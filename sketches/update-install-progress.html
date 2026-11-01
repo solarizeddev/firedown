@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Update install — feedback while the APK is handed to Android</title>
+<style>
+  :root {
+    --bg: #0a0a0c; --panel: #131316; --surface: #131315; --sheet: #2a2a2e;
+    --sc: #232327; --sch: #2a2a2e; --schh: #36363a;
+    --on: #e6e1e5; --onv: #b8b4c0; --faint: #7a7681;
+    --coral: #ff716c; --coral-ink: #460005; --track: rgba(255,113,108,.2);
+    --divider: #2a2a2e; --bad: #ffb4ab;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 28px; background: var(--bg); color: var(--on);
+    font-family: -apple-system, system-ui, "Roboto", sans-serif; -webkit-font-smoothing: antialiased; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 6px; }
+  .lede { color: var(--onv); font-size: 13px; margin: 0 0 14px; max-width: 1100px; line-height: 1.6; }
+  .lede strong { color: var(--on); }
+  .principles { background: var(--panel); border: 1px solid var(--divider); border-radius: 14px;
+    padding: 16px 20px; margin: 0 0 24px; max-width: 1100px; }
+  .principles h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; margin: 0 0 10px; }
+  .principles ul { margin: 0; padding-left: 22px; font-size: 13px; line-height: 1.6; color: var(--onv); }
+  .principles li { margin: 4px 0; } .principles li strong { color: var(--on); }
+  .row { background: var(--panel); border: 1px solid var(--divider); border-radius: 18px; padding: 22px; margin-bottom: 22px; }
+  .row h3 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .row .descr { font-size: 13px; color: var(--onv); line-height: 1.55; margin: 0 0 18px; max-width: 1000px; }
+  .phones { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+  .step { display: flex; flex-direction: column; gap: 8px; }
+  .step .cap { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--faint); padding-left: 4px; }
+  .step .note { font-size: 12px; color: var(--onv); max-width: 250px; line-height: 1.45; padding-left: 4px; }
+  .arrow { align-self: center; color: var(--faint); font-size: 22px; margin-top: 40px; }
+
+  /* phone with a bottom sheet over a dimmed page */
+  .phone { width: 250px; height: 500px; background: var(--surface); border: 1px solid var(--divider);
+    border-radius: 26px; overflow: hidden; position: relative; }
+  .page { position: absolute; inset: 0; padding: 14px; opacity: .35; }
+  .page .pill { height: 40px; border-radius: 20px; background: var(--sch); margin-bottom: 14px; }
+  .page .blk { height: 70px; border-radius: 14px; background: var(--sc); margin-bottom: 10px; }
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--sheet);
+    border-radius: 24px 24px 0 0; padding: 0 0 6px; }
+  .handle { width: 32px; height: 4px; border-radius: 2px; background: rgba(230,225,229,.4); margin: 10px auto 10px; }
+  .ill { width: 74px; height: 74px; margin: 2px auto 8px; border-radius: 18px;
+    background: radial-gradient(circle at 50% 40%, #ffb58a 0 22%, #ff716c 23% 46%, transparent 47%), var(--sc); }
+  .t { text-align: center; font-size: 18px; font-weight: 400; }
+  .v { text-align: center; font-size: 13px; color: var(--coral); margin-top: 4px; font-weight: 500; }
+  .cur { text-align: center; font-size: 11px; color: var(--onv); margin-top: 2px; }
+  .wn { font-size: 13px; font-weight: 500; margin: 14px 18px 6px; }
+  .bul { font-size: 11.5px; color: var(--onv); margin: 0 18px 6px; line-height: 1.4; }
+  .foot { padding: 12px 18px 12px; min-height: 64px; display: flex; flex-direction: column; justify-content: center; }
+  .btn { text-align: center; padding: 10px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    background: var(--coral); color: var(--coral-ink); }
+  .btn.dis { background: rgba(230,225,229,.12); color: rgba(230,225,229,.38); }
+  .lab { display: flex; justify-content: space-between; font-size: 12px; color: var(--onv); margin-bottom: 8px; }
+  .lab b { color: var(--on); font-weight: 500; }
+  .bar { height: 5px; border-radius: 3px; background: var(--track); overflow: hidden; position: relative; }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--coral); border-radius: 3px; }
+  .bar.ind i { left: 22%; width: 38%; }
+  .err { font-size: 12px; color: var(--bad); text-align: center; margin: 0 0 10px; }
+
+  /* Android's own dialog */
+  .sys { position: absolute; left: 18px; right: 18px; top: 150px; background: #2b2930; border-radius: 26px; padding: 20px; }
+  .sys .ic { width: 40px; height: 40px; border-radius: 10px; margin: 0 auto 10px; background: radial-gradient(circle at 50% 45%, #ffb58a 0 22%, #ff716c 23% 46%, #3a3a3e 47%); }
+  .sys .q { text-align: center; font-size: 14px; margin-bottom: 4px; }
+  .sys .s { text-align: center; font-size: 11px; color: var(--onv); margin-bottom: 16px; }
+  .sys .acts { display: flex; justify-content: flex-end; gap: 18px; font-size: 13px; color: #d0bcff; font-weight: 500; }
+  .badge { position: absolute; top: 120px; left: 0; right: 0; text-align: center; font-size: 10px;
+    text-transform: uppercase; letter-spacing: .6px; color: var(--faint); }
+
+  /* notification shade */
+  .shade { width: 280px; background: #1d1b20; border: 1px solid var(--divider); border-radius: 22px; padding: 12px; }
+  .notif { background: #2b2930; border-radius: 16px; padding: 12px 14px; font-size: 12px; }
+  .notif .hd { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--onv); margin-bottom: 6px; }
+  .notif .hd .dot { width: 14px; height: 14px; border-radius: 7px; background: var(--coral); }
+  .notif .tt { font-weight: 500; font-size: 13px; color: var(--on); }
+  .notif .tx { color: var(--onv); margin-top: 2px; }
+  .notif .bar { margin-top: 10px; height: 4px; }
+
+  /* About row */
+  .about { width: 300px; background: var(--surface); border: 1px solid var(--divider); border-radius: 18px; padding: 12px; }
+  .prow { background: var(--sch); border-radius: 16px; padding: 12px 14px; display: flex; gap: 14px; align-items: center; margin-top: 2px; }
+  .prow.top { border-radius: 16px 16px 4px 4px; } .prow.bot { border-radius: 4px 4px 16px 16px; }
+  .prow .gl { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--onv); flex: none; }
+  .prow .ti { font-size: 14px; } .prow .su { font-size: 12px; color: var(--onv); margin-top: 2px; }
+
+  table.cmp { border-collapse: collapse; font-size: 13px; max-width: 1100px; }
+  table.cmp th, table.cmp td { text-align: left; padding: 8px 12px; border-top: 1px solid var(--divider); vertical-align: top; color: var(--onv); }
+  table.cmp th { color: var(--on); font-weight: 600; }
+  table.cmp td:first-child { color: var(--on); white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<h1>Update install — feedback while the APK is handed to Android</h1>
+<p class="lede">Download, patch rebuild and verification all run in the background <strong>before</strong> the user
+hears about the update, so nobody waits on them. The one wait is after <strong>Install</strong>: Firedown copies the
+~205 MB APK into Android's installer before Android shows anything. Today the sheet closes on the tap and the screen
+does nothing for that time. This sketch keeps the sheet up and shows the copy.</p>
+
+<div class="principles">
+  <h4>Rules</h4>
+  <ul>
+    <li><strong>The progress replaces the button, in the same footer.</strong> No second surface, no layout jump: the footer keeps the button's height.</li>
+    <li><strong>Determinate while copying</strong> (we know bytes copied of the file's size), <strong>indeterminate once Android has it</strong> ("Installing…"), because how long Android takes is not ours to know.</li>
+    <li><strong>The sheet closes when Android answers</strong>: its confirmation dialog appears, or the app is closed and replaced. A failure brings the Install button back with one line saying so.</li>
+    <li><strong>One install at a time.</strong> A tap on the sheet, the notification and the About row all start the same install; a second tap while one runs does nothing.</li>
+    <li><strong>The notification path gets the same states</strong> on the notification itself (the shade is where that user is looking), and the About row says what is happening.</li>
+  </ul>
+</div>
+
+<!-- ───────────────────────── Row 1: the sheet ───────────────────────── -->
+<div class="row">
+  <h3>From the update sheet</h3>
+  <p class="descr">Only the footer changes. Swiping the sheet away while it copies is allowed: the copy goes on and Android's
+  dialog still appears.</p>
+  <div class="phones">
+
+    <div class="step"><div class="cap">1 · Ready</div>
+      <div class="phone"><div class="page"><div class="pill"></div><div class="blk"></div><div class="blk"></div></div><div class="scrim"></div>
+        <div class="sheet"><div class="handle"></div><div class="ill"></div>
+          <div class="t">Update available</div><div class="v">Firedown 1.2.7 · 205 MB</div><div class="cur">Current version 1.2.6</div>
+          <div class="wn">What's new</div><div class="bul">• App updates download much less</div><div class="bul">• Videos in news cards are named by their headline</div>
+          <div class="foot"><div class="btn">Install</div></div></div></div>
+      <div class="note">Unchanged.</div></div>
+
+    <div class="arrow">→</div>
+
+    <div class="step"><div class="cap">2 · Copying to Android</div>
+      <div class="phone"><div class="page"><div class="pill"></div><div class="blk"></div><div class="blk"></div></div><div class="scrim"></div>
+        <div class="sheet"><div class="handle"></div><div class="ill"></div>
+          <div class="t">Update available</div><div class="v">Firedown 1.2.7 · 205 MB</div><div class="cur">Current version 1.2.6</div>
+          <div class="wn">What's new</div><div class="bul">• App updates download much less</div><div class="bul">• Videos in news cards are named by their headline</div>
+          <div class="foot"><div class="lab"><span>Preparing update…</span><b>42%</b></div><div class="bar"><i style="width:42%"></i></div></div></div></div>
+      <div class="note">Percent of the APK copied into the install session, whole percents only.</div></div>
+
+    <div class="arrow">→</div>
+
+    <div class="step"><div class="cap">3 · Android has it</div>
+      <div class="phone"><div class="page"><div class="pill"></div><div class="blk"></div><div class="blk"></div></div><div class="scrim"></div>
+        <div class="sheet"><div class="handle"></div><div class="ill"></div>
+          <div class="t">Update available</div><div class="v">Firedown 1.2.7 · 205 MB</div><div class="cur">Current version 1.2.6</div>
+          <div class="wn">What's new</div><div class="bul">• App updates download much less</div><div class="bul">• Videos in news cards are named by their headline</div>
+          <div class="foot"><div class="lab"><span>Installing…</span><b></b></div><div class="bar ind"><i></i></div></div></div></div>
+      <div class="note">Android checks the APK. Usually a moment; a minute at most before the sheet gives up waiting and closes.</div></div>
+
+    <div class="arrow">→</div>
+
+    <div class="step"><div class="cap">4 · Android's dialog</div>
+      <div class="phone"><div class="page"><div class="pill"></div><div class="blk"></div><div class="blk"></div></div><div class="scrim"></div>
+        <div class="badge">Android</div>
+        <div class="sys"><div class="ic"></div><div class="q">Do you want to update this app?</div><div class="s">Firedown</div>
+          <div class="acts"><span>Cancel</span><span>Update</span></div></div></div>
+      <div class="note">Our sheet is gone. On a phone where Firedown installed itself last time, Android skips this dialog and
+        just replaces the app; "Firedown updated" follows.</div></div>
+
+    <div class="step"><div class="cap">Failure</div>
+      <div class="phone"><div class="page"><div class="pill"></div><div class="blk"></div><div class="blk"></div></div><div class="scrim"></div>
+        <div class="sheet"><div class="handle"></div><div class="ill"></div>
+          <div class="t">Update available</div><div class="v">Firedown 1.2.7 · 205 MB</div><div class="cur">Current version 1.2.6</div>
+          <div class="wn">What's new</div><div class="bul">• App updates download much less</div><div class="bul">• Videos in news cards are named by their headline</div>
+          <div class="foot"><div class="err">Couldn't start the install. Try again.</div><div class="btn">Install</div></div></div></div>
+      <div class="note">Storage full, the file gone, Android refusing the session. The button comes back; the existing
+        "Update failed" notification still posts.</div></div>
+
+  </div>
+</div>
+
+<!-- ───────────────────────── Row 2: the notification ───────────────────────── -->
+<div class="row">
+  <h3>From the notification</h3>
+  <p class="descr">Tapping "Tap to update" turns that same notification into the progress, so nothing new stacks in the shade.
+  It is silent (the update channel already is) and goes away when Android answers.</p>
+  <div class="phones">
+    <div class="step"><div class="cap">Ready</div>
+      <div class="shade"><div class="notif"><div class="hd"><span class="dot"></span>Firedown · now</div>
+        <div class="tt">Firedown update</div><div class="tx">Firedown 1.2.7 is ready. Tap to update.</div></div></div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="cap">Copying</div>
+      <div class="shade"><div class="notif"><div class="hd"><span class="dot"></span>Firedown · now</div>
+        <div class="tt">Firedown update</div><div class="tx">Preparing update…</div><div class="bar"><i style="width:42%"></i></div></div></div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="cap">Android has it</div>
+      <div class="shade"><div class="notif"><div class="hd"><span class="dot"></span>Firedown · now</div>
+        <div class="tt">Firedown update</div><div class="tx">Installing…</div><div class="bar ind"><i></i></div></div></div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="cap">Done</div>
+      <div class="shade"><div class="notif"><div class="hd"><span class="dot"></span>Firedown · now</div>
+        <div class="tt">Firedown updated</div><div class="tx">Updated to Firedown 1.2.7.</div></div></div>
+      <div class="note">Existing notification, unchanged. It now also clears a progress notification left behind when
+        Android replaced the app mid-"Installing…".</div></div>
+  </div>
+</div>
+
+<!-- ───────────────────────── Row 3: About ───────────────────────── -->
+<div class="row">
+  <h3>From Settings → About</h3>
+  <p class="descr">The "Install update" row's summary follows the same states, so a tap there no longer looks dead.</p>
+  <div class="phones">
+    <div class="step"><div class="cap">Ready</div>
+      <div class="about"><div class="prow top"><span class="gl"></span><div><div class="ti">Version</div><div class="su">1.2.6</div></div></div>
+        <div class="prow bot"><span class="gl"></span><div><div class="ti">Install update</div><div class="su">Firedown 1.2.7</div></div></div></div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="cap">Copying</div>
+      <div class="about"><div class="prow top"><span class="gl"></span><div><div class="ti">Version</div><div class="su">1.2.6</div></div></div>
+        <div class="prow bot"><span class="gl"></span><div><div class="ti">Install update</div><div class="su">Preparing update… 42%</div></div></div></div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="cap">Android has it</div>
+      <div class="about"><div class="prow top"><span class="gl"></span><div><div class="ti">Version</div><div class="su">1.2.6</div></div></div>
+        <div class="prow bot"><span class="gl"></span><div><div class="ti">Install update</div><div class="su">Installing…</div></div></div></div></div>
+  </div>
+</div>
+
+<!-- ───────────────────────── Row 4: not chosen ───────────────────────── -->
+<div class="row">
+  <h3>Considered, not chosen</h3>
+  <div class="phones" style="margin-bottom:18px">
+    <div class="step"><div class="cap">Disabled button with the percent</div>
+      <div class="phone" style="height:150px"><div class="sheet"><div class="handle"></div>
+        <div class="foot"><div class="btn dis">Preparing… 42%</div></div></div></div>
+      <div class="note">A greyed button reads as "you can't do this", not as work in progress, and shows no bar.</div></div>
+  </div>
+  <table class="cmp">
+    <tr><th>Option</th><th>Why not</th></tr>
+    <tr><td>Progress for the download and the patch rebuild</td><td>They finish before the user is told about the update; a bar there advertises background work nobody started. Play Store auto-updates behave the same way. Revisit only if the flow becomes "tap Update, then download".</td></tr>
+    <tr><td>Close the sheet and show a snackbar</td><td>A snackbar can't carry a percent for several seconds, and the notification-tap path has no snackbar host.</td></tr>
+    <tr><td>Progress during Android's own install</td><td>Not ours: Android closes Firedown to replace it, and its dialog is its own UI.</td></tr>
+  </table>
+</div>
+
+</body>
+</html>

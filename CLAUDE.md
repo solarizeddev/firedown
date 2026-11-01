@@ -4448,6 +4448,33 @@ is **~75 MB**, the APK 205 MB.
   full for everyone (the installed versions don't read the blocks); F-Droid
   clients (Droid-ify, Neo Store, F-Droid) installing from the firedown.app
   repo always download the full APK — the F-Droid repo format has no patches.
+- **The install tap shows its progress; the download and the rebuild don't**
+  (`UpdateInstallProgress`, published through `UpdateInstaller.state()`).
+  Download, rebuild and checks finish before the user hears of the update, so
+  nobody waits on them and they stay silent. The wait is the TAP: copying the
+  205 MB APK into Android's install session takes seconds before Android shows
+  anything, and the sheet used to close on the tap. Now the sheet's footer, the
+  "Tap to update" notification (same id, so the failed / updated notifications
+  replace it) and the About row show "Preparing update… 42%" (bytes copied, also
+  handed to `session.setStagingProgress`), then "Installing…" with no percent
+  until Android answers: `STATUS_PENDING_USER_ACTION` or success → IDLE and the
+  sheet closes; a refusal → FAILED, the button back with one error line; nothing
+  for 60 s → IDLE. Rules: ONE install at a time (`begin` claims the slot, a
+  second tap anywhere does nothing; the sheet and the notification could start
+  two sessions before); INSTALLING is published BEFORE `commit()`, because
+  Android's answer is a main-thread broadcast that must never find the install
+  still PREPARING; every transition carries its install's `generation`, so a
+  late callback or timeout never moves a newer install; a refusal after Android
+  already answered (the user cancelling Android's dialog) changes nothing; the
+  sheet acts on an outcome only for an install it saw run (`mSeenInstall`, kept
+  across rotation). The notification posts at most twice a second: Android
+  drops an app's notification updates past ~5 a second, and the dropped one can
+  be the last. `MY_PACKAGE_REPLACED` cancels a progress notification left at
+  "Installing…". Nothing is shown during Android's own install: Firedown is
+  closed to be replaced. Pinned by `UpdateInstallProgressTest` (13 tests, in
+  the update harness with four mutants); the debug `showPreview` plays the
+  footer's states on a timer. Sketch: `sketches/update-install-progress.html`.
+  On-device unverified at write time.
 - **Verify** with `sh scripts/update-harness/run.sh` (JDK only, ~6 min): the
   JUnit tests on a plain JVM (UpdatePatchTest, UpdatePlanTest,
   UpdateManifestTest — the same ones `testDebugUnitTest` runs); **the state
@@ -4459,7 +4486,7 @@ is **~75 MB**, the APK 205 MB.
   clearPending; 51 checks, written after review found the device-failure
   loop the other tests all passed on); a fuzz of the real generator and
   applier (300 random edits, 3000 random corruptions, 500 random headers, an
-  APK-shaped file, the CLI); 26 planted bugs that must each fail
+  APK-shaped file, the CLI); 30 planted bugs that must each fail
   (`MUTANTS=0` skips); the REAL `releaseStatus` in a scratch Gradle
   project (offline, file:// history URLs: status.json blocks, history,
   SHA256SUMS, each patch re-applied, a mismatched history entry skipped, the

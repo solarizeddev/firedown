@@ -322,6 +322,9 @@
     <string name="update_auto_update_success_title">Firedown aktualizován</string>
     <string name="update_available_sheet_current">Aktuální verze %1$s</string>
     <string name="update_available_sheet_install">Instalovat</string>
+    <string name="update_install_preparing">Připravuje se aktualizace…</string>
+    <string name="update_install_installing">Instaluje se…</string>
+    <string name="update_install_failed">Instalaci se nepodařilo spustit. Zkuste to znovu.</string>
     <string name="update_available_sheet_title">Dostupná aktualizace</string>
     <string name="update_available_sheet_whats_new">Novinky</string>
     <string name="update_failed_general_body">Zkusíme to znovu později.</string>

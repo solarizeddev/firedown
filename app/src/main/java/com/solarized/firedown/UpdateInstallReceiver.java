@@ -44,6 +44,10 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String updateName = prefs.getString(Keys.UPDATE_META, null);
 
+        // A progress notification left at "Installing…" when Android replaced
+        // the app goes either way (the success notification below cancels it
+        // too, but only when it posts).
+        UpdateNotification.cancelInstallProgress(context);
         if (updateName != null) {
             prefs.edit().remove(Keys.UPDATE_META).apply();
             UpdateNotification.showNotificationSuccess(context, updateName);
@@ -67,7 +71,7 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
         PendingResult pendingResult = goAsync();
         new Thread(() -> {
             try {
-                UpdateInstaller.install(context, updateName);
+                UpdateInstaller.install(context, updateName, true);
             } finally {
                 pendingResult.finish();
             }
@@ -85,6 +89,8 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
 
         switch (status) {
             case PackageInstaller.STATUS_PENDING_USER_ACTION:
+                // Android's dialog takes over from the sheet / notification.
+                UpdateInstaller.onAndroidAnswered(context);
                 // Use the typed overload on T+ to avoid Parcelable type-confusion.
                 Intent confirmationIntent = BuildUtils.hasAndroidTiramisu()
                         ? intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class)
@@ -105,6 +111,7 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
                 // Guard: only show if UPDATE_META still exists (not already
                 // consumed by handlePackageReplaced).
                 Log.d(TAG, "Session callback: success (redundant path)");
+                UpdateInstaller.onAndroidAnswered(context);
                 String updateName = prefs.getString(Keys.UPDATE_META, null);
                 if (updateName != null) {
                     prefs.edit().remove(Keys.UPDATE_META).apply();
@@ -120,6 +127,7 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
             case PackageInstaller.STATUS_FAILURE_INVALID:
             case PackageInstaller.STATUS_FAILURE_STORAGE:
                 Log.e(TAG, "Installation failed: " + message);
+                UpdateInstaller.onAndroidRefused(context);
                 prefs.edit().remove(Keys.UPDATE_META).apply();
                 UpdateNotification.showNotificationFailed(context);
                 break;

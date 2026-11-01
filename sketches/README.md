@@ -79,3 +79,12 @@ between them show *why* we ended up where we did.
   model) — recorded, not recommended: it announces the phone on every
   Wi‑Fi. Proposed A. The engine, codes, mailbox, relay and resume handshake
   are untouched in both. Not yet implemented.
+- `update-install-progress.html` — What tapping Install shows (BUILT,
+  2026-11). Download, patch rebuild and checks run before the user is told
+  about the update, so they stay silent; the wait is the copy of the APK into
+  Android's installer. The sheet's footer turns into "Preparing update… 42%",
+  then "Installing…" until Android's dialog appears, with the same states on
+  the "Tap to update" notification and the About row; a failure brings the
+  button back with one line. Considered and not chosen: a disabled button with
+  the percent (reads as "you can't do this"), progress for the download and
+  rebuild (nobody waits on them), a snackbar.

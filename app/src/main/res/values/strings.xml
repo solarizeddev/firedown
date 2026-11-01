@@ -951,6 +951,12 @@
     <string name="update_available_sheet_version_size" translatable="false">%1$s · %2$s</string>
     <string name="update_available_sheet_whats_new">What\'s new</string>
     <string name="update_available_sheet_install">Install</string>
+    <!-- The install tap, while Firedown copies the APK into Android's
+         installer and then while Android checks it (update sheet, update
+         notification, Settings → About). -->
+    <string name="update_install_preparing">Preparing update…</string>
+    <string name="update_install_installing">Installing…</string>
+    <string name="update_install_failed">Couldn\'t start the install. Try again.</string>
     <!-- Named dismissal beside Install: closes the sheet for this version. -->
     <!-- Manual "Check for updates" row on the About screen (AboutFragment):
          the background periodic check is Doze-deferred and dies on

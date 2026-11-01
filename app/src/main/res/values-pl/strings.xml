@@ -341,6 +341,9 @@
     <string name="update_auto_update_success_title">Firedown zaktualizowany</string>
     <string name="update_available_sheet_current">Bieżąca wersja %1$s</string>
     <string name="update_available_sheet_install">Zainstaluj</string>
+    <string name="update_install_preparing">Przygotowywanie aktualizacji…</string>
+    <string name="update_install_installing">Instalowanie…</string>
+    <string name="update_install_failed">Nie udało się rozpocząć instalacji. Spróbuj ponownie.</string>
     <string name="update_available_sheet_title">Dostępna aktualizacja</string>
     <string name="update_available_sheet_whats_new">Co nowego</string>
     <string name="update_failed_general_body">Spróbujemy ponownie później.</string>

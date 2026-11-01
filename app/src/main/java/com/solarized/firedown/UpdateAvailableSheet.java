@@ -3,6 +3,7 @@ package com.solarized.firedown;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.format.Formatter;
 import android.view.LayoutInflater;
@@ -13,13 +14,17 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.phone.dialogs.BaseBottomSheetDialogFragment;
 
 import java.io.File;
+import java.text.NumberFormat;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -49,6 +54,7 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     // from BaseActivity.onResume and takes priority over this one.
     private static final String CRASH_SHEET_TAG = "CrashReportSheet";
     private static final String ARG_PREVIEW = "preview";
+    private static final String STATE_SEEN_INSTALL = "seen_install";
 
     /**
      * How long a dismissal holds the sheet back. "Later" has to MEAN later, or
@@ -69,6 +75,21 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     private static final int MAX_PROMPTS = 3;
 
     private int mReadyVersionCode;
+
+    /**
+     * The install this sheet has watched run (its generation), so a later
+     * IDLE closes the sheet and a FAILED shows the error line only for an
+     * install it saw. An older install's outcome left in
+     * {@link UpdateInstaller#state()} must not reach a sheet opened after it.
+     */
+    private long mSeenInstall = -1;
+
+    private MaterialButton mInstall;
+    private TextView mError;
+    private View mProgress;
+    private TextView mProgressLabel;
+    private TextView mProgressPercent;
+    private LinearProgressIndicator mProgressBar;
 
     /**
      * Shows the sheet if a verified update strictly newer than the installed
@@ -105,7 +126,8 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
      * download. No-op in release builds. To try it, temporarily add to an
      * activity's onResume (e.g. BaseActivity):
      *   UpdateAvailableSheet.showPreview(getSupportFragmentManager());
-     * In preview, "Install" just dismisses (there is no real APK on disk).
+     * In preview, "Install" plays the footer's install states on a timer and
+     * closes (there is no real APK on disk).
      */
     public static void showPreview(@NonNull FragmentManager fm) {
         if (!BuildConfig.DEBUG) return;
@@ -202,28 +224,141 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         whatsNew.setVisibility(changelogVisibility);
         changelogContainer.setVisibility(changelogVisibility);
 
-        MaterialButton install = view.findViewById(R.id.update_sheet_install);
-        // In preview there's no real APK on disk, so Install just closes.
-        install.setOnClickListener(v -> {
+        mInstall = view.findViewById(R.id.update_sheet_install);
+        mError = view.findViewById(R.id.update_sheet_error);
+        mProgress = view.findViewById(R.id.update_sheet_progress);
+        mProgressLabel = view.findViewById(R.id.update_sheet_progress_label);
+        mProgressPercent = view.findViewById(R.id.update_sheet_progress_percent);
+        mProgressBar = view.findViewById(R.id.update_sheet_progress_bar);
+        // The Downloads row's track: colorPrimary at 20% under the
+        // progress_indicator set in the layout.
+        int primary = MaterialColors.getColor(view, android.R.attr.colorPrimary, Color.BLACK);
+        mProgressBar.setTrackColor(ColorUtils.setAlphaComponent(primary, 0x33));
+
+        // In preview there's no real APK on disk, so Install plays the
+        // footer's states on a timer and closes.
+        mInstall.setOnClickListener(v -> {
             if (preview) {
-                dismissAllowingStateLoss();
+                runPreview();
             } else {
                 onInstall(name);
             }
         });
+
+        if (savedInstanceState != null) {
+            mSeenInstall = savedInstanceState.getLong(STATE_SEEN_INSTALL, -1);
+        }
+        if (!preview) {
+            UpdateInstaller.state().observe(getViewLifecycleOwner(), this::render);
+        }
 
         // No decline button on purpose — the drag handle, back and tap-outside
         // dismiss, and onDismiss snoozes all of them identically. See the
         // footer comment in fragment_dialog_update_available.xml.
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putLong(STATE_SEEN_INSTALL, mSeenInstall);
+    }
+
     private void onInstall(String name) {
         // UpdateInstaller.install does disk IO (reads the APK into a
         // PackageInstaller session) — off the main thread. Use the application
         // context so the worker thread can't outlive and leak this fragment.
+        //
+        // The sheet STAYS: the copy into Android's installer takes seconds on
+        // a slow phone, and a sheet that closed on the tap left the screen
+        // doing nothing for that time. render() closes it when Android
+        // answers. The footer flips now, not on the first posted state, so a
+        // second tap can't land on the button.
+        showPreparing(0);
         Context app = requireContext().getApplicationContext();
-        new Thread(() -> UpdateInstaller.install(app, name)).start();
-        dismissAllowingStateLoss();
+        new Thread(() -> UpdateInstaller.install(app, name, false)).start();
+    }
+
+    /**
+     * Footer for the install's state. Busy: the progress in place of the
+     * button. IDLE after a busy state this sheet saw: Android answered (its
+     * dialog is up, or it is replacing the app), so the sheet goes. FAILED
+     * after one: the button back, with the error line.
+     */
+    private void render(UpdateInstallProgress.Snapshot s) {
+        if (s.busy()) {
+            mSeenInstall = s.generation;
+            if (s.phase == UpdateInstallProgress.Phase.PREPARING) {
+                showPreparing(s.percent);
+            } else {
+                showInstalling();
+            }
+            return;
+        }
+        boolean ours = mSeenInstall > 0 && s.generation == mSeenInstall;
+        if (ours && s.phase == UpdateInstallProgress.Phase.IDLE) {
+            dismissAllowingStateLoss();
+            return;
+        }
+        showButton(ours && s.phase == UpdateInstallProgress.Phase.FAILED);
+    }
+
+    private void showButton(boolean failed) {
+        mProgress.setVisibility(View.GONE);
+        mInstall.setVisibility(View.VISIBLE);
+        mError.setVisibility(failed ? View.VISIBLE : View.GONE);
+    }
+
+    private void showPreparing(int percent) {
+        mInstall.setVisibility(View.GONE);
+        mError.setVisibility(View.GONE);
+        mProgress.setVisibility(View.VISIBLE);
+        mProgressLabel.setText(R.string.update_install_preparing);
+        mProgressPercent.setText(NumberFormat.getPercentInstance(
+                getResources().getConfiguration().getLocales().get(0)).format(percent / 100.0));
+        if (mProgressBar.isIndeterminate()) {
+            mProgressBar.setIndeterminate(false);
+        }
+        mProgressBar.setProgressCompat(percent, true);
+    }
+
+    private void showInstalling() {
+        mInstall.setVisibility(View.GONE);
+        mError.setVisibility(View.GONE);
+        mProgress.setVisibility(View.VISIBLE);
+        mProgressLabel.setText(R.string.update_install_installing);
+        mProgressPercent.setText(null);
+        if (!mProgressBar.isIndeterminate()) {
+            mProgressBar.setIndeterminate(true);
+        }
+    }
+
+    /** DEBUG preview: the footer's states on a timer, then the sheet closes. */
+    private void runPreview() {
+        View root = getView();
+        if (root == null) {
+            return;
+        }
+        int[] percent = {0};
+        root.post(new Runnable() {
+            @Override
+            public void run() {
+                if (getView() == null) {
+                    return;
+                }
+                if (percent[0] <= 100) {
+                    showPreparing(percent[0]);
+                    percent[0] += 2;
+                    root.postDelayed(this, 30);
+                    return;
+                }
+                showInstalling();
+                root.postDelayed(() -> {
+                    if (isAdded()) {
+                        dismissAllowingStateLoss();
+                    }
+                }, 2000);
+            }
+        });
     }
 
     /**

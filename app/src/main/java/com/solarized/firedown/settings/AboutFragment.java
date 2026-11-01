@@ -5,6 +5,10 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.view.View;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.preference.Preference;
@@ -16,12 +20,14 @@ import com.solarized.firedown.App;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.UpdateDownloader;
+import com.solarized.firedown.UpdateInstallProgress;
 import com.solarized.firedown.UpdateInstaller;
 import com.solarized.firedown.UpdateScheduler;
 import com.solarized.firedown.UpdateWorker;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.utils.NavigationUtils;
 
+import java.text.NumberFormat;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -89,6 +95,14 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
     }
 
 
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        // The Install row says what its tap started: the copy into Android's
+        // installer, then Android's own check (see refreshUpdateRow).
+        UpdateInstaller.state().observe(getViewLifecycleOwner(), s -> refreshUpdateRow());
+    }
 
     @Override
     public boolean onPreferenceClick(Preference preference) {
@@ -178,6 +192,18 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
             row.setTitle(R.string.settings_update_install_title);
             row.setSummary(versionName == null || versionName.isEmpty() ? null : versionName);
             row.setIcon(R.drawable.ic_download_done_24);
+            // While an install runs (started here, from the sheet or from the
+            // notification) the summary is what it is doing. A tap meanwhile
+            // does nothing: UpdateInstaller runs one install at a time.
+            UpdateInstallProgress.Snapshot install = UpdateInstaller.state().getValue();
+            if (install != null && install.phase == UpdateInstallProgress.Phase.PREPARING) {
+                String percent = NumberFormat.getPercentInstance(
+                        getResources().getConfiguration().getLocales().get(0))
+                        .format(install.percent / 100.0);
+                row.setSummary(getString(R.string.update_install_preparing) + " " + percent);
+            } else if (install != null && install.phase == UpdateInstallProgress.Phase.INSTALLING) {
+                row.setSummary(R.string.update_install_installing);
+            }
         } else {
             row.setTitle(R.string.settings_update_check_title);
             row.setSummary(null);
@@ -195,7 +221,7 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
     private void installReadyUpdate() {
         Context app = requireContext().getApplicationContext();
         String name = UpdateDownloader.readyVersionName(app);
-        new Thread(() -> UpdateInstaller.install(app, name)).start();
+        new Thread(() -> UpdateInstaller.install(app, name, false)).start();
     }
 
     /**

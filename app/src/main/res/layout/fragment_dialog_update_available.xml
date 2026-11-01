@@ -145,20 +145,93 @@
       "update ready" affordance is ever added to home, revisit this — the
       button becomes meaningful again at that point, and not before.
     -->
+    <!--
+      After Install the footer shows the install instead of the button
+      (UpdateAvailableSheet.render): "Preparing update… 42%" over a bar while
+      the APK is copied into Android's installer, then "Installing…" with an
+      indeterminate bar until Android answers, and the sheet closes. The
+      progress block keeps the button's 48dp so the sheet doesn't jump. A
+      failure brings the button back with the error line above it.
+    -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:paddingHorizontal="24dp"
         android:paddingTop="16dp"
         android:paddingBottom="16dp">
+
+        <TextView
+            android:id="@+id/update_sheet_error"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:text="@string/update_install_failed"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorError"
+            android:visibility="gone"
+            tools:visibility="visible" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/update_sheet_install"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/update_available_sheet_install" />
+
+        <LinearLayout
+            android:id="@+id/update_sheet_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/update_sheet_progress_label"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/update_install_preparing"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                <TextView
+                    android:id="@+id/update_sheet_progress_percent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textColor="?attr/colorOnSurface"
+                    tools:text="42%" />
+
+            </LinearLayout>
+
+            <!-- progress_indicator, never colorPrimary: the brand coral can't
+                 separate from its own track in light theme (CLAUDE.md). The
+                 track is colorPrimary at 20%, set in code like the Downloads
+                 row's. -->
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/update_sheet_progress_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:max="100"
+                app:indicatorColor="@color/progress_indicator"
+                app:indicatorTrackGapSize="0dp"
+                app:trackCornerRadius="3dp"
+                app:trackStopIndicatorSize="0dp"
+                app:trackThickness="5dp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

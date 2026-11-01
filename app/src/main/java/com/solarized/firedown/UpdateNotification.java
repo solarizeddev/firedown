@@ -65,6 +65,38 @@ public class UpdateNotification {
     }
 
 
+    /**
+     * The install the user started from the "Tap to update" notification, shown
+     * on that same notification (same id), so nothing new stacks in the shade
+     * and the failed / updated notifications replace it. {@code percent} is the
+     * copy into Android's installer; -1 once Android has it ("Installing…").
+     * Silent and ongoing; posted at most twice a second by the caller.
+     */
+    public static void showInstallProgress(Context context, int percent) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        boolean installing = percent < 0;
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, App.UPDATES_NOTIFICATION_ID);
+        mBuilder.setSmallIcon(R.drawable.ic_firedown_notification);
+        mBuilder.setOnlyAlertOnce(true);
+        mBuilder.setSilent(true);
+        mBuilder.setOngoing(true);
+        mBuilder.setAutoCancel(false);
+        mBuilder.setShowWhen(false);
+        mBuilder.setCategory(NotificationCompat.CATEGORY_PROGRESS);
+        mBuilder.setContentTitle(context.getText(R.string.update_prompt_install_title));
+        mBuilder.setContentText(context.getText(installing
+                ? R.string.update_install_installing : R.string.update_install_preparing));
+        mBuilder.setProgress(100, installing ? 0 : percent, installing);
+        NotificationManagerCompat.from(context).notify(NotificationID.APK_UPDATE_PROMPT_INSTALL, mBuilder.build());
+    }
+
+    /** Android answered (or never did): the progress has nothing left to say. */
+    public static void cancelInstallProgress(Context context) {
+        NotificationManagerCompat.from(context).cancel(NotificationID.APK_UPDATE_PROMPT_INSTALL);
+    }
+
     public static void showInstallPrompt(Context context, String versionName) {
         NotificationManagerCompat mNotificationManager = NotificationManagerCompat.from(context);
 
