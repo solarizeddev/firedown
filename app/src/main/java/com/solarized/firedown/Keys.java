@@ -53,6 +53,10 @@ public class Keys {
     // next round goes straight to the next step for that version.
     public static final String UPDATE_PATCH_FAILED_VERSION = "com.solarized.firedown.UPDATE_PATCH_FAILED_VERSION";
     public static final String UPDATE_XZ_FAILED_VERSION = "com.solarized.firedown.UPDATE_XZ_FAILED_VERSION";
+    // "<versionCode>:<kind>" of a patch / .xz whose rebuild failed on this
+    // device (storage, an unreadable file), and how many times in a row.
+    public static final String UPDATE_DEVICE_FAILED_STEP = "com.solarized.firedown.UPDATE_DEVICE_FAILED_STEP";
+    public static final String UPDATE_DEVICE_FAILED_COUNT = "com.solarized.firedown.UPDATE_DEVICE_FAILED_COUNT";
     // The installed APK's SHA-256 (picks the patch), cached under the APK's
     // path + size + install time so it is hashed once per installed build.
     public static final String UPDATE_INSTALLED_SHA = "com.solarized.firedown.UPDATE_INSTALLED_SHA";

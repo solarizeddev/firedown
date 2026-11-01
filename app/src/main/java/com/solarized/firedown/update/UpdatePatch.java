@@ -66,8 +66,13 @@ public final class UpdatePatch {
     /** Largest APK this code will build or read: far above any real release. */
     public static final long MAX_FILE_SIZE = 1L << 30;
 
-    /** xz decoder memory limit, in KiB. The generator uses 8 MiB dictionaries. */
-    public static final int XZ_MEMORY_LIMIT_KIB = 64 * 1024;
+    /**
+     * xz decoder memory limit, in KiB, PER DECODER: {@link #apply} opens three
+     * at once, so a patch can ask for three times this. The generator uses
+     * 8 MiB dictionaries (~9 MiB of decoder each); 16 MiB keeps a patch under
+     * ~50 MB of heap whatever it asks for.
+     */
+    public static final int XZ_MEMORY_LIMIT_KIB = 16 * 1024;
 
     private static final int CHUNK = 1 << 16;
 

@@ -1,0 +1,1 @@
+package com.solarized.firedown; public class UpdateWorker extends androidx.work.Worker { public UpdateWorker(android.content.Context c, androidx.work.WorkerParameters p) { super(c, p); } public Result doWork() { return null; } }

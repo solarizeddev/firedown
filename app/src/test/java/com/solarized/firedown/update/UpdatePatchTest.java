@@ -278,6 +278,25 @@ public class UpdatePatchTest {
     }
 
     @Test
+    public void aPatchStreamAskingForTooMuchMemoryIsRefused() throws Exception {
+        // apply() opens three decoders: the limit must hold for each.
+        byte[] old = randomBytes(new Random(18), 100);
+        byte[] nw = randomBytes(new Random(19), 100);
+        // One entry: copy the 100 new bytes from the extra stream.
+        ByteArrayOutputStream ctrlRaw = new ByteArrayOutputStream();
+        DataOutputStream ctrlData = new DataOutputStream(ctrlRaw);
+        ctrlData.writeLong(0);
+        ctrlData.writeLong(100);
+        ctrlData.writeLong(0);
+        byte[] ctrl = withDictionaryByte(xz(ctrlRaw.toByteArray()), 30);
+        File oldFile = write("old", old);
+        assertRefused("ctrl stream with a 128 MiB dictionary", oldFile,
+                assemble(old, nw, ctrl, xz(new byte[0]), xz(nw)));
+        assertRefused("extra stream with a 128 MiB dictionary", oldFile,
+                assemble(old, nw, xz(ctrlRaw.toByteArray()), xz(new byte[0]), withDictionaryByte(xz(nw), 30)));
+    }
+
+    @Test
     public void theGeneratorFoldsEntriesThatProduceNothing() throws Exception {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         UpdateDiff.Controls controls = new UpdateDiff.Controls(new DataOutputStream(bytes));

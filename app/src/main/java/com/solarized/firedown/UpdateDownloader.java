@@ -66,6 +66,21 @@ public final class UpdateDownloader {
      */
     private static final long FINALIZE_CLAIM_MS = 30L * 60L * 1000L;
 
+    /**
+     * Free space kept beyond what a patch or .xz step needs (the downloaded
+     * file plus the APK it is rebuilt into), so an update never fills the
+     * phone to the byte.
+     */
+    public static final long SPACE_MARGIN_BYTES = 32L * 1024L * 1024L;
+
+    /**
+     * A patch or .xz whose rebuild failed on this device this many times for
+     * one version (storage, an unreadable file) is skipped like one that
+     * rebuilt the wrong APK. Retrying a step that keeps failing here would
+     * download it again every backoff round and never reach the APK.
+     */
+    private static final int MAX_DEVICE_FAILURES = 2;
+
     private UpdateDownloader() {}
 
     private static SharedPreferences prefs(Context context) {
@@ -97,22 +112,27 @@ public final class UpdateDownloader {
     }
 
     /**
-     * The current download failed (DownloadManager error, or a file that is
-     * not the one status.json named): try the step's next mirror, then the
-     * next step. When nothing is left, back off — no tight retry loop:
+     * The download {@code downloadId} failed (DownloadManager error, or a file
+     * that is not the one status.json named): try the step's next mirror, then
+     * the next step. When nothing is left, back off — no tight retry loop:
      * DownloadManager already retries transient network errors internally.
+     * Ignored when the record has moved on to another download.
      */
-    public static void onAttemptFailed(Context context) {
+    public static void onAttemptFailed(Context context, long downloadId) {
         synchronized (LOCK) {
             Pending pending = readPendingLocked(context);
-            if (pending != null && pending.plan.nextUrl()) {
+            if (pending == null || pending.downloadId != downloadId) {
+                Log.w(TAG, "attempt failure for a download no longer recorded; ignored");
+                return;
+            }
+            if (pending.plan.nextUrl()) {
                 Log.w(TAG, "download attempt failed; trying " + pending.plan.current().kind
                         + " from mirror " + pending.plan.urlIndex());
                 enqueueLocked(context, pending.plan, pending.apkSha256, pending.name, pending.versionCode);
                 return;
             }
             Log.w(TAG, "download attempt failed; nothing left to try, backing off");
-            backOffLocked(context, pending == null ? -1 : pending.versionCode);
+            backOffLocked(context, pending.versionCode);
         }
     }
 
@@ -121,37 +141,65 @@ public final class UpdateDownloader {
      * APK. Every mirror serves the same file, so skip the whole step, and
      * remember it for this version so later rounds don't try it again.
      */
-    public static void onStepFailed(Context context) {
+    public static void onStepFailed(Context context, long downloadId) {
         synchronized (LOCK) {
             Pending pending = readPendingLocked(context);
-            if (pending == null) {
+            if (pending == null || pending.downloadId != downloadId) {
+                Log.w(TAG, "step failure for a download no longer recorded; ignored");
                 return;
             }
-            UpdatePlan.Kind kind = pending.plan.current().kind;
-            if (kind == UpdatePlan.Kind.PATCH) {
-                prefs(context).edit().putInt(Keys.UPDATE_PATCH_FAILED_VERSION, pending.versionCode).apply();
-            } else if (kind == UpdatePlan.Kind.XZ) {
-                prefs(context).edit().putInt(Keys.UPDATE_XZ_FAILED_VERSION, pending.versionCode).apply();
-            }
-            if (pending.plan.nextStep()) {
-                Log.w(TAG, kind + " did not rebuild the update; trying " + pending.plan.current().kind);
-                enqueueLocked(context, pending.plan, pending.apkSha256, pending.name, pending.versionCode);
-                return;
-            }
-            backOffLocked(context, pending.versionCode);
+            stepFailedLocked(context, pending);
         }
     }
 
     /**
      * Something on THIS device failed (storage full, a file it could not
-     * write): the downloaded file may be fine, so don't walk the plan — wait,
-     * then start the whole plan again.
+     * read or write): the downloaded file may be fine, so the first time,
+     * wait and start the whole plan again. A patch or .xz that fails here
+     * {@link #MAX_DEVICE_FAILURES} times for a version is skipped, so the
+     * ladder still reaches the APK.
      */
-    public static void backOff(Context context) {
+    public static void onDeviceFailed(Context context, long downloadId) {
         synchronized (LOCK) {
             Pending pending = readPendingLocked(context);
-            backOffLocked(context, pending == null ? -1 : pending.versionCode);
+            if (pending == null || pending.downloadId != downloadId) {
+                Log.w(TAG, "device failure for a download no longer recorded; ignored");
+                return;
+            }
+            UpdatePlan.Kind kind = pending.plan.current().kind;
+            if (kind != UpdatePlan.Kind.APK) {
+                SharedPreferences p = prefs(context);
+                String step = pending.versionCode + ":" + kind.name();
+                int count = (step.equals(p.getString(Keys.UPDATE_DEVICE_FAILED_STEP, null))
+                        ? p.getInt(Keys.UPDATE_DEVICE_FAILED_COUNT, 0) : 0) + 1;
+                if (count >= MAX_DEVICE_FAILURES) {
+                    p.edit().remove(Keys.UPDATE_DEVICE_FAILED_STEP)
+                            .remove(Keys.UPDATE_DEVICE_FAILED_COUNT).apply();
+                    Log.w(TAG, kind + " failed on this device " + count + " times; skipping it");
+                    stepFailedLocked(context, pending);
+                    return;
+                }
+                p.edit().putString(Keys.UPDATE_DEVICE_FAILED_STEP, step)
+                        .putInt(Keys.UPDATE_DEVICE_FAILED_COUNT, count).apply();
+            }
+            backOffLocked(context, pending.versionCode);
         }
+    }
+
+    /** Must be called under LOCK. Records the step's kind as failed and moves on. */
+    private static void stepFailedLocked(Context context, Pending pending) {
+        UpdatePlan.Kind kind = pending.plan.current().kind;
+        if (kind == UpdatePlan.Kind.PATCH) {
+            prefs(context).edit().putInt(Keys.UPDATE_PATCH_FAILED_VERSION, pending.versionCode).apply();
+        } else if (kind == UpdatePlan.Kind.XZ) {
+            prefs(context).edit().putInt(Keys.UPDATE_XZ_FAILED_VERSION, pending.versionCode).apply();
+        }
+        if (pending.plan.nextStep()) {
+            Log.w(TAG, kind + " did not give the update; trying " + pending.plan.current().kind);
+            enqueueLocked(context, pending.plan, pending.apkSha256, pending.name, pending.versionCode);
+            return;
+        }
+        backOffLocked(context, pending.versionCode);
     }
 
     /** Kinds that already failed to rebuild {@code versionCode} (see {@link #onStepFailed}). */
@@ -202,6 +250,25 @@ public final class UpdateDownloader {
                     .apply();
             return pending;
         }
+    }
+
+    /**
+     * About how large the next APK will be: the installed one plus a tenth.
+     * 0 when the installed APK can't be read.
+     */
+    public static long expectedApkBytes(Context context) {
+        File installed = UpdateInstalledApk.file(context);
+        long base = installed == null ? 0L : installed.length();
+        return base + base / 10;
+    }
+
+    /** True when the files dir can hold the step's download and the APK rebuilt from it. */
+    private static boolean roomForStep(Context context, UpdatePlan.Step step) {
+        File dir = context.getExternalFilesDir(null);
+        if (dir == null) {
+            return false;
+        }
+        return dir.getUsableSpace() >= step.size + expectedApkBytes(context) + SPACE_MARGIN_BYTES;
     }
 
     /** Where a step's download lands. The APK step downloads the update APK itself. */
@@ -307,6 +374,13 @@ public final class UpdateDownloader {
         if (previousId == -1) {
             return false;
         }
+        Pending pending = readPendingLocked(context);
+        if (pending == null) {
+            // An id with no readable record: nothing could ever finish it.
+            removeDownload(context, previousId);
+            clearPendingLocked(context);
+            return false;
+        }
         DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
         if (dm == null) {
             return false;
@@ -331,6 +405,17 @@ public final class UpdateDownloader {
                 Log.d(TAG, "a finished download is being verified; not enqueuing again");
                 return true;
             }
+            // WorkManager stops a worker after 10 minutes, so a claim this old
+            // belongs to one that died — its process crashed or ran out of
+            // memory rebuilding. Doing that again would die again: a patch or
+            // .xz is skipped; the APK (only hashed) is handed over again.
+            if (pending.plan.current().kind != UpdatePlan.Kind.APK) {
+                Log.w(TAG, "the " + pending.plan.current().kind + " rebuild never finished; skipping it");
+                stepFailedLocked(context, pending);
+            } else {
+                UpdateFinalizeWorker.enqueue(context, previousId);
+            }
+            return true;
         }
         return false;
     }
@@ -360,6 +445,14 @@ public final class UpdateDownloader {
         File apk = Preferences.getUpdateApkFile(context);
         if (apk.exists()) {
             apk.delete();
+        }
+
+        // A patch or .xz needs room for itself AND the APK rebuilt from it.
+        // When there isn't, go to the APK now: DownloadManager checks the
+        // APK's own size before transferring a byte.
+        while (plan.current().kind != UpdatePlan.Kind.APK && !roomForStep(context, plan.current())) {
+            Log.w(TAG, "not enough free space for the " + plan.current().kind + " step; skipping it");
+            plan.nextStep();
         }
         File dest = fileFor(context, plan.current().kind);
 
@@ -431,11 +524,19 @@ public final class UpdateDownloader {
      * this, {@link #isVerifiedReady} returns true and the install prompt / sheet
      * may offer it.
      */
-    public static void markReady(Context context, int versionCode, String name) {
+    public static void markReady(Context context, long downloadId, int versionCode, String name) {
         synchronized (LOCK) {
-            // The DownloadManager row is left alone: for an APK step its file
-            // IS the ready APK, and remove() would delete it. A patch or .xz
-            // has been used, so its file goes.
+            Pending pending = readPendingLocked(context);
+            if (pending == null || pending.downloadId != downloadId) {
+                Log.w(TAG, "verified a download no longer recorded; ignored");
+                return;
+            }
+            // For an APK step the DownloadManager row's file IS the ready APK,
+            // and remove() would delete it, so the row is only forgotten. A
+            // patch or .xz has been used: its row goes with its file.
+            if (pending.plan.current().kind != UpdatePlan.Kind.APK) {
+                removeDownload(context, downloadId);
+            }
             deleteArtifacts(context);
             prefs(context).edit()
                     .putBoolean(Keys.UPDATE_READY, true)
@@ -449,6 +550,8 @@ public final class UpdateDownloader {
                     .remove(Keys.UPDATE_DOWNLOAD_NAME)
                     .remove(Keys.UPDATE_DOWNLOAD_VERSION_CODE)
                     .remove(Keys.UPDATE_DOWNLOAD_FINALIZING_AT)
+                    .remove(Keys.UPDATE_DEVICE_FAILED_STEP)
+                    .remove(Keys.UPDATE_DEVICE_FAILED_COUNT)
                     // Success — drop the backoff state so it can't carry over to
                     // a later version.
                     .remove(Keys.UPDATE_FAILED_VERSION_CODE)
@@ -519,9 +622,17 @@ public final class UpdateDownloader {
         return prefs(context).getString(Keys.UPDATE_READY_NAME, "");
     }
 
-    /** Drop the pending-download record (does not touch any verified file). */
+    /**
+     * Drop the pending-download record and its DownloadManager row (which
+     * deletes its file: a download still running when the app was updated
+     * by another route would otherwise land unclaimed, up to 205 MB, and stay
+     * until the next release). A verified APK is not touched: markReady
+     * already removed it from the record.
+     */
     public static void clearPending(Context context) {
         synchronized (LOCK) {
+            removeDownload(context, prefs(context).getLong(Keys.UPDATE_DOWNLOAD_ID, -1));
+            deleteArtifacts(context);
             clearPendingLocked(context);
         }
     }

@@ -34,19 +34,19 @@ import java.nio.file.StandardCopyOption;
  * seconds to tens of seconds on a phone, past what a receiver may hold.
  * Unique work per download id, so a duplicate broadcast runs nothing twice.
  *
- * Outcomes go back to UpdateDownloader: a wrong or failed download tries the
- * next mirror ({@code onAttemptFailed}); a patch or .xz that does not rebuild
- * the expected APK skips to the next kind ({@code onStepFailed}); a failure of
- * this device (storage full) waits and starts over ({@code backOff}).
+ * Outcomes go back to UpdateDownloader, each naming the download it is about
+ * (a stale run can't move a newer record): a wrong or failed download tries
+ * the next mirror ({@code onAttemptFailed}); a patch or .xz that does not
+ * rebuild the expected APK, or needs more memory than this phone has, skips
+ * to the next kind ({@code onStepFailed}); a failure of this device (storage
+ * full, a file it can't read) waits and starts over, and skips the step if it
+ * happens again ({@code onDeviceFailed}).
  */
 public class UpdateFinalizeWorker extends Worker {
 
     private static final String TAG = "UpdateFinalizeWorker";
 
     static final String KEY_DOWNLOAD_ID = "download_id";
-
-    /** Room left over beyond the APK being written, so the phone is not filled to the byte. */
-    private static final long SPACE_MARGIN_BYTES = 32L * 1024L * 1024L;
 
     public UpdateFinalizeWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -72,7 +72,7 @@ public class UpdateFinalizeWorker extends Worker {
         }
         if (!isDownloadSuccessful(context, downloadId)) {
             Log.w(TAG, "update download did not complete successfully");
-            UpdateDownloader.onAttemptFailed(context);
+            UpdateDownloader.onAttemptFailed(context, downloadId);
             return Result.success();
         }
 
@@ -80,7 +80,7 @@ public class UpdateFinalizeWorker extends Worker {
         File downloaded = UpdateDownloader.fileFor(context, step.kind);
         if (!downloaded.isFile()) {
             Log.w(TAG, "update download reported complete but its file is missing");
-            UpdateDownloader.onAttemptFailed(context);
+            UpdateDownloader.onAttemptFailed(context, downloadId);
             return Result.success();
         }
 
@@ -89,7 +89,7 @@ public class UpdateFinalizeWorker extends Worker {
             if (!UpdateApkVerifier.verifySha256(downloaded, step.sha256)) {
                 Log.e(TAG, step.kind + " download is not the file status.json named — discarding");
                 downloaded.delete();
-                UpdateDownloader.onAttemptFailed(context);
+                UpdateDownloader.onAttemptFailed(context, downloadId);
                 return Result.success();
             }
             Result rebuilt = rebuild(context, pending, step, downloaded, apk);
@@ -101,13 +101,13 @@ public class UpdateFinalizeWorker extends Worker {
         if (!UpdateApkVerifier.verifySha256(apk, pending.apkSha256)) {
             Log.e(TAG, "update APK digest mismatch — discarding");
             apk.delete();
-            failStep(context, step);
+            failStep(context, step, downloadId);
             return Result.success();
         }
         if (!UpdateApkVerifier.verifySignature(context, apk)) {
             Log.e(TAG, "update APK signature mismatch — discarding");
             apk.delete();
-            failStep(context, step);
+            failStep(context, step, downloadId);
             return Result.success();
         }
 
@@ -116,7 +116,7 @@ public class UpdateFinalizeWorker extends Worker {
         // reachable whether or not the app is open; the in-app sheet
         // (UpdateAvailableSheet, shown on resume) is the additional prominent
         // surface while the app is in use.
-        UpdateDownloader.markReady(context, pending.versionCode, pending.name);
+        UpdateDownloader.markReady(context, downloadId, pending.versionCode, pending.name);
         UpdateNotification.showInstallPrompt(context, pending.name);
         return Result.success();
     }
@@ -136,25 +136,28 @@ public class UpdateFinalizeWorker extends Worker {
             if (step.kind == UpdatePlan.Kind.PATCH) {
                 installed = UpdateInstalledApk.file(context);
                 if (installed == null) {
-                    throw new UpdatePatch.PatchException("the installed APK can't be read");
+                    throw new IOException("the installed APK can't be read");
                 }
                 needed = UpdatePatch.readHeader(downloaded).newSize;
             } else {
-                // The .xz index knows the size, but the old APK is a close guess.
-                File installedApk = UpdateInstalledApk.file(context);
-                long base = installedApk == null ? 0 : installedApk.length();
-                needed = Math.max(base, downloaded.length() * 4);
+                // The .xz index knows the size; the installed APK + a tenth
+                // is a close guess, and the cap below bounds a wrong one.
+                long expected = UpdateDownloader.expectedApkBytes(context);
+                needed = expected > 0 ? expected : downloaded.length() * 3;
             }
             File dir = part.getParentFile();
-            if (dir != null && dir.getUsableSpace() < needed + SPACE_MARGIN_BYTES) {
+            if (dir != null && dir.getUsableSpace() < needed + UpdateDownloader.SPACE_MARGIN_BYTES) {
                 Log.w(TAG, "not enough free space to rebuild the update");
-                UpdateDownloader.backOff(context);
+                UpdateDownloader.onDeviceFailed(context, pending.downloadId);
                 return Result.success();
             }
 
             String sha;
             if (step.kind == UpdatePlan.Kind.PATCH) {
-                sha = UpdatePatch.apply(installed, downloaded, part, step.fromSha256, this::isStopped);
+                // Null: the applier hashes the installed APK itself, so the
+                // patch's base is checked against the real file, not against
+                // the cached hash the plan was built from.
+                sha = UpdatePatch.apply(installed, downloaded, part, null, this::isStopped);
             } else {
                 sha = UpdatePatch.unxz(downloaded, part, UpdatePatch.MAX_FILE_SIZE, this::isStopped);
             }
@@ -170,7 +173,14 @@ public class UpdateFinalizeWorker extends Worker {
             Log.e(TAG, step.kind + " did not rebuild the update: " + e.getMessage());
             part.delete();
             downloaded.delete();
-            UpdateDownloader.onStepFailed(context);
+            UpdateDownloader.onStepFailed(context, pending.downloadId);
+            return Result.success();
+        } catch (OutOfMemoryError e) {
+            // The applier needs ~32 MB of heap; a phone that can't give it
+            // will not manage the next time either.
+            part.delete();
+            downloaded.delete();
+            UpdateDownloader.onStepFailed(context, pending.downloadId);
             return Result.success();
         } catch (InterruptedIOException e) {
             // Stopped by the system: WorkManager runs this again, and the claim
@@ -180,17 +190,17 @@ public class UpdateFinalizeWorker extends Worker {
         } catch (IOException | RuntimeException e) {
             Log.e(TAG, "could not rebuild the update on this device", e);
             part.delete();
-            UpdateDownloader.backOff(context);
+            UpdateDownloader.onDeviceFailed(context, pending.downloadId);
             return Result.success();
         }
     }
 
     /** A wrong APK: from the APK step, try the next mirror; from a patch or .xz, the next kind. */
-    private static void failStep(Context context, UpdatePlan.Step step) {
+    private static void failStep(Context context, UpdatePlan.Step step, long downloadId) {
         if (step.kind == UpdatePlan.Kind.APK) {
-            UpdateDownloader.onAttemptFailed(context);
+            UpdateDownloader.onAttemptFailed(context, downloadId);
         } else {
-            UpdateDownloader.onStepFailed(context);
+            UpdateDownloader.onStepFailed(context, downloadId);
         }
     }
 

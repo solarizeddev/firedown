@@ -4,6 +4,13 @@
 #
 #   1. JUnit: app/src/test's UpdatePatchTest, UpdatePlanTest and
 #      UpdateManifestTest (the same tests ./gradlew testDebugUnitTest runs).
+#   1b. The download state machine (UpdateFlowHarness): the REAL
+#      UpdateDownloader + UpdateFinalizeWorker against fakes of DownloadManager,
+#      WorkManager and SharedPreferences — the patch / .xz / APK ladder,
+#      mirrors, a patch for another base, device failures (retry once, then
+#      skip), no room for a delta step, the finalize claim (live, stale,
+#      unclaimed), a stopped worker, stale broadcasts, a record from before
+#      plans, an unreadable record, clearPending — plus planted bugs.
 #   2. Fuzz (UpdateFuzz): 300 random edits round-tripped through the real
 #      generator (app/src/updatetool) and the app's applier (UpdatePatch);
 #      3000 random corruptions of a real patch and 500 random headers, every
@@ -129,6 +136,67 @@ else
     grep -v '^\s*at org.junit\|^\s*at java\.\|JAVA_TOOL_OPTIONS' "$OUT/junit.log" | head -60 | sed 's/^/     | /'
 fi
 
+echo "== 1b. The download state machine (UpdateFlowHarness)"
+# The real UpdateDownloader, UpdateFinalizeWorker, UpdatePlan, UpdateManifest,
+# UpdateInstalledApk and UpdatePatch against fakes of DownloadManager,
+# WorkManager and SharedPreferences (flow/stub; the android-all compile check
+# of these classes is separate: they use only what the stubs declare).
+FLOW="$OUT/flow-src"
+mkdir -p "$FLOW/com/solarized/firedown/update"
+cp -r "$HERE/flow/stub/." "$HERE/flow/src/." "$FLOW/"
+for f in Keys UpdateManifest UpdatePlan UpdateDownloader UpdateFinalizeWorker UpdateInstalledApk; do
+    cp "$ROOT/app/src/main/java/com/solarized/firedown/$f.java" "$FLOW/com/solarized/firedown/"
+done
+cp "$ROOT/app/src/main/java/com/solarized/firedown/update/UpdatePatch.java" \
+   "$ROOT/app/src/updatetool/java/com/solarized/firedown/update/UpdateDiff.java" "$FLOW/com/solarized/firedown/update/"
+flow() { # src-dir classes-dir; output to $OUT/flow.log
+    compile "$1" "$2" > "$OUT/flow-compile.log"
+    if [ ! -f "$2/com/solarized/firedown/UpdateFlowHarness.class" ]; then
+        sed 's/^/     | /' "$OUT/flow-compile.log" | head -20 > "$OUT/flow.log"
+        return 2
+    fi
+    java -cp "$2:$CP" com.solarized.firedown.UpdateFlowHarness > "$OUT/flow.log" 2>&1
+}
+if flow "$FLOW" "$OUT/flow-classes"; then
+    ok "flow: $(grep -o '[0-9]* passed, 0 failed' "$OUT/flow.log")"
+else
+    bad "flow"
+    grep -v '^ok ' "$OUT/flow.log" | grep -v JAVA_TOOL_OPTIONS | head -30 | sed 's/^/     | /'
+fi
+fmutant() { # label file-under-flow perl-substitution
+    m="$OUT/fmutant"
+    rm -rf "$m"
+    mkdir -p "$m"
+    cp -r "$FLOW" "$m/src"
+    before=$(cksum < "$m/src/$2")
+    perl -0pi -e "$3" "$m/src/$2"
+    if [ "$(cksum < "$m/src/$2")" = "$before" ]; then
+        bad "flow mutant '$1': the substitution matched nothing (update the harness)"
+        return
+    fi
+    flow "$m/src" "$m/classes"
+    case $? in
+        0) bad "flow mutant survived: $1" ;;
+        2) bad "flow mutant '$1' does not compile"; cat "$OUT/flow.log" ;;
+        *) ok "flow mutant killed: $1" ;;
+    esac
+}
+if [ "${MUTANTS:-1}" != 0 ]; then
+    D=com/solarized/firedown/UpdateDownloader.java
+    fmutant 'a device failure never skips the step' $D 's/MAX_DEVICE_FAILURES = 2/MAX_DEVICE_FAILURES = 99/'
+    fmutant 'a failed patch is not remembered' $D 's/prefs\(context\)\.edit\(\)\.putInt\(Keys\.UPDATE_PATCH_FAILED_VERSION, pending\.versionCode\)\.apply\(\);//'
+    fmutant 'a new download inherits the old claim' $D 's/\.remove\(Keys\.UPDATE_DOWNLOAD_FINALIZING_AT\)\n(\s*)\.remove\(Keys\.UPDATE_DOWNLOAD_URLS\)/.remove(Keys.UPDATE_DOWNLOAD_URLS)/'
+    fmutant 'a dead rebuild is downloaded again' $D 's/if \(pending\.plan\.current\(\)\.kind != UpdatePlan\.Kind\.APK\) \{\n(\s*)Log\.w\(TAG, "the "/if (false) {\n$1Log.w(TAG, "the "/'
+    fmutant 'an unclaimed finished download is downloaded again' $D 's/UpdateFinalizeWorker\.enqueue\(context, previousId\);\n(\s*)return true;/return false;/'
+    fmutant 'markReady removes the APK step'"'"'s row' $D 's/if \(pending\.plan\.current\(\)\.kind != UpdatePlan\.Kind\.APK\) \{\n(\s*)removeDownload\(context, downloadId\);/if (true) {\n$1removeDownload(context, downloadId);/'
+    fmutant 'clearPending leaves the download' $D 's/removeDownload\(context, prefs\(context\)\.getLong\(Keys\.UPDATE_DOWNLOAD_ID, -1\)\);\n(\s*)deleteArtifacts\(context\);\n(\s*)clearPendingLocked/deleteArtifacts(context);\n$2clearPendingLocked/'
+    fmutant 'no space check before a delta step' $D 's/return dir\.getUsableSpace\(\) >= step\.size/return true || dir.getUsableSpace() >= step.size/'
+    fmutant 'an unreadable record is kept' $D 's/if \(pending == null\) \{\n(\s*)\/\/ An id with no readable record/if (false) {\n$1\/\/ An id with no readable record/'
+    W=com/solarized/firedown/UpdateFinalizeWorker.java
+    fmutant 'a device failure walks the plan' $W 's/UpdateDownloader\.onDeviceFailed\(context, pending\.downloadId\);\n(\s*)return Result\.success\(\);\n(\s*)\}\n(\s*)\}/UpdateDownloader.onStepFailed(context, pending.downloadId);\n$1return Result.success();\n$2}\n$3}/'
+    fmutant 'a wrong download skips the whole step' $W 's/downloaded\.delete\(\);\n(\s*)UpdateDownloader\.onAttemptFailed\(context, downloadId\);/downloaded.delete();\n$1UpdateDownloader.onStepFailed(context, downloadId);/'
+fi
+
 echo "== 2. Fuzz"
 mkdir -p "$OUT/fuzz"
 if java -Xmx1g -Xss512m -cp "$OUT/classes:$CP" com.solarized.firedown.update.UpdateFuzz "$OUT/fuzz" ${SEED:-} \
@@ -175,7 +243,7 @@ if [ "${MUTANTS:-1}" != 0 ]; then
     mutant 'no output hash check' $P 's/if \(!MessageDigest\.isEqual\(written, header\.newSha256\)\)/if (false)/' $PT
     mutant 'trailing bytes after the streams allowed' $P 's/extra != remaining - ctrl - diff/extra > remaining - ctrl - diff/' $PT
     mutant 'the base hash not checked' $P 's/if \(!baseSha\.equalsIgnoreCase\(header\.oldSha256Hex\(\)\)\)/if (false)/' $PT
-    mutant 'no xz memory limit' $P 's/XZ_MEMORY_LIMIT_KIB = 64 \* 1024/XZ_MEMORY_LIMIT_KIB = -1/' $PT
+    mutant 'no xz memory limit' $P 's/XZ_MEMORY_LIMIT_KIB = 16 \* 1024/XZ_MEMORY_LIMIT_KIB = -1/' $PT
     mutant 'generator does not fold no-progress entries' com/solarized/firedown/update/UpdateDiff.java \
         's/if \(add == 0 && copy == 0\) \{\n(\s*)if \(havePending\)/if (false) {\n$1if (havePending)/' $PT
     M=com/solarized/firedown/UpdateManifest.java
