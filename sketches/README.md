@@ -88,3 +88,15 @@ between them show *why* we ended up where we did.
   button back with one line. Considered and not chosen: a disabled button with
   the percent (reads as "you can't do this"), progress for the download and
   rebuild (nobody waits on them), a snackbar.
+- `addons.html` — Add-ons (PROPOSED, 2026-11), from a feedback note asking
+  for userscripts: Firefox add-ons from addons.mozilla.org's Android listing
+  only (that listing is the compatibility gate; signed only; built-in IDs
+  such as our uBlock's `uBlock0@raymondhill.net` refused), so Violentmonkey
+  brings userscripts with its own `GM_*` API. No toolbar icon: one ⋮-sheet
+  row (hidden until an add-on is installed) opening a second page of add-on
+  actions, popups in a sheet hosting a GeckoView; a Settings → Add-ons screen;
+  the install prompt; the userscript install path, which needs `tabs.create`
+  to open tracked tabs for add-ons. Ends with every code touch point,
+  including two that break as soon as a user add-on runs (the action
+  delegate treats every badge as uBlock's count; `onNewTab` refuses all).
+  Not yet implemented.
