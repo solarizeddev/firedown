@@ -299,6 +299,12 @@ def shell(st, cmd):
         cmd = cmd.split(" ", 2)[2]
     if cmd == "getprop ro.build.version.sdk":
         return str(SDK)
+    if cmd == "getprop ro.build.version.release":
+        return {29: "10", 30: "11", 31: "12", 32: "12", 33: "13", 34: "14"}.get(SDK, "?")
+    if cmd == "getprop ro.product.manufacturer":
+        return "samsung"
+    if cmd == "getprop ro.product.model":
+        return "SM-FAKE"
     m = re.match(r"settings (put system font_scale \S+|delete system font_scale)$", cmd)
     if m:
         if m.group(1).startswith("put"):
@@ -393,7 +399,15 @@ def shell(st, cmd):
     if cmd.startswith("uiautomator dump"):
         if st["focus"] == "app" and st["sheet"] and st["footer"] in ("progress", "installing"):
             return "ERROR: could not get idle state."
-        st["ui"] = screen(st)
+        # As on a Samsung: a plain dump reads the window Android counts as
+        # active, which stays the one under the shade; --windows reads them
+        # all (Android 11+).
+        if st["shade"] and not ("--windows" in cmd and SDK >= 30):
+            st["shade"] = False
+            st["ui"] = screen(st)
+            st["shade"] = True
+        else:
+            st["ui"] = screen(st)
         return "UI hierchary dumped to: /sdcard/fd-update-ui.xml"
     m = re.match(r"input tap (\d+) (\d+)", cmd)
     if m:
@@ -431,6 +445,8 @@ def shell(st, cmd):
     if m:
         for path in m.group(1).split():
             st["files"].pop(path, None)
+            if path == "/sdcard/fd-update-ui.xml":
+                st["ui"] = ""
         return ""
     if cmd == "df -k /data":
         return "Filesystem 1K-blocks Used Available Use% Mounted on\n/dev/block/dm-48 100000000 50000000 50000000 50% /data"

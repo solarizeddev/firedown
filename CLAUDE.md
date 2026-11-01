@@ -4505,7 +4505,12 @@ is **~75 MB**, the APK 205 MB.
   from a debug-only `UpdateSheetTrace` line per render
   (`UpdateAvailableSheet.render`: sheet id, footer, percent) beside the
   `UpdateInstallTrace` line per phase. Notifications through STATE; the
-  shade is opened by `cmd statusbar`, else a swipe from the top edge. Every
+  shade is opened by `cmd statusbar`, else a swipe from the top edge, and
+  read with `uiautomator dump --windows` (every window, Android 11+; older
+  versions ignore the flag): a plain dump reads only the window Android
+  counts as active, which on a Samsung stays the launcher under an open
+  shade. The second device run passed 26 of 26 with the notification tapped
+  through the test receiver for exactly that reason. Every
   phone setting it touches (animations, stay-on, rotation, font size,
   appops, the notification grant) is put back. It runs on
   macOS (bash 3.2, BSD awk: the screen parsers split a dump into nodes in
@@ -4523,7 +4528,9 @@ is **~75 MB**, the APK 205 MB.
   progress, two installs at once, a rebuilt sheet that forgets the copy, no
   "Firedown updated"), each of which the script must report. The previous
   script fails 7 checks against the simulated phone, as it did on the real
-  one. Cancelling Android's dialog posts the "update failed" notification
+  one; the simulated phones also hide the shade from a plain dump, and an
+  Android 10 one checks the fallback tap. The results file opens with the
+  phone's model and Android version. Cancelling Android's dialog posts the "update failed" notification
   (the session reports ABORTED); the script flags it as a WARN.
 - **Verify** with `sh scripts/update-harness/run.sh` (JDK only, ~6 min): the
   JUnit tests on a plain JVM (UpdatePatchTest, UpdatePlanTest,

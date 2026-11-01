@@ -290,7 +290,8 @@ print(s['installed'], s['appops'], s['settings'], s['files'], s['notif_perm'], s
     # allowed, which the script must leave as it found them.
     check "silent: exit code" "$(run_fake clean '' FAKE_SHADE=stuck --)" "0"
     check "silent: nothing failed" "$(said clean ' 0 failed')" "yes"
-    for want in 'PASS the footer showed the progress:' \
+    for want in 'Phone: samsung SM-FAKE, Android 14 (SDK 34)' \
+            'PASS the footer showed the progress:' \
             'PASS Android installed the update without asking' \
             'PASS phases in order: PREPARING INSTALLING (' \
             'PASS the "Firedown updated" notification was posted' \
@@ -327,6 +328,10 @@ print(s['installed'], s['appops'], s['settings'], s['files'], s['notif_perm'], s
     check "dialog: the permission it granted is taken back" "$(left dialog)" "$base default {} {} False 1"
     check "android 11: exit code" "$(run_fake sdk30 '' FAKE_SDK=30 -- --skip-build --only sheet)" "0"
     check "android 11: no note about asking" "$(said sdk30 'Android asked although')" "no"
+    # Android 10 has no all-windows dump, so a shade the plain dump cannot
+    # see falls back to the test receiver.
+    check "android 10: exit code" "$(run_fake sdk29 '' FAKE_SDK=29 -- --skip-build --only notification)" "0"
+    check "android 10: the tap sent another way" "$(said sdk29 'sent its tap through the test receiver')" "yes"
 
     check "fault cancel-fails: fails" "$(run_fake cancel cancel-fails FAKE_DIALOG=1 -- --skip-build --only sheet)" "1"
     check "fault cancel-fails: named" "$(said cancel "FAIL after cancelling Android's dialog")" "yes"

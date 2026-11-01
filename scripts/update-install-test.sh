@@ -77,6 +77,7 @@ OUT=
 LOGCAT_PID=
 GRADLE_BACKUP=
 SDK=0
+PHONE=
 BASE_CODE=0
 NEWER_CODE=0
 BASE_APK=
@@ -271,14 +272,23 @@ wait_state() {
 
 # ── the screen ───────────────────────────────────────────────────────────
 
-# ui_dump [TRIES]: the screen into $OUT/ui.xml. uiautomator waits for the
-# screen to go still and gives up after ~10 s, so it cannot read a screen
+# ui_dump [TRIES] [all]: the screen into $OUT/ui.xml. uiautomator waits for
+# the screen to go still and gives up after ~10 s, so it cannot read a screen
 # whose progress bar is counting up: the footer checks read UpdateSheetTrace.
+# It reads only the window Android counts as active, which on some phones
+# (Samsung) stays the launcher while the notification shade is open; "all"
+# reads every window (--windows, Android 11+; older versions ignore it).
+# The file is removed first: an all-windows dump that finds no window says
+# "dumped" without writing one.
 ui_dump() {
-    local i=0 tries=${1:-4} out
+    local i=0 tries=${1:-4} opt='' out
+    if [ "${2:-}" = all ]; then
+        opt=--windows
+    fi
     while [ "$i" -lt "$tries" ]; do
         i=$((i + 1))
-        out=$(remote uiautomator dump /sdcard/fd-update-ui.xml)
+        remote rm -f /sdcard/fd-update-ui.xml >/dev/null
+        out=$(remote uiautomator dump $opt /sdcard/fd-update-ui.xml)
         if has "$out" 'dumped to'; then
             if adbq exec-out cat /sdcard/fd-update-ui.xml > "$OUT/ui.xml" 2>/dev/null; then
                 return 0
@@ -1014,7 +1024,7 @@ case_notification() {
     xy=
     if open_shade; then
         shot notification-shade
-        if ui_dump 2; then
+        if ui_dump 2 all; then
             xy=$(ui_find text "$TEST_NAME" contains)
         fi
     else
@@ -1243,6 +1253,7 @@ preflight() {
     esac
     SDK=$(remote getprop ro.build.version.sdk)
     SDK=${SDK:-0}
+    PHONE="$(remote getprop ro.product.manufacturer) $(remote getprop ro.product.model), Android $(remote getprop ro.build.version.release) (SDK $SDK)"
 }
 
 save_setting() {
@@ -1372,6 +1383,7 @@ main() {
 
     preflight
     build_all
+    say "Phone: $PHONE" | tee -a "$OUT/results.txt"
     say "Testing on the phone: installs $(name_for "$BASE_CODE"), offers $TEST_NAME"
     adbq logcat -v threadtime > "$OUT/logcat.txt" 2>&1 &
     LOGCAT_PID=$!
