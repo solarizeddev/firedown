@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Add-ons — which ones, where they live, what it touches</title>
+<style>
+  :root {
+    --bg: #0a0a0c; --panel: #131316; --surface: #131315; --sheet: #2a2a2e;
+    --sc: #1c1c1f; --sch: #2a2a2e; --schh: #36363a; --row: #232327;
+    --on: #e6e1e5; --onv: #b8b4c0; --faint: #7a7681;
+    --coral: #ff716c; --coral-ink: #460005; --wash: rgba(255,113,108,.14);
+    --divider: #2a2a2e; --ok: #9fd8a8; --warn: #ffcf8a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 28px; background: var(--bg); color: var(--on);
+    font-family: -apple-system, system-ui, "Roboto", sans-serif; -webkit-font-smoothing: antialiased; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 6px; }
+  .lede { color: var(--onv); font-size: 13px; margin: 0 0 14px; max-width: 1100px; line-height: 1.6; }
+  .lede strong { color: var(--on); }
+  .box { background: var(--panel); border: 1px solid var(--divider); border-radius: 14px;
+    padding: 16px 20px; margin: 0 0 22px; max-width: 1100px; }
+  .box h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; margin: 0 0 10px; }
+  .box ul { margin: 0; padding-left: 22px; font-size: 13px; line-height: 1.6; color: var(--onv); }
+  .box li { margin: 4px 0; } .box li strong { color: var(--on); }
+  .row { background: var(--panel); border: 1px solid var(--divider); border-radius: 18px; padding: 22px; margin-bottom: 22px; }
+  .row h3 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .row .descr { font-size: 13px; color: var(--onv); line-height: 1.55; margin: 0 0 18px; max-width: 1000px; }
+  .phones { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+  .step { display: flex; flex-direction: column; gap: 8px; }
+  .step .cap { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--faint); padding-left: 4px; }
+  .step .note { font-size: 12px; color: var(--onv); max-width: 250px; line-height: 1.45; padding-left: 4px; }
+  .arrow { align-self: center; color: var(--faint); font-size: 22px; margin-top: 40px; }
+
+  /* phone */
+  .phone { width: 250px; height: 520px; background: var(--surface); border: 1px solid var(--divider);
+    border-radius: 26px; overflow: hidden; position: relative; font-size: 12px; }
+  .bar { height: 46px; display: flex; align-items: center; gap: 6px; padding: 0 8px; border-bottom: 1px solid var(--divider); }
+  .bar .pill { flex: 1; height: 32px; border-radius: 16px; background: var(--sch); display: flex; align-items: center;
+    padding: 0 10px; color: var(--onv); font-size: 11px; gap: 6px; overflow: hidden; white-space: nowrap; }
+  .g { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--onv); flex: none; opacity: .8; }
+  .g.sq { border-radius: 4px; }
+  .content { padding: 12px; }
+  .blk { height: 64px; border-radius: 12px; background: var(--sc); margin-bottom: 10px; }
+  .line { height: 8px; border-radius: 4px; background: var(--sch); margin: 8px 0; }
+  .navbar { position: absolute; left: 0; right: 0; bottom: 0; height: 46px; border-top: 1px solid var(--divider);
+    display: flex; justify-content: space-around; align-items: center; background: var(--surface); }
+  .navbar i { width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--faint); }
+  .dim { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--sheet);
+    border-radius: 22px 22px 0 0; padding: 0 0 10px; }
+  .handle { width: 32px; height: 4px; border-radius: 2px; background: rgba(230,225,229,.4); margin: 10px auto 10px; }
+  .grp { margin: 0 12px 8px; display: flex; flex-direction: column; gap: 2px; }
+  .r { background: var(--row); min-height: 32px; padding: 0 12px; display: flex; align-items: center; gap: 10px;
+    border-radius: 3px; position: relative; }
+  .grp .r:first-child { border-top-left-radius: 12px; border-top-right-radius: 12px; }
+  .grp .r:last-child { border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+  .r .lbl { flex: 1; min-width: 0; }
+  .r .sub { display: block; font-size: 10px; color: var(--onv); margin-top: 1px; }
+  .r.two { min-height: 42px; }
+  .r.new { outline: 1.5px dashed var(--coral); outline-offset: -1.5px; }
+  .chev { color: var(--faint); font-size: 14px; }
+  .badge { font-size: 10px; font-weight: 600; background: var(--coral); color: var(--coral-ink);
+    border-radius: 9px; padding: 1px 6px; }
+  .badge.grey { background: var(--schh); color: var(--on); }
+  .ai { width: 20px; height: 20px; border-radius: 5px; flex: none; display: grid; place-items: center;
+    font-size: 9px; font-weight: 700; color: #111; }
+  .vm { background: #8fd18d; } .dr { background: #7fb7ff; } .sb { background: #ffcf8a; } .ub { background: #ff9a7a; }
+  .stack { display: flex; } .stack .ai { width: 16px; height: 16px; font-size: 7px; margin-left: -4px; border: 2px solid var(--row); }
+  .quick { margin: 0 12px 8px; background: var(--row); border-radius: 12px; padding: 6px 4px; display: grid;
+    grid-template-columns: repeat(4, 1fr); row-gap: 6px; }
+  .quick span { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9px; color: var(--onv); }
+  .quick span i { width: 16px; height: 16px; border-radius: 5px; border: 2px solid var(--onv); opacity: .8; }
+  .ident { display: flex; align-items: center; gap: 8px; padding: 0 16px 10px; }
+  .ident .fav { width: 22px; height: 22px; border-radius: 6px; background: var(--schh); }
+  .ident b { display: block; font-size: 12px; font-weight: 500; }
+  .ident small { color: var(--onv); font-size: 10px; }
+  .pghead { display: flex; align-items: center; gap: 8px; padding: 0 16px 10px; font-size: 14px; }
+  .pghead .back { color: var(--onv); font-size: 16px; }
+  .sw { width: 28px; height: 16px; border-radius: 8px; background: var(--schh); position: relative; flex: none; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 10px; height: 10px; border-radius: 50%; background: var(--onv); }
+  .sw.on { background: var(--coral); } .sw.on::after { left: 15px; background: var(--coral-ink); }
+  .btns { display: flex; gap: 8px; padding: 6px 16px 4px; justify-content: flex-end; }
+  .btn { padding: 8px 14px; border-radius: 18px; font-size: 12px; font-weight: 500; }
+  .btn.fill { background: var(--coral); color: var(--coral-ink); }
+  .btn.text { color: var(--coral); }
+  .btn.out { border: 1px solid var(--schh); color: var(--on); }
+  .title { text-align: center; font-size: 15px; margin: 2px 16px 4px; }
+  .center { text-align: center; color: var(--onv); font-size: 11px; margin: 0 16px 10px; line-height: 1.4; }
+  .bigicon { width: 44px; height: 44px; border-radius: 12px; margin: 2px auto 8px; display: grid; place-items: center;
+    font-weight: 700; color: #111; font-size: 14px; }
+  .perm { font-size: 11px; color: var(--onv); margin: 0 16px; line-height: 1.5; }
+  .perm div { padding: 3px 0 3px 14px; position: relative; }
+  .perm div::before { content: ""; position: absolute; left: 0; top: 9px; width: 5px; height: 5px; border-radius: 50%; background: var(--onv); }
+  .glabel { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--onv); margin: 6px 16px 6px; }
+  .snack { position: absolute; left: 10px; right: 10px; bottom: 56px; background: #e6e1e5; color: #1c1b1f;
+    border-radius: 8px; padding: 10px 12px; font-size: 11px; display: flex; gap: 8px; align-items: center; }
+  .snack b { color: #b3261e; font-weight: 600; margin-left: auto; }
+  .amo { padding: 12px; }
+  .amo .hd { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+  .amo .hd b { display: block; font-size: 13px; }
+  .amo .hd small { color: var(--onv); font-size: 10px; }
+  .amo .cta { background: #3a6df0; color: #fff; text-align: center; border-radius: 6px; padding: 8px; font-size: 12px; margin: 10px 0; }
+  .amo .cta.off { background: var(--schh); color: var(--onv); }
+  .tag { display: inline-block; font-size: 9px; padding: 1px 6px; border-radius: 6px; background: var(--schh); color: var(--onv); margin-right: 4px; }
+  .tag.rec { background: rgba(159,216,168,.18); color: var(--ok); }
+  .gv { position: absolute; left: 12px; right: 12px; top: 64px; bottom: 16px; border-radius: 10px;
+    border: 1px dashed var(--faint); padding: 10px; background: #f4f4f6; color: #222; font-size: 11px; }
+  .gv .h { font-weight: 600; margin-bottom: 8px; }
+  .gv .it { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #ddd; }
+  .gv .it span { flex: 1; }
+  .gv .sw { background: #cfcfd4; } .gv .sw::after { background: #fff; }
+  .gv .sw.on { background: #3a9a4a; } .gv .sw.on::after { background: #fff; }
+  .gvlabel { position: absolute; top: 46px; left: 14px; font-size: 9px; color: var(--faint); text-transform: uppercase; letter-spacing: .5px; }
+  .foot { font-size: 10px; color: var(--onv); margin: 4px 16px 8px; line-height: 1.45; }
+  table { border-collapse: collapse; width: 100%; max-width: 1150px; font-size: 12.5px; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--faint);
+    font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--divider); }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--divider); vertical-align: top; color: var(--onv); line-height: 1.5; }
+  td:first-child { color: var(--on); white-space: nowrap; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+  td .no { color: var(--ok); } td .risk { color: var(--warn); }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--on); }
+  .q { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; max-width: 1150px; }
+  .q div { background: var(--sc); border-radius: 12px; padding: 12px 14px; font-size: 12.5px; color: var(--onv); line-height: 1.5; }
+  .q b { color: var(--on); display: block; margin-bottom: 4px; }
+  .q em { color: var(--coral); font-style: normal; }
+</style>
+</head>
+<body>
+
+<h1>Add-ons</h1>
+<p class="lede">Prompted by a feedback note asking for userscripts. The answer proposed here is not a
+userscript engine of our own but <strong>Firefox add-ons</strong>, so that Violentmonkey (or Tampermonkey)
+brings userscripts with its own maintained <code>GM_*</code> API. This sheet answers three questions:
+<strong>which add-ons</strong>, <strong>where an add-on's button lives</strong> (not on the toolbar), and
+<strong>what in the app it touches</strong>. Dashed coral outline = new.</p>
+
+<div class="box">
+  <h4>Rules</h4>
+  <ul>
+    <li><strong>Which add-ons: the ones addons.mozilla.org lists for Firefox for Android, and nothing else.</strong>
+      The author declares Android support in the manifest (<code>gecko_android</code>), AMO signs it, and AMO's
+      Android site lists only those. Firedown makes no compatibility judgement of its own, keeps no list, and installs
+      nothing unsigned or from another site. What fails on Android (sidebars, context menus, keyboard shortcuts,
+      devtools) is filtered by that listing before the user sees it.</li>
+    <li><strong>Built-in IDs are refused.</strong> Our uBlock is registered as <code>uBlock0@raymondhill.net</code>,
+      its AMO ID. Installing it from AMO would replace the patched build and cut the native bridge (shield toggles,
+      counts). Same for <code>downloader@</code>, <code>youtube@</code>, <code>p2pshare@</code>,
+      <code>icons@mozac.org</code>: the install prompt says "Built into Firedown" and offers nothing to tap.</li>
+    <li><strong>No toolbar icon, ever.</strong> The address bar is already shield · field · translate mark · reload.
+      An add-on's button lives in the ⋮ sheet, on a second page, the way Firefox for Android's menu holds its
+      extensions. <code>GeckoToolbar</code> is not touched at all.</li>
+    <li><strong>Off in private tabs</strong> until the user switches it on per add-on (Firefox's default).</li>
+    <li><strong>Said once, where it's decided:</strong> an add-on sees the pages you visit and runs outside
+      Firedown's no-tracking promise. That sentence is on the install prompt and the Add-ons screen, nowhere else.</li>
+    <li><strong>Discovery is the website, not a catalog.</strong> "Find add-ons" opens
+      <code>addons.mozilla.org/android</code> in a tab. No AMO API client, no store screen to maintain.</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<div class="row">
+  <h3>1 · Where an add-on's button lives: the ⋮ sheet, one row, a second page</h3>
+  <p class="descr">One new row, <em>Add-ons</em>, beside Translate in the first group, because both act on the page
+  on screen. It is <strong>hidden until an add-on is installed</strong> (the Safe Folder row's rule: users who never
+  install one see the sheet exactly as today). The row's trailing edge shows the installed add-ons' icons and,
+  when any add-on sets a badge on this tab, the badge. A tap turns the sheet's page, the same two-page shape as
+  "Where to back up". Each row there is that add-on's browser action (or page action), with its per-tab title,
+  badge and enabled state. A tap runs the action, or opens the add-on's popup in a sheet.</p>
+  <div class="phones">
+    <div class="step">
+      <div class="cap">⋮ sheet · page 1</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">greasyfork.org</div><div class="g"></div></div>
+        <div class="content"><div class="blk"></div><div class="line"></div><div class="line" style="width:70%"></div></div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="handle"></div>
+          <div class="ident"><div class="fav"></div><div><b>Greasy Fork</b><small>greasyfork.org</small></div></div>
+          <div class="quick">
+            <span><i></i>Back</span><span><i></i>Forward</span><span><i></i>Bookmark</span><span><i></i>Reload</span>
+            <span><i></i>Find</span><span><i></i>Desktop</span><span><i></i>Share</span><span><i></i>Save</span>
+          </div>
+          <div class="grp">
+            <div class="r"><div class="g sq"></div><span class="lbl">New tab</span></div>
+            <div class="r"><div class="g sq"></div><span class="lbl">New private tab</span></div>
+            <div class="r"><div class="g sq"></div><span class="lbl">Translate page</span></div>
+            <div class="r new"><div class="g sq"></div><span class="lbl">Add-ons</span>
+              <span class="stack"><span class="ai vm">VM</span><span class="ai dr">DR</span></span>
+              <span class="badge">3</span><span class="chev">›</span></div>
+          </div>
+          <div class="grp">
+            <div class="r"><div class="g sq"></div><span class="lbl">Bookmarks</span></div>
+            <div class="r"><div class="g sq"></div><span class="lbl">History</span></div>
+          </div>
+          <div class="grp">
+            <div class="r"><div class="g sq"></div><span class="lbl">Settings</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="note">The badge is the sum of what add-ons show on THIS tab (Violentmonkey: 3 scripts here).
+        No badge when none sets one.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="cap">⋮ sheet · page 2</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">greasyfork.org</div><div class="g"></div></div>
+        <div class="content"><div class="blk"></div></div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="handle"></div>
+          <div class="pghead"><span class="back">←</span>Add-ons</div>
+          <div class="grp">
+            <div class="r two"><span class="ai vm">VM</span><span class="lbl">Violentmonkey<span class="sub">3 scripts on this page</span></span><span class="badge">3</span><span class="chev">›</span></div>
+            <div class="r two"><span class="ai dr">DR</span><span class="lbl">Dark Reader<span class="sub">On for this site</span></span><span class="chev">›</span></div>
+            <div class="r two" style="opacity:.45"><span class="ai sb">SB</span><span class="lbl">SponsorBlock<span class="sub">Not available on this page</span></span></div>
+          </div>
+          <div class="grp">
+            <div class="r"><div class="g sq"></div><span class="lbl">Manage add-ons</span><span class="chev">›</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="note">Title and subtitle are the action's own <code>title</code> (per tab); greyed = the add-on
+        disabled its action here. Order: install order, so rows don't move under the thumb.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="cap">The add-on's popup, in a sheet</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">greasyfork.org</div><div class="g"></div></div>
+        <div class="dim"></div>
+        <div class="sheet" style="top:120px">
+          <div class="handle"></div>
+          <div class="pghead"><span class="ai vm">VM</span>Violentmonkey</div>
+          <div class="gvlabel">GeckoView · moz-extension://…/popup.html</div>
+          <div class="gv">
+            <div class="h">Scripts on this page</div>
+            <div class="it"><span>Greasy Fork dark</span><div class="sw on"></div></div>
+            <div class="it"><span>Wider code view</span><div class="sw on"></div></div>
+            <div class="it"><span>Auto-expand</span><div class="sw on"></div></div>
+            <div class="it" style="border:0;color:#666"><span>Find scripts for this site…</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="note"><code>onOpenPopup</code> wants a GeckoSession; it is hosted in a bottom sheet, never a tab,
+        never saved with the tabs, closed when the sheet closes. The popup's own UI is the add-on's (light here).</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="row">
+  <h3>2 · Installing: from AMO's Android site, one prompt</h3>
+  <p class="descr">The user browses <code>addons.mozilla.org/android</code> in a normal tab (the "Find add-ons" row
+  opens it). "Add to Firefox" ends in our prompt, which lists Gecko's own permission strings, the private-tab switch
+  (off) and the one sentence about privacy. Two routes can reach it and the sketch doesn't pick: Gecko's web-install
+  prompt, or a <code>.xpi</code> response that today would be a download. <strong>Check on GeckoView 159 which one
+  AMO's button takes</strong>; either way it ends in <code>WebExtensionController.install()</code>, never in
+  Downloads.</p>
+  <div class="phones">
+    <div class="step">
+      <div class="cap">AMO in a tab</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">addons.mozilla.org/android/…</div><div class="g"></div></div>
+        <div class="amo">
+          <div class="hd"><span class="ai vm" style="width:36px;height:36px;font-size:12px">VM</span>
+            <div><b>Violentmonkey</b><small>by Gerald</small></div></div>
+          <span class="tag rec">Recommended</span><span class="tag">Android</span>
+          <div class="cta">Add to Firefox</div>
+          <div class="line"></div><div class="line" style="width:80%"></div><div class="line" style="width:60%"></div>
+        </div>
+      </div>
+      <div class="note">Nothing of ours on the page. The label says Firefox; that's AMO's, and it works.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="cap">Install prompt (sheet)</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">addons.mozilla.org/android/…</div><div class="g"></div></div>
+        <div class="dim"></div>
+        <div class="sheet new" style="outline:1.5px dashed var(--coral);outline-offset:-1.5px">
+          <div class="handle"></div>
+          <div class="bigicon vm">VM</div>
+          <div class="title">Add Violentmonkey?</div>
+          <div class="center">It will be able to:</div>
+          <div class="perm">
+            <div>Access your data for all websites</div>
+            <div>Store unlimited amount of client-side data</div>
+            <div>Display notifications to you</div>
+          </div>
+          <div class="grp" style="margin-top:10px">
+            <div class="r"><span class="lbl">Allow in private tabs</span><div class="sw"></div></div>
+          </div>
+          <div class="foot">Add-ons see the pages you visit and work outside Firedown's no-tracking promise.</div>
+          <div class="btns"><span class="btn text">Cancel</span><span class="btn fill">Add</span></div>
+        </div>
+      </div>
+      <div class="note">Permission lines are Gecko's localized strings (from <code>onInstallPromptRequest</code>'s
+        permissions + origins), so they read exactly like Firefox's.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="cap">Added</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">addons.mozilla.org/android/…</div><div class="g"></div></div>
+        <div class="amo"><div class="hd"><span class="ai vm" style="width:36px;height:36px;font-size:12px">VM</span>
+          <div><b>Violentmonkey</b><small>by Gerald</small></div></div>
+          <div class="cta off">Added to Firefox</div></div>
+        <div class="navbar"><i></i><i></i><i></i><i></i></div>
+        <div class="snack">Violentmonkey added. Find it in the ⋮ menu. <b>OPEN</b></div>
+      </div>
+      <div class="note">OPEN = the ⋮ sheet straight on page 2. From now on the Add-ons row shows on page 1.</div>
+    </div>
+    <div class="arrow" style="visibility:hidden">→</div>
+    <div class="step">
+      <div class="cap">A built-in ID</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">addons.mozilla.org/android/…</div><div class="g"></div></div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="handle"></div>
+          <div class="bigicon ub">uB</div>
+          <div class="title">uBlock Origin is built into Firedown</div>
+          <div class="center">It's already on. Turn it off for a site from the shield in the address bar.</div>
+          <div class="btns"><span class="btn fill">OK</span></div>
+        </div>
+      </div>
+      <div class="note">Refused before Gecko installs anything: the ID is checked on the prompt, and again in
+        <code>install()</code>'s result as a belt.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="row">
+  <h3>3 · The request itself: installing a userscript</h3>
+  <p class="descr">This is why <code>tabs.create</code> has to work for add-ons. Violentmonkey catches a tap on a
+  <code>.user.js</code> link and opens its own install page in a NEW tab. Today <code>mTabDelegate.onNewTab</code>
+  refuses every <code>tabs.create</code> (on purpose: a returned session would be an untracked tab). For add-ons it
+  opens a real tab through the tab repository, regular or private like the opener, and returns that tab's session.
+  Built-in extensions stay refused.</p>
+  <div class="phones">
+    <div class="step">
+      <div class="cap">Tap "Install this script"</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">greasyfork.org/scripts/…</div><div class="g"></div></div>
+        <div class="amo"><div class="hd"><div><b>YouTube: wider player</b><small>v2.4 · 1.2M installs</small></div></div>
+          <div class="cta" style="background:#2b8a3e">Install this script</div>
+          <div class="line"></div><div class="line" style="width:70%"></div></div>
+      </div>
+      <div class="note">A link to <code>…/wider-player.user.js</code>. The generic catcher ignores it (not media).</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="cap">New tab: Violentmonkey's installer</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">Violentmonkey</div><div class="g"></div></div>
+        <div class="gv" style="top:58px">
+          <div class="h">Install: YouTube: wider player</div>
+          <div style="color:#666;margin-bottom:8px">Runs on: youtube.com</div>
+          <div style="font-family:ui-monospace,monospace;font-size:9px;background:#e8e8ec;border-radius:6px;padding:6px;height:150px;overflow:hidden">// ==UserScript==<br>// @name YouTube: wider player<br>// @match https://www.youtube.com/*<br>// @grant GM_addStyle<br>// ==/UserScript==<br>GM_addStyle(`#primary{max-width:none}`)</div>
+          <div style="display:flex;gap:8px;margin-top:10px"><span style="background:#2b8a3e;color:#fff;border-radius:6px;padding:6px 10px">Confirm installation</span><span style="padding:6px 10px">Close</span></div>
+        </div>
+      </div>
+      <div class="note">A tracked tab like any other: it shows in the tab grid, the add-on can close it
+        (<code>onCloseTab</code>), and it is saved and restored like the rest.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="cap">It runs</div>
+      <div class="phone">
+        <div class="bar"><div class="g"></div><div class="pill">m.youtube.com</div><div class="g"></div></div>
+        <div class="content"><div class="blk" style="height:120px"></div><div class="line"></div><div class="line" style="width:60%"></div></div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="handle"></div>
+          <div class="pghead"><span class="back">←</span>Add-ons</div>
+          <div class="grp">
+            <div class="r two"><span class="ai vm">VM</span><span class="lbl">Violentmonkey<span class="sub">1 script on this page</span></span><span class="badge">1</span><span class="chev">›</span></div>
+            <div class="r two"><span class="ai dr">DR</span><span class="lbl">Dark Reader<span class="sub">On for this site</span></span><span class="chev">›</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="note">The script and the YouTube capture coexist: page DOM changes don't touch the
+        wire capture or SABR. A script that rewrites the player can still break the play-time capture; that's
+        the user's add-on.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="row">
+  <h3>4 · Settings → Add-ons</h3>
+  <p class="descr">The door that always exists (General, under Translations), whether or not anything is installed.
+  The list is grouped cards like every settings screen; built-in extensions are not listed (they're features, with
+  their own settings). Detail: enable, private tabs, options page (opens in a tab:
+  <code>openOptionsPageInTab</code>, else a full-screen page), permissions, version, remove. Updates are checked
+  daily in the background; one that asks for new permissions waits on this screen for the user.</p>
+  <div class="phones">
+    <div class="step">
+      <div class="cap">Add-ons</div>
+      <div class="phone">
+        <div class="bar" style="border:0"><span class="back" style="color:var(--onv);font-size:16px;padding:0 6px">←</span><span style="font-size:15px">Add-ons</span></div>
+        <div style="padding-top:8px">
+          <div class="grp">
+            <div class="r two"><span class="ai vm">VM</span><span class="lbl">Violentmonkey<span class="sub">2.31.0</span></span><div class="sw on"></div></div>
+            <div class="r two"><span class="ai dr">DR</span><span class="lbl">Dark Reader<span class="sub">Update needs new permissions</span></span><span class="badge grey">Review</span></div>
+            <div class="r two"><span class="ai sb">SB</span><span class="lbl">SponsorBlock<span class="sub">Off</span></span><div class="sw"></div></div>
+          </div>
+          <div class="grp">
+            <div class="r"><div class="g sq"></div><span class="lbl">Find add-ons</span><span class="chev">›</span></div>
+          </div>
+          <div class="foot">Add-ons come from addons.mozilla.org. They see the pages you visit and work outside
+            Firedown's no-tracking promise.</div>
+        </div>
+      </div>
+      <div class="note">The switch is enable/disable; the row opens the detail.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="cap">Violentmonkey</div>
+      <div class="phone">
+        <div class="bar" style="border:0"><span class="back" style="color:var(--onv);font-size:16px;padding:0 6px">←</span><span style="font-size:15px">Violentmonkey</span></div>
+        <div style="padding-top:8px">
+          <div class="grp">
+            <div class="r"><span class="lbl">Enabled</span><div class="sw on"></div></div>
+            <div class="r"><span class="lbl">Allow in private tabs</span><div class="sw"></div></div>
+          </div>
+          <div class="grp">
+            <div class="r"><span class="lbl">Settings</span><span class="chev">›</span></div>
+            <div class="r two"><span class="lbl">Permissions<span class="sub">All websites, notifications, storage</span></span><span class="chev">›</span></div>
+            <div class="r two"><span class="lbl">Version<span class="sub">2.31.0 · updated 3 days ago</span></span></div>
+          </div>
+          <div class="grp">
+            <div class="r"><span class="lbl" style="color:var(--coral)">Remove</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="note">"Settings" is the add-on's options page: Violentmonkey's dashboard, where scripts are
+        edited.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="row">
+  <h3>5 · What it touches</h3>
+  <p class="descr">The honest list. Two lines are bugs the moment a user add-on runs, whatever the UI.</p>
+  <table>
+    <tr><th>Where</th><th>Today</th><th>Change</th></tr>
+    <tr><td>BrowserSessionActionDelegate</td><td>Treats EVERY <code>onBrowserAction</code> as uBlock's badge
+      (<code>onAdsCount</code>).</td><td><span class="risk">Bug as soon as an add-on sets a badge</span>: it would overwrite
+      the blocked count. Dispatch by <code>extension.id</code>: uBlock as today, anything else to a new
+      <code>AddonActions</code> store (global action + per-session overrides, dropped with the tab).</td></tr>
+    <tr><td>mTabDelegate.onNewTab</td><td>Refuses all <code>tabs.create</code>.</td><td>Built-ins still refused. Add-ons
+      get a tracked tab from the tab repository (opener's mode), its session returned. Without this Violentmonkey can't
+      install a script.</td></tr>
+    <tr><td>mSessionTabDelegate</td><td><code>onUpdateTab</code> only to <code>moz-extension://</code> (uBlock's
+      blocked page).</td><td>Unchanged for built-ins. Add-ons: http(s) and their own pages; add
+      <code>onCloseTab</code> through the repository.</td></tr>
+    <tr><td>registerSession</td><td>Wires built-ins' delegates into each session.</td><td>Also action + tab delegates for
+      each enabled add-on, and into every open session when one is installed or enabled (registerBuiltIn's late
+      attach, again).</td></tr>
+    <tr><td>WebExtensionController</td><td>No prompt or add-on-manager delegate.</td><td><code>setPromptDelegate</code>
+      (install / update / optional-permission prompts → sheets) and <code>setAddonManagerDelegate</code> (keeps an
+      <code>AddonRepository</code> LiveData in step). Boot <code>list()</code> split on <code>isBuiltIn</code>; the orphan
+      cleanup stays ID-specific.</td></tr>
+    <tr><td>GeckoComponents.onExternalResponse</td><td>Every response is a download.</td><td>A signed <code>.xpi</code>
+      from addons.mozilla.org → <code>install()</code>, if that is the route AMO's button takes (check on 159).</td></tr>
+    <tr><td>PopupBrowserSheetDialogFragment</td><td>Three groups.</td><td>One row (hidden with no add-ons; the existing
+      <code>applyCorners</code> pass handles it) and a second page. The places sheet already has the two-page pattern.</td></tr>
+    <tr><td>New: AddonPopupSheet</td><td>—</td><td>A sheet hosting a GeckoView for <code>onOpenPopup</code>'s session.
+      Not a tab, not persisted, closed on dismiss. The one genuinely new surface.</td></tr>
+    <tr><td>Settings</td><td>—</td><td>Door + list + detail fragments, on the card adapter like every screen.</td></tr>
+    <tr><td>WorkManager</td><td>—</td><td>Daily unique <code>addons-update</code> → <code>update()</code> per add-on;
+      a permission-adding update waits for Review.</td></tr>
+    <tr><td>Extension process watcher</td><td>Restarts once, then a snackbar.</td><td><span class="risk">Add-ons share
+      the process with capture and uBlock</span>, so a crashing add-on takes both down. On a second stop with add-ons
+      enabled, the snackbar offers "Turn off add-ons".</td></tr>
+    <tr><td>GeckoToolbar</td><td>—</td><td><span class="no">No change.</span></td></tr>
+    <tr><td>webrequests / parsers / uBlock</td><td>—</td><td><span class="no">No change.</span> Firefox hides one
+      extension's own requests from the others, so add-ons can't see or break our probes. They do see the page's
+      requests, as uBlock does.</td></tr>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<div class="row">
+  <h3>6 · Open questions for the maintainer</h3>
+  <div class="q">
+    <div><b>Row hidden until an install, or always there?</b>Proposed: hidden, with Settings → Add-ons as the
+      permanent door (the Safe Folder rule). Always-there would be the discovery path, at a row's cost for everyone.</div>
+    <div><b>Any Android add-on, or Recommended only at first?</b>Recommended (Mozilla-reviewed) cuts support load
+      for a first release. Violentmonkey is Recommended; most userscript users would be covered either way.
+      Proposed: any AMO Android add-on, the listing is the gate.</div>
+    <div><b>Pin one add-on to the toolbar?</b>Proposed: <em>no</em>. The bar has no free slot, and a pinned glyph
+      reopens the toolbar code this design avoids.</div>
+    <div><b>Content-blocker add-ons?</b>A second ad blocker double-blocks and confuses the shield's count.
+      Proposed: allowed, not detected (no reliable way to tell a blocker from its manifest). Revisit if reports come in.</div>
+  </div>
+</div>
+
+</body>
+</html>
