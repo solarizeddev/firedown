@@ -20,6 +20,23 @@ GeckoView
   https://mozilla.github.io/geckoview/
 
 --------------------------------------------------------------------------------
+XZ for Java
+  Lasse Collin and contributors
+  License: BSD Zero Clause License (0BSD)
+  https://tukaani.org/xz/java.html
+
+  Unpacks the compressed update APK and the streams of an update patch.
+
+--------------------------------------------------------------------------------
+bsdiff (algorithm, release tooling only)
+  Copyright 2003-2005 Colin Percival
+  License: BSD 2-Clause
+  https://www.daemonology.net/bsdiff/
+
+  app/src/updatetool/.../UpdateDiff.java ports bsdiff 4.3 to make update
+  patches at release time; it is not part of the APK.
+
+--------------------------------------------------------------------------------
 uBlock Origin
   Copyright (c) Raymond Hill
   License: GNU General Public License v3.0

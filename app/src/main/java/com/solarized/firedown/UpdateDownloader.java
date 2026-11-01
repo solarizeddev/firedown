@@ -18,21 +18,26 @@ import com.solarized.firedown.utils.BrowserHeaders;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Owns the update-APK download lifecycle on top of the system DownloadManager:
- * the "pending download" record (id + mirror list + index + expected digest)
- * and the verified "ready" record (an APK that passed SHA-256 + signature and
- * is safe to install). UpdateWorker starts a download; UpdateDownloadReceiver
- * reports the outcome; UpdateInstallReceiver clears the ready record on install.
+ * Owns the update download lifecycle on top of the system DownloadManager:
+ * the "pending download" record (id + the UpdatePlan being followed + the
+ * APK's expected digest) and the verified "ready" record (an APK that passed
+ * SHA-256 + signature and is safe to install). UpdateWorker starts a
+ * download; UpdateDownloadReceiver hands the finished one to
+ * UpdateFinalizeWorker, which rebuilds the APK when the download was a patch
+ * or an .xz, verifies it and reports back here; UpdateInstallReceiver clears
+ * the ready record on install.
  *
  * Why a single class: the enqueue path must be atomic (the one-time check on
  * app open and the 6h periodic can fire close together — without serialization
  * both could enqueue the same APK twice to the same path), and the failure /
- * mirror-failover / verify / promote-to-ready transitions all mutate the same
+ * fail-over / verify / promote-to-ready transitions all mutate the same
  * SharedPreferences record, so they live together behind one monitor.
  */
 public final class UpdateDownloader {
@@ -43,8 +48,8 @@ public final class UpdateDownloader {
     private static final Object LOCK = new Object();
 
     /**
-     * Exponential backoff for a failing download. Each failed (all-mirrors)
-     * round grows the delay BACKOFF_BASE_MS * 2^(round-1), capped at
+     * Exponential backoff for a failing download. Each failed (everything
+     * tried) round grows the delay BACKOFF_BASE_MS * 2^(round-1), capped at
      * BACKOFF_MAX_MS — so retries go 15m, 30m, 1h, 2h, 4h, 6h, 6h, … The app
      * never gives up; the cap just keeps a permanently-failing download from
      * being re-fetched more than ~once every 6h. A newer version or a success
@@ -54,6 +59,13 @@ public final class UpdateDownloader {
     private static final long BACKOFF_BASE_MS = 15L * 60L * 1000L;      // 15 min
     private static final long BACKOFF_MAX_MS = 6L * 60L * 60L * 1000L;  // 6 h
 
+    /**
+     * How long a claim by UpdateFinalizeWorker keeps a finished download safe
+     * from {@link #start}. Far longer than a rebuild takes; a claim this old
+     * belongs to a worker that died, and the download is started over.
+     */
+    private static final long FINALIZE_CLAIM_MS = 30L * 60L * 1000L;
+
     private UpdateDownloader() {}
 
     private static SharedPreferences prefs(Context context) {
@@ -61,13 +73,14 @@ public final class UpdateDownloader {
     }
 
     /**
-     * Begin downloading the update (first mirror). No-op if a download for this
-     * APK is already in flight (the in-flight guard in {@link #enqueueAt}).
+     * Begin downloading the update along {@code plan} (see UpdatePlan). No-op
+     * while a download is in flight, or while a finished one is waiting to be
+     * (or being) rebuilt and verified.
+     *
+     * @param apkSha256 the top-level sha256: what the APK must hash to,
+     *        whichever step produced it
      */
-    public static void start(Context context, List<String> urls, String sha, String name, int versionCode) {
-        if (urls == null || urls.isEmpty()) {
-            return;
-        }
+    public static void start(Context context, UpdatePlan plan, String apkSha256, String name, int versionCode) {
         synchronized (LOCK) {
             if (isBackingOff(context, versionCode)) {
                 // Inside the backoff window for this version — let the scheduled
@@ -76,43 +89,150 @@ public final class UpdateDownloader {
                 Log.d(TAG, "within backoff window for version " + versionCode + "; skipping");
                 return;
             }
-            enqueueAt(context, urls, 0, sha, name, versionCode);
+            if (inFlightLocked(context)) {
+                return;
+            }
+            enqueueLocked(context, plan, apkSha256, name, versionCode);
         }
     }
 
     /**
-     * A download (or its verification) failed: fail over to the next mirror if
-     * one is left, otherwise clear the pending record so the next check / app
-     * open re-enqueues from the top (rather than waiting silently). No tight
-     * retry loop — DownloadManager already retries transient network errors
-     * internally, and every app-open check re-tries a cleared download.
+     * The current download failed (DownloadManager error, or a file that is
+     * not the one status.json named): try the step's next mirror, then the
+     * next step. When nothing is left, back off — no tight retry loop:
+     * DownloadManager already retries transient network errors internally.
      */
     public static void onAttemptFailed(Context context) {
         synchronized (LOCK) {
-            SharedPreferences p = prefs(context);
-            List<String> urls = splitUrls(p.getString(Keys.UPDATE_DOWNLOAD_URLS, ""));
-            int index = p.getInt(Keys.UPDATE_DOWNLOAD_URL_INDEX, 0);
-            String sha = p.getString(Keys.UPDATE_DOWNLOAD_SHA, null);
-            String name = p.getString(Keys.UPDATE_DOWNLOAD_NAME, "");
-            int versionCode = p.getInt(Keys.UPDATE_DOWNLOAD_VERSION_CODE, -1);
-
-            if (index + 1 < urls.size() && sha != null && versionCode > 0) {
-                Log.w(TAG, "download attempt failed; failing over to mirror " + (index + 1));
-                enqueueAt(context, urls, index + 1, sha, name, versionCode);
-            } else {
-                // All mirrors for this version failed this round. Schedule the
-                // next retry with exponential backoff (never gives up) and clear
-                // the pending record. NO immediate re-enqueue here.
-                Log.w(TAG, "download attempt failed; mirrors exhausted, backing off");
-                // Remove the failed DownloadManager row (and any partial file)
-                // so they don't accumulate across backoff rounds. Safe here —
-                // it's a FAILED download; we never remove a SUCCESSFUL one
-                // (DownloadManager.remove would delete the APK we need).
-                removeDownload(context, p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1));
-                scheduleBackoff(context, versionCode);
-                clearPending(context);
+            Pending pending = readPendingLocked(context);
+            if (pending != null && pending.plan.nextUrl()) {
+                Log.w(TAG, "download attempt failed; trying " + pending.plan.current().kind
+                        + " from mirror " + pending.plan.urlIndex());
+                enqueueLocked(context, pending.plan, pending.apkSha256, pending.name, pending.versionCode);
+                return;
             }
+            Log.w(TAG, "download attempt failed; nothing left to try, backing off");
+            backOffLocked(context, pending == null ? -1 : pending.versionCode);
         }
+    }
+
+    /**
+     * The patch or .xz downloaded intact but did not rebuild the expected
+     * APK. Every mirror serves the same file, so skip the whole step, and
+     * remember it for this version so later rounds don't try it again.
+     */
+    public static void onStepFailed(Context context) {
+        synchronized (LOCK) {
+            Pending pending = readPendingLocked(context);
+            if (pending == null) {
+                return;
+            }
+            UpdatePlan.Kind kind = pending.plan.current().kind;
+            if (kind == UpdatePlan.Kind.PATCH) {
+                prefs(context).edit().putInt(Keys.UPDATE_PATCH_FAILED_VERSION, pending.versionCode).apply();
+            } else if (kind == UpdatePlan.Kind.XZ) {
+                prefs(context).edit().putInt(Keys.UPDATE_XZ_FAILED_VERSION, pending.versionCode).apply();
+            }
+            if (pending.plan.nextStep()) {
+                Log.w(TAG, kind + " did not rebuild the update; trying " + pending.plan.current().kind);
+                enqueueLocked(context, pending.plan, pending.apkSha256, pending.name, pending.versionCode);
+                return;
+            }
+            backOffLocked(context, pending.versionCode);
+        }
+    }
+
+    /**
+     * Something on THIS device failed (storage full, a file it could not
+     * write): the downloaded file may be fine, so don't walk the plan — wait,
+     * then start the whole plan again.
+     */
+    public static void backOff(Context context) {
+        synchronized (LOCK) {
+            Pending pending = readPendingLocked(context);
+            backOffLocked(context, pending == null ? -1 : pending.versionCode);
+        }
+    }
+
+    /** Kinds that already failed to rebuild {@code versionCode} (see {@link #onStepFailed}). */
+    public static Set<UpdatePlan.Kind> failedKinds(Context context, int versionCode) {
+        SharedPreferences p = prefs(context);
+        Set<UpdatePlan.Kind> kinds = EnumSet.noneOf(UpdatePlan.Kind.class);
+        if (p.getInt(Keys.UPDATE_PATCH_FAILED_VERSION, -1) == versionCode) {
+            kinds.add(UpdatePlan.Kind.PATCH);
+        }
+        if (p.getInt(Keys.UPDATE_XZ_FAILED_VERSION, -1) == versionCode) {
+            kinds.add(UpdatePlan.Kind.XZ);
+        }
+        return kinds;
+    }
+
+    /** The download record, as UpdateFinalizeWorker needs it. */
+    public static final class Pending {
+        public final long downloadId;
+        public final UpdatePlan plan;
+        public final String apkSha256;
+        public final String name;
+        public final int versionCode;
+
+        Pending(long downloadId, UpdatePlan plan, String apkSha256, String name, int versionCode) {
+            this.downloadId = downloadId;
+            this.plan = plan;
+            this.apkSha256 = apkSha256;
+            this.name = name;
+            this.versionCode = versionCode;
+        }
+    }
+
+    /**
+     * Claims the finished download {@code downloadId} for rebuilding and
+     * verifying; null when the record is about another download (a stale or
+     * duplicate broadcast). While claimed, {@link #start} leaves the download
+     * and its file alone. Unique work per download id means one claimant; a
+     * claimant that is re-run after its process died claims again.
+     */
+    public static Pending beginFinalize(Context context, long downloadId) {
+        synchronized (LOCK) {
+            Pending pending = readPendingLocked(context);
+            if (pending == null || pending.downloadId != downloadId) {
+                return null;
+            }
+            prefs(context).edit()
+                    .putLong(Keys.UPDATE_DOWNLOAD_FINALIZING_AT, System.currentTimeMillis())
+                    .apply();
+            return pending;
+        }
+    }
+
+    /** Where a step's download lands. The APK step downloads the update APK itself. */
+    public static File fileFor(Context context, UpdatePlan.Kind kind) {
+        File apk = Preferences.getUpdateApkFile(context);
+        switch (kind) {
+            case PATCH:
+                return new File(apk.getParentFile(), Preferences.UPDATE_APK + ".patch");
+            case XZ:
+                return new File(apk.getParentFile(), Preferences.UPDATE_APK + ".xz");
+            default:
+                return apk;
+        }
+    }
+
+    /** The temporary name an APK is rebuilt under before it is moved into place. */
+    public static File partFile(Context context) {
+        File apk = Preferences.getUpdateApkFile(context);
+        return new File(apk.getParentFile(), Preferences.UPDATE_APK + ".part");
+    }
+
+    /** Must be called under LOCK. */
+    private static void backOffLocked(Context context, int versionCode) {
+        // Remove the failed DownloadManager row (and any partial file) so they
+        // don't accumulate across backoff rounds. Safe here — nothing waits on
+        // it any more; a SUCCESSFUL download is only removed once its file has
+        // been used or refused (DownloadManager.remove deletes the file).
+        removeDownload(context, prefs(context).getLong(Keys.UPDATE_DOWNLOAD_ID, -1));
+        deleteArtifacts(context);
+        scheduleBackoff(context, versionCode);
+        clearPendingLocked(context);
     }
 
     /**
@@ -173,9 +293,51 @@ public final class UpdateDownloader {
                 "update_retry", ExistingWorkPolicy.REPLACE, retry);
     }
 
-    /** Must be called under LOCK. */
-    private static void enqueueAt(Context context, List<String> urls, int index,
-                                  String sha, String name, int versionCode) {
+    /**
+     * Must be called under LOCK. True when the recorded download must be left
+     * alone: still downloading (PENDING/RUNNING, or PAUSED while
+     * DownloadManager waits out its own transient-failure retry), or finished
+     * and claimed by UpdateFinalizeWorker. A finished download nobody claimed
+     * (its broadcast was missed — e.g. the app was force-stopped) is handed to
+     * the worker now instead of being downloaded again.
+     */
+    private static boolean inFlightLocked(Context context) {
+        SharedPreferences p = prefs(context);
+        long previousId = p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1);
+        if (previousId == -1) {
+            return false;
+        }
+        DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (dm == null) {
+            return false;
+        }
+        int status = queryStatus(dm, previousId);
+        if (status == DownloadManager.STATUS_PENDING
+                || status == DownloadManager.STATUS_RUNNING
+                || status == DownloadManager.STATUS_PAUSED) {
+            Log.d(TAG, "a download is already in flight; not enqueuing again");
+            return true;
+        }
+        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+            long claimedAt = p.getLong(Keys.UPDATE_DOWNLOAD_FINALIZING_AT, 0L);
+            long age = System.currentTimeMillis() - claimedAt;
+            if (claimedAt == 0L) {
+                Log.d(TAG, "a finished download was never verified; handing it over");
+                UpdateFinalizeWorker.enqueue(context, previousId);
+                return true;
+            }
+            // A clock set back makes the age negative: still a live claim.
+            if (age < FINALIZE_CLAIM_MS) {
+                Log.d(TAG, "a finished download is being verified; not enqueuing again");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Must be called under LOCK. Enqueues the plan's current step and records it. */
+    private static void enqueueLocked(Context context, UpdatePlan plan, String apkSha256,
+                                      String name, int versionCode) {
         DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
         // DownloadManager can be disabled by the user, and it needs an external
         // files dir to write to. If either is unavailable, skip quietly — the
@@ -186,42 +348,30 @@ public final class UpdateDownloader {
         }
 
         SharedPreferences p = prefs(context);
-
-        // In-flight guard: if a previous download is still PENDING/RUNNING, leave
-        // it alone (this is the concurrent one-time + periodic case). Only a
-        // finished/failed/absent previous download is replaced.
         long previousId = p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1);
         if (previousId != -1) {
-            int status = queryStatus(dm, previousId);
-            // PENDING/RUNNING = in flight; PAUSED = DownloadManager is doing its
-            // OWN transient-failure retry/wait — in all three, leave it alone so
-            // we neither double-enqueue (the concurrent one-time + periodic case)
-            // nor cancel a retry DownloadManager is about to resume.
-            if (status == DownloadManager.STATUS_PENDING
-                    || status == DownloadManager.STATUS_RUNNING
-                    || status == DownloadManager.STATUS_PAUSED) {
-                Log.d(TAG, "a download is already in flight; not enqueuing again");
-                return;
-            }
             dm.remove(previousId);
         }
 
         // DownloadManager refuses to overwrite an existing destination, so clear
-        // any stale/partial file first.
-        File dest = Preferences.getUpdateApkFile(context);
-        if (dest != null && dest.exists()) {
-            dest.delete();
+        // any stale/partial file first — and the APK, which a patch or an .xz
+        // is about to be turned into.
+        deleteArtifacts(context);
+        File apk = Preferences.getUpdateApkFile(context);
+        if (apk.exists()) {
+            apk.delete();
         }
+        File dest = fileFor(context, plan.current().kind);
 
         long downloadId;
         try {
-            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(urls.get(index)));
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(plan.currentUrl()));
             // Same browser UA + X-App-Version as the status fetch so the
             // Cloudflare front (or the GitHub fallback) sees a consistent client
             // across both the check and the download.
             request.addRequestHeader(BrowserHeaders.USER_AGENT, BrowserHeaders.getDefaultUserAgentString());
             request.addRequestHeader(BrowserHeaders.X_APP_VERSION, App.getVersionName());
-            request.setDestinationInExternalFilesDir(context, null, Preferences.UPDATE_APK);
+            request.setDestinationInExternalFilesDir(context, null, dest.getName());
             // No download-progress notification — the only notification we want
             // is the install prompt after verification (needs
             // DOWNLOAD_WITHOUT_NOTIFICATION, already held). Allow metered to
@@ -234,18 +384,46 @@ public final class UpdateDownloader {
             // Bad URL scheme, DownloadManager disabled mid-call, etc. Drop the
             // pending record so the next check starts clean.
             Log.e(TAG, "enqueue failed", e);
-            clearPending(context);
+            clearPendingLocked(context);
             return;
         }
 
+        Log.d(TAG, "downloading " + plan.current().kind + " for version " + versionCode
+                + " from mirror " + plan.urlIndex());
         p.edit()
                 .putLong(Keys.UPDATE_DOWNLOAD_ID, downloadId)
-                .putString(Keys.UPDATE_DOWNLOAD_URLS, joinUrls(urls))
-                .putInt(Keys.UPDATE_DOWNLOAD_URL_INDEX, index)
-                .putString(Keys.UPDATE_DOWNLOAD_SHA, sha)
+                .putString(Keys.UPDATE_DOWNLOAD_PLAN, plan.toJson())
+                .putString(Keys.UPDATE_DOWNLOAD_SHA, apkSha256)
                 .putString(Keys.UPDATE_DOWNLOAD_NAME, name == null ? "" : name)
                 .putInt(Keys.UPDATE_DOWNLOAD_VERSION_CODE, versionCode)
+                .remove(Keys.UPDATE_DOWNLOAD_FINALIZING_AT)
+                .remove(Keys.UPDATE_DOWNLOAD_URLS)
+                .remove(Keys.UPDATE_DOWNLOAD_URL_INDEX)
                 .apply();
+    }
+
+    /**
+     * Must be called under LOCK. The record, or null when there is none. A
+     * record written before plans existed (URL list + index) reads as an
+     * APK-only plan, so a download in flight across this update still lands.
+     */
+    private static Pending readPendingLocked(Context context) {
+        SharedPreferences p = prefs(context);
+        long id = p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1);
+        String sha = p.getString(Keys.UPDATE_DOWNLOAD_SHA, null);
+        int versionCode = p.getInt(Keys.UPDATE_DOWNLOAD_VERSION_CODE, -1);
+        if (id == -1 || sha == null || versionCode <= 0) {
+            return null;
+        }
+        UpdatePlan plan = UpdatePlan.fromJson(p.getString(Keys.UPDATE_DOWNLOAD_PLAN, null));
+        if (plan == null) {
+            List<String> urls = splitUrls(p.getString(Keys.UPDATE_DOWNLOAD_URLS, ""));
+            if (urls.isEmpty()) {
+                return null;
+            }
+            plan = UpdatePlan.apkOnly(urls, sha, p.getInt(Keys.UPDATE_DOWNLOAD_URL_INDEX, 0));
+        }
+        return new Pending(id, plan, sha, p.getString(Keys.UPDATE_DOWNLOAD_NAME, ""), versionCode);
     }
 
     /**
@@ -255,16 +433,22 @@ public final class UpdateDownloader {
      */
     public static void markReady(Context context, int versionCode, String name) {
         synchronized (LOCK) {
+            // The DownloadManager row is left alone: for an APK step its file
+            // IS the ready APK, and remove() would delete it. A patch or .xz
+            // has been used, so its file goes.
+            deleteArtifacts(context);
             prefs(context).edit()
                     .putBoolean(Keys.UPDATE_READY, true)
                     .putInt(Keys.UPDATE_READY_VERSION_CODE, versionCode)
                     .putString(Keys.UPDATE_READY_NAME, name == null ? "" : name)
                     .remove(Keys.UPDATE_DOWNLOAD_ID)
+                    .remove(Keys.UPDATE_DOWNLOAD_PLAN)
                     .remove(Keys.UPDATE_DOWNLOAD_URLS)
                     .remove(Keys.UPDATE_DOWNLOAD_URL_INDEX)
                     .remove(Keys.UPDATE_DOWNLOAD_SHA)
                     .remove(Keys.UPDATE_DOWNLOAD_NAME)
                     .remove(Keys.UPDATE_DOWNLOAD_VERSION_CODE)
+                    .remove(Keys.UPDATE_DOWNLOAD_FINALIZING_AT)
                     // Success — drop the backoff state so it can't carry over to
                     // a later version.
                     .remove(Keys.UPDATE_FAILED_VERSION_CODE)
@@ -338,15 +522,21 @@ public final class UpdateDownloader {
     /** Drop the pending-download record (does not touch any verified file). */
     public static void clearPending(Context context) {
         synchronized (LOCK) {
-            prefs(context).edit()
-                    .remove(Keys.UPDATE_DOWNLOAD_ID)
-                    .remove(Keys.UPDATE_DOWNLOAD_URLS)
-                    .remove(Keys.UPDATE_DOWNLOAD_URL_INDEX)
-                    .remove(Keys.UPDATE_DOWNLOAD_SHA)
-                    .remove(Keys.UPDATE_DOWNLOAD_NAME)
-                    .remove(Keys.UPDATE_DOWNLOAD_VERSION_CODE)
-                    .apply();
+            clearPendingLocked(context);
         }
+    }
+
+    private static void clearPendingLocked(Context context) {
+        prefs(context).edit()
+                .remove(Keys.UPDATE_DOWNLOAD_ID)
+                .remove(Keys.UPDATE_DOWNLOAD_PLAN)
+                .remove(Keys.UPDATE_DOWNLOAD_URLS)
+                .remove(Keys.UPDATE_DOWNLOAD_URL_INDEX)
+                .remove(Keys.UPDATE_DOWNLOAD_SHA)
+                .remove(Keys.UPDATE_DOWNLOAD_NAME)
+                .remove(Keys.UPDATE_DOWNLOAD_VERSION_CODE)
+                .remove(Keys.UPDATE_DOWNLOAD_FINALIZING_AT)
+                .apply();
     }
 
     /** Drop the verified "ready" record and delete the APK from disk. */
@@ -360,6 +550,21 @@ public final class UpdateDownloader {
             File apk = Preferences.getUpdateApkFile(context);
             if (apk != null && apk.exists()) {
                 apk.delete();
+            }
+            deleteArtifacts(context);
+        }
+    }
+
+    /** The patch, the .xz and a half-rebuilt APK: never needed once a step is over. */
+    private static void deleteArtifacts(Context context) {
+        File[] files = {
+                fileFor(context, UpdatePlan.Kind.PATCH),
+                fileFor(context, UpdatePlan.Kind.XZ),
+                partFile(context),
+        };
+        for (File f : files) {
+            if (f.exists()) {
+                f.delete();
             }
         }
     }
@@ -375,7 +580,7 @@ public final class UpdateDownloader {
         }
     }
 
-    private static int queryStatus(DownloadManager dm, long id) {
+    static int queryStatus(DownloadManager dm, long id) {
         DownloadManager.Query query = new DownloadManager.Query().setFilterById(id);
         try (Cursor cursor = dm.query(query)) {
             if (cursor != null && cursor.moveToFirst()) {
@@ -388,12 +593,8 @@ public final class UpdateDownloader {
         return -1;
     }
 
-    // URLs never contain a newline, so newline-join is a safe, dependency-free
-    // encoding for the SharedPreferences string.
-    private static String joinUrls(List<String> urls) {
-        return String.join("\n", urls);
-    }
-
+    // The URL list of a record written before plans existed: newline-joined
+    // (URLs never contain a newline).
     private static List<String> splitUrls(String joined) {
         List<String> out = new ArrayList<>();
         if (joined == null || joined.isEmpty()) {

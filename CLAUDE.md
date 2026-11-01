@@ -4331,6 +4331,116 @@ server's `TOKEN_RE` and the privacy bullet change in the same release — a
 malformed token silently degrades that ping to IP uniquing, which looks like
 adoption stalling, not like a bug.
 
+## Update downloads — a patch, the compressed APK, or the APK
+
+The APK is ~205 MB (`libxul.so` alone is 154 MB, stored uncompressed so
+Android maps it straight from the APK), and the in-app updater downloads a
+release about every week, over mobile data too. So status.json can offer two
+smaller downloads beside the APK, and the app takes the smallest it can use.
+Measured on real releases: a release with no GeckoView change patches in
+**5.2 MB**, a GeckoView major-version bump in **19.7 MB**, the compressed APK
+is **~75 MB**, the APK 205 MB.
+
+- **status.json** gains two OPTIONAL blocks (`UpdateManifest`): `patches`, at
+  most 3 read, each `{fromVersionCode, fromSha256, urls, sha256, size}`, and
+  `compressed` `{format: "xz", urls, sha256, size}`. Every `sha256` there is
+  of the file DOWNLOADED; the rebuilt APK must still hash to the top-level
+  `sha256` and carry the installed app's signing certificate, so nothing is
+  ever offered for install that the plain-APK path would have refused. An
+  older app ignores both blocks (org.json skips unknown keys), and a
+  malformed entry is skipped without failing the descriptor: the top-level
+  APK fields alone must always be enough to update. URLs are https only.
+- **The ladder (`UpdatePlan`)**: PATCH — only when a patch's `fromSha256` is
+  the installed APK's hash (`UpdateInstalledApk`: `ApplicationInfo.sourceDir`,
+  hashed once per installed build, cached by path + size + install time; an
+  install split into several APKs gets no patch) — then XZ, then APK, which is
+  always present and always last. A failed DOWNLOAD (DownloadManager error, or
+  a file whose hash isn't the one named) tries the step's next mirror, then the
+  next step (`UpdateDownloader.onAttemptFailed`); a patch or `.xz` that
+  downloaded intact but does not rebuild the expected APK skips its whole step
+  (every mirror serves the same file) and is remembered for that version
+  (`onStepFailed`, `UPDATE_PATCH_FAILED_VERSION` / `UPDATE_XZ_FAILED_VERSION`);
+  a failure of the DEVICE (no space, an unreadable file) waits and starts the
+  whole plan over (`backOff`). Everything exhausted → the existing backoff
+  (15 min doubling to 6 h, never gives up). The plan is persisted with the
+  pending download as JSON (`UPDATE_DOWNLOAD_PLAN`, position included); a
+  record from a build before plans (URL list + index) reads as an APK-only
+  plan.
+- **Android only installs whole APKs, and nothing here is "live patching".**
+  The patch is DATA that rebuilds a normal APK file before installation; that
+  file goes through `UpdateInstaller` exactly as a downloaded one, and Android
+  checks its signature over the whole file. No code is ever loaded from a
+  download. Patching works because Android stores the APK it was handed,
+  unchanged, as `base.apk` — the hash check is what proves it per phone.
+- **Rebuilding is a worker, not the receiver.** `UpdateDownloadReceiver` only
+  enqueues `UpdateFinalizeWorker` (unique work per download id, KEEP): rebuild
+  + hash + signature on 200 MB takes seconds to tens of seconds on a phone,
+  past what a receiver may hold. The worker CLAIMS the download
+  (`beginFinalize`, `UPDATE_DOWNLOAD_FINALIZING_AT`) so a check that runs
+  meanwhile doesn't remove it (`DownloadManager.remove` deletes the file); a
+  claim older than 30 min belongs to a worker that died, and the download
+  starts over. A finished download nobody claimed (its broadcast was missed —
+  a force-stopped app) is handed to the worker by the next check instead of
+  being downloaded again. A worker stopped by the system returns `retry()`
+  and keeps its claim.
+- **The format (`UpdatePatch`, FDPATCH1)**: a 112-byte header (sizes, both
+  SHA-256s, three stream lengths that must add up to the file) and three xz
+  streams of bsdiff data (control triples, diff bytes, extra bytes). The
+  applier streams (64 KB buffers, the old APK by `RandomAccessFile`, ~10 MB
+  of heap), bounds every length before using it, refuses a triple that
+  produces nothing unless it is the first (so its work is bounded by the
+  output size whatever a hostile stream says), decodes xz under a 64 MiB
+  memory limit, requires every stream to end exactly where the new file
+  does, and hashes the output as it writes. `PatchException` = the patch or
+  its base is wrong (skip the step); any other IOException = the device.
+  A changed byte is refused, or — in the rare place a change decodes to the
+  same data, e.g. the LZMA properties byte of a mostly-zero stream — still
+  rebuilds exactly the new file; it is never returned as good with different
+  bytes. (In the app a changed patch never gets that far: its own SHA-256 is
+  checked first.)
+- **The generator (`app/src/updatetool`, NOT in the APK)** is bsdiff 4.3
+  (Colin Percival, BSD-2-Clause) ported line for line, with the diff/extra
+  bytes streamed into their encoders and no-progress entries folded. The
+  JVM unit tests compile it (`test.java.srcDirs`), the release build
+  compiles it together with the app's own `UpdatePatch.java` — the tool's
+  `diff` applies every patch it makes with that applier and refuses to keep
+  one that doesn't rebuild the new APK byte for byte. Cost: ~10 bytes of heap
+  per old byte (two suffix arrays) — about 3 GB for our APK, so each diff runs
+  in its own JVM — and 3 minutes (no GeckoView change) to 6.5 minutes
+  (GeckoView bump) per patch on a laptop core.
+- **Release side (`app/release.gradle`, see Releasing)**: the patch sources
+  are the newest older releases in `release-history.json` (repo root:
+  versionCode, name, APK URL, sha256 — the published file's hash; this
+  release is added on top, the last 10 kept). Their APKs are downloaded from
+  those URLs into `~/.gradle/caches/firedown-release-apks/<sha256>.apk` and
+  used only if they hash to what the history says; one that can't be had is
+  a warning and no patch, never a failure. **Patches must start from the
+  PUBLISHED file**, never a local rebuild of the old version, which may differ
+  by a byte. `-Pfiredown.patchJobs=N` (default: memory allows, at most 3),
+  `-Pfiredown.updateDeltas=false` (skip the `.xz` and patches — status.json
+  then lists neither; the previous release's blocks are always dropped, never
+  carried over), `-Pfiredown.updateMirror` (default
+  `https://www.firedown.app/updates`, listed after GitHub). XZ for Java's
+  version is ONE property, `firedown.xzVersion` in gradle.properties, used by
+  the app dependency and the release tool alike.
+- **Expected costs**: the first release that carries this code downloads in
+  full for everyone (the installed versions don't read the blocks); F-Droid
+  clients (Droid-ify, Neo Store, F-Droid) installing from the firedown.app
+  repo always download the full APK — the F-Droid repo format has no patches.
+- **Verify** with `sh scripts/update-harness/run.sh` (JDK only, ~5 min): the
+  JUnit tests on a plain JVM (UpdatePatchTest, UpdatePlanTest,
+  UpdateManifestTest — the same ones `testDebugUnitTest` runs), a fuzz of the
+  real generator and applier (300 random edits, 3000 random corruptions,
+  500 random headers, an APK-shaped file, the CLI), 15 planted bugs that must
+  each fail (`MUTANTS=0` skips), the REAL `releaseStatus` in a scratch Gradle
+  project (offline, file:// history URLs: status.json blocks, history,
+  SHA256SUMS, each patch re-applied, a mismatched history entry skipped, the
+  cache reused, deltas off), and `REAL_APKS="old.apk new.apk"` for two real
+  releases. Written against nothing older (new code), so its teeth come from
+  the mutants. **On-device unverified at write time**: DownloadManager with
+  the new file names, the worker hand-off, and `base.apk` hashing equal to
+  the published file on a real install.
+
 ## Releasing — `bumpVersion` and `releaseStatus` (app/release.gradle)
 
 Version bump and `status.json` (what the in-app update check reads) are Gradle
@@ -4378,6 +4488,15 @@ tasks, not hand edits:
   committing it after the APK is on GitHub and in the F-Droid repo is still the
   release step, since a pushed status.json pointing at a missing APK is an
   update every user taps into a 404.
+- **`releaseStatus` also builds the update downloads** (next section): the
+  `.xz`, up to 3 patches, `SHA256SUMS`, the `patches`/`compressed` blocks of
+  status.json, and this release's entry in `release-history.json`, all in
+  `app/build/outputs/update/v<name>/`. **`./gradlew uploadUpdateRelease`**
+  uploads that folder to the GitHub release with `gh` (creating it as a DRAFT
+  with the changelog as notes when missing; publishing stays a click on
+  GitHub). The release steps are: build the signed APK → `uploadUpdateRelease`
+  → copy the APK to the F-Droid repo and the `.xz`/patches to the mirror
+  (it prints which) → commit status.json AND release-history.json.
 
 ### CHANGELOG entries — short, important changes only (HARD RULE)
 

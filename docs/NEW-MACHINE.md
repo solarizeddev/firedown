@@ -75,7 +75,8 @@ first publish), nothing else to do.
 |---|---|---|
 | Release signing key | wherever the Studio release wizard keeps it (`app/release/` is only its `output-metadata.json`) | signed release APKs; debug builds need nothing |
 | `firedown.mappingUploadToken` (+ optional `firedown.mappingUploadUrl`) | `~/.gradle/gradle.properties` | `assembleRelease` (the `uploadReleaseMapping` task fails loudly without it; `-Pfiredown.mappingUpload=false` skips it) |
-| `gh` login / `GITHUB_TOKEN` | `gh auth login` | the prebuilt fetch, publishing releases |
+| `gh` login / `GITHUB_TOKEN` | `gh auth login` | the prebuilt fetch, publishing releases, `uploadUpdateRelease` |
+| The old release APKs update patches start from | nothing to copy: `releaseStatus` downloads them from the URLs in `release-history.json` into `~/.gradle/caches/firedown-release-apks/` and checks their hashes | a release build's patches; it needs ~3 GB of free memory per patch job (`-Pfiredown.patchJobs=1` on a small machine, `-Pfiredown.updateDeltas=false` to skip them) |
 | Gecko source + toolchain caches (`gecko/`, `.docker-build/`, `~/.mozbuild`) | firedown-geckoview, tens of GB | **don't copy** — `./build.sh docker` recreates them; a machine that only develops the app never needs them |
 | FFmpeg `build/`, `sources/`, `output/` | firedown-ffmpeg | **don't copy** — the release carries `output/`; a rebuild recreates the rest |
 | `local.properties` (`sdk.dir`) | app root | Studio writes it on first open |

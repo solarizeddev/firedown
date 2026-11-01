@@ -102,6 +102,9 @@ android {
         // The exported Room schemas (room.schemaLocation) as test assets, so
         // MigrationTestHelper can build a database at an older version.
         androidTest.assets.srcDirs += files("$projectDir/schemas".toString())
+        // The update-patch generator (release tool, not in the APK) for the
+        // JVM tests, so they can make the patches the app's applier reads.
+        test.java.srcDirs += 'src/updatetool/java'
     }
     compileOptions {
         // Flag to enable support for the new language APIs
@@ -258,6 +261,12 @@ dependencies {
     implementation 'commons-io:commons-io:2.22.0'
 
     implementation 'commons-codec:commons-codec:1.23.0'
+
+    // XZ for Java (0BSD): unpacks the compressed update APK and the streams of
+    // an update patch (UpdatePatch). Pure Java, ~170 KB. The release build
+    // resolves the same artifact to make them (app/release.gradle), so keep
+    // the two versions equal: firedown.xzVersion in gradle.properties.
+    implementation "org.tukaani:xz:${project.property('firedown.xzVersion')}"
 
     implementation "com.squareup.okhttp3:okhttp-dnsoverhttps:5.5.1"
 

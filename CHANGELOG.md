@@ -1,5 +1,6 @@
 ## [1.2.6] - 2026-10-29
 
+- App updates download much less: only the changes when possible, otherwise a compressed copy
 - Player: playback speed from 0.25× to 2×, with speed and subtitles under the timeline
 - Player: press and hold the video to play at 2× until you let go
 - Tapping a link meant for an app asks first, naming the app; staying opens the site's web version

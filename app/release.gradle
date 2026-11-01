@@ -169,12 +169,183 @@ tasks.register('bumpVersion') {
     }
 }
 
+
+// ── Update files: the APK compressed, patches from the last releases ──────────
+// releaseStatus also writes, into app/build/outputs/update/v<versionName>/,
+// everything a release uploads, each file checked before it is listed:
+//
+//   app-release.apk            the signed APK (GitHub's asset name, unchanged)
+//   firedown-<code>.apk.xz     the same APK compressed; the tool unpacks it
+//                              again and compares before keeping it
+//   patch-<from>-<code>.fdpatch  one per release in release-history.json
+//                              below this one, at most 3, newest first; each
+//                              is applied to its old APK with the app's own
+//                              code (UpdatePatch) and must rebuild the new APK
+//                              byte for byte, or the build fails
+//   SHA256SUMS                 sha256sum format, for anyone checking by hand
+//
+// The old APKs are downloaded from the URLs release-history.json records and
+// must hash to what it records; they are cached in the Gradle user home, so a
+// release downloads only the one it has not seen. An old release that can't
+// be fetched or doesn't match gets no patch (a warning, not a failure): its
+// users download the .xz instead. status.json lists the patches and the .xz
+// with their URLs (the GitHub release, then -Pfiredown.updateMirror, by
+// default https://www.firedown.app/updates), sha256 and size; an older app
+// ignores both blocks. release-history.json gains this release.
+//
+// The patches are made by app/src/updatetool (bsdiff 4.3, ported), compiled
+// here with UpdatePatch.java — the file the app ships — and run in their own
+// JVMs: a diff of two 200 MB APKs needs ~2.8 GB of heap and 3–5 minutes.
+// -Pfiredown.patchJobs=N runs N at once (default: what the machine's memory
+// allows, at most 3). -Pfiredown.updateDeltas=false skips the .xz and the
+// patches (status.json then lists neither).
+//
+//   ./gradlew uploadUpdateRelease
+//       Uploads that folder to the GitHub release v<versionName> with `gh`
+//       (creating it as a DRAFT with the changelog as notes when it doesn't
+//       exist; publishing stays a deliberate step on GitHub), and prints what
+//       to copy to the mirror. Same rule as before: commit status.json and
+//       release-history.json only once the files are up.
+
+def releaseHistoryFile = rootProject.file('release-history.json')
+def maxPatches = 3
+def maxHistory = 10
+def githubReleaseBase = 'https://github.com/solarizeddev/firedown/releases/download'
+
+// Deletes a file or folder tree. Not project.delete: a task action must not
+// reach Task.project (deprecated, an error in Gradle 10).
+def deleteTree = { File f ->
+    if (!f.exists()) {
+        return
+    }
+    def stream = java.nio.file.Files.walk(f.toPath())
+    try {
+        stream.sorted(Comparator.reverseOrder()).forEach { java.nio.file.Files.delete(it) }
+    } finally {
+        stream.close()
+    }
+}
+
+def sha256Of = { File f ->
+    MessageDigest digest = MessageDigest.getInstance('SHA-256')
+    f.withInputStream { input ->
+        byte[] buffer = new byte[1 << 16]
+        int read
+        while ((read = input.read(buffer)) > 0) {
+            digest.update(buffer, 0, read)
+        }
+    }
+    return digest.digest().encodeHex().toString()
+}
+
+def readReleaseHistory = { File f ->
+    if (!f.isFile()) {
+        return []
+    }
+    def parsed = new JsonSlurper().parse(f, 'UTF-8')
+    if (!(parsed instanceof List)) {
+        throw new GradleException("${f} must be a JSON array of releases")
+    }
+    return parsed.collect { new LinkedHashMap(it as Map) }
+}
+
+// The old APK a patch starts from, downloaded once into the Gradle user home
+// and named by its hash. Null (with a warning) when it can't be had.
+def fetchReleaseApk = { Map entry, File cacheDir ->
+    String sha = entry.sha256?.toString()?.toLowerCase()
+    if (!(sha ==~ /[0-9a-f]{64}/) || !entry.apkUrl) {
+        logger.warn("release-history.json entry ${entry.versionCode} has no usable sha256/apkUrl; no patch from it")
+        return null
+    }
+    cacheDir.mkdirs()
+    File cached = new File(cacheDir, "${sha}.apk")
+    if (cached.isFile() && sha256Of(cached) == sha) {
+        return cached
+    }
+    File part = new File(cacheDir, "${sha}.apk.part")
+    try {
+        logger.lifecycle("Downloading ${entry.versionName} (${entry.versionCode}) from ${entry.apkUrl}")
+        URLConnection conn = URI.create(entry.apkUrl.toString()).toURL().openConnection()
+        conn.connectTimeout = 30000
+        conn.readTimeout = 60000
+        conn.inputStream.withStream { input -> part.withOutputStream { out -> out << input } }
+        String got = sha256Of(part)
+        if (got != sha) {
+            logger.warn("${entry.apkUrl} hashes to ${got}, release-history.json says ${sha}; no patch from ${entry.versionCode}")
+            part.delete()
+            return null
+        }
+        cached.delete()
+        if (!part.renameTo(cached)) {
+            throw new IOException("could not rename ${part} to ${cached}")
+        }
+        return cached
+    } catch (Exception e) {
+        part.delete()
+        logger.warn("Could not download ${entry.apkUrl} (${e}); no patch from ${entry.versionCode}")
+        return null
+    }
+}
+
+// Compiles UpdatePatch.java (as the app ships it) with the generator into a
+// throwaway class folder. In-process when the JVM has a compiler, else javac.
+def compileUpdateTool = { File xzJar, File outDir ->
+    deleteTree(outDir)
+    outDir.mkdirs()
+    List<File> sources = [file('src/main/java/com/solarized/firedown/update/UpdatePatch.java')]
+    sources.addAll(fileTree('src/updatetool/java').matching { include '**/*.java' }.files.sort())
+    List<String> args = ['-d', outDir.path, '-classpath', xzJar.path, '--release', '17', '-nowarn',
+                         '-encoding', 'UTF-8'] + sources*.path
+    def compiler = javax.tools.ToolProvider.getSystemJavaCompiler()
+    int rc
+    String output
+    if (compiler != null) {
+        def messages = new ByteArrayOutputStream()
+        rc = compiler.run(null, messages, messages, args.collect { it.toString() } as String[])
+        output = messages.toString('UTF-8')
+    } else {
+        String exe = System.getProperty('os.name').toLowerCase().contains('windows') ? 'javac.exe' : 'javac'
+        def proc = new ProcessBuilder(([new File(System.getProperty('java.home'), "bin/${exe}").path] + args).collect { it.toString() })
+                .redirectErrorStream(true).start()
+        output = proc.inputStream.getText('UTF-8')
+        rc = proc.waitFor()
+    }
+    if (rc != 0) {
+        throw new GradleException("Could not compile the update tool (app/src/updatetool + UpdatePatch.java):\n${output}")
+    }
+}
+
+// Starts the tool in its own JVM; its output goes to `log`.
+def startUpdateTool = { File classes, File xzJar, heapMb, List<String> toolArgs, File log ->
+    String exe = System.getProperty('os.name').toLowerCase().contains('windows') ? 'java.exe' : 'java'
+    List<String> command = [new File(System.getProperty('java.home'), "bin/${exe}").path, "-Xmx${heapMb}m",
+                            '-cp', classes.path + File.pathSeparator + xzJar.path,
+                            'com.solarized.firedown.update.UpdateTool'] + toolArgs
+    return new ProcessBuilder(command.collect { it.toString() }).redirectErrorStream(true).redirectOutput(log).start()
+}
+
+def awaitUpdateTool = { Process proc, File log, String what ->
+    int rc = proc.waitFor()
+    if (rc != 0) {
+        String tail = log.isFile() ? log.readLines('UTF-8').takeRight(20).join('\n') : ''
+        throw new GradleException("${what} failed (exit ${rc}):\n${tail}")
+    }
+}
+
 tasks.register('releaseStatus') {
-    description = 'Writes status.json (version, download URLs, sha256, What\'s new) for the release APK just built'
+    description = 'Writes status.json, release-history.json and the update files (APK, .xz, patches, sha256) for the release APK just built'
     group = 'firedown'
     def versionName = android.defaultConfig.versionName
     def versionCode = android.defaultConfig.versionCode
     def enabled = (project.findProperty('firedown.releaseStatus') ?: 'true').toString() != 'false'
+    def deltas = (project.findProperty('firedown.updateDeltas') ?: 'true').toString() != 'false'
+    def mirror = (project.findProperty('firedown.updateMirror') ?: 'https://www.firedown.app/updates').toString().replaceAll('/+$', '')
+    def patchJobsProp = project.findProperty('firedown.patchJobs')?.toString()
+    def xzTool = project.configurations.detachedConfiguration(
+            project.dependencies.create("org.tukaani:xz:${project.property('firedown.xzVersion')}"))
+    def updateDir = layout.buildDirectory.dir("outputs/update/v${versionName}").get().asFile
+    def toolDir = layout.buildDirectory.dir('update-tool').get().asFile
+    def apkCache = new File(project.gradle.gradleUserHomeDir, 'caches/firedown-release-apks')
     // A diagnostic APK (-Pfiredown.diagnostic=true, or the older
     // -Pfiredown.geckoNetLog=true) logs every URL and is never published (see
     // app/build.gradle), so it never gets a status.json either.
@@ -235,33 +406,189 @@ tasks.register('releaseStatus') {
             throw new GradleException("releaseStatus: no signed APK for versionCode ${versionCode} in ${apkDirs*.path.join(', ')}. " +
                     "Build it with Build → Generate Signed App Bundle or APK (or skip with -Pfiredown.releaseStatus=false).")
         }
-
-        MessageDigest digest = MessageDigest.getInstance('SHA-256')
-        apk.withInputStream { input ->
-            byte[] buffer = new byte[1 << 16]
-            int read
-            while ((read = input.read(buffer)) > 0) {
-                digest.update(buffer, 0, read)
+        String sha256 = sha256Of(apk)
+        String releaseBase = "${githubReleaseBase}/v${versionName}"
+        def urlsFor = { String fileName ->
+            List<String> urls = ["${releaseBase}/${fileName}".toString()]
+            if (mirror) {
+                urls.add("${mirror}/${fileName}".toString())
             }
+            return urls
         }
-        String sha256 = digest.digest().encodeHex().toString()
+
+        // The upload folder, rebuilt from scratch so nothing stale is uploaded.
+        deleteTree(updateDir)
+        updateDir.mkdirs()
+        File apkOut = new File(updateDir, 'app-release.apk')
+        java.nio.file.Files.copy(apk.toPath(), apkOut.toPath())
+        Map<String, String> sums = new LinkedHashMap<>()
+        sums[apkOut.name] = sha256
+
+        List history = readReleaseHistory(releaseHistoryFile)
+        Map compressedBlock = null
+        List patchBlocks = []
+        if (deltas) {
+            File xzJar = xzTool.singleFile
+            File classes = new File(toolDir, 'classes')
+            File logs = new File(toolDir, 'logs')
+            deleteTree(logs)
+            logs.mkdirs()
+            compileUpdateTool(xzJar, classes)
+
+            // Patches from the newest older releases, each from an APK that
+            // hashes to what release-history.json says was published.
+            List sources = history.findAll { (it.versionCode as int) < (versionCode as int) }
+                    .sort { -(it.versionCode as int) }
+                    .take(maxPatches)
+            List jobs = []
+            for (Map entry : sources) {
+                File old = fetchReleaseApk(entry, apkCache)
+                if (old != null) {
+                    jobs.add([entry: entry, old: old,
+                              patch: new File(updateDir, "patch-${entry.versionCode}-${versionCode}.fdpatch")])
+                }
+            }
+
+            // ~10 bytes per old byte (the suffix arrays) + the new file + headroom.
+            long maxOld = (jobs.collect { it.old.length() as long }.max() ?: 0L) as long
+            long heapMb = (maxOld * 10L + apk.length()).intdiv(1L << 20) + 768L
+            int parallel = 1
+            if (patchJobsProp) {
+                parallel = Math.max(1, patchJobsProp as int)
+            } else {
+                long totalMb = 0L
+                try {
+                    def os = java.lang.management.ManagementFactory.getOperatingSystemMXBean()
+                    if (os instanceof com.sun.management.OperatingSystemMXBean) {
+                        totalMb = ((com.sun.management.OperatingSystemMXBean) os).getTotalMemorySize().intdiv(1L << 20)
+                    }
+                } catch (Throwable ignored) {
+                    totalMb = 0L
+                }
+                // Leave room for the Gradle daemon (4 GB), what the Android
+                // build left resident, the .xz job and the system.
+                parallel = (int) Math.max(1L, Math.min((long) maxPatches, (totalMb - 8192L).intdiv(Math.max(1L, heapMb))))
+            }
+
+            long started = System.currentTimeMillis()
+            File xzOut = new File(updateDir, "firedown-${versionCode}.apk.xz")
+            File xzLog = new File(logs, 'xz.log')
+            Process xzProc = startUpdateTool(classes, xzJar, 1024L, ['xz', apkOut.path, xzOut.path], xzLog)
+            if (!jobs.isEmpty()) {
+                logger.lifecycle("Making ${jobs.size()} patch(es), ${parallel} at a time, ${heapMb} MB heap each " +
+                        "(a few minutes each): ${jobs.collect { it.entry.versionName }.join(', ')} → ${versionName}")
+            }
+            List running = []
+            try {
+                for (List batch : jobs.collate(parallel)) {
+                    running = batch.collect { job ->
+                        File log = new File(logs, "${job.patch.name}.log")
+                        [job: job, log: log,
+                         proc: startUpdateTool(classes, xzJar, heapMb, ['diff', job.old.path, apkOut.path, job.patch.path], log)]
+                    }
+                    running.each { awaitUpdateTool(it.proc, it.log, "Patch ${it.job.entry.versionCode} → ${versionCode}") }
+                }
+                awaitUpdateTool(xzProc, xzLog, 'Compressing the APK')
+            } catch (Throwable t) {
+                // Don't leave multi-GB JVMs running behind a failed build.
+                running.each { it.proc.destroyForcibly() }
+                xzProc.destroyForcibly()
+                throw t
+            }
+
+            String xzSha = sha256Of(xzOut)
+            sums[xzOut.name] = xzSha
+            compressedBlock = [format: 'xz', urls: urlsFor(xzOut.name), sha256: xzSha, size: xzOut.length()]
+            for (Map job : jobs) {
+                String patchSha = sha256Of(job.patch)
+                sums[job.patch.name] = patchSha
+                patchBlocks.add([fromVersionCode: job.entry.versionCode as int,
+                                 fromSha256     : job.entry.sha256.toString().toLowerCase(),
+                                 urls           : urlsFor(job.patch.name),
+                                 sha256         : patchSha,
+                                 size           : job.patch.length()])
+            }
+            long seconds = (System.currentTimeMillis() - started).intdiv(1000)
+            logger.lifecycle("Update files checked in ${seconds} s: APK ${(apk.length() >> 20)} MB, .xz ${(xzOut.length() >> 20)} MB" +
+                    patchBlocks.collect { ", patch from ${it.fromVersionCode} ${((it.size as long) >> 20)} MB" }.join(''))
+        }
+        new File(updateDir, 'SHA256SUMS').write(sums.collect { name, sum -> "${sum}  ${name}\n" }.join(''), 'UTF-8')
 
         // Keep the existing key order (and any key this task doesn't own).
         Map status = releaseStatusFile.isFile() ? new JsonSlurper().parse(releaseStatusFile, 'UTF-8') as Map : [:]
         Map out = new LinkedHashMap(status)
         out.versionCode = versionCode
-        out.updateUrl = "https://github.com/solarizeddev/firedown/releases/download/v${versionName}/app-release.apk".toString()
+        out.updateUrl = "${releaseBase}/app-release.apk".toString()
         out.updateUrlFallbacks = ["https://www.firedown.app/fdroid/repo/com.solarized.firedown_${versionCode}.apk".toString()]
         out.versionName = "Firedown ${versionName}".toString()
         out.sha256 = sha256
         out.changelog = latest.bullets.collect { "• ${it}" }.join('\n')
+        // The previous release's blocks describe ITS files: never carry them over.
+        out.remove('patches')
+        out.remove('compressed')
+        if (!patchBlocks.isEmpty()) {
+            out.patches = patchBlocks
+        }
+        if (compressedBlock != null) {
+            out.compressed = compressedBlock
+        }
 
         // Same bytes the old node script wrote (JSON.stringify): compact, and
         // non-ASCII left as UTF-8 rather than \u-escaped.
         def json = new JsonGenerator.Options().disableUnicodeEscaping().build()
         releaseStatusFile.write(json.toJson(out) + '\n', 'UTF-8')
+
+        // This release becomes a patch source for the next ones.
+        List kept = history.findAll { (it.versionCode as int) != (versionCode as int) }
+        kept.add(0, [versionCode: versionCode as int, versionName: versionName.toString(),
+                     apkUrl: out.updateUrl, sha256: sha256, size: apk.length()])
+        kept = kept.sort { -(it.versionCode as int) }.take(maxHistory)
+        releaseHistoryFile.write(groovy.json.JsonOutput.prettyPrint(json.toJson(kept)) + '\n', 'UTF-8')
+
         logger.lifecycle("status.json → Firedown ${versionName} (${versionCode}), sha256 ${sha256.take(12)}… of ${apk}, " +
-                "${latest.bullets.size()} changelog items. Commit it once the APK is on GitHub and in the F-Droid repo.")
+                "${latest.bullets.size()} changelog items, ${patchBlocks.size()} patch(es)" +
+                (compressedBlock != null ? ', .xz' : '') + ". Upload ${updateDir} (./gradlew uploadUpdateRelease), " +
+                "then commit status.json and release-history.json.")
+    }
+}
+
+tasks.register('uploadUpdateRelease') {
+    description = 'Uploads app/build/outputs/update/v<versionName> to the GitHub release (a draft is created if needed)'
+    group = 'firedown'
+    def versionName = android.defaultConfig.versionName
+    def repo = (project.findProperty('firedown.githubRepo') ?: 'solarizeddev/firedown').toString()
+    def mirror = (project.findProperty('firedown.updateMirror') ?: 'https://www.firedown.app/updates').toString().replaceAll('/+$', '')
+    def updateDir = layout.buildDirectory.dir("outputs/update/v${versionName}").get().asFile
+    doLast {
+        if (!new File(updateDir, 'SHA256SUMS').isFile()) {
+            throw new GradleException("uploadUpdateRelease: ${updateDir} has no SHA256SUMS — build the release first (releaseStatus writes it).")
+        }
+        List<File> files = updateDir.listFiles().findAll { it.isFile() && !it.name.endsWith('.tmp') && !it.name.endsWith('.check') }.sort { it.name }
+        String tag = "v${versionName}"
+        def gh = { List<String> command, boolean mustSucceed ->
+            def proc = new ProcessBuilder(command.collect { it.toString() }).redirectErrorStream(true).start()
+            String output = proc.inputStream.getText('UTF-8')
+            int rc = proc.waitFor()
+            if (mustSucceed && rc != 0) {
+                throw new GradleException("`${command.join(' ')}` failed (exit ${rc}):\n${output}")
+            }
+            return rc
+        }
+        if (gh(['gh', 'release', 'view', tag, '--repo', repo], false) != 0) {
+            def latest = readLatestChangelog(releaseChangelogFile)
+            File notes = new File(temporaryDir, 'notes.md')
+            notes.write(latest.version == versionName ? latest.bullets.collect { "- ${it}" }.join('\n') + '\n' : '', 'UTF-8')
+            gh(['gh', 'release', 'create', tag, '--repo', repo, '--draft', '--title', "Firedown ${versionName}".toString(),
+                 '--notes-file', notes.path], true)
+            logger.lifecycle("Created the DRAFT release ${tag}; publish it on GitHub when ready.")
+        }
+        gh(['gh', 'release', 'upload', tag, '--repo', repo, '--clobber'] + files*.path, true)
+        logger.lifecycle("Uploaded to ${repo} ${tag}: ${files*.name.join(', ')}")
+        List<File> mirrored = files.findAll { it.name.endsWith('.xz') || it.name.endsWith('.fdpatch') }
+        if (mirror && !mirrored.isEmpty()) {
+            logger.lifecycle("Also copy ${mirrored*.name.join(', ')} to ${mirror}/ (status.json lists it as the mirror).")
+        }
+        logger.lifecycle("Then commit status.json and release-history.json.")
     }
 }
 

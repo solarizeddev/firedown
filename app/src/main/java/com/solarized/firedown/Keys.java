@@ -40,8 +40,23 @@ public class Keys {
     // The mirror candidate list + the index currently being tried, so a failed
     // download can fail over to the next mirror without waiting for the next
     // check (covers the Cloudflare/LaLiga-blocked-host case).
+    // Read only to carry over a download a build before UpdatePlan recorded.
     public static final String UPDATE_DOWNLOAD_URLS = "com.solarized.firedown.UPDATE_DOWNLOAD_URLS";
     public static final String UPDATE_DOWNLOAD_URL_INDEX = "com.solarized.firedown.UPDATE_DOWNLOAD_URL_INDEX";
+    // The whole download plan (patch → compressed APK → APK, each with its
+    // mirrors) and the position being tried, as UpdatePlan JSON.
+    public static final String UPDATE_DOWNLOAD_PLAN = "com.solarized.firedown.UPDATE_DOWNLOAD_PLAN";
+    // When UpdateFinalizeWorker started rebuilding/verifying the finished
+    // download: while it is recent, a new check must not remove that download.
+    public static final String UPDATE_DOWNLOAD_FINALIZING_AT = "com.solarized.firedown.UPDATE_DOWNLOAD_FINALIZING_AT";
+    // The version whose patch / .xz failed to rebuild the expected APK, so the
+    // next round goes straight to the next step for that version.
+    public static final String UPDATE_PATCH_FAILED_VERSION = "com.solarized.firedown.UPDATE_PATCH_FAILED_VERSION";
+    public static final String UPDATE_XZ_FAILED_VERSION = "com.solarized.firedown.UPDATE_XZ_FAILED_VERSION";
+    // The installed APK's SHA-256 (picks the patch), cached under the APK's
+    // path + size + install time so it is hashed once per installed build.
+    public static final String UPDATE_INSTALLED_SHA = "com.solarized.firedown.UPDATE_INSTALLED_SHA";
+    public static final String UPDATE_INSTALLED_SHA_KEY = "com.solarized.firedown.UPDATE_INSTALLED_SHA_KEY";
     // The "ready" record: an APK that has PASSED SHA-256 + signature verification
     // and is safe to offer for install (notification + in-app sheet). Distinct
     // from the download record above so the install shortcut never trusts an

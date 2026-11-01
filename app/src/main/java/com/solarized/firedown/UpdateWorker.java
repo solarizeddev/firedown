@@ -89,12 +89,22 @@ public class UpdateWorker extends Worker {
                     // additionally shows on resume while the app is in use.
                     UpdateNotification.showInstallPrompt(mContext, manifest.versionName);
                 } else {
-                    // Hand the APK download to the system DownloadManager and
-                    // return — UpdateDownloadReceiver verifies it and posts the
-                    // install prompt when the broadcast arrives (which can
-                    // cold-start the app, so a download surviving a process
-                    // eviction still ends in a notification).
-                    UpdateDownloader.start(mContext, manifest.downloadUrls, manifest.sha256,
+                    // Hand the download to the system DownloadManager and
+                    // return — when the broadcast arrives (which can cold-start
+                    // the app, so a download surviving a process eviction still
+                    // ends in a notification) UpdateDownloadReceiver hands it to
+                    // UpdateFinalizeWorker, which verifies it and posts the
+                    // install prompt.
+                    //
+                    // The plan picks the smallest download this phone can use:
+                    // a patch from the installed APK (only when status.json
+                    // lists one for its exact hash), else the compressed APK,
+                    // else the APK. The hash is cached per installed build.
+                    String installedSha = manifest.patches.isEmpty()
+                            ? null : UpdateInstalledApk.sha256(mContext);
+                    UpdatePlan plan = UpdatePlan.build(manifest, installedSha,
+                            UpdateDownloader.failedKinds(mContext, manifest.versionCode));
+                    UpdateDownloader.start(mContext, plan, manifest.sha256,
                             manifest.versionName, manifest.versionCode);
                 }
             }
