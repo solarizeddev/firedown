@@ -2,8 +2,10 @@
 # Checks scripts/update-install-test.sh with no phone and no Android SDK:
 # the parts that read what the phone says (screen dumps, the install trace,
 # the test receiver's answers) and the build.gradle edit, on canned input;
-# then the whole script against a simulated phone (fake_adb.py), and three
-# faults planted in that phone, each of which it must report.
+# then the whole script against two simulated phones (fake_adb.py): one
+# where Android 12+ installs the update without asking, as the first real
+# run found, one that shows Android's dialog; and five faults planted in
+# them, each of which it must report.
 #   bash scripts/update-install-test/selftest.sh      (QUICK=1: canned input only)
 
 set -Euo pipefail
@@ -165,6 +167,66 @@ check "trace: a missing file needs no 100%" "$r" "0"
 none=$(printf 'nothing\n' | check_trace 1 "PREPARING FAILED") && r=0 || r=1
 check "trace: no trace fails" "$r $none" "1 no trace for install 1"
 
+# ── a phone's log is megabytes: tests must read to the end ──
+{
+    printf '10-17 12:00:00.000  1 1 I FDUPDTEST: case refused start\n'
+    printf '10-17 12:00:00.000  1 1 D com.solarized.firedown.UpdateInstaller: install already running\n'
+    i=0
+    while [ $i -lt 3000 ]; do
+        printf '10-17 12:00:00.000  1 1 D ActivityManager: background noise background noise background noise %d\n' $i
+        i=$((i + 1))
+    done
+    printf '10-17 12:00:01.000  1 1 I FDUPDTEST: case missing start\n'
+} > "$OUT/logcat.txt"
+check "log_wait finds a line in a long log" "$(log_wait refused 'install already running' 0 && echo yes || echo no)" "yes"
+check "log_wait: not in another case" "$(log_wait missing 'install already running' 0 && echo yes || echo no)" "no"
+# The trap the first real run fell into, kept as a reason: grep -q stops
+# reading, the writer dies of SIGPIPE, and pipefail reports a miss.
+check "the old grep -q misses it" "$(case_log refused | grep -q 'install already running' && echo found || echo missed)" "missed"
+big=$(i=0; while [ $i -lt 2000 ]; do printf 'padding %d xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n' $i; i=$((i + 1)); done)
+check "has: a match early in a long text" "$(has "granted=true
+$big" 'granted=true' && echo yes || echo no)" "yes"
+check "has: no match" "$(has "$big" 'granted=true' && echo yes || echo no)" "no"
+
+# ── the sheet's footer trace ──
+sline() {
+    printf '10-17 12:00:00.000  1234  1234 D UpdateSheetTrace: sheet=%s footer=%s percent=%s gen=%s\n' "$1" "$2" "$3" "$4"
+}
+{
+    printf '10-17 12:00:00.000  1 1 I FDUPDTEST: case sheet start\n'
+    sline 1a button -1 0
+    sline 1a progress 0 1
+    sline 1a progress 40 1
+    sline 1a progress 100 1
+    sline 1a installing -1 1
+    printf '10-17 12:00:00.000  1 1 I FDUPDTEST: case refused start\n'
+    sline 2b button -1 0
+    sline 2b progress 10 1
+    printf '10-17 12:00:00.000  1 1 I FDUPDTEST: rebuild\n'
+    sline 3c progress 30 1
+    printf '10-17 12:00:00.000  1 1 I FDUPDTEST: case missing start\n'
+    sline 4d button -1 0
+    sline 4d progress 10 1
+    printf '10-17 12:00:00.000  1 1 I FDUPDTEST: rebuild\n'
+    line FAILED -1 1
+    sline 5e error -1 1
+    printf '10-17 12:00:00.000  1 1 I FDUPDTEST: case notification start\n'
+    sline 6f progress 10 1
+    printf '10-17 12:00:00.000  1 1 I FDUPDTEST: rebuild\n'
+    sline 7a button -1 0
+    sline 7a button -1 1
+    printf '10-17 12:00:00.000  1 1 I FDUPDTEST: case install start\n'
+    sline 8b progress 10 1
+    printf '10-17 12:00:00.000  1 1 I FDUPDTEST: rebuild\n'
+    sline 8b progress 20 1
+} > "$OUT/logcat.txt"
+check "footers" "$(footers sheet | tr '\n' '|')" "1a button -1|1a progress 0|1a progress 40|1a progress 100|1a installing -1|"
+check "count_footers" "$(count_footers sheet progress)" "3"
+check "rebuilt_ok: the rebuilt sheet shows the copy" "$(rebuilt_ok refused | tail -n 1)" "  PASS the sheet rebuilt by a font size change came back showing the copy (progress)"
+check "rebuilt_ok: the copy ended first" "$(rebuilt_ok missing | tail -n 1)" "  INFO the install ended before the rebuilt sheet appeared; it shows \"error\""
+check "rebuilt_ok: lost the copy" "$(rebuilt_ok notification | tail -n 1)" "  FAIL the sheet rebuilt mid-copy came back showing \"button\" instead of the progress"
+check "rebuilt_ok: not rebuilt" "$(rebuilt_ok install | tail -n 1)" "  INFO the font size change did not rebuild the sheet; the rebuilt sheet was not checked"
+
 # ── the whole script against a simulated phone (fake_adb.py) ──
 # A clean run, from the build to the phone put back as it was found, then
 # one run per planted fault, each of which the script must report.
@@ -187,52 +249,95 @@ GRADLEW
     chmod +x "$FAKE/bin/adb"
     base=$(read_version "$FAKE/root/app/build.gradle")
 
-    # run_fake NAME BUG [options…]: the script's exit code; its output in run-NAME.txt.
+    # run_fake NAME BUG [KEY=VALUE… --] [options…]: the script's exit code;
+    # its output in run-NAME.txt, the phone's state in phone-NAME.json.
     run_fake() {
         local name=$1 bug=$2 rc
+        local -a envs=()
         shift 2
+        while [ $# -gt 0 ] && [ "$1" != -- ] && has "$1" =; do
+            envs+=("$1")
+            shift
+        done
+        if [ "${1:-}" = -- ]; then
+            shift
+        fi
         rm -rf "$FAKE/phone"
         mkdir -p "$FAKE/phone"
         # shellcheck disable=SC2031 # the real PATH, untouched by the subshells above
-        PATH="$FAKE/bin:$PATH" FAKE_BUG="$bug" FAKE_PHONE_DIR="$FAKE/phone" FAKE_COPY_S=1.5 \
+        env PATH="$FAKE/bin:$PATH" FAKE_BUG="$bug" FAKE_PHONE_DIR="$FAKE/phone" FAKE_COPY_S=1.5 \
             UPDATE_INSTALL_TEST_ROOT="$FAKE/root" OUT_DIR="$FAKE/out-$name" UPDATE_INSTALL_TEST_LIB=0 \
+            ${envs[@]+"${envs[@]}"} \
             bash "$HERE/../update-install-test.sh" "$@" < /dev/null > "$FAKE/run-$name.txt" 2>&1 && rc=0 || rc=$?
+        cp "$FAKE/phone/phone.json" "$FAKE/phone-$name.json" 2>/dev/null || true
         printf '%s' "$rc"
     }
-    has() {
+    said() {
         grep -qF -- "$2" "$FAKE/run-$1.txt" && echo yes || echo no
     }
-
-    printf 'running the script against the simulated phone…\n'
-    check "dry run: exit code" "$(run_fake clean '')" "0"
-    check "dry run: nothing failed" "$(has clean ' 0 failed')" "yes"
-    for want in 'the footer shows "Preparing update' \
-            "PASS Android's dialog appeared" \
-            "cancelling Android's dialog leaves the state IDLE" \
-            'after rotating: the footer still shows' \
-            'was turned away' \
-            'Install works again after a failure' \
-            'PASS phases in order: PREPARING FAILED' \
-            'the notification shows the install: progress:' \
-            'the progress notification is gone' \
-            "PASS Firedown is now $(name_for $((base + 1)))" \
-            'the "Firedown updated" notification was posted' \
-            'WARN cancelling'; do
-        check "dry run: $want" "$(has clean "$want")" "yes"
-    done
-    check "dry run: every adb command understood" "$(cat "$FAKE/phone/unhandled.txt" 2>/dev/null)" ""
-    check "dry run: build.gradle put back" "$(cmp -s "$FAKE/build.gradle.orig" "$FAKE/root/app/build.gradle" && echo same)" "same"
-    check "dry run: the phone put back" "$(python3 -c "
+    # What the run left on the phone: version, appops, settings, files,
+    # notification permission, revokes.
+    left() {
+        python3 -c "
 import json, sys
 s = json.load(open(sys.argv[1]))
-print(s['installed'], s['appops'], s['settings'], s['files'])" "$FAKE/phone/phone.json")" "$base default {} {}"
+print(s['installed'], s['appops'], s['settings'], s['files'], s['notif_perm'], s['revokes'])" "$FAKE/phone-$1.json"
+    }
 
-    check "fault cancel-fails: fails" "$(run_fake cancel cancel-fails --skip-build --only sheet)" "1"
-    check "fault cancel-fails: named" "$(has cancel "FAIL after cancelling Android's dialog")" "yes"
+    printf 'running the script against the simulated phones…\n'
+    # Android 12+: the update installs without asking. The shade ignores the
+    # shell command (a swipe opens it) and notifications were already
+    # allowed, which the script must leave as it found them.
+    check "silent: exit code" "$(run_fake clean '' FAKE_SHADE=stuck --)" "0"
+    check "silent: nothing failed" "$(said clean ' 0 failed')" "yes"
+    for want in 'PASS the footer showed the progress:' \
+            'PASS Android installed the update without asking' \
+            'PASS phases in order: PREPARING INSTALLING (' \
+            'PASS the "Firedown updated" notification was posted' \
+            'PASS no progress notification left behind' \
+            "INFO the cancel path needs Android's dialog" \
+            'PASS the footer kept counting after the rotation' \
+            'PASS the sheet rebuilt by a font size change came back showing the copy' \
+            'PASS a second install requested while the first copied was turned away' \
+            'PASS the sheet shows the error line and the Install button again' \
+            'PASS Install works again after a failure' \
+            'PASS phases in order: PREPARING FAILED' \
+            'INFO tapped the notification in the shade' \
+            'PASS the install ran as started from the notification' \
+            'INFO skipped: Android already installed the update'; do
+        check "silent: $want" "$(said clean "$want")" "yes"
+    done
+    check "silent: every adb command understood" "$(cat "$FAKE/phone/unhandled.txt" 2>/dev/null)" ""
+    check "silent: build.gradle put back" "$(cmp -s "$FAKE/build.gradle.orig" "$FAKE/root/app/build.gradle" && echo same)" "same"
+    check "silent: the phone put back, notifications still allowed" "$(left clean)" "$base default {} {} True 0"
+
+    # Android's dialog (an older phone, or another installer owning updates).
+    check "dialog: exit code" "$(run_fake dialog '' FAKE_DIALOG=1 FAKE_NOTIF_GRANTED=0 -- --skip-build)" "0"
+    for want in "PASS Android's dialog appeared" \
+            "INFO Android asked although Firedown requests" \
+            'PASS the sheet closed when Android answered' \
+            "PASS cancelling Android's dialog leaves the state IDLE" \
+            'PASS the sheet stays closed after the cancel' \
+            'PASS the progress notification is gone' \
+            "PASS Firedown is now $(name_for $((base + 1)))" \
+            'PASS the "Firedown updated" notification was posted' \
+            'WARN cancelling'; do
+        check "dialog: $want" "$(said dialog "$want")" "yes"
+    done
+    check "dialog: the permission it granted is taken back" "$(left dialog)" "$base default {} {} False 1"
+    check "android 11: exit code" "$(run_fake sdk30 '' FAKE_SDK=30 -- --skip-build --only sheet)" "0"
+    check "android 11: no note about asking" "$(said sdk30 'Android asked although')" "no"
+
+    check "fault cancel-fails: fails" "$(run_fake cancel cancel-fails FAKE_DIALOG=1 -- --skip-build --only sheet)" "1"
+    check "fault cancel-fails: named" "$(said cancel "FAIL after cancelling Android's dialog")" "yes"
     check "fault no-progress: fails" "$(run_fake progress no-progress --skip-build --only sheet)" "1"
-    check "fault no-progress: named" "$(has progress 'but the sheet shows no progress')" "yes"
+    check "fault no-progress: named" "$(said progress 'FAIL the sheet never showed the progress')" "yes"
     check "fault double: fails" "$(run_fake double double --skip-build --only refused)" "1"
-    check "fault double: named" "$(has double 'a second install ran while the first was still copying')" "yes"
+    check "fault double: named" "$(said double 'a second install ran while the first was still copying')" "yes"
+    check "fault rotate-loses: fails" "$(run_fake rotate rotate-loses --skip-build --only refused)" "1"
+    check "fault rotate-loses: named" "$(said rotate 'FAIL the sheet rebuilt mid-copy came back showing')" "yes"
+    check "fault no-updated: fails" "$(run_fake updated no-updated --skip-build --only sheet)" "1"
+    check "fault no-updated: named" "$(said updated 'FAIL no "Firedown updated" notification')" "yes"
 fi
 
 printf '\n%d passed, %d failed\n' "$OK" "$BAD"

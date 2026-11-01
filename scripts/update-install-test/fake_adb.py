@@ -6,12 +6,22 @@ state lives in a JSON file in $FAKE_PHONE_DIR.
 
 What it simulates, and only that:
   - the install: the copy takes COPY_S seconds (PREPARING 0..100), then
-    INSTALLING; a real APK then brings Android's dialog (state IDLE), a file
-    that is not one is refused (FAILED), a missing file fails at once;
+    INSTALLING; a file that is not an APK is refused (FAILED), a missing
+    file fails at once;
+  - a real APK: on Android 12+ (FAKE_SDK, default 34) Android installs it
+    without asking, the app dies before Android's answer reaches it (no
+    IDLE in the trace) and posts "Firedown updated"; below 12, or with
+    FAKE_DIALOG=1, Android's dialog appears (state IDLE), cancelling it
+    posts the "update failed" notification, confirming it replaces the app;
   - a second install request while one runs logs "install already running";
-  - cancelling Android's dialog posts the "update failed" notification, as
-    the app does today;
-  - confirming it replaces the app and posts "Firedown updated".
+  - the sheet's footer renders (UpdateSheetTrace), and a font size change
+    rebuilds the sheet;
+  - what makes a real phone hard to read: dumpsys output and the log run to
+    megabytes (a `producer | grep -q` misses a match under pipefail), the
+    screen cannot be dumped while the progress bar moves, and FAKE_SHADE=stuck
+    makes the shade ignore `cmd statusbar` (a swipe still opens it);
+  - the notification permission (FAKE_NOTIF_GRANTED, default 1), with the
+    grants and revokes the script made.
 The trace lines and the script's markers go to a log that `adb logcat`
 streams, like the real one.
 """
@@ -27,6 +37,10 @@ DIR = os.environ["FAKE_PHONE_DIR"]
 STATE = os.path.join(DIR, "phone.json")
 LOG = os.path.join(DIR, "logcat.txt")
 COPY_S = float(os.environ.get("FAKE_COPY_S", "3"))
+SDK = int(os.environ.get("FAKE_SDK", "34"))
+DIALOG = os.environ.get("FAKE_DIALOG", "") == "1" or SDK < 31
+SHADE = os.environ.get("FAKE_SHADE", "")
+NOTIF_GRANTED = os.environ.get("FAKE_NOTIF_GRANTED", "1") == "1"
 ANSWER_S = 0.5
 APK_PATH = "/storage/emulated/0/Android/data/%s/files/firedown.apk" % PKG
 STAGE = "/data/local/tmp/fd-update-test.apk"
@@ -34,6 +48,8 @@ STAGE = "/data/local/tmp/fd-update-test.apk"
 #   cancel-fails  cancelling Android's dialog turns the install FAILED
 #   no-progress   the sheet keeps its Install button while copying
 #   double        a second install request starts a second install
+#   rotate-loses  a sheet rebuilt mid-copy shows the button, not the copy
+#   no-updated    after updating itself the app posts no "Firedown updated"
 BUG = os.environ.get("FAKE_BUG", "")
 
 INSTALL_BTN = (540, 2200)
@@ -48,7 +64,54 @@ def fresh():
         "sheet": False, "sheet_seen": 0, "shade": False, "notifs": {},
         "install": None, "gen": 0, "phase": "IDLE", "percent": -1,
         "notif_install": False, "last_traced": None, "ui": "",
+        "sheet_id": "", "seen": 0, "footer": "", "last_render": None,
+        "amnesia": False, "notif_perm": NOTIF_GRANTED, "revokes": 0,
     }
+
+
+def noise(n):
+    """What else a phone logs: enough that a case's log runs past a pipe."""
+    with open(LOG, "a") as f:
+        for i in range(n):
+            f.write("%s  1500  1600 D ActivityManager: %s\n" % (
+                time.strftime("%m-%d %H:%M:%S.000"), "background noise " * 12))
+
+
+def new_sheet(st):
+    st["sheet"] = True
+    st["sheet_id"] = "%x" % (int(time.time() * 1e6) & 0xfffffff)
+    st["last_render"] = None
+    render(st)
+
+
+def render(st):
+    """UpdateAvailableSheet.render: the footer for the app's state."""
+    if not st["sheet"]:
+        return
+    phase = st["phase"]
+    busy = phase in ("PREPARING", "INSTALLING")
+    if st["amnesia"] or (busy and BUG == "no-progress"):
+        footer = "button"
+    elif busy:
+        st["seen"] = st["gen"]
+        footer = "progress" if phase == "PREPARING" else "installing"
+    else:
+        ours = st["seen"] > 0 and st["gen"] == st["seen"]
+        if ours and phase == "IDLE":
+            footer = "closed"
+        elif ours and phase == "FAILED":
+            footer = "error"
+        else:
+            footer = "button"
+    key = "%s %s %s %s" % (st["sheet_id"], footer, st["percent"], st["gen"])
+    if key == st["last_render"]:
+        return
+    st["last_render"] = key
+    st["footer"] = footer
+    log(st, "UpdateSheetTrace", "sheet=%s footer=%s percent=%s gen=%s" % (
+        st["sheet_id"], footer, st["percent"], st["gen"]))
+    if footer == "closed":
+        st["sheet"] = False
 
 
 def log(st_unused, tag, msg, level="D"):
@@ -74,21 +137,36 @@ def advance(st):
     copy = ins["copy"]
     if st["phase"] == "PREPARING":
         pct = min(100, int(t / copy * 100))
-        for step in (25, 50, 75, 100):
+        for step in range(10, 101, 10):
             if st["percent"] < step <= pct:
                 st["percent"] = step
                 trace(st)
+                render(st)
         if st["notif_install"]:
             st["notifs"]["666"] = "progress:%d/100" % st["percent"]
         if t >= copy:
             st["phase"], st["percent"] = "INSTALLING", -1
             trace(st)
+            render(st)
             if st["notif_install"]:
                 st["notifs"]["666"] = "indeterminate"
     if st["phase"] == "INSTALLING" and t >= copy + ANSWER_S:
+        if ins["kind"] == "apk" and not DIALOG:
+            # Installed without asking: the app is replaced before
+            # Android's answer reaches it, then posts "Firedown updated".
+            code = st["ready"]["code"]
+            kill_app(st)
+            st["installed"] = code
+            st["ready"] = None
+            st["files"].pop(APK_PATH, None)
+            st["focus"] = "launcher"
+            if BUG != "no-updated":
+                st["notifs"]["668"] = "shown"
+            return
         if ins["kind"] == "apk":
             st["phase"] = "IDLE"
             trace(st)
+            render(st)
             st["notifs"].pop("666", None)
             st["behind"] = st["focus"]
             st["focus"] = "packageinstaller"
@@ -97,6 +175,7 @@ def advance(st):
         else:
             st["phase"] = "FAILED"
             trace(st)
+            render(st)
             log(st, "%s.UpdateInstallReceiver" % PKG, "Installation failed: INSTALL_FAILED_INVALID_APK", "E")
             st["notifs"].pop("666", None)
             st["notifs"]["667"] = "shown"
@@ -111,15 +190,17 @@ def start_install(st, from_notif):
     st["notif_install"] = from_notif
     st["phase"], st["percent"] = "PREPARING", 0
     trace(st)
+    render(st)
     kind = st["files"].get(APK_PATH)
     if kind is None:
         st["phase"], st["percent"] = "FAILED", -1
         trace(st)
+        render(st)
         st["notifs"]["667"] = "shown"
         return
     st["install"] = {"t0": time.time(), "kind": "apk" if kind.startswith("apk") else "junk"}
     # The large not-an-APK file copies longer, as on a phone.
-    st["install"]["copy"] = COPY_S if st["install"]["kind"] == "apk" else 2 * COPY_S
+    st["install"]["copy"] = COPY_S if st["install"]["kind"] == "apk" else 4 * COPY_S
     if from_notif:
         st["notifs"]["666"] = "progress:0/100"
 
@@ -171,8 +252,7 @@ def screen(st):
     elif st["focus"] == "packageinstaller":
         nodes.append(node("android:id/button1", "Update", 700, 1500, 1000, 1600, "com.google.android.packageinstaller"))
     elif st["focus"] == "app" and st["sheet"]:
-        busy = (st["phase"] in ("PREPARING", "INSTALLING") and not st["notif_install"]
-                and BUG != "no-progress")
+        busy = st["footer"] in ("progress", "installing")
         if busy:
             nodes.append(node(PKG + ":id/update_sheet_progress", "", 48, 2090, 1032, 2300))
             label = "Preparing update…" if st["phase"] == "PREPARING" else "Installing…"
@@ -180,7 +260,7 @@ def screen(st):
             if st["phase"] == "PREPARING":
                 nodes.append(node(PKG + ":id/update_sheet_progress_percent", "%d%%" % st["percent"], 900, 2100, 1032, 2160))
         else:
-            if st["phase"] == "FAILED":
+            if st["footer"] == "error":
                 nodes.append(node(PKG + ":id/update_sheet_error", "Couldn't start the install. Try again.", 48, 2080, 1032, 2140))
             nodes.append(node(PKG + ":id/update_sheet_install", "Install", 48, 2150, 1032, 2250))
     return "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><hierarchy rotation=\"0\">%s</hierarchy>" % "".join(nodes)
@@ -201,6 +281,9 @@ def kill_app(st):
     st["phase"], st["percent"], st["gen"] = "IDLE", -1, 0
     st["notif_install"] = False
     st["sheet"] = False
+    st["seen"] = 0
+    st["amnesia"] = False
+    st["footer"] = ""
     st["last_traced"] = None
     for k in ("666", "667", "668"):
         st["notifs"].pop(k, None)
@@ -215,7 +298,19 @@ def shell(st, cmd):
     elif cmd.startswith("run-as "):
         cmd = cmd.split(" ", 2)[2]
     if cmd == "getprop ro.build.version.sdk":
-        return "34"
+        return str(SDK)
+    m = re.match(r"settings (put system font_scale \S+|delete system font_scale)$", cmd)
+    if m:
+        if m.group(1).startswith("put"):
+            st["settings"]["system/font_scale"] = cmd.split()[-1]
+        else:
+            st["settings"].pop("system/font_scale", None)
+        # Not a change the browser handles: the activity and the sheet are
+        # rebuilt from saved state.
+        if st["sheet"] and st["focus"] == "app":
+            st["amnesia"] = BUG == "rotate-loses"
+            new_sheet(st)
+        return ""
     m = re.match(r"settings get (\w+) (\w+)", cmd)
     if m:
         return st["settings"].get(m.group(1) + "/" + m.group(2), "null")
@@ -233,15 +328,34 @@ def shell(st, cmd):
     if m:
         st["appops"] = m.group(1)
         return ""
-    if cmd.startswith("pm grant") or cmd.startswith("pm revoke"):
+    if cmd.startswith("pm grant") and "POST_NOTIFICATIONS" in cmd:
+        st["notif_perm"] = True
         return ""
+    if cmd.startswith("pm revoke") and "POST_NOTIFICATIONS" in cmd:
+        st["notif_perm"] = False
+        st["revokes"] += 1
+        return ""
+    # A real dumpsys runs to hundreds of KB, most of it after the lines the
+    # script wants.
+    pad = "\n".join("      padding line %d %s" % (i, "x" * 60) for i in range(1500))
     if cmd.startswith("dumpsys package"):
-        return "    versionCode=%d minSdk=26 targetSdk=36\n      android.permission.POST_NOTIFICATIONS: granted=false" % st["installed"]
+        return "    versionCode=%d minSdk=26 targetSdk=36\n      android.permission.POST_NOTIFICATIONS: granted=%s\n%s" % (
+            st["installed"], "true" if st["notif_perm"] else "false", pad)
     if cmd == "dumpsys window":
-        f = {"app": PKG + "/" + PKG + ".phone.BrowserMainActivity",
-             "packageinstaller": "com.google.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity",
-             "launcher": "com.android.launcher3/.Launcher"}[st["focus"]]
-        return "  mCurrentFocus=Window{1a2b u0 %s}" % f
+        if st["shade"]:
+            f = "NotificationShade"
+        else:
+            f = {"app": PKG + "/" + PKG + ".phone.BrowserMainActivity",
+                 "packageinstaller": "com.google.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity",
+                 "launcher": "com.android.launcher3/.Launcher"}[st["focus"]]
+        return "  mCurrentFocus=Window{1a2b u0 %s}\n  mFocusedWindow=Window{1a2b u0 %s}\n%s" % (f, f, pad)
+    if cmd == "wm size":
+        return "Physical size: 1080x2400"
+    m = re.match(r"input swipe (\d+) (\d+) (\d+) (\d+)", cmd)
+    if m:
+        if int(m.group(2)) < 50 and int(m.group(4)) > 800:
+            st["shade"] = True
+        return ""
     m = re.match(r"log -t (\w+) '(.*)'$", cmd)
     if m:
         log(st, m.group(1), m.group(2), "I")
@@ -258,8 +372,8 @@ def shell(st, cmd):
         return ""
     if cmd.startswith("am start"):
         st["focus"] = "app"
-        if sheet_due(st):
-            st["sheet"] = True
+        if sheet_due(st) and not st["sheet"]:
+            new_sheet(st)
         return "Status: ok"
     if cmd == "input keyevent KEYCODE_HOME":
         st["focus"] = "launcher"
@@ -272,11 +386,13 @@ def shell(st, cmd):
             if BUG == "cancel-fails":
                 st["phase"] = "FAILED"
                 trace(st)
-                st["sheet"] = True
+                new_sheet(st)
         return ""
     if cmd.startswith("input keyevent") or cmd.startswith("wm dismiss-keyguard"):
         return ""
     if cmd.startswith("uiautomator dump"):
+        if st["focus"] == "app" and st["sheet"] and st["footer"] in ("progress", "installing"):
+            return "ERROR: could not get idle state."
         st["ui"] = screen(st)
         return "UI hierchary dumped to: /sdcard/fd-update-ui.xml"
     m = re.match(r"input tap (\d+) (\d+)", cmd)
@@ -297,7 +413,8 @@ def shell(st, cmd):
             st["notifs"]["668"] = "shown"
         return ""
     if cmd == "cmd statusbar expand-notifications":
-        st["shade"] = True
+        if SHADE != "stuck":
+            st["shade"] = True
         return ""
     if cmd == "cmd statusbar collapse":
         st["shade"] = False
@@ -338,6 +455,7 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_EX)
         st = json.load(open(STATE)) if os.path.exists(STATE) else fresh()
         advance(st)
+        noise(3)
         out = ""
         rc = 0
         if args == ["get-state"]:

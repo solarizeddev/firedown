@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.format.Formatter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,6 +56,8 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     private static final String CRASH_SHEET_TAG = "CrashReportSheet";
     private static final String ARG_PREVIEW = "preview";
     private static final String STATE_SEEN_INSTALL = "seen_install";
+    /** Debug builds: one line per footer render, read by scripts/update-install-test.sh. */
+    private static final String TRACE_TAG = "UpdateSheetTrace";
 
     /**
      * How long a dismissal holds the sheet back. "Later" has to MEAN later, or
@@ -289,17 +292,34 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
             mSeenInstall = s.generation;
             if (s.phase == UpdateInstallProgress.Phase.PREPARING) {
                 showPreparing(s.percent);
+                trace("progress", s);
             } else {
                 showInstalling();
+                trace("installing", s);
             }
             return;
         }
         boolean ours = mSeenInstall > 0 && s.generation == mSeenInstall;
         if (ours && s.phase == UpdateInstallProgress.Phase.IDLE) {
+            trace("closed", s);
             dismissAllowingStateLoss();
             return;
         }
-        showButton(ours && s.phase == UpdateInstallProgress.Phase.FAILED);
+        boolean failed = ours && s.phase == UpdateInstallProgress.Phase.FAILED;
+        showButton(failed);
+        trace(failed ? "error" : "button", s);
+    }
+
+    /**
+     * Debug builds: what the footer shows, per sheet instance. The device
+     * test reads it instead of the screen: a screen dump waits for the
+     * screen to go still, which it never does while the bar counts up.
+     */
+    private void trace(String footer, UpdateInstallProgress.Snapshot s) {
+        if (BuildConfig.DEBUG) {
+            Log.d(TRACE_TAG, "sheet=" + Integer.toHexString(System.identityHashCode(this))
+                    + " footer=" + footer + " percent=" + s.percent + " gen=" + s.generation);
+        }
     }
 
     private void showButton(boolean failed) {

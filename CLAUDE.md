@@ -4482,26 +4482,49 @@ is **~75 MB**, the APK 205 MB.
   (`app/src/debug`, exported but gated on `android.permission.DUMP`, which
   the adb shell holds and no installed app can: WHERE / MARK_READY / CLEAR /
   POST_PROMPT / TAP_PROMPT / STATE, answered as `am broadcast` result data).
-  Cases: the sheet (progress, Android's dialog, a cancel), a 1 GB file that
-  is not an APK (rotation mid-copy, a second request turned away, the error,
-  a retry), the APK gone, the notification route, and a real update confirmed
-  in Android's dialog, then put back. It reads the phases from a debug-only
-  `UpdateInstallTrace` log line per transition, the screen through
-  `uiautomator dump` (animations are turned off for the run: an
-  indeterminate bar never lets the screen go idle) and the notifications
-  through STATE; every phone setting it touches is put back. It runs on
+  Cases: the sheet (the footer counting up, then Android's answer), a large
+  file that is not an APK (rotation mid-copy, a sheet REBUILT mid-copy by a
+  font size change — the browser handles rotation itself, so rotating never
+  rebuilds the sheet — a second request turned away, the error, a retry),
+  the APK gone, the notification route, and a real update, then put back.
+  **On Android 12+ Android installs the update WITHOUT a dialog** (the
+  installer asks for `USER_ACTION_NOT_REQUIRED` and holds
+  `UPDATE_PACKAGES_WITHOUT_USER_ACTION`): the app is replaced before
+  Android's answer reaches it, so the trace ends at INSTALLING with no IDLE,
+  then "Firedown updated" is posted. The script takes whichever Android does
+  (`wait_outcome`: dialog / updated / failed): the cancel path runs only
+  where a dialog appears, the real-update case is skipped once an earlier
+  case already updated, and a dialog on 12+ is an INFO. The first device run
+  (SM-A426B, Android 12) failed 8 checks on exactly this, and on two script
+  bugs worth knowing: under `set -o pipefail`, `producer | grep -q` reads a
+  match as a MISS on a phone's megabytes of dumpsys or logcat (grep exits at
+  the match, the producer dies of SIGPIPE), which also made the script take
+  back a notification permission the phone already had — tests go through
+  `has` / `grep -c` / awk, which read to the end; and `uiautomator dump`
+  cannot read a screen whose progress bar is moving, so the footer is read
+  from a debug-only `UpdateSheetTrace` line per render
+  (`UpdateAvailableSheet.render`: sheet id, footer, percent) beside the
+  `UpdateInstallTrace` line per phase. Notifications through STATE; the
+  shade is opened by `cmd statusbar`, else a swipe from the top edge. Every
+  phone setting it touches (animations, stay-on, rotation, font size,
+  appops, the notification grant) is put back. It runs on
   macOS (bash 3.2, BSD awk: the screen parsers split a dump into nodes in
   `END`, never with a multi-character `RS`, which older BSD awk lacks) and
   Linux, takes adb from PATH else from `local.properties`' `sdk.dir` /
   `$ANDROID_HOME` / Android Studio's default SDK folders (`ADB=` overrides),
   and builds with `JAVA_HOME`, else `java` on PATH, else Android Studio's
-  bundled JDK. `bash scripts/update-install-test/selftest.sh` checks the script with no
-  phone: its parsers on canned input, a whole run against a simulated phone
-  (`fake_adb.py`) and three faults planted in it (a cancel that fails the
-  install, a sheet with no progress, two installs at once), each of which
-  the script must report. Cancelling Android's dialog posts the "update
-  failed" notification (the session reports ABORTED); the script flags it as
-  a WARN. Not yet run on a phone.
+  bundled JDK. `bash scripts/update-install-test/selftest.sh` checks the
+  script with no phone: its parsers on canned input (a long log, the
+  footer trace, a rebuilt sheet), whole runs against two simulated phones
+  (`fake_adb.py`: one that installs without asking, with a shade that
+  ignores the shell command, and one that shows Android's dialog; both with
+  megabyte outputs and a screen that cannot be dumped mid-copy) and five
+  faults planted in them (a cancel that fails the install, a sheet with no
+  progress, two installs at once, a rebuilt sheet that forgets the copy, no
+  "Firedown updated"), each of which the script must report. The previous
+  script fails 7 checks against the simulated phone, as it did on the real
+  one. Cancelling Android's dialog posts the "update failed" notification
+  (the session reports ABORTED); the script flags it as a WARN.
 - **Verify** with `sh scripts/update-harness/run.sh` (JDK only, ~6 min): the
   JUnit tests on a plain JVM (UpdatePatchTest, UpdatePlanTest,
   UpdateManifestTest — the same ones `testDebugUnitTest` runs); **the state

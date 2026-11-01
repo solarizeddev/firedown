@@ -10,23 +10,31 @@
 # with `am broadcast`; the install itself is the real code, on the phone.
 #
 # Cases, run in this order (--only picks some):
-#   sheet         Install from the sheet: the progress counts up, the sheet
-#                 closes when Android's "update this app?" dialog appears,
-#                 cancelling that dialog leaves no error.
-#   refused       A large file that is not an APK: the progress survives a
-#                 rotation, a second install started from the notification
-#                 route while the first copies does nothing, Android refuses
-#                 the file, the error line and the button come back, and the
-#                 button works again.
+#   sheet         Install from the sheet: the footer counts the copy up, then
+#                 Android answers. On Android 12+ it installs the update
+#                 without asking (Firedown requests that); otherwise its
+#                 "update this app?" dialog appears, the sheet closes, and
+#                 cancelling the dialog leaves no error.
+#   refused       A large file that is not an APK: the footer keeps counting
+#                 through a rotation, a sheet rebuilt mid-copy (a font size
+#                 change) shows the copy, a second install started from the
+#                 notification route while the first copies does nothing,
+#                 Android refuses the file, the error line and the button
+#                 come back, and the button works again.
 #   missing       The APK disappears after the sheet showed: the error line,
 #                 and the "update failed" notification.
 #   notification  Install from the "Tap to update" notification with the app
 #                 in the background: the same notification shows the
-#                 progress and goes away when Android's dialog appears.
+#                 progress, then Android installs or asks.
 #   install       A real update: Install, confirm Android's dialog (tapped
 #                 for you when the button can be found), the app becomes the
-#                 next version and posts "Firedown updated". The original
+#                 next version and posts "Firedown updated". Skipped when an
+#                 earlier case already updated without asking. The original
 #                 version is put back at the end. --no-install skips it.
+#
+# The sheet's footer is read from the debug build's UpdateSheetTrace log
+# lines, the phases from UpdateInstallTrace: a screen dump waits for the
+# screen to go still, which it never does while the bar counts up.
 #
 # Usage:  scripts/update-install-test.sh [--skip-build] [--only a,b] [--no-install]
 #   --skip-build  reuse the two APKs the last run built (build/update-install-test/apks)
@@ -44,8 +52,9 @@
 # checkout replaces the installed Firedown (data kept; the phone must already
 # have a DEBUG build signed on this computer, or none), animations are turned
 # off (an indeterminate progress bar never lets the screen be read), the
-# screen stays on, rotation is fixed, Firedown may install apps, and it may
-# post notifications. Each case force-stops Firedown first.
+# screen stays on, rotation is fixed, the font size changes for a moment,
+# Firedown may install apps, and it may post notifications (taken back only
+# if it could not before). Each case force-stops Firedown first.
 
 set -Euo pipefail
 
@@ -89,9 +98,23 @@ REVOKE_NOTIFICATIONS=0
 INSTALLED_NEWER=0
 PHONE_TOUCHED=0
 SCREEN_READ=0
+FONT_SCALE_SAVED=
+OUTCOME=
+SILENT_SEEN=0
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'STOPPED: %s\n' "$*" >&2; exit 1; }
+
+# has TEXT NEEDLE: TEXT contains NEEDLE. Never test `producer | grep -q` in a
+# condition: under pipefail grep's early exit kills a long producer with
+# SIGPIPE, and a match reads as a miss. A phone's dumpsys and logcat are
+# megabytes.
+has() {
+    case $1 in
+        *"$2"*) return 0 ;;
+    esac
+    return 1
+}
 
 # Every adb call reads from /dev/null: `adb shell` otherwise swallows the
 # stdin of the loop it runs in.
@@ -248,10 +271,15 @@ wait_state() {
 
 # ── the screen ───────────────────────────────────────────────────────────
 
+# ui_dump [TRIES]: the screen into $OUT/ui.xml. uiautomator waits for the
+# screen to go still and gives up after ~10 s, so it cannot read a screen
+# whose progress bar is counting up: the footer checks read UpdateSheetTrace.
 ui_dump() {
-    local i
-    for i in 1 2 3 4; do
-        if remote uiautomator dump /sdcard/fd-update-ui.xml | grep -q 'dumped to'; then
+    local i=0 tries=${1:-4} out
+    while [ "$i" -lt "$tries" ]; do
+        i=$((i + 1))
+        out=$(remote uiautomator dump /sdcard/fd-update-ui.xml)
+        if has "$out" 'dumped to'; then
             if adbq exec-out cat /sdcard/fd-update-ui.xml > "$OUT/ui.xml" 2>/dev/null; then
                 return 0
             fi
@@ -325,16 +353,23 @@ tap_id() {
     tap_at $xy
 }
 
+# The focused window, lower-cased. awk reads to the end (see has()).
 focus() {
-    remote dumpsys window | grep -E 'mCurrentFocus=|mFocusedWindow=' | head -n 1
+    remote dumpsys window | awk '/mCurrentFocus=|mFocusedWindow=/ { if (!n++) print tolower($0) }'
 }
 
 installer_up() {
-    focus | grep -qi 'packageinstaller'
+    has "$(focus)" packageinstaller
 }
 
 ours_up() {
-    focus | grep -q "$PKG"
+    has "$(focus)" "$PKG"
+}
+
+shade_up() {
+    local f
+    f=$(focus)
+    has "$f" notificationshade || has "$f" 'statusbar}'
 }
 
 wait_installer() {
@@ -406,6 +441,87 @@ rotate() {
     remote settings put system user_rotation "$1"
 }
 
+# The browser handles a rotation itself, so the sheet lives through it. A
+# font size change it does not handle rebuilds the activity and the sheet
+# from saved state.
+font_bump() {
+    local to=1.15
+    if [ "$FONT_SCALE_SAVED" = 1.15 ]; then
+        to=1.3
+    fi
+    remote settings put system font_scale "$to" >/dev/null
+}
+
+font_restore() {
+    restore_setting system font_scale "$FONT_SCALE_SAVED"
+}
+
+# wait_outcome SECONDS: what Android did with an install. OUTCOME is dialog
+# (its "update this app?" dialog is up), updated (it installed the update
+# without asking: from Android 12 an app may update itself, and Firedown
+# asks to), failed (the app reports FAILED) or none.
+wait_outcome() {
+    local end=$(($(date +%s) + $1))
+    OUTCOME=none
+    while [ "$(date +%s)" -lt "$end" ]; do
+        if installer_up; then
+            OUTCOME=dialog
+            return 0
+        fi
+        if [ "$(installed_code)" = "$NEWER_CODE" ]; then
+            OUTCOME=updated
+            INSTALLED_NEWER=1
+            SILENT_SEEN=1
+            return 0
+        fi
+        read_state
+        if [ "$PHASE" = FAILED ]; then
+            OUTCOME=failed
+            return 0
+        fi
+        sleep 0.5
+    done
+    return 1
+}
+
+# After Android installed the update without asking: the app was replaced
+# before Android's answer reached it (the trace ends at INSTALLING), then
+# posted "Firedown updated".
+check_updated() {
+    local name=$1 end n668=
+    if [ "$SDK" -ge 31 ]; then
+        pass "Android installed the update without asking: Firedown is now $(name_for "$NEWER_CODE") (Android 12+ lets an app update itself)"
+    else
+        fail "Android $SDK installed without asking, which it should not do below Android 12"
+    fi
+    trace_ok "$name" 1 "PREPARING INSTALLING"
+    end=$(($(date +%s) + 20))
+    while [ "$(date +%s)" -lt "$end" ]; do
+        LAST_STATE=$(rx STATE)
+        n668=$(kv n668 "$LAST_STATE")
+        if [ "$n668" = shown ]; then
+            break
+        fi
+        sleep 1
+    done
+    if [ "$n668" = shown ]; then
+        pass "the \"Firedown updated\" notification was posted"
+    else
+        fail "no \"Firedown updated\" notification: $LAST_STATE"
+    fi
+    if [ "$(kv n666 "$LAST_STATE")" = none ]; then
+        pass "no progress notification left behind"
+    else
+        fail "a progress notification was left behind: $(kv n666 "$LAST_STATE")"
+    fi
+}
+
+dialog_but_silent_requested() {
+    if [ "$SDK" -ge 31 ]; then
+        info "Android asked although Firedown requests an update without asking on Android 12+ (another installer may own its updates)"
+    fi
+}
+
 # ── the logcat ───────────────────────────────────────────────────────────
 
 # The phone's log from this case's last start marker to the next case's.
@@ -463,6 +579,47 @@ check_trace() {
 count_installs() {
     awk '/UpdateInstallTrace: / { if (match($0, /gen=[0-9]+/)) g[substr($0, RSTART, RLENGTH)] = 1 }
          END { n = 0; for (k in g) n++; print n }'
+}
+
+# log_wait CASE TEXT [SECONDS]: the case's log holds TEXT, waiting for the
+# log to catch up. grep -c reads to the end (see has()).
+log_wait() {
+    local end=$(($(date +%s) + ${3:-5})) n
+    while :; do
+        n=$(case_log "$1" | grep -cF -- "$2")
+        if [ "${n:-0}" -gt 0 ]; then
+            return 0
+        fi
+        if [ "$(date +%s)" -ge "$end" ]; then
+            return 1
+        fi
+        sleep 0.5
+    done
+}
+
+# footers CASE: the sheet's footer renders in a case's log (UpdateSheetTrace),
+# one "SHEET FOOTER PERCENT" line each.
+footers() {
+    case_log "$1" | awk '/UpdateSheetTrace: / {
+        line = $0
+        sub(/.*UpdateSheetTrace: /, "", line)
+        n = split(line, f, " ")
+        sheet = ""; footer = ""; pct = ""
+        for (i = 1; i <= n; i++) {
+            k = index(f[i], "=")
+            key = substr(f[i], 1, k - 1)
+            v = substr(f[i], k + 1)
+            if (key == "sheet") sheet = v
+            else if (key == "footer") footer = v
+            else if (key == "percent") pct = v
+        }
+        print sheet, footer, pct
+    }'
+}
+
+# count_footers CASE FOOTER
+count_footers() {
+    footers "$1" | awk -v want="$2" '$2 == want { n++ } END { print n + 0 }'
 }
 
 trace_ok() {
@@ -556,8 +713,27 @@ begin_case() {
     mark "case $1 start"
 }
 
+# footer_ok CASE: the sheet's footer counted the copy up (UpdateSheetTrace).
+footer_ok() {
+    local name=$1 n first last back
+    log_wait "$name" 'footer=progress' 3 || true
+    n=$(count_footers "$name" progress)
+    if [ "$n" -gt 0 ]; then
+        first=$(footers "$name" | awk '$2 == "progress" { print $3; exit }')
+        last=$(footers "$name" | awk '$2 == "progress" { p = $3 } END { print p }')
+        back=$(footers "$name" | awk '$2 == "progress" { if ($3 + 0 < p + 0) b = p " to " $3; p = $3 } END { print b }')
+        if [ -n "$back" ]; then
+            fail "the footer's percent went back ($back)"
+        else
+            pass "the footer showed the progress: $n renders, $first% to $last%"
+        fi
+    else
+        fail "the sheet never showed the progress (no footer=progress in UpdateSheetTrace)"
+    fi
+}
+
 case_sheet() {
-    begin_case sheet "install from the sheet, then cancel Android's dialog"
+    begin_case sheet "install from the sheet, then Android's answer"
     prepare_ready apk
     launch || { fail "Firedown did not come to the front (is the phone locked?)"; shot sheet-no-app; return; }
     if ! wait_sheet; then
@@ -567,27 +743,30 @@ case_sheet() {
     pass "the update sheet appeared"
     shot sheet-ready
     tap_id update_sheet_install || { fail "could not find the Install button"; return; }
-    if ui_dump && ui_has update_sheet_progress && ! ui_has update_sheet_install; then
-        pass "the footer shows \"$(ui_text update_sheet_progress_label) $(ui_text update_sheet_progress_percent)\""
-        shot sheet-progress
-    else
-        # Read after the screen: still running means the footer was missing,
-        # not late.
-        read_state
-        case $PHASE in
-            PREPARING|INSTALLING)
-                fail "the install is running ($PHASE) but the sheet shows no progress"
-                shot sheet-no-progress
-                ;;
-            *) info "the copy ended before the screen could be read (the trace below covers it)" ;;
-        esac
-    fi
-    if wait_installer 60; then
-        pass "Android's dialog appeared"
-        shot sheet-android-dialog
-    else
-        fail "Android's dialog did not appear within 60 s (state: $LAST_STATE)"
-    fi
+    shot sheet-progress
+    wait_outcome 90 || true
+    footer_ok sheet
+    case $OUTCOME in
+        updated)
+            check_updated sheet
+            info "the cancel path needs Android's dialog, which this phone skips; not tested"
+            shot sheet-updated
+            return
+            ;;
+        failed)
+            fail "the install failed: $LAST_STATE"
+            shot sheet-failed
+            return
+            ;;
+        none)
+            fail "neither Android's dialog nor the update within 90 s (state: $LAST_STATE)"
+            shot sheet-nothing
+            return
+            ;;
+    esac
+    pass "Android's dialog appeared"
+    dialog_but_silent_requested
+    shot sheet-android-dialog
     read_state
     if [ "$PHASE" = IDLE ]; then
         pass "the install state is IDLE once Android has the update"
@@ -595,6 +774,11 @@ case_sheet() {
         fail "the install state is not IDLE: $LAST_STATE"
     fi
     trace_ok sheet 1 "PREPARING INSTALLING IDLE"
+    if [ "$(count_footers sheet closed)" -gt 0 ]; then
+        pass "the sheet closed when Android answered"
+    else
+        fail "the sheet did not close when Android answered"
+    fi
     close_installer || fail "could not close Android's dialog"
     sleep 2
     read_state
@@ -617,12 +801,72 @@ case_sheet() {
     [ "$(installed_code)" = "$BASE_CODE" ] || fail "the version changed although the install was cancelled"
 }
 
+# renders_after CASE MARK [FOOTER]: how many FOOTER renders (any, when
+# empty) the case's log holds after the MARK line, waiting up to 3 s for the log to catch up.
+renders_after() {
+    local end=$(($(date +%s) + 3)) n
+    while :; do
+        n=$(case_log "$1" | awk -v m="FDUPDTEST: $2" -v f="${3:-}" '
+            index($0, m) { on = 1; next }
+            on && index($0, "UpdateSheetTrace: ") && (f == "" || index($0, "footer=" f " ")) { n++ }
+            END { print n + 0 }')
+        if [ "$n" -gt 0 ] || [ "$(date +%s)" -ge "$end" ]; then
+            printf '%s' "$n"
+            return
+        fi
+        sleep 0.5
+    done
+}
+
+# rebuilt_ok CASE: after the "rebuild" mark the sheet is a new instance (the
+# activity was recreated), and its first render shows the copy, not the
+# button, unless the install had already ended by then.
+rebuilt_ok() {
+    local out first ended
+    renders_after "$1" rebuild >/dev/null
+    out=$(case_log "$1" | awk '
+        function sheet_of(line) {
+            if (match(line, /sheet=[0-9a-f]+/)) return substr(line, RSTART + 6, RLENGTH - 6)
+            return ""
+        }
+        /FDUPDTEST: rebuild/ { on = 1; next }
+        !on && /UpdateSheetTrace: / { before = sheet_of($0) }
+        on && /UpdateInstallTrace: phase=(FAILED|IDLE)/ { ended = 1 }
+        on && /UpdateSheetTrace: / {
+            s = sheet_of($0)
+            if (s != before && match($0, /footer=[a-z]+/)) {
+                print substr($0, RSTART + 7, RLENGTH - 7), ended + 0
+                exit
+            }
+        }')
+    if [ -z "$out" ]; then
+        info "the font size change did not rebuild the sheet; the rebuilt sheet was not checked"
+        return
+    fi
+    first=${out% *}
+    ended=${out#* }
+    case $first in
+        progress|installing)
+            pass "the sheet rebuilt by a font size change came back showing the copy ($first)"
+            ;;
+        *)
+            if [ "$ended" = 1 ]; then
+                info "the install ended before the rebuilt sheet appeared; it shows \"$first\""
+            else
+                fail "the sheet rebuilt mid-copy came back showing \"$first\" instead of the progress"
+            fi
+            ;;
+    esac
+}
+
 case_refused() {
-    local mb free ans gen installs pre
-    begin_case refused "a file that is not an APK: rotation, a second install, the error, a retry"
+    local mb free ans gen installs pre n
+    begin_case refused "a file that is not an APK: rotation, a rebuilt sheet, a second install, the error, a retry"
     free=$(remote df -k /data | awk 'NR == 2 { print $4 }')
     free=${free:-0}
-    if [ "$free" -gt 4194304 ]; then
+    if [ "$free" -gt 6291456 ]; then
+        mb=1536
+    elif [ "$free" -gt 4194304 ]; then
         mb=1024
     elif [ "$free" -gt 1572864 ]; then
         mb=384
@@ -638,18 +882,26 @@ case_refused() {
     read_state
     pre=$PHASE
     ans=$(rx TAP_PROMPT --es name "$(q "$TEST_NAME")")
+    mark "rotate"
     rotate 1
-    sleep 2
+    sleep 1.5
+    shot refused-rotated
     read_state
     if [ "$PHASE" = PREPARING ]; then
-        if ui_dump && ui_has update_sheet_progress && ! ui_has update_sheet_install; then
-            pass "after rotating: the footer still shows \"$(ui_text update_sheet_progress_percent)\""
+        n=$(renders_after refused rotate progress)
+        if [ "$n" -gt 0 ]; then
+            pass "the footer kept counting after the rotation ($n renders)"
         else
-            fail "after rotating mid-copy the footer lost the progress"
+            fail "the footer stopped counting after the rotation"
         fi
-        shot refused-rotated
+        mark "rebuild"
+        font_bump
+        sleep 2.5
+        shot refused-rebuilt
+        rebuilt_ok refused
+        font_restore
     else
-        info "the ${mb} MB copy ended before the rotation landed ($LAST_STATE); rotation not checked"
+        info "the ${mb} MB copy ended before the rotation landed ($LAST_STATE); the rebuilt sheet was not checked"
     fi
     rotate 0
     if wait_state FAILED 90; then
@@ -657,9 +909,10 @@ case_refused() {
     else
         fail "no FAILED state within 90 s: $LAST_STATE"
     fi
+    footer_ok refused
     trace_ok refused 1 "PREPARING INSTALLING FAILED"
     installs=$(case_log refused | count_installs)
-    if case_log refused | grep -q 'install already running'; then
+    if log_wait refused 'install already running' 3; then
         if [ "$installs" = 1 ]; then
             pass "a second install requested while the first copied was turned away ($ans)"
         else
@@ -673,10 +926,13 @@ case_refused() {
         fail "the second request was neither turned away nor run ($ans)"
     fi
     sleep 1
-    if ui_dump && ui_has update_sheet_error && ui_has update_sheet_install; then
-        pass "the error line \"$(ui_text update_sheet_error)\" and the Install button are back"
+    if [ "$(footers refused | awk 'END { print $2 }')" = error ]; then
+        pass "the sheet shows the error line and the Install button again"
     else
-        fail "the sheet does not show the error line and the button"
+        fail "the sheet's last footer is \"$(footers refused | awk 'END { print $2 }')\", not the error line"
+    fi
+    if ui_dump && ui_has update_sheet_error && ui_has update_sheet_install; then
+        info "the error line reads \"$(ui_text update_sheet_error)\""
     fi
     shot refused-error
     gen=$(kv gen "$LAST_STATE")
@@ -717,6 +973,26 @@ case_missing() {
     fi
 }
 
+# Opens the notification shade: the shell command first, then a swipe down
+# from the top edge (some phones ignore the command).
+open_shade() {
+    local size w h
+    remote cmd statusbar expand-notifications >/dev/null
+    sleep 1.5
+    if shade_up; then
+        return 0
+    fi
+    size=$(remote wm size | sed -n 's/.*: *\([0-9][0-9]*\)x\([0-9][0-9]*\).*/\1 \2/p' | tail -n 1)
+    w=${size% *}
+    h=${size#* }
+    if [ -z "$size" ] || [ -z "$w" ] || [ -z "$h" ]; then
+        return 1
+    fi
+    remote input swipe $((w / 2)) 5 $((w / 2)) $((h * 2 / 3)) 300 >/dev/null
+    sleep 1.5
+    shade_up
+}
+
 case_notification() {
     local ans xy seen=0 end n
     begin_case notification "install from the \"Tap to update\" notification"
@@ -735,13 +1011,15 @@ case_notification() {
         fail "no \"Tap to update\" notification: $LAST_STATE"
         return
     fi
-    remote cmd statusbar expand-notifications >/dev/null
-    sleep 1.5
     xy=
-    if ui_dump; then
-        xy=$(ui_find text "$TEST_NAME" contains)
+    if open_shade; then
+        shot notification-shade
+        if ui_dump 2; then
+            xy=$(ui_find text "$TEST_NAME" contains)
+        fi
+    else
+        shot notification-shade
     fi
-    shot notification-shade
     if [ -n "$xy" ]; then
         # shellcheck disable=SC2086
         tap_at $xy
@@ -754,6 +1032,7 @@ case_notification() {
     sleep 0.5
     remote cmd statusbar collapse >/dev/null
     end=$(($(date +%s) + 60))
+    OUTCOME=none
     while [ "$(date +%s)" -lt "$end" ]; do
         read_state
         n=$(kv n666 "$LAST_STATE")
@@ -767,6 +1046,17 @@ case_notification() {
                 ;;
         esac
         if installer_up; then
+            OUTCOME=dialog
+            break
+        fi
+        if [ "$(installed_code)" = "$NEWER_CODE" ]; then
+            OUTCOME=updated
+            INSTALLED_NEWER=1
+            SILENT_SEEN=1
+            break
+        fi
+        if [ "$PHASE" = FAILED ]; then
+            OUTCOME=failed
             break
         fi
         sleep 0.3
@@ -774,23 +1064,34 @@ case_notification() {
     if [ $seen = 0 ]; then
         info "the notification's progress was not caught between samples (the trace covers the phases)"
     fi
-    if installer_up; then
-        pass "Android's dialog appeared"
-        shot notification-android-dialog
-        sleep 1
-        LAST_STATE=$(rx STATE)
-        if [ "$(kv n666 "$LAST_STATE")" = none ]; then
-            pass "the progress notification is gone once Android has the update"
-        else
-            fail "the progress notification is still there: $LAST_STATE"
-        fi
-    else
-        fail "Android's dialog did not appear (an install started from the background may be blocked from opening it): $LAST_STATE"
-    fi
-    if case_log notification | grep -q 'UpdateInstallTrace: .*notif=true'; then
+    if log_wait notification 'notif=true' 3; then
         pass "the install ran as started from the notification"
     else
         fail "no install started from the notification in the trace"
+    fi
+    case $OUTCOME in
+        updated)
+            check_updated notification
+            return
+            ;;
+        failed)
+            fail "the install failed: $LAST_STATE"
+            return
+            ;;
+        none)
+            fail "neither Android's dialog nor the update within 60 s: $LAST_STATE"
+            return
+            ;;
+    esac
+    pass "Android's dialog appeared"
+    dialog_but_silent_requested
+    shot notification-android-dialog
+    sleep 1
+    LAST_STATE=$(rx STATE)
+    if [ "$(kv n666 "$LAST_STATE")" = none ]; then
+        pass "the progress notification is gone once Android has the update"
+    else
+        fail "the progress notification is still there: $LAST_STATE"
     fi
     trace_ok notification 1 "PREPARING INSTALLING IDLE"
     close_installer || true
@@ -801,34 +1102,47 @@ case_notification() {
 }
 
 case_install() {
-    local xy end answer dialog=0
+    local xy answer end
+    if [ "$SILENT_SEEN" = 1 ]; then
+        say ""
+        say "== install: a real update to $(name_for "$NEWER_CODE")" | tee -a "$OUT/results.txt"
+        info "skipped: Android already installed the update without asking in an earlier case"
+        return
+    fi
     begin_case install "a real update to $(name_for "$NEWER_CODE")"
     prepare_ready apk
     launch || { fail "Firedown did not come to the front"; return; }
     wait_sheet || { no_sheet install-no-sheet; return; }
     tap_id update_sheet_install || { fail "could not find the Install button"; return; }
-    end=$(($(date +%s) + 60))
-    while [ "$(date +%s)" -lt "$end" ]; do
-        if installer_up || [ "$(installed_code)" = "$NEWER_CODE" ]; then
-            break
-        fi
-        sleep 0.5
-    done
-    if installer_up; then
-        dialog=1
-        shot install-android-dialog
-        xy=
-        if ui_dump; then
-            xy=$(ui_find resource-id "android:id/button1" exact)
-        fi
-        if [ -n "$xy" ]; then
-            # shellcheck disable=SC2086
-            tap_at $xy
-            info "tapped Android's Update button"
-        else
-            answer=$(ask "Tap Update in Android's dialog on the phone, then press Enter here.")
-            : "$answer"
-        fi
+    wait_outcome 90 || true
+    case $OUTCOME in
+        updated)
+            check_updated install
+            shot install-done
+            return
+            ;;
+        failed)
+            fail "the install failed: $LAST_STATE"
+            return
+            ;;
+        none)
+            fail "neither Android's dialog nor the update within 90 s: $LAST_STATE"
+            return
+            ;;
+    esac
+    dialog_but_silent_requested
+    shot install-android-dialog
+    xy=
+    if ui_dump; then
+        xy=$(ui_find resource-id "android:id/button1" exact)
+    fi
+    if [ -n "$xy" ]; then
+        # shellcheck disable=SC2086
+        tap_at $xy
+        info "tapped Android's Update button"
+    else
+        answer=$(ask "Tap Update in Android's dialog on the phone, then press Enter here.")
+        : "$answer"
     fi
     end=$(($(date +%s) + 120))
     while [ "$(date +%s)" -lt "$end" ]; do
@@ -844,12 +1158,7 @@ case_install() {
         fail "the version did not change within 2 minutes ($(installed_code))"
         return
     fi
-    if [ "$dialog" = 1 ]; then
-        trace_ok install 1 "PREPARING INSTALLING IDLE"
-    else
-        # Replaced without a dialog: the process died before Android answered.
-        trace_ok install 1 "PREPARING INSTALLING"
-    fi
+    trace_ok install 1 "PREPARING INSTALLING IDLE"
     sleep 3
     LAST_STATE=$(rx STATE)
     if [ "$(kv n668 "$LAST_STATE")" = shown ]; then
@@ -955,6 +1264,8 @@ setup_phone() {
     save_setting global stay_on_while_plugged_in
     save_setting system accelerometer_rotation
     save_setting system user_rotation
+    save_setting system font_scale
+    FONT_SCALE_SAVED=${RESTORE_SYSTEM[$((${#RESTORE_SYSTEM[@]} - 1))]}
     remote settings put global animator_duration_scale 0
     remote settings put global transition_animation_scale 0
     remote settings put global window_animation_scale 0
@@ -967,7 +1278,7 @@ setup_phone() {
     RESTORE_APPOPS=${mode:-default}
     remote appops set "$PKG" REQUEST_INSTALL_PACKAGES allow
     if [ "$SDK" -ge 33 ]; then
-        if ! remote dumpsys package "$PKG" | grep -q 'android.permission.POST_NOTIFICATIONS: granted=true'; then
+        if ! has "$(remote dumpsys package "$PKG")" 'android.permission.POST_NOTIFICATIONS: granted=true'; then
             REVOKE_NOTIFICATIONS=1
             remote pm grant "$PKG" android.permission.POST_NOTIFICATIONS
         fi
