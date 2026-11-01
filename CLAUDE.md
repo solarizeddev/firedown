@@ -4474,7 +4474,29 @@ is **~75 MB**, the APK 205 MB.
   closed to be replaced. Pinned by `UpdateInstallProgressTest` (13 tests, in
   the update harness with four mutants); the debug `showPreview` plays the
   footer's states on a timer. Sketch: `sketches/update-install-progress.html`.
-  On-device unverified at write time.
+  **Device check: `scripts/update-install-test.sh`** (laptop + adb, a phone
+  with a debug build signed on that computer, or none). It builds two debug
+  APKs (the current versionCode and the next; `app/build.gradle` is edited
+  for the second build and put back, also on Ctrl-C), installs the first,
+  and fakes "an update is ready" through the debug-only `UpdateTestReceiver`
+  (`app/src/debug`, exported but gated on `android.permission.DUMP`, which
+  the adb shell holds and no installed app can: WHERE / MARK_READY / CLEAR /
+  POST_PROMPT / TAP_PROMPT / STATE, answered as `am broadcast` result data).
+  Cases: the sheet (progress, Android's dialog, a cancel), a 1 GB file that
+  is not an APK (rotation mid-copy, a second request turned away, the error,
+  a retry), the APK gone, the notification route, and a real update confirmed
+  in Android's dialog, then put back. It reads the phases from a debug-only
+  `UpdateInstallTrace` log line per transition, the screen through
+  `uiautomator dump` (animations are turned off for the run: an
+  indeterminate bar never lets the screen go idle) and the notifications
+  through STATE; every phone setting it touches is put back.
+  `bash scripts/update-install-test/selftest.sh` checks the script with no
+  phone: its parsers on canned input, a whole run against a simulated phone
+  (`fake_adb.py`) and three faults planted in it (a cancel that fails the
+  install, a sheet with no progress, two installs at once), each of which
+  the script must report. Cancelling Android's dialog posts the "update
+  failed" notification (the session reports ABORTED); the script flags it as
+  a WARN. Not yet run on a phone.
 - **Verify** with `sh scripts/update-harness/run.sh` (JDK only, ~6 min): the
   JUnit tests on a plain JVM (UpdatePatchTest, UpdatePlanTest,
   UpdateManifestTest — the same ones `testDebugUnitTest` runs); **the state

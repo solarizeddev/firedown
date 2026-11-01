@@ -9,5 +9,14 @@
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@android:style/Theme.Material.NoActionBar" />
+
+        <!-- scripts/update-install-test.sh drives the update install through
+             this receiver. Exported so `am broadcast -n` can reach it, but only
+             a sender holding DUMP may: the adb shell does, installed apps
+             cannot. -->
+        <receiver
+            android:name="com.solarized.firedown.updatetest.UpdateTestReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
     </application>
 </manifest>

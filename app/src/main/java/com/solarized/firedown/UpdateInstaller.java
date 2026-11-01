@@ -25,6 +25,11 @@ import java.io.OutputStream;
 public final class UpdateInstaller {
 
     private static final String TAG = UpdateInstaller.class.getName();
+    /**
+     * One debug line per install state change, read by
+     * scripts/update-install-test.sh to check the order of the phases.
+     */
+    private static final String TRACE_TAG = "UpdateInstallTrace";
     private static final int SESSION_ID = 123;
 
     /**
@@ -114,6 +119,7 @@ public final class UpdateInstaller {
                     copied += bytesRead;
                     UpdateInstallProgress.Snapshot moved = sProgress.copied(generation, copied, total);
                     if (moved != null) {
+                        trace(moved);
                         // Android's own record of the copy, for whatever
                         // system surface follows install sessions.
                         session.setStagingProgress(moved.percent / 100f);
@@ -208,6 +214,7 @@ public final class UpdateInstaller {
         if (s == null) {
             return;
         }
+        trace(s);
         sMain.post(() -> sState.setValue(s));
         if (!s.fromNotification) {
             return;
@@ -224,6 +231,13 @@ public final class UpdateInstaller {
                 break;
             default:
                 break;
+        }
+    }
+
+    private static void trace(UpdateInstallProgress.Snapshot s) {
+        if (BuildConfig.DEBUG) {
+            Log.d(TRACE_TAG, "phase=" + s.phase + " percent=" + s.percent
+                    + " gen=" + s.generation + " notif=" + s.fromNotification);
         }
     }
 
