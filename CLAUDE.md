@@ -4437,9 +4437,15 @@ is **~75 MB**, the APK 205 MB.
   SHA256SUMS, each patch re-applied, a mismatched history entry skipped, the
   cache reused, deltas off), and `REAL_APKS="old.apk new.apk"` for two real
   releases. Written against nothing older (new code), so its teeth come from
-  the mutants. **On-device unverified at write time**: DownloadManager with
-  the new file names, the worker hand-off, and `base.apk` hashing equal to
-  the published file on a real install.
+  the mutants. **The device half is `update/UpdatePatchDeviceTest`**
+  (androidTest): XZ for Java working after D8 (it is a multi-release jar),
+  the app reading and hashing its own `base.apk` (and the cache), an APK
+  rebuilt from `base.apk` by a patch passing `UpdateApkVerifier`'s signature
+  check, and the patch refused against a one-byte-different base. Compiled
+  against the Android 16 framework jar; **not yet run on a device**. Still
+  unverified anywhere: DownloadManager with the new file names, the worker
+  hand-off, and `base.apk` equal to the published file on a real install
+  (the hash comparison makes that last one safe either way).
 
 ## Releasing — `bumpVersion` and `releaseStatus` (app/release.gradle)
 
