@@ -882,11 +882,16 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
      * "Add-ons": shown once an add-on that runs in this tab's mode is
      * installed (a private tab lists only the ones allowed there).
      */
+    /**
+     * Always shown: with an add-on running in this tab's mode, its buttons
+     * for the page; with none, Settings → Add-ons (Mozilla's list), so the
+     * row is never a dead end.
+     */
     private void bindAddonsRow() {
         View row = mView.findViewById(R.id.popup_addons);
         if (row == null) return;
-        row.setVisibility(mAddonManager.hasAddonsFor(mIsIncognito) ? View.VISIBLE : View.GONE);
-        row.setOnClickListener(this);
+        row.setOnClickListener(view -> dispatch(mAddonManager.hasAddonsFor(mIsIncognito)
+                ? R.id.popup_addons : R.id.addon_actions_manage));
     }
 
 
