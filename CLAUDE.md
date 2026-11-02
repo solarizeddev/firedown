@@ -4511,7 +4511,7 @@ Design points that are easy to undo:
 - **The `crash_sheet_send_note` caption under the button is the privacy
   claim** ("only the report above, no identifiers") — it sits AT the button
   that acts on it, and the honest-copy rule applies: if what's sent ever
-  changes, the caption changes with it, in all 16 locales.
+  changes, the caption changes with it, in every maintained locale.
 - **Failure keeps the sheet up and the pending files on disk** — only a
   dismissal sweeps, and only success dismisses; Copy/Report stay available as
   the fallback. The button disables for the in-flight window (double-tap =
@@ -4606,7 +4606,7 @@ CLAUDE.md.
 - **`feedback_note` is the privacy claim** (message, optional contact, app
   version, Android version, phone model — "nothing else"), shown under the
   fields at the moment of sending. The `crash_sheet_send_note` rule: if the
-  payload changes, the string changes in all 16 locales.
+  payload changes, the string changes in every maintained locale.
 - **A full page, not a dialog.** It shipped as a dialog for one build: ~270dp
   of width cut the message placeholder and the contact label mid-sentence
   (a floating hint is single-line), and a 4-line box is too small to write
@@ -5288,7 +5288,7 @@ scoped-storage caveat above) → `restoreFromTree` → snackbar with the count /
 "no backup" / "different device". `importMirrorDatabase` dedups by
 `file_path` against the live table, so the flow is idempotent — tapping
 twice or restoring on a non-empty list never duplicates rows. Strings are
-translated across the same 16 locales as the JIT toggle.
+translated into the maintained locales.
 
 **Restore progress/result live in the ViewModel, NOT the fragment.**
 `DownloadsViewModel.runRestore(...)` runs the SAF scan/decrypt/import on its own
@@ -5362,7 +5362,7 @@ all three fixed that and was still too crowded; (3) the row. Two bar icons
   `TaskViewModel#getSafeCount` drives only the trailing pill
   (`safe_folder_pill`, `bg_safe_folder_pill` in the `chip_checked_*` pair
   so the screen's two "active" marks share one colour; the
-  `safe_folder_downloading` plural, "N downloading", 16 locales — short on
+  `safe_folder_downloading` plural, "N downloading", every maintained locale — short on
   purpose, it lives in a 20dp badge). GONE at rest, VISIBLE while live; no
   wash, no subtitle, no height change. The count never hides the row.
 - **Stacking policy for the top of the list: at most TWO cards, furniture
@@ -6251,8 +6251,8 @@ URL became uneditable); the custom URL is scheme-validated (`stun:`/`turn:`)
 before persisting so a typo can't fail every future share in the
 `RTCPeerConnection` constructor.
 
-Strings are `p2p_*`/`settings_p2p_stun*`, translated across the same 16
-locales as the JIT toggle.
+Strings are `p2p_*`/`settings_p2p_stun*`, translated into the
+maintained locales.
 
 **BROWSER-RECIPIENT RECEIVE — the sanctioned way to reach someone without
 Firedown installed (NOT a server-side share link).** This is the designed-but-
@@ -6956,7 +6956,7 @@ recovery code, the password sealed under the same keystore key through
   final URL is on another host is skipped, and if it answered as a WebDAV
   folder the result is `MOVED` with `movedTo`; the page says "This address
   forwards to <url>. If that is your server, enter that address instead"
-  (`webdav_error_moved`, 16 locales) and saves nothing. A same-host move
+  (`webdav_error_moved`, every maintained locale) and saves nothing. A same-host move
   (http→https, another port, another path) is followed as before; an
   https→http downgrade stays refused. OkHttp sends no Authorization across
   a cross-host hop by itself. User info in a typed address
@@ -11550,8 +11550,8 @@ anything (it used to scope CanvasRandomization to tiktok.com via the now-removed
 per-site override is ever reintroduced, it must not fold into this global
 `overrides` pref. This is deliberately the no-patch route over IronFox's
 `nsRFPService` code patch + custom bool pref (firedown-geckoview CLAUDE.md has the
-rationale). New string keys (`settings_utc_timezone*`) are translated across the
-same 16 locales the JIT toggle uses; the remaining (already-partial) locales fall
+rationale). New string keys (`settings_utc_timezone*`) are translated into the
+maintained locales; the other (partial) locales fall
 back to English (MissingTranslation isn't build-fatal here).
 
 ### GeckoRuntime hardening prefs (`applyHardeningPrefs`) — privacy vs. breakage
@@ -13103,6 +13103,21 @@ lines of `gradle.properties`. `docs/NEW-MACHINE.md` is the checklist.
 
 ## Conventions
 
+- **Translations: 18 maintained locales.** `bg cs de es et fi fr hi id ja
+  nl pl pt ru tr uk vi zh-CN` (Indonesian lives in the legacy `values-in`,
+  Chinese in `values-zh-rCN`). Every new or changed user-facing string goes
+  into all 18 in the same commit, and a changed meaning changes every
+  translation (the honest-copy rule). The other `values-*` folders are
+  partial and nobody keeps them current; what they lack falls back to
+  English (MissingTranslation is not build-fatal). Indonesian and
+  Vietnamese joined in 2026-11 with every string filled; the original 16
+  only ever got NEW strings, so each still lacks older ones (160 to 355 of
+  them, measured 2026-11-02). To audit a locale, compare it against
+  `values/` across `strings.xml`, `plurals.xml` and
+  `prompt_strings_mozac.xml` (`arrays.xml` holds only `@string`
+  references); skip `translatable="false"` and keys whose comment says the
+  value stays English (`settings_sync_export_file_name`). Indonesian and
+  Vietnamese plurals need only `other`, their one CLDR category.
 - Match the surrounding comment density — the parsers are heavily commented
   with *why*, including dead-ends not to retry. Keep that.
 - **Code comments name the page SHAPE, never the site where a case was
