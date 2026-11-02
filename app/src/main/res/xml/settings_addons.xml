@@ -2,10 +2,11 @@
 <!-- Add-ons (AddonsFragment). Two dynamic lists the fragment fills: the
      add-ons installed (tap → the add-on's page) and Mozilla's list of
      add-ons for Android (tap → the install prompt; the one Firedown ships,
-     uBlock Origin, reads "Built into Firedown"). The list is the only
-     discovery path: Mozilla vets every entry for Firefox for Android, so
-     nothing offered here is a desktop-only add-on. "Install from file" is
-     for a signed add-on from elsewhere. The footnote says what reaches
+     uBlock Origin, reads "Built into Firedown"). The list is Mozilla's
+     short recommended collection; "Find more add-ons" opens Mozilla's
+     add-on site for Android in a tab (only add-ons marked as working on
+     Android; the user-script managers live there), as Firefox for Android
+     does. "Install from file" is for a signed add-on from elsewhere. The footnote says what reaches
      Mozilla and that add-ons work outside the no-tracking promise. -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
@@ -58,6 +59,12 @@
             android:key="com.solarized.firedown.preferences.addons.updates"
             android:title="@string/addons_check_updates"
             app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.addons.more"
+            android:title="@string/addons_find_more"
+            android:summary="@string/addons_find_more_summary"
             app:iconSpaceReserved="false" />
 
         <Preference

@@ -4070,12 +4070,21 @@ that talks to `WebExtensionController` for user add-ons. Fenix's
 `feature/addons` + `support/webextensions` were the reference; read them
 before changing a flow. The rules, each easy to undo:
 
-- **Only Mozilla's list is offered** (`AmoCatalog` / `AmoCatalogClient`):
-  the `Extensions-for-Android` collection of the `mozilla` account on
-  services.addons.mozilla.org, the list Fenix shows, cached 2 days per
-  language, extensions only (themes, http files and ids we refuse dropped).
-  Not every Firefox add-on works on Android, and that list is the one
-  someone tested. Never a search over all of AMO.
+- **In the app: Mozilla's recommended list; beyond it: Mozilla's site,
+  never a search of our own** (`AmoCatalog` / `AmoCatalogClient`): the
+  `Extensions-for-Android` collection of the `mozilla` account on
+  services.addons.mozilla.org, the list Firefox for Android shows (about
+  twenty: Privacy Badger, Dark Reader, NoScript…), cached 2 days per
+  language, extensions only (themes, http files and ids we refuse
+  dropped). **"Find more add-ons"** opens `https://addons.mozilla.org/android/`
+  in a tab, Firefox for Android's own link: that site lists only add-ons
+  whose developers mark them as working on Android, and the user-script
+  managers (Violentmonkey, Tampermonkey: the "userscripts" request) are
+  there, not in the collection. Its install button is Gecko's own web
+  install (`amContentHandler` → `installAddonFromWebpage`, allowed from
+  addons.mozilla.org only by `xpinstall.whitelist.add`), which reaches the
+  same `onInstallPromptRequest` through `webextension-permission-prompt`
+  (read in toolkit's `AddonManager.sys.mjs`, not yet tried on a device).
 - **A signed .xpi from elsewhere installs, an unsigned one never does.**
   The GeckoView build is a release build (`MOZ_REQUIRE_SIGNING`, checked in
   firedown-geckoview), so Gecko refuses anything not signed by Mozilla;

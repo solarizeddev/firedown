@@ -1314,6 +1314,8 @@
     <string name="addons_retry">Try again</string>
     <string name="addons_built_in">Built into Firedown</string>
     <string name="addons_more">More</string>
+    <string name="addons_find_more">Find more add-ons</string>
+    <string name="addons_find_more_summary">On addons.mozilla.org, the ones made for Android</string>
     <string name="addons_install_from_file">Install from file</string>
     <string name="addons_install_from_file_summary">A signed Firefox add-on (.xpi)</string>
     <string name="addons_check_updates">Check for updates</string>
