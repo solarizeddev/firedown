@@ -6393,11 +6393,17 @@ unified"), each easy to undo:
   class comment). The sheet was
   13sp monospace lines (~30dp) in one card with "×3" counts and nothing
   for a single block. The domain was the patched uBlock's own PSL answer
-  (`domainOf` in its firedown.js); the capture extension's counter that
-  replaced it ships none, so today every host takes the domain style
-  whole (`HostLabel`'s fallback). There is no PSL on the Java side; a
-  host whose domain is missing or doesn't split on a label boundary takes
-  the domain style whole. The
+  (`domainOf` in its firedown.js), and the capture extension's counter
+  that replaced it ships none, so for one release every host was styled
+  whole and the split was gone. It is worked out on the Java side now
+  (`utils/RegistrableDomain`: `HttpUrl.topPrivateDomain()`, the public
+  suffix list OkHttp already ships as its `PublicSuffixDatabase.list`
+  asset, read once on HeavyIO at startup by `GeckoUblockHelper`, LRU of
+  512; it answers null until that read is done, never reading on the
+  main thread), so `bbc.co.uk` is the name in `static.files.bbc.co.uk`.
+  A host with no registrable domain (an IP, a public suffix itself) or
+  one that doesn't split on a label boundary takes the domain style
+  whole. The
   adapter re-shapes the bound rows on every list change
   (`PAYLOAD_SHAPE`): the list re-sorts by count as blocks land, so a row's
   first/last role moves without its content changing. No site icons on

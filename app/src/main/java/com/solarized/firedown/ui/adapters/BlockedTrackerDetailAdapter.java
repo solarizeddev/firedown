@@ -59,15 +59,13 @@ public class BlockedTrackerDetailAdapter
         abstract String key();
     }
 
-    /** Per-host row — host, its registrable domain, and the count. */
+    /** Per-host row — the host and the count. */
     public static final class HostRow extends Item {
         public final String host;
-        public final String domain;
         public final long count;
 
-        public HostRow(String host, String domain, long count) {
+        public HostRow(String host, long count) {
             this.host = host;
-            this.domain = domain;
             this.count = count;
         }
 
@@ -86,8 +84,7 @@ public class BlockedTrackerDetailAdapter
         @Override
         public boolean areContentsTheSame(@NonNull Item oldItem, @NonNull Item newItem) {
             if (oldItem instanceof HostRow oh && newItem instanceof HostRow nh) {
-                return oh.count == nh.count && Objects.equals(oh.host, nh.host)
-                        && Objects.equals(oh.domain, nh.domain);
+                return oh.count == nh.count && Objects.equals(oh.host, nh.host);
             }
             return false;
         }
@@ -109,7 +106,7 @@ public class BlockedTrackerDetailAdapter
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         Item item = getItem(position);
         if (holder instanceof HostViewHolder vh && item instanceof HostRow r) {
-            vh.host.setText(HostLabel.format(vh.itemView.getContext(), r.host, r.domain));
+            vh.host.setText(HostLabel.format(vh.itemView.getContext(), r.host));
             // Allocated per bind like CountPreference's, so the column follows
             // a locale change without the sheet being reopened.
             vh.count.setText(NumberFormat.getInstance(Locale.getDefault()).format(r.count));

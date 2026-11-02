@@ -181,7 +181,7 @@ public class BlockedStatsFragment extends BasePreferenceFragment {
                 row = new HostCountPreference(requireContext());
                 mTop.addPreference(row);
             }
-            row.setTitle(HostLabel.format(requireContext(), tracker.host, tracker.domain));
+            row.setTitle(HostLabel.format(requireContext(), tracker.host));
             row.setCount(tracker.count);
         }
         while (mTop.getPreferenceCount() > size) {
