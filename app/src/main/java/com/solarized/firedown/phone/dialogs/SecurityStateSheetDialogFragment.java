@@ -312,7 +312,8 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 mBlockersGroup.addView(row);
                 mBlockerRows.put(key, row);
             }
-            mIconLoaded.retainAll(keys);
+            // Every row is new: every icon loads again.
+            mIconLoaded.clear();
         }
         for (AddonManager.BlockerItem item : items) {
             MaterialCardView row = mBlockerRows.get(item.addon.id);

@@ -2,12 +2,15 @@ package com.solarized.firedown.geckoview;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.solarized.firedown.BuildConfig;
 
 import dagger.hilt.android.qualifiers.ApplicationContext;
 
@@ -89,6 +92,9 @@ public class GeckoUblockHelper {
 
     static final int MAX_TODAY_HOSTS = 500;
     static final int TOP_HOSTS = 10;
+    /** The breakdown (categories, up to 500 hosts) is written at most this often; the lifetime count every time. */
+    static final long BREAKDOWN_WRITE_INTERVAL_MS = 10_000;
+    private long mLastBreakdownWrite;
 
     private final SharedPreferences mPrefs;
 
@@ -199,9 +205,16 @@ public class GeckoUblockHelper {
                 }
             }
         }
-        editor.putString(KEY_TODAY_CATEGORIES, categoriesJson().toString())
-              .putString(KEY_TODAY_HOSTS, hostsJson().toString())
-              .apply();
+        long now = SystemClock.elapsedRealtime();
+        boolean newDay = !today.equals(savedDate);
+        if (newDay || now - mLastBreakdownWrite >= BREAKDOWN_WRITE_INTERVAL_MS) {
+            // A process death loses at most this interval of the day's
+            // breakdown; the lifetime count is never behind.
+            mLastBreakdownWrite = now;
+            editor.putString(KEY_TODAY_CATEGORIES, categoriesJson().toString())
+                  .putString(KEY_TODAY_HOSTS, hostsJson().toString());
+        }
+        editor.apply();
         mCumulativeBlockedLive.postValue(cumulative);
         mTodayBlockedLive.postValue(Math.max(0L, cumulative - baseline));
         mCategoryBlockedLive.postValue(new EnumMap<>(mTodayCategories));
@@ -260,7 +273,9 @@ public class GeckoUblockHelper {
                 }
             }
         } catch (JSONException e) {
-            Log.w(TAG, "today's blocked figures unreadable", e);
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "today's blocked figures unreadable", e);
+            }
             mTodayHosts.clear();
         }
         mCategoryBlockedLive.postValue(new EnumMap<>(mTodayCategories));
@@ -275,7 +290,9 @@ public class GeckoUblockHelper {
                 o.put(e.getKey().name(), e.getValue());
             }
         } catch (JSONException e) {
-            Log.w(TAG, "categories", e);
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "categories", e);
+            }
         }
         return o;
     }
@@ -288,7 +305,9 @@ public class GeckoUblockHelper {
                 a.put(new JSONObject().put("host", e.getKey()).put("count", e.getValue()));
             }
         } catch (JSONException e) {
-            Log.w(TAG, "hosts", e);
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "hosts", e);
+            }
         }
         return a;
     }

@@ -2141,16 +2141,27 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     for (const fn of committed) fn({ tabId: 92, frameId: 0 });
     const r = await bs.flush();
     expect(r && r.page.count === 0 && r.page.items.length === 0, "blocked-stats: a top-level commit resets the page");
-    // A tab whose mode is unknown counts on its page but not in the totals.
+    // A tab whose mode the request did not say is asked at the flush: a
+    // private one is not stored, a regular one is, a closed one is dropped.
+    modes[94] = true;
+    modes[95] = false;
     fail(94, "https://ads.example/d.js", "script", "NS_ERROR_ABORT", undefined);
+    fail(95, "https://ads.example/e.js", "script", "NS_ERROR_ABORT", undefined);
+    fail(96, "https://ads.example/f.js", "script", "NS_ERROR_ABORT", undefined);
+    browser.tabs.get = async (id) => {
+      if (id === 96) throw new Error("no tab");
+      return { id, incognito: modes[id] ?? false };
+    };
     const u = await bs.flush();
-    expect(!u || !u.totals, "blocked-stats: a request of unknown mode is not stored");
-    expect(ts.peekTabState(94).pageBlocked.count === 1, "blocked-stats: but it counts on its page");
+    expect(u && u.totals && u.totals.blocked === 1 && u.totals.hosts[0].host === "ads.example",
+      `blocked-stats: of three tabs of unknown mode, only the regular one is stored (got ${u?.totals?.blocked})`);
+    expect(ts.peekTabState(94).pageBlocked.count === 1, "blocked-stats: a private one still counts on its page");
+    expect(ts.peekTabState(94).incognito === true, "blocked-stats: the mode asked is remembered");
     expect(nativeSent.slice(before).every((n) => n.app === "browser" && n.msg.listener === "blockedStats"),
       "blocked-stats: sent over the browser app as blockedStats");
   } finally {
     browser.tabs.get = realGet;
-    for (const fn of removed) { fn(91); fn(92); fn(93); fn(94); }
+    for (const fn of removed) { fn(91); fn(92); fn(93); fn(94); fn(95); fn(96); }
   }
 }
 

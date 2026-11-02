@@ -700,7 +700,7 @@
     <string name="shield_blocker_not_private">Doesn\'t run in private tabs</string>
     <string name="shield_blocker_allow">Allow</string>
     <string name="shield_no_blocker_title">No ad blocker is on</string>
-    <string name="shield_no_blocker_summary">Ads and trackers load on this page</string>
+    <string name="shield_no_blocker_summary">Ads load on this page</string>
     <string name="shield_turn_on">Turn on</string>
     <string name="shield_installing">Installing…</string>
     <plurals name="shield_blockers_many">

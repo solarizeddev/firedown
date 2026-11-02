@@ -99,8 +99,14 @@ public class AddonManager {
     private static final int MAX_QUEUED_PROMPTS = 4;
     /** The official uBlock Origin, signed by Mozilla, shipped in the APK (updated from addons.mozilla.org). */
     static final String BUNDLED_UBLOCK_ASSET = "addons/ublock-origin.xpi";
-    /** The user removed uBlock Origin: Firedown does not put it back by itself. */
+    /**
+     * The user removed uBlock Origin: Firedown does not put it back by
+     * itself. In {@code backup_local} (excluded from Auto Backup): add-ons
+     * live in the Gecko profile, which is not backed up, so on a restored
+     * phone the blocker the user chose instead is not there either.
+     */
     private static final String PREF_UBLOCK_REMOVED = "com.solarized.firedown.addons.ublock.removed";
+    private static final String LOCAL_PREFS = "backup_local";
     /** Add-ons the user put behind the shield, or took out of it, against what their permissions say. */
     private static final String PREF_SHIELD_SHOW = "com.solarized.firedown.addons.shield.show";
     private static final String PREF_SHIELD_HIDE = "com.solarized.firedown.addons.shield.hide";
@@ -289,6 +295,8 @@ public class AddonManager {
 
     private final Context mContext;
     private final SharedPreferences mPrefs;
+    /** Install-local facts (see {@link #PREF_UBLOCK_REMOVED}). */
+    private final SharedPreferences mLocalPrefs;
     private final GeckoStateDataRepository mRegularRepository;
     private final IncognitoStateRepository mIncognitoRepository;
     private final Provider<GeckoComponents> mComponents;
@@ -336,6 +344,7 @@ public class AddonManager {
                         @Qualifiers.HeavyIO Executor heavyExecutor) {
         mContext = context;
         mPrefs = sharedPreferences;
+        mLocalPrefs = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
         mRegularRepository = regularRepository;
         mIncognitoRepository = incognitoRepository;
         mComponents = components;
@@ -587,7 +596,7 @@ public class AddonManager {
             });
             return;
         }
-        if (findUblock() == null && !mPrefs.getBoolean(PREF_UBLOCK_REMOVED, false)) {
+        if (findUblock() == null && !mLocalPrefs.getBoolean(PREF_UBLOCK_REMOVED, false)) {
             installBundledUblock(false);
         }
     }
@@ -639,7 +648,9 @@ public class AddonManager {
                     return;
                 }
                 mInstallContexts.put(AddonPolicy.UBLOCK_ID, new InstallContext(null, false, null, true));
-                if (!announce) {
+                if (announce) {
+                    mQuietInstalls.remove(AddonPolicy.UBLOCK_ID);
+                } else {
                     mQuietInstalls.add(AddonPolicy.UBLOCK_ID);
                 }
                 install(Uri.fromFile(file).toString(), WebExtensionController.INSTALLATION_METHOD_FROM_FILE,
@@ -707,6 +718,7 @@ public class AddonManager {
                             Log.w(TAG, "uBlock enable failed", e);
                         }
                         publish();
+                        emit(Event.FAILED, AddonInfo.from(extension).name);
                     });
         } else if (needsPrivate) {
             setAllowedInPrivate(id, true);
@@ -1050,6 +1062,11 @@ public class AddonManager {
             finishInstall(staged, contextId, fromPage);
         }, e -> {
             finishInstall(staged, contextId, fromPage);
+            // A quiet install's marker is consumed by onInstalled, which
+            // may land before or after this result; a failure never gets one.
+            if (contextId != null) {
+                mQuietInstalls.remove(contextId);
+            }
             if (quiet) {
                 if (BuildConfig.DEBUG) {
                     Log.w(TAG, "quiet install failed: " + contextId, e);
@@ -1068,7 +1085,6 @@ public class AddonManager {
         }
         if (contextId != null) {
             mInstallContexts.remove(contextId);
-            mQuietInstalls.remove(contextId);
         }
         if (fromPage) {
             mPageInstallInFlight = false;
@@ -1217,7 +1233,7 @@ public class AddonManager {
         String name = AddonInfo.from(extension).name;
         runtime.getWebExtensionController().uninstall(extension).accept(unused -> {
             if (AddonPolicy.isUblockId(id)) {
-                mPrefs.edit().putBoolean(PREF_UBLOCK_REMOVED, true).apply();
+                mLocalPrefs.edit().putBoolean(PREF_UBLOCK_REMOVED, true).apply();
             }
             forget(id);
             emit(Event.REMOVED, name);
@@ -1507,10 +1523,11 @@ public class AddonManager {
             adopt(extension);
             publish();
             if (AddonPolicy.isUblockId(extension.id)) {
-                mPrefs.edit().remove(PREF_UBLOCK_REMOVED).apply();
+                mLocalPrefs.edit().remove(PREF_UBLOCK_REMOVED).apply();
             }
+            boolean quiet = mQuietInstalls.remove(extension.id);
             if (isNew) {
-                if (!mQuietInstalls.contains(extension.id)) {
+                if (!quiet) {
                     emit(Event.INSTALLED, AddonInfo.from(extension).name);
                 }
                 scheduleUpdateCheck();

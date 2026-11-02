@@ -330,15 +330,39 @@ user runs (sketch: `sketches/shield-blockers.html`).
   refused it. The page tally of the tab on screen (count + hosts, reset on
   its top-level commit, a refused main_frame not counted) is sent whenever it
   changes; the lifetime figures are sent as DELTAS (blocked, by request
-  type, by host), regular tabs only — a request of unknown mode is treated
-  as private — and `GeckoUblockHelper.onBlockedTotals` adds them to what it
-  persisted under the patched uBlock's key names, so the user's lifetime
-  count carries on. One message kind, `listener: "blockedStats"`, over the
+  type, by host), regular tabs only — a block whose request did not say its
+  mode waits for the flush, which asks `tabs.get`, and is dropped if the
+  answer is private or none — and `GeckoUblockHelper.onBlockedTotals` adds
+  them to what it persisted under the patched uBlock's key names, so the
+  user's lifetime count carries on. The day's breakdown (types, up to 500
+  hosts) is written at most every 10 s, the lifetime count on every
+  message. One message kind, `listener: "blockedStats"`, over the
   `"browser"` app; Java drops a page tally for a tab that is not the one on
   screen. A redirect to a neutered resource is not counted (no error fires),
   which uBlock's own number does count, so the two differ slightly. The
   per-add-on number on a row is the add-on's own badge and is never summed.
-  Pinned by the smoke's `blocked-stats:` section.
+  Pinned by the smoke's `blocked-stats:` section (mutants: unknown mode
+  counted as regular, a refused document counted, a sub-frame commit
+  resetting the page, the flush not asking the mode — each fails it).
+- **Install quiet, announce on the user's tap**: the first run's install
+  is quiet (`mQuietInstalls`, consumed by `onInstalled`, which may land
+  before or after the install result, and dropped on a failure); "Turn on"
+  and "Reinstall" announce, and a "Turn on" whose enable fails says so.
+  The "removed" flag lives in `backup_local` (excluded from Auto Backup):
+  add-ons are in the Gecko profile, which is not restored, so a restored
+  phone does not carry the blocker the user chose instead either.
+- **Residuals, known**: (1) the "(off)" title is a per-tab override with no
+  URL, so after a cross-site navigation the shield can show the previous
+  site's state for under a second, until uBlock retitles (its
+  `updateToolbarIcon` runs on an idle callback, timeout 701 ms). (2) Any
+  channel Gecko cancels with `NS_ERROR_ABORT` for a reason that is not a
+  blocker would count; a device-audit comparison of the sheet's count with
+  uBlock's badge over `site-audit/sites.txt` is what would show it. (3) The
+  hidden sessions (YouTube's token page, the share engine) are tabs to the
+  extension, so a request a blocker refuses there reaches the lifetime
+  figures. (4) Nothing on a device exercises the "(off)" branch yet (it
+  needs uBlock's popup); the harness pins the rule, not the transport of a
+  per-tab title to the session override.
 - Verify with `sh scripts/addons-harness/run.sh` (the blocker and shield
   rules, uBlock's 1.75.0 manifest; mutants for each) and on a device
   `AddonsDeviceTest` t1 (installed from the app's copy, private allowed,

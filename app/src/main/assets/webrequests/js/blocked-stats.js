@@ -27,7 +27,8 @@ const MAX_DELTA_HOSTS = 500;    // per flush
 const PAGE_ITEMS_SENT = 100;    // the sheet's list
 
 let activeTabId = -1;
-let pending = null;             // totals not yet sent
+let pending = null;             // totals not yet sent, from regular tabs
+const unsure = new Map();       // tabId → totals from a tab whose mode is not known yet
 let pageDirty = false;
 let timer = null;
 
@@ -54,6 +55,33 @@ function hostOf(url) {
     return new URL(url).hostname;
   } catch (_) {
     return '';
+  }
+}
+
+function emptyTotals() {
+  return { blocked: 0, scripts: 0, pixels: 0, frames: 0, other: 0, hosts: new Map() };
+}
+
+function addTo(totals, bucket, host, n) {
+  totals.blocked += n;
+  totals[bucket] += n;
+  if (host) {
+    const had = totals.hosts.get(host);
+    if (had !== undefined) totals.hosts.set(host, had + n);
+    else if (totals.hosts.size < MAX_DELTA_HOSTS) totals.hosts.set(host, n);
+  }
+}
+
+function mergeInto(into, from) {
+  into.scripts += from.scripts;
+  into.pixels += from.pixels;
+  into.frames += from.frames;
+  into.other += from.other;
+  into.blocked += from.blocked;
+  for (const [host, n] of from.hosts) {
+    const had = into.hosts.get(host);
+    if (had !== undefined) into.hosts.set(host, had + n);
+    else if (into.hosts.size < MAX_DELTA_HOSTS) into.hosts.set(host, n);
   }
 }
 
@@ -88,18 +116,18 @@ export function countBlocked(data) {
     if (n !== undefined) page.hosts.set(host, n + 1);
     else if (page.hosts.size < MAX_PAGE_HOSTS) page.hosts.set(host, 1);
   }
-  // Unknown mode counts as private: nothing about it is stored.
+  // A private tab's blocks are never stored; a tab whose mode is not known
+  // yet waits for flush() to ask it.
   if (state.incognito === false) {
-    if (!pending) {
-      pending = { blocked: 0, scripts: 0, pixels: 0, frames: 0, other: 0, hosts: new Map() };
+    if (!pending) pending = emptyTotals();
+    addTo(pending, bucketOf(data.type), host, 1);
+  } else if (state.incognito !== true) {
+    let t = unsure.get(data.tabId);
+    if (!t) {
+      t = emptyTotals();
+      unsure.set(data.tabId, t);
     }
-    pending.blocked++;
-    pending[bucketOf(data.type)]++;
-    if (host) {
-      const n = pending.hosts.get(host);
-      if (n !== undefined) pending.hosts.set(host, n + 1);
-      else if (pending.hosts.size < MAX_DELTA_HOSTS) pending.hosts.set(host, 1);
-    }
+    addTo(t, bucketOf(data.type), host, 1);
   }
   if (data.tabId === activeTabId) pageDirty = true;
   schedule(FLUSH_MS);
@@ -151,20 +179,32 @@ export function pageSnapshot(tabId, incognito) {
 
 // The tab's mode: learned from its requests, else asked once.
 async function modeOf(tabId) {
-  const state = tabState(tabId);
-  if (typeof state.incognito !== 'boolean') {
-    try {
-      const tab = await browser.tabs.get(tabId);
-      if (typeof tab?.incognito === 'boolean') state.incognito = tab.incognito;
-    } catch (_) { /* a tab that went away */ }
-  }
-  // Unknown counts as private: a regular sheet never shows its numbers.
-  return state.incognito !== false;
+  const state = peekTabState(tabId);
+  if (state && typeof state.incognito === 'boolean') return state.incognito;
+  let incognito = null;
+  try {
+    const tab = await browser.tabs.get(tabId);
+    if (typeof tab?.incognito === 'boolean') incognito = tab.incognito;
+  } catch (_) { /* a tab that went away: no state is made for it */ }
+  const now = peekTabState(tabId);
+  if (now && incognito !== null) now.incognito = incognito;
+  // Unknown counts as private: nothing about it is stored or shown as regular.
+  return incognito !== false;
 }
 
 export async function flush() {
   timer = null;
   const message = { listener: 'blockedStats' };
+  if (unsure.size) {
+    const tabs = [...unsure];
+    unsure.clear();
+    for (const [tabId, totals] of tabs) {
+      if (!(await modeOf(tabId))) {
+        if (!pending) pending = emptyTotals();
+        mergeInto(pending, totals);
+      }
+    }
+  }
   if (pending) {
     message.totals = {
       blocked: pending.blocked,
