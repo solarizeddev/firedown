@@ -383,7 +383,7 @@
     <string name="sort_by_type_gif">GIF</string>
     <string name="sort_by_type_images">Hình ảnh</string>
     <string name="sort_by_type_video">Video</string>
-    <string name="sort_by_type_zip">Zip</string>
+    <string name="sort_by_type_zip">Tệp nén</string>
     <string name="switch_to_tab_description">Chuyển sang thẻ</string>
 <string name="task_decryption_finished">Giải mã hoàn tất</string>
     <string name="task_encryption_finished">Mã hóa hoàn tất</string>

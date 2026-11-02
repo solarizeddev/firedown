@@ -1,4 +1,20 @@
 <resources>
+    <plurals name="archive_banner_title">
+        <item quantity="one">%d hiljuti suletud vaheleht</item>
+        <item quantity="other">%d hiljuti suletud vahelehte</item>
+    </plurals>
+    <plurals name="archive_banner_title_day">
+        <item quantity="one">Täna arhiveeriti %d vaheleht</item>
+        <item quantity="other">Täna arhiveeriti %d vahelehte</item>
+    </plurals>
+    <plurals name="archive_banner_title_month">
+        <item quantity="one">Sel kuul arhiveeriti %d vaheleht</item>
+        <item quantity="other">Sel kuul arhiveeriti %d vahelehte</item>
+    </plurals>
+    <plurals name="archive_banner_title_week">
+        <item quantity="one">Sel nädalal arhiveeriti %d vaheleht</item>
+        <item quantity="other">Sel nädalal arhiveeriti %d vahelehte</item>
+    </plurals>
     <plurals name="complete_delete_files_text">
         <item quantity="other">%1$d faili kustutati</item>
         <item quantity="one">%1$d fail kustutati</item>
@@ -24,5 +40,9 @@
     <plurals name="home_downloads_file_count">
         <item quantity="one">%d salvestatud fail</item>
         <item quantity="other">%d salvestatud faili</item>
+    </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d privaatne vaheleht avatud</item>
+        <item quantity="other">%d privaatset vahelehte avatud</item>
     </plurals>
 </resources>

@@ -1,4 +1,20 @@
 <resources>
+    <plurals name="archive_banner_title">
+        <item quantity="one">%d हाल ही में बंद किया गया टैब</item>
+        <item quantity="other">%d हाल ही में बंद किए गए टैब</item>
+    </plurals>
+    <plurals name="archive_banner_title_day">
+        <item quantity="one">आज %d टैब संग्रहित किया गया</item>
+        <item quantity="other">आज %d टैब संग्रहित किए गए</item>
+    </plurals>
+    <plurals name="archive_banner_title_month">
+        <item quantity="one">इस महीने %d टैब संग्रहित किया गया</item>
+        <item quantity="other">इस महीने %d टैब संग्रहित किए गए</item>
+    </plurals>
+    <plurals name="archive_banner_title_week">
+        <item quantity="one">इस हफ़्ते %d टैब संग्रहित किया गया</item>
+        <item quantity="other">इस हफ़्ते %d टैब संग्रहित किए गए</item>
+    </plurals>
     <plurals name="complete_delete_files_text">
         <item quantity="other">%1$d फ़ाइलें मिटाई गईं</item>
         <item quantity="one">%1$d फ़ाइल मिटाई गई</item>
@@ -24,5 +40,9 @@
     <plurals name="home_downloads_file_count">
         <item quantity="one">%d फ़ाइल सहेजी गई</item>
         <item quantity="other">%d फ़ाइलें सहेजी गईं</item>
+    </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d निजी टैब खुला है</item>
+        <item quantity="other">%d निजी टैब खुले हैं</item>
     </plurals>
 </resources>

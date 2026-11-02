@@ -1,4 +1,28 @@
 <resources>
+    <plurals name="archive_banner_title">
+        <item quantity="one">%d nedávno zavřená karta</item>
+        <item quantity="few">%d nedávno zavřené karty</item>
+        <item quantity="many">%d nedávno zavřené karty</item>
+        <item quantity="other">%d nedávno zavřených karet</item>
+    </plurals>
+    <plurals name="archive_banner_title_day">
+        <item quantity="one">Dnes archivována %d karta</item>
+        <item quantity="few">Dnes archivovány %d karty</item>
+        <item quantity="many">Dnes archivováno %d karty</item>
+        <item quantity="other">Dnes archivováno %d karet</item>
+    </plurals>
+    <plurals name="archive_banner_title_month">
+        <item quantity="one">Tento měsíc archivována %d karta</item>
+        <item quantity="few">Tento měsíc archivovány %d karty</item>
+        <item quantity="many">Tento měsíc archivováno %d karty</item>
+        <item quantity="other">Tento měsíc archivováno %d karet</item>
+    </plurals>
+    <plurals name="archive_banner_title_week">
+        <item quantity="one">Tento týden archivována %d karta</item>
+        <item quantity="few">Tento týden archivovány %d karty</item>
+        <item quantity="many">Tento týden archivováno %d karty</item>
+        <item quantity="other">Tento týden archivováno %d karet</item>
+    </plurals>
     <plurals name="complete_delete_files_text">
         <item quantity="other">Bylo smazáno %1$d souborů</item>
         <item quantity="one">Byl smazán %1$d soubor</item>
@@ -32,5 +56,11 @@
     <plurals name="home_downloads_file_count">
         <item quantity="one">%d uložený soubor</item>
         <item quantity="other">%d uložených souborů</item>
+    </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d otevřená anonymní karta</item>
+        <item quantity="few">%d otevřené anonymní karty</item>
+        <item quantity="many">%d otevřené anonymní karty</item>
+        <item quantity="other">%d otevřených anonymních karet</item>
     </plurals>
 </resources>

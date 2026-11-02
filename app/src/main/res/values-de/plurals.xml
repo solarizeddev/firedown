@@ -41,4 +41,8 @@
         <item quantity="one">%d Datei gespeichert</item>
         <item quantity="other">%d Dateien gespeichert</item>
     </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d privater Tab geöffnet</item>
+        <item quantity="other">%d private Tabs geöffnet</item>
+    </plurals>
 </resources>

@@ -378,7 +378,7 @@
     <string name="sort_by_type_gif">GIF</string>
     <string name="sort_by_type_images">Gambar-gambar</string>
     <string name="sort_by_type_video">Video</string>
-    <string name="sort_by_type_zip">Ritsleting</string>
+    <string name="sort_by_type_zip">Arsip</string>
     <string name="switch_to_tab_description">Pindah ke tab</string>
 <string name="task_decryption_finished">Dekripsi selesai</string>
     <string name="task_encryption_finished">Enkripsi selesai</string>

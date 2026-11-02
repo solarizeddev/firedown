@@ -40,4 +40,9 @@
         <item quantity="one">%d fichier enregistré</item>
         <item quantity="other">%d fichiers enregistrés</item>
     </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d onglet privé ouvert</item>
+        <item quantity="many">%d onglets privés ouverts</item>
+        <item quantity="other">%d onglets privés ouverts</item>
+    </plurals>
 </resources>

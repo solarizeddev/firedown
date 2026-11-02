@@ -41,4 +41,9 @@
         <item quantity="one">%d aba arquivada este mês</item>
         <item quantity="other">%d abas arquivadas este mês</item>
     </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d aba privativa aberta</item>
+        <item quantity="many">%d abas privativas abertas</item>
+        <item quantity="other">%d abas privativas abertas</item>
+    </plurals>
 </resources>

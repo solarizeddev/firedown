@@ -79,4 +79,47 @@
     <string name="prompts_expand_credit_cards_content_description">सुझाए गए क्रेडिट कार्ड का विस्तार करें</string>
     <!-- Option in the expanded select credit card prompt that links to credit cards settings -->
     <string name="prompts_manage_credit_cards">क्रेडिट कार्ड प्रबंधित करें</string>
+    <!-- Negative confirmation that we should not save the new or updated login -->
+    <string name="prompt_dont_save_2">अभी नहीं</string>
+    <!-- Negative confirmation that we should not save the updated login -->
+    <string name="prompt_dont_update_2">अभी नहीं</string>
+    <!-- Error text displayed underneath the password field when it is in an error case -->
+    <string name="prompt_error_empty_password_2">पासवर्ड दर्ज करें</string>
+    <!-- Error text displayed underneath the password field when it is in an error case -->
+    <string name="prompt_error_unknown_cause_2">पासवर्ड सहेजा नहीं जा सकता</string>
+    <!-- Prompt message displayed when app detects a user has entered a new username and password and user decides if app should save the new password. -->
+    <string name="prompt_login_save_headline_2">पासवर्ड सहेजें?</string>
+    <!-- Prompt message displayed when app detects a user has entered a new password for an existing login and user decides if app should update the password. -->
+    <string name="prompt_login_update_headline_2">पासवर्ड अपडेट करें?</string>
+    <!-- Option in expanded select password prompt that links to password settings -->
+    <string name="prompts_manage_logins_2">पासवर्ड प्रबंधित करें</string>
+    <!-- Content description for expanding the saved passwords options in the select password prompt -->
+    <string name="prompts_expand_logins_content_description_2">सहेजे गए पासवर्ड विस्तृत करें</string>
+    <!-- Content description for collapsing the saved passwords options in the select password prompt -->
+    <string name="prompts_collapse_logins_content_description_2">सहेजे गए पासवर्ड संक्षिप्त करें</string>
+    <!-- Header for the select password prompt to allow users to fill a form with a saved password -->
+    <string name="prompts_saved_logins_2">सहेजे गए पासवर्ड</string>
+    <string name="prompt_repost_message">इस पेज को रीफ़्रेश करने से हाल की कार्रवाइयाँ दोहराई जा सकती हैं, जैसे भुगतान भेजना या कोई टिप्पणी दो बार पोस्ट करना।</string>
+    <!-- Header for the select card prompt to allow users to fill a form with a saved card. -->
+    <string name="prompts_select_credit_card_2">सहेजा गया कार्ड इस्तेमाल करें</string>
+    <!-- Content description for expanding the saved card options in the select card prompt. -->
+    <string name="prompts_expand_credit_cards_content_description_2">सहेजे गए कार्ड विस्तृत करें</string>
+    <!-- Content description for collapsing the select credit card options in the select credit prompt. -->
+    <string name="prompts_collapse_credit_cards_content_description">सुझाए गए क्रेडिट कार्ड संक्षिप्त करें</string>
+    <!-- Content description for collapsing the saved card options in the select prompt. -->
+    <string name="prompts_collapse_credit_cards_content_description_2">सहेजे गए कार्ड संक्षिप्त करें</string>
+    <!-- Option in the expanded select card prompt that links to cards settings. -->
+    <string name="prompts_manage_credit_cards_2">कार्ड प्रबंधित करें</string>
+    <!-- Subtitle text displayed under the title of the save credit card dialog. -->
+    <string name="prompts_save_credit_card_prompt_body">कार्ड नंबर एन्क्रिप्ट किया जाएगा। सुरक्षा कोड सहेजा नहीं जाएगा।</string>
+    <!-- Subtitle text displayed under the title of the saved card dialog. Parameter will be replaced by app name -->
+    <string name="prompts_save_credit_card_prompt_body_2">%s आपका कार्ड नंबर एन्क्रिप्ट करता है। आपका सुरक्षा कोड सहेजा नहीं जाएगा।</string>
+    <!-- Content description for expanding the select addresses options in the select address prompt. -->
+    <string name="prompts_expand_address_content_description">सुझाए गए पते विस्तृत करें</string>
+    <!-- Content description for expanding the saved addresses options in the select address prompt. -->
+    <string name="prompts_expand_address_content_description_2">सहेजे गए पते विस्तृत करें</string>
+    <!-- Content description for collapsing the select address options in the select address prompt. -->
+    <string name="prompts_collapse_address_content_description">सुझाए गए पते संक्षिप्त करें</string>
+    <!-- Content description for collapsing the saved address options in the select address prompt. -->
+    <string name="prompts_collapse_address_content_description_2">सहेजे गए पते संक्षिप्त करें</string>
 </resources>

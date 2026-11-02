@@ -1,4 +1,28 @@
 <resources>
+    <plurals name="archive_banner_title">
+        <item quantity="one">%d нещодавно закрита вкладка</item>
+        <item quantity="few">%d нещодавно закриті вкладки</item>
+        <item quantity="many">%d нещодавно закритих вкладок</item>
+        <item quantity="other">%d нещодавно закритої вкладки</item>
+    </plurals>
+    <plurals name="archive_banner_title_day">
+        <item quantity="one">%d вкладку архівовано сьогодні</item>
+        <item quantity="few">%d вкладки архівовано сьогодні</item>
+        <item quantity="many">%d вкладок архівовано сьогодні</item>
+        <item quantity="other">%d вкладки архівовано сьогодні</item>
+    </plurals>
+    <plurals name="archive_banner_title_month">
+        <item quantity="one">%d вкладку архівовано цього місяця</item>
+        <item quantity="few">%d вкладки архівовано цього місяця</item>
+        <item quantity="many">%d вкладок архівовано цього місяця</item>
+        <item quantity="other">%d вкладки архівовано цього місяця</item>
+    </plurals>
+    <plurals name="archive_banner_title_week">
+        <item quantity="one">%d вкладку архівовано цього тижня</item>
+        <item quantity="few">%d вкладки архівовано цього тижня</item>
+        <item quantity="many">%d вкладок архівовано цього тижня</item>
+        <item quantity="other">%d вкладки архівовано цього тижня</item>
+    </plurals>
     <plurals name="complete_delete_files_text">
         <item quantity="other">Видалено %1$d файлу</item>
         <item quantity="one">Видалено %1$d файл</item>
@@ -32,5 +56,11 @@
     <plurals name="home_downloads_file_count">
         <item quantity="one">%d файл збережено</item>
         <item quantity="other">%d файлів збережено</item>
+    </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d приватна вкладка відкрита</item>
+        <item quantity="few">%d приватні вкладки відкриті</item>
+        <item quantity="many">%d приватних вкладок відкрито</item>
+        <item quantity="other">%d приватної вкладки відкрито</item>
     </plurals>
 </resources>
