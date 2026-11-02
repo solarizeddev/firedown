@@ -4436,7 +4436,8 @@ is **~75 MB**, the APK 205 MB.
   `-Pfiredown.updateDeltas=false` (skip the `.xz` and patches — status.json
   then lists neither; the previous release's blocks are always dropped, never
   carried over), `-Pfiredown.updateMirror` (default
-  `https://www.firedown.app/updates`, listed after GitHub). XZ for Java's
+  `https://www.firedown.app/updates`, listed after GitHub; filled by
+  `scripts/publish-release.sh`). XZ for Java's
   version is ONE property, `firedown.xzVersion` in gradle.properties, used by
   the app dependency and the release tool alike.
 - **DownloadManager rows don't pile up**: `markReady` removes a patch / `.xz`
@@ -4619,9 +4620,27 @@ tasks, not hand edits:
   `app/build/outputs/update/v<name>/`. **`./gradlew uploadUpdateRelease`**
   uploads that folder to the GitHub release with `gh` (creating it as a DRAFT
   with the changelog as notes when missing; publishing stays a click on
-  GitHub). The release steps are: build the signed APK → `uploadUpdateRelease`
-  → copy the APK to the F-Droid repo and the `.xz`/patches to the mirror
-  (it prints which) → commit status.json AND release-history.json.
+  GitHub).
+- **`scripts/publish-release.sh` publishes a built release, in the order
+  phones need it** (it replaced a list of manual steps): `uploadUpdateRelease`
+  and the draft published after asking (a draft's files answer 404 to
+  phones); the F-Droid repo through `publish.sh` in the local firedown-fdroid
+  folder (`FDROID_DIR`, default `../firedown-fdroid`: it renames the APK,
+  signs the index, syncs and asks first); the `.xz` and patches copied to
+  `<SITE_PATH>/updates/` on the server with the login `publish.sh`'s `.env`
+  names (older releases' files removed, each file's SHA-256 checked on the
+  server); then, once every URL in status.json answers 200 with its size and
+  after one last question, status.json and release-history.json committed and
+  pushed to firedown's main and status.json to the website's main
+  (`WEBSITE_DIR`, default `../firedown-website`), whose push deploys; last it
+  waits until `www.firedown.app/status.json` serves the new versionCode. Every
+  step can run again; `--from STEP` resumes. **The mirror needs the website's
+  deploy to leave `/updates/` alone**: its rsync runs with `--delete`, so
+  without `--exclude='/updates/'` beside `/fdroid/` in `deploy.yml` every
+  website push deletes the mirror, and the script refuses to mirror until it
+  is there. Verify with `bash scripts/publish-release/selftest.sh` (a
+  simulated GitHub, server, `publish.sh`, ssh and rsync, real git remotes; 62
+  checks, and four planted faults that must each be caught).
 
 ### CHANGELOG entries — short, important changes only (HARD RULE)
 

@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+# Stand-in for rsync in the publish-release self-test: the subset the script
+# uses (-r, --delete, --include/--exclude first-match rules, a flat folder)
+# to "host:path", which is a local path in the simulated world.
+# FAKE_RSYNC_CORRUPT=<file name> writes that file with different bytes.
+import fnmatch
+import os
+import shutil
+import sys
+
+world = os.environ["FAKE_WORLD"]
+rules, delete, paths = [], False, []
+for a in sys.argv[1:]:
+    if a.startswith("--include="):
+        rules.append((True, a.split("=", 1)[1].strip("'")))
+    elif a.startswith("--exclude="):
+        rules.append((False, a.split("=", 1)[1].strip("'")))
+    elif a == "--delete":
+        delete = True
+    elif not a.startswith("-"):
+        paths.append(a)
+src, dest = paths[-2], paths[-1]
+host, dest = dest.split(":", 1)
+with open(os.path.join(world, "events"), "a") as log:
+    log.write("rsync %s %s\n" % (host, dest))
+
+
+def included(name):
+    for inc, pat in rules:
+        if fnmatch.fnmatch(name, pat):
+            return inc
+    return True
+
+
+os.makedirs(dest, exist_ok=True)
+sent = set()
+for name in sorted(os.listdir(src)):
+    if not os.path.isfile(os.path.join(src, name)) or not included(name):
+        continue
+    sent.add(name)
+    if os.environ.get("FAKE_RSYNC_CORRUPT") == name:
+        with open(os.path.join(dest, name), "wb") as f:
+            f.write(b"not the file")
+    else:
+        shutil.copyfile(os.path.join(src, name), os.path.join(dest, name))
+    print(name)
+if delete:
+    for name in sorted(os.listdir(dest)):
+        if name not in sent and included(name) and os.path.isfile(os.path.join(dest, name)):
+            os.remove(os.path.join(dest, name))
+            print("deleting " + name)

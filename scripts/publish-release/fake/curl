@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+# Stand-in for curl in the publish-release self-test. Serves the simulated
+# world under $FAKE_WORLD:
+#   GitHub release files  github/v<name>/<file>   (404 while github/v<name>.draft exists)
+#   the website           server/www/<path>       (/status.json is the website
+#                                                  remote's main: the deploy is instant)
+# Only the two shapes publish-release.sh uses: -sSIL (HEAD, following
+# redirects) and -fsS (GET).
+import os
+import subprocess
+import sys
+
+world = os.environ["FAKE_WORLD"]
+args = sys.argv[1:]
+head = any(a.startswith("-") and not a.startswith("--") and "I" in a for a in args)
+url = [a for a in args if a.startswith("http")][-1]
+with open(os.path.join(world, "events"), "a") as log:
+    log.write(("HEAD " if head else "GET ") + url + "\n")
+
+GITHUB = "https://github.com/solarizeddev/firedown/releases/download/"
+SITE = "https://www.firedown.app/"
+
+
+def body_of(u):
+    """The bytes the URL serves, or None (404)."""
+    path = u.split("?", 1)[0]
+    if path.startswith(GITHUB):
+        tag, name = path[len(GITHUB):].split("/", 1)
+        if os.path.exists(os.path.join(world, "github", tag + ".draft")):
+            return None
+        f = os.path.join(world, "github", tag, name)
+    elif path == SITE + "status.json":
+        r = subprocess.run(["git", "--git-dir", os.path.join(world, "web-origin.git"), "show", "main:status.json"],
+                           capture_output=True)
+        return r.stdout if r.returncode == 0 else None
+    elif path.startswith(SITE):
+        f = os.path.join(world, "server", "www", path[len(SITE):])
+    else:
+        return None
+    if not os.path.isfile(f):
+        return None
+    with open(f, "rb") as fh:
+        return fh.read()
+
+
+body = body_of(url)
+if head:
+    out = ""
+    if url.startswith(GITHUB) and body is not None:
+        out += "HTTP/2 302\r\nlocation: https://objects.example/x\r\ncontent-length: 0\r\n\r\n"
+    if body is None:
+        out += "HTTP/2 404\r\ncontent-length: 9\r\n\r\n"
+    else:
+        out += "HTTP/2 200\r\ncontent-length: %d\r\n\r\n" % len(body)
+    sys.stdout.write(out)
+    sys.exit(0)
+if body is None:
+    sys.stderr.write("curl: (22) The requested URL returned error: 404\n")
+    sys.exit(22)
+sys.stdout.buffer.write(body)

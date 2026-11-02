@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Stand-in for ./gradlew in the publish-release self-test: uploadUpdateRelease
+# copies the update folder into the simulated GitHub release, creating it as
+# a draft when it does not exist (what the real task does with gh).
+printf 'gradlew %s\n' "$*" >> "$FAKE_WORLD/events"
+[ "$1" = uploadUpdateRelease ] || { echo "fake gradlew: unexpected: $*" >&2; exit 2; }
+name=$(awk '$1 == "versionName" { gsub(/"/, "", $2); print $2; exit }' app/build.gradle)
+dir=$FAKE_WORLD/github/v$name
+if [ ! -d "$dir" ]; then
+    mkdir -p "$dir"
+    : > "$dir.draft"
+fi
+cp app/build/outputs/update/v"$name"/* "$dir"/
+echo "Uploaded to v$name"

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Stand-in for ssh in the publish-release self-test: runs the command here
+# (the simulated server's paths are local paths). FAKE_SSH_DOWN=1 refuses.
+host=''
+while [ $# -gt 0 ]; do
+    case $1 in
+        -o) shift 2 ;;
+        -*) shift ;;
+        *) host=$1; shift; break ;;
+    esac
+done
+printf 'ssh %s %s\n' "$host" "$*" >> "$FAKE_WORLD/events"
+if [ "${FAKE_SSH_DOWN:-0}" = 1 ]; then
+    echo "ssh: connect to host ${host#*@}: Connection refused" >&2
+    exit 255
+fi
+exec bash -c "$*"

@@ -206,6 +206,12 @@ tasks.register('bumpVersion') {
 //       exist; publishing stays a deliberate step on GitHub), and prints what
 //       to copy to the mirror. Same rule as before: commit status.json and
 //       release-history.json only once the files are up.
+//
+//   scripts/publish-release.sh
+//       The whole release after the build, in that order: this upload and
+//       the draft published, the F-Droid repo (its publish.sh), the .xz and
+//       patches to the mirror (checked on the server), then status.json to
+//       firedown's main and the website. Checks every URL first; resumable.
 
 def releaseHistoryFile = rootProject.file('release-history.json')
 def maxPatches = 3
@@ -586,7 +592,8 @@ tasks.register('uploadUpdateRelease') {
         logger.lifecycle("Uploaded to ${repo} ${tag}: ${files*.name.join(', ')}")
         List<File> mirrored = files.findAll { it.name.endsWith('.xz') || it.name.endsWith('.fdpatch') }
         if (mirror && !mirrored.isEmpty()) {
-            logger.lifecycle("Also copy ${mirrored*.name.join(', ')} to ${mirror}/ (status.json lists it as the mirror).")
+            logger.lifecycle("Also copy ${mirrored*.name.join(', ')} to ${mirror}/ (status.json lists it as the mirror): " +
+                    "scripts/publish-release.sh does that and the rest of the release.")
         }
         logger.lifecycle("Then commit status.json and release-history.json.")
     }

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Stand-in for gh in the publish-release self-test. A release is the folder
+# $FAKE_WORLD/github/<tag>; it is a draft while <tag>.draft exists.
+printf 'gh %s\n' "$*" >> "$FAKE_WORLD/events"
+case "$1 $2" in
+    "auth status") exit 0 ;;
+    "release view")
+        [ -d "$FAKE_WORLD/github/$3" ] || { echo "release not found" >&2; exit 1; }
+        if [ -e "$FAKE_WORLD/github/$3.draft" ]; then echo true; else echo false; fi
+        ;;
+    "release edit")
+        [ -d "$FAKE_WORLD/github/$3" ] || { echo "release not found" >&2; exit 1; }
+        case " $* " in
+            *" --draft=false "*) rm -f "$FAKE_WORLD/github/$3.draft" ;;
+        esac
+        ;;
+    *) echo "fake gh: unexpected: $*" >&2; exit 2 ;;
+esac
