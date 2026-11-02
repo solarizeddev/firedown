@@ -5,8 +5,9 @@
       identity header  — favicon tile + title + host (the site anchor; stays
                          above the scroller as the drag zone)
       group 1          — Connection is secure / not secure  › (cert details)
-      group 2          — N blocked on this page            › (the hosts)
-                         one row per ad blocker (add-on)   › (its popup)
+      group 2          — N requests blocked on this page   › (the hosts)
+                         one row per ad blocker (add-on)   › (its popup),
+                         each with a status line and no count of its own
                          or "No ad blocker is on   [Turn on]"
       hint             — "Two ad blockers are on…" when more than one runs
       group 3          — Clear browsing data               ›
@@ -165,11 +166,17 @@
                 android:layout_marginTop="@dimen/sheet_group_gap"
                 android:orientation="vertical">
 
-                <!-- Blocked on this page — "[N] blocked on this page ›", drills
-                     into the page's refused hosts
-                     (BlockedAdsDetailDialogFragment). security_total_count holds
-                     the number; it is onSurface, not coral: the brand coral on
-                     this ground is under 3:1 for 16sp text in light theme. -->
+                <!-- "N requests blocked on this page ›", drills into the page's
+                     refused hosts (BlockedAdsDetailDialogFragment). ONE line
+                     from the blocked_ads_summary plural (the number set in
+                     bold by the fragment), so the words agree with the count
+                     in every language. It is the only number in the group:
+                     the blocker rows below carry no count of their own, an
+                     add-on's badge measures something else (trackers, or
+                     redirects this count never sees) and side by side the
+                     numbers read as a sum that does not add up. onSurface,
+                     not coral: the brand coral on this ground is under 3:1
+                     for 16sp text in light theme. -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/ads_stat_card"
                     style="@style/Firedown.Widget.SheetRowCard"
@@ -195,23 +202,15 @@
                         <TextView
                             android:id="@+id/security_total_count"
                             style="@style/TextAppearance.Material3.TitleMedium"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFeatureSettings="tnum"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textStyle="bold"
-                            tools:text="7" />
-
-                        <TextView
-                            style="@style/TextAppearance.Material3.TitleMedium"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
                             android:layout_weight="1"
                             android:ellipsize="end"
-                            android:maxLines="1"
-                            android:text="@string/security_stat_blocked_scope"
-                            android:textColor="?attr/colorOnSurface" />
+                            android:fontFeatureSettings="tnum"
+                            android:maxLines="2"
+                            android:paddingVertical="8dp"
+                            android:textColor="?attr/colorOnSurface"
+                            tools:text="27 requests blocked on this page" />
 
                         <androidx.appcompat.widget.AppCompatImageView
                             android:layout_width="24dp"

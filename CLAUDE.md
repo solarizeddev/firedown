@@ -317,14 +317,25 @@ user runs (sketch: `sketches/shield-blockers.html`).
   regular AND private tabs (the private toolbar used to show the full
   shield always).
 - **The sheet** (`SecurityStateSheetDialogFragment`): the connection row;
-  then "N blocked on this page ›" followed by one row per blocker
-  (`item_blocker_row`, uBlock first: its name, "On for this site" / "Off for
-  this site" for uBlock, its own badge count, a tap opens its popup — where
-  uBlock's per-site switch lives); a blocker not allowed in a private tab
-  says so with "Allow"; with none running, "No ad blocker is on · Ads and
-  trackers load on this page · Turn on". More than one running adds one
-  quiet line (no warning colour: the user chose it). Rows are updated in
-  place, as in the ⋮ Add-ons sheet (counts change many times a page).
+  then "N requests blocked on this page ›" (one line from the
+  `blocked_ads_summary` plural, the number in bold) followed by one row per
+  blocker (`item_blocker_row`, uBlock first: its name on ONE line, a status
+  line on EVERY row — "On for this site" / "Off for this site" for uBlock,
+  "On" for any other, enabled being all that can be read of it — a tap
+  opens its popup, where uBlock's per-site switch lives); a blocker not
+  allowed in a private tab says so with "Allow"; with none running, "No ad
+  blocker is on · Ads and trackers load on this page · Turn on". More than
+  one running adds one quiet line (no warning colour: the user chose it).
+  Rows are updated in place, as in the ⋮ Add-ons sheet (titles change many
+  times a page). **The page total is the sheet's ONLY number** (canvas
+  `sketches/shield-sheet-numbers.html`, option A): each row used to carry
+  its add-on's own badge, and on-device "27 blocked" sat above "uBlock
+  Origin 31" and "Ghostery 22" — uBlock's badge also counts the redirects
+  this counter never sees, Ghostery's counts trackers — which read as a
+  sum that does not add up, with no room on the sheet to explain it. The
+  badge is in each add-on's popup, one tap away. Don't put a count back on
+  a blocker row; nothing here can split the total between blockers either
+  (the counter sees that a request was cancelled, not by whom).
 - **The counts are blocker-neutral** (`webrequests/js/blocked-stats.js`):
   the capture extension sees every request a blocker refuses —
   onErrorOccurred `NS_ERROR_ABORT` for an extension's cancel, a classifier
@@ -341,8 +352,8 @@ user runs (sketch: `sketches/shield-blockers.html`).
   message. One message kind, `listener: "blockedStats"`, over the
   `"browser"` app; Java drops a page tally for a tab that is not the one on
   screen. A redirect to a neutered resource is not counted (no error fires),
-  which uBlock's own number does count, so the two differ slightly. The
-  per-add-on number on a row is the add-on's own badge and is never summed.
+  which uBlock's own number does count, so the two differ slightly (one
+  reason the sheet shows no per-add-on number beside the total).
   Pinned by the smoke's `blocked-stats:` section (mutants: unknown mode
   counted as regular, a refused document counted, a sub-frame commit
   resetting the page, the flush not asking the mode — each fails it).
@@ -11279,9 +11290,9 @@ and update **all** locale files, not just English.
 `SecurityStateSheetDialogFragment` (`fragment_dialog_security.xml`, the
 shield tap): "Connection is secure ›" (first row under the identity header
 — it is the page's most important fact and drills into the certificate),
-then "N blocked on this page ›" (the capture extension's blocker-neutral
-per-page tally → `BlockedAdsDetailDialogFragment`) grouped with ONE ROW PER
-AD BLOCKER add-on (uBlock Origin first; a tap opens its popup, where its
+then "N requests blocked on this page ›" (the capture extension's
+blocker-neutral per-page tally → `BlockedAdsDetailDialogFragment`, the
+sheet's only number) grouped with ONE ROW PER AD BLOCKER add-on (uBlock Origin first; a tap opens its popup, where its
 per-site switch lives) or "No ad blocker is on · Turn on", and "Clear
 browsing data ›". The **"Block ads and trackers" switch is GONE** with the
 patched uBlock it talked to — see "Blockers behind the shield" for the

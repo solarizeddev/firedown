@@ -399,7 +399,6 @@
         <item quantity="other">%d verzoeken geblokkeerd op deze pagina</item>
     </plurals>
     <string name="security_block_ads_trackers">Advertenties en trackers blokkeren</string>
-    <string name="security_stat_blocked_scope">geblokkeerd op deze pagina</string>
     <string name="tabs_incognito_empty">Geen privétabbladen</string>
     <string name="compress">Comprimeren</string>
     <string name="media_tools">Mediahulpmiddelen</string>

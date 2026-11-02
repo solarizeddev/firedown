@@ -325,7 +325,6 @@
         <item quantity="other">%d solicitações bloqueadas nesta página</item>
     </plurals>
     <string name="security_block_ads_trackers">Bloquear anúncios e rastreadores</string>
-    <string name="security_stat_blocked_scope">bloqueado nesta página</string>
     <string name="tabs_incognito_empty">Sem separadores privados</string>
     <string name="settings_oled_theme">Preto AMOLED</string>
     <string name="settings_oled_theme_summary">Superfícies pretas puras. Economiza bateria em telas OLED</string>

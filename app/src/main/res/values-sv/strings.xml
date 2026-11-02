@@ -240,7 +240,6 @@
         <item quantity="other">%d begäranden blockerade på denna sida</item>
     </plurals>
     <string name="security_block_ads_trackers">Blockera annonser och spårare</string>
-    <string name="security_stat_blocked_scope">blockerat på den här sidan</string>
     <string name="tabs_incognito_empty">Inga privata flikar</string>
     <string name="browser_menu_back">Tillbaka</string>
     <string name="browser_menu_bookmark_this_page_2">Bokmärk sida</string>

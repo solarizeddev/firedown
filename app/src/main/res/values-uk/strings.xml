@@ -349,7 +349,12 @@
     <string name="trackers_info_stat_blocked">Заблоковано</string>
     <string name="trackers_info_stat_saved">Заощаджено</string>
     <string name="tabs_incognito_empty">Немає приватних вкладок</string>
-    <string name="security_stat_blocked_scope">заблоковано на цій сторінці</string>
+    <plurals name="blocked_ads_summary">
+        <item quantity="one">%d запит заблоковано на цій сторінці</item>
+        <item quantity="few">%d запити заблоковано на цій сторінці</item>
+        <item quantity="many">%d запитів заблоковано на цій сторінці</item>
+        <item quantity="other">%d запиту заблоковано на цій сторінці</item>
+    </plurals>
     <string name="capture_help_menu">Довідка</string>
     <string name="capture_help_banner_title">Відео немає у списку?</string>
     <string name="capture_help_banner">Деякі вбудовані медіа потрібно спочатку відтворити. Торкніться, щоб дізнатися як.</string>

@@ -368,7 +368,6 @@
         <item quantity="other">%d pyyntöä estetty tällä sivulla</item>
     </plurals>
     <string name="security_block_ads_trackers">Estä mainokset ja seuraimet</string>
-    <string name="security_stat_blocked_scope">estetty tällä sivulla</string>
     <string name="tabs_incognito_empty">Ei yksityisiä välilehtiä</string>
     <string name="compress">Pakkaa</string>
     <string name="media_tools">Mediatyökalut</string>

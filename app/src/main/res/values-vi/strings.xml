@@ -271,7 +271,9 @@
     <string name="trackers_info_stat_blocked">Đã chặn</string>
     <string name="trackers_info_stat_saved">Dữ liệu đã lưu</string>
     <string name="tabs_incognito_empty">Không có thẻ riêng tư</string>
-    <string name="security_stat_blocked_scope">bị chặn trên trang này</string>
+    <plurals name="blocked_ads_summary">
+        <item quantity="other">Đã chặn %d yêu cầu trên trang này</item>
+    </plurals>
     <string name="capture_help_menu">Trợ giúp</string>
     <string name="capture_help_banner_title">Không thấy video?</string>
     <string name="capture_help_banner">Một số nội dung nhúng phải được phát trước. Nhấn để tìm hiểu cách.</string>

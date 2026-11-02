@@ -299,7 +299,6 @@
         <item quantity="other">%d anmodninger blokeret på denne side</item>
     </plurals>
     <string name="security_block_ads_trackers">Bloker reklamer og trackere</string>
-    <string name="security_stat_blocked_scope">blokeret på denne side</string>
     <string name="tabs_incognito_empty">Ingen private faner</string>
     <string name="compress">Komprimér</string>
     <string name="download_saving_compress">Komprimerer, vent venligst…</string>
