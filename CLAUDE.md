@@ -4249,11 +4249,26 @@ before changing a flow. The rules, each easy to undo:
   `AddonPermissionText`), with the data-collection line and, when the
   add-on declares it, Firefox's opt-in to share technical and interaction
   data (off by default, the third `PermissionPromptResponse` value).
-- **Updates: daily while the app runs, never a background job.** One minute
-  after attach, at most once a day (`checkForUpdates(false)`); an update
-  asking for new permissions is refused in the background and the add-on
-  marked "Update needs your review" until the user taps it (interactive
-  check → the update prompt). Gecko itself is never booted for this.
+- **Updates: daily while the app runs, never a background job.** A minute
+  after attach, then looked at every hour (`mUpdateTick`, on the handler's
+  uptime clock, so a sleeping phone is never woken and the next look after
+  it wakes catches up), a check runs once a day has passed since the last
+  one (`checkForUpdates(false)`; a "last check" in the future is a clock
+  that moved back and counts as due). It used to run only once per app
+  start, so a process left running for days never checked again. Updates
+  that ask nothing install silently. One asking for new permissions is
+  refused in the background, the add-on marked "Update needs your review",
+  and **a notification says so once per add-on and update**
+  (`AddonUpdateNotification`, the Updates channel, Firefox for Android's
+  "new permissions" notification): for one add-on its tap opens that
+  add-on's page AND asks again as the user's check
+  (`SettingsActivity.EXTRA_REVIEW_ADDON_UPDATE` → `reviewUpdate`, held
+  until the add-on list is loaded), so the permission question comes up at
+  once; for several it opens Settings → Add-ons. The mark is what stops a
+  repeat (the next daily check finds it already marked), and the
+  notification goes when nothing waits. Declining keeps the mark, so a
+  declined update is not asked about again every day. Gecko itself is
+  never booted for this.
 - **Optional permissions are the user's to take back**, as in Firefox:
   the add-on's page lists each optional permission, site and data kind it
   declares as a switch, on when granted (`setOptionalPermission` →

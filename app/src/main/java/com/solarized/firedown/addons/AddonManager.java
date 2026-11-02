@@ -91,6 +91,8 @@ public class AddonManager {
     private static final String PREF_LAST_UPDATE_CHECK = "com.solarized.firedown.addons.update.last";
     private static final String PREF_UPDATE_REVIEW = "com.solarized.firedown.addons.update.review";
     private static final long UPDATE_INTERVAL_MS = TimeUnit.DAYS.toMillis(1);
+    /** While the app runs, whether a check is due is looked at this often (uptime: a sleeping phone is not woken). */
+    private static final long UPDATE_POLL_MS = TimeUnit.HOURS.toMillis(1);
     /** Let the browser finish starting before the daily update check. */
     private static final long UPDATE_DELAY_MS = TimeUnit.MINUTES.toMillis(1);
     /** A site whose add-on the user declined is not asked about again for this long. */
@@ -323,7 +325,9 @@ public class AddonManager {
     private boolean mPageInstallInFlight;
     /** Host → when the user declined an add-on from it; its links are ignored for a while. */
     private final Map<String, Long> mDeclinedHosts = new HashMap<>();
-    private boolean mUpdateCheckPosted;
+    private boolean mUpdateTicking;
+    /** An update review asked for (the notification's tap) before the runtime was there. */
+    @Nullable private String mPendingReview;
     private int mPromptSeq;
     private boolean mBrowsingPrivate;
     private boolean mLoaded;
@@ -385,6 +389,11 @@ public class AddonManager {
                 publish();
                 scheduleUpdateCheck();
                 ensureUblock(controller, legacyUblock);
+                if (mPendingReview != null) {
+                    String id = mPendingReview;
+                    mPendingReview = null;
+                    reviewUpdate(id);
+                }
             }, e -> {
                 if (BuildConfig.DEBUG) {
                     Log.e(TAG, "list() failed", e);
@@ -1356,19 +1365,48 @@ public class AddonManager {
         }
     }
 
+    /**
+     * The daily check, for as long as the app runs: a minute after start,
+     * then looked at every hour, run once a day has passed since the last
+     * check (any check, the user's too). The hourly look is on the handler's
+     * uptime clock, so a sleeping phone is never woken for it; the next look
+     * after it wakes catches up. Firedown runs no background job for this.
+     */
     private void scheduleUpdateCheck() {
-        if (mInstalled.isEmpty() || mUpdateCheckPosted) {
+        if (mInstalled.isEmpty() || mUpdateTicking) {
+            return;
+        }
+        mUpdateTicking = true;
+        mMain.postDelayed(mUpdateTick, UPDATE_DELAY_MS);
+    }
+
+    private final Runnable mUpdateTick = this::onUpdateTick;
+
+    private void onUpdateTick() {
+        if (mInstalled.isEmpty()) {
+            mUpdateTicking = false;
             return;
         }
         long last = mPrefs.getLong(PREF_LAST_UPDATE_CHECK, 0L);
-        if (System.currentTimeMillis() - last < UPDATE_INTERVAL_MS) {
+        long now = System.currentTimeMillis();
+        // A last check in the future is a clock that moved back: check now.
+        if (now - last >= UPDATE_INTERVAL_MS || now < last) {
+            checkForUpdates(false, null);
+        }
+        mMain.postDelayed(mUpdateTick, UPDATE_POLL_MS);
+    }
+
+    /**
+     * The review notification's tap: the update asked for again, as the
+     * user's own check, so its permission question is put to them.
+     */
+    @UiThread
+    public void reviewUpdate(@NonNull String id) {
+        if (mRuntime == null || !mLoaded) {
+            mPendingReview = id;
             return;
         }
-        mUpdateCheckPosted = true;
-        mMain.postDelayed(() -> {
-            mUpdateCheckPosted = false;
-            checkForUpdates(false, null);
-        }, UPDATE_DELAY_MS);
+        checkForUpdates(true, id);
     }
 
     private void markReview(@NonNull String id) {
@@ -1376,6 +1414,9 @@ public class AddonManager {
         if (ids.add(id)) {
             mPrefs.edit().putStringSet(PREF_UPDATE_REVIEW, ids).apply();
             publish();
+            // Once per add-on and update: the daily check that finds it again
+            // finds it already marked and says nothing.
+            AddonUpdateNotification.show(mContext, reviewNames(ids), ids.size() == 1 ? id : null);
         }
     }
 
@@ -1383,7 +1424,22 @@ public class AddonManager {
         Set<String> ids = new HashSet<>(mPrefs.getStringSet(PREF_UPDATE_REVIEW, Collections.emptySet()));
         if (ids.remove(id)) {
             mPrefs.edit().putStringSet(PREF_UPDATE_REVIEW, ids).apply();
+            if (ids.isEmpty()) {
+                AddonUpdateNotification.cancel(mContext);
+            }
         }
+    }
+
+    /** The names of the add-ons whose update waits for the user, for the notification. */
+    @NonNull
+    private List<String> reviewNames(@NonNull Set<String> ids) {
+        List<String> names = new ArrayList<>();
+        for (String id : ids) {
+            WebExtension extension = mInstalled.get(id);
+            names.add(extension == null ? id : AddonInfo.from(extension).name);
+        }
+        Collections.sort(names, String::compareToIgnoreCase);
+        return names;
     }
 
     // ── Prompts ─────────────────────────────────────────────────────────
