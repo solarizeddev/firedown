@@ -79,6 +79,8 @@ public class PopupHomeSheetDialogFragment extends BaseBottomSheetDialogFragment
     private void bindRows() {
         mView.findViewById(R.id.popup_sync).setOnClickListener(this);
         mView.findViewById(R.id.popup_settings).setOnClickListener(this);
+        // No page on home: Add-ons is the door to Settings → Add-ons.
+        mView.findViewById(R.id.popup_addons).setOnClickListener(v -> dispatch(R.id.addon_actions_manage));
         mView.findViewById(R.id.popup_quit).setOnClickListener(this);
         mView.findViewById(R.id.popup_history).setOnClickListener(this);
         mView.findViewById(R.id.popup_vault).setOnClickListener(this);
