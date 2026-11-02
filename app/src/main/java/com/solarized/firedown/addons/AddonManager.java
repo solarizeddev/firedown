@@ -309,6 +309,8 @@ public class AddonManager {
     private final Map<String, WebExtension> mInstalled = new LinkedHashMap<>();
     private final Map<String, ActionState> mActions = new HashMap<>();
     private final Set<GeckoSession> mSessions = Collections.newSetFromMap(new WeakHashMap<>());
+    /** Sessions showing an add-on's own pages (its popup, its options page) → the add-on's id. */
+    private final Map<GeckoSession, String> mPageSessions = new WeakHashMap<>();
     private final ArrayDeque<Prompt> mPromptQueue = new ArrayDeque<>();
     private final Map<String, InstallContext> mInstallContexts = new HashMap<>();
     @Nullable private InstallContext mLastFileContext;
@@ -1652,6 +1654,7 @@ public class AddonManager {
         session.setContentDelegate(mPopupContentDelegate);
         session.setNavigationDelegate(mPopupNavigationDelegate);
         session.open(runtime);
+        mPageSessions.put(session, extension.id);
         Popup popup = new Popup(extension.id, AddonInfo.from(extension).name, session);
         mPopup.setValue(popup);
         return GeckoResult.fromValue(session);
@@ -1709,13 +1712,29 @@ public class AddonManager {
         @Override
         public GeckoResult<GeckoSession> onNewSession(@NonNull GeckoSession session, @NonNull String uri) {
             String lower = uri.toLowerCase(Locale.ROOT);
-            if (lower.startsWith("http://") || lower.startsWith("https://")) {
+            // A web link, or a link to one of the add-on's own pages opened
+            // in a new window: on Android Ghostery's "Enable Ghostery" is a
+            // target=_blank link to its onboarding page (its openHref), and
+            // the add-on does nothing until that page is done.
+            if (lower.startsWith("http://") || lower.startsWith("https://") || isOwnPage(session, uri)) {
                 openWebTab(uri);
                 closePopupOf(session);
             }
             return null;
         }
     };
+
+    /** {@code uri} is a page of the add-on that {@code session} shows. */
+    private boolean isOwnPage(@NonNull GeckoSession session, @NonNull String uri) {
+        String id = mPageSessions.get(session);
+        WebExtension extension = id == null ? null : mInstalled.get(id);
+        if (extension == null) {
+            return false;
+        }
+        String base = extension.metaData.baseUrl;
+        return uri.toLowerCase(Locale.ROOT).startsWith("moz-extension://")
+                && AddonPolicy.mayLoadInTab(uri, base);
+    }
 
     private void closePopupOf(@NonNull GeckoSession session) {
         Popup popup = mPopup.getValue();
@@ -1880,7 +1899,7 @@ public class AddonManager {
         }
     }
 
-    /** A web link from a popup: a new tab in the mode on screen, opened the usual way. */
+    /** A link from a popup or options page (a web page, or the add-on's own): a new tab in the mode on screen. */
     private void openWebTab(@NonNull String url) {
         GeckoStateEntity entity = new GeckoStateEntity(false);
         entity.setUri(url);
@@ -1920,6 +1939,7 @@ public class AddonManager {
         GeckoSession session = new GeckoSession(new GeckoSessionSettings.Builder().build());
         session.setNavigationDelegate(mPopupNavigationDelegate);
         session.open(runtime);
+        mPageSessions.put(session, id);
         registerSession(session);
         session.loadUri(info.optionsPageUrl);
         return session;
