@@ -1055,4 +1055,6 @@
     <string name="tabs_close_all_action">すべて閉じる</string>
     <string name="tab_crashed_again">このページは繰り返しクラッシュしています</string>
     <string name="tab_crashed_reload">再読み込み</string>
+    <string name="settings_reject_cookie_banners_title">Cookie バナーを拒否</string>
+    <string name="settings_reject_cookie_banners_summary">同意ポップアップに可能な限り「拒否」で答え、それ以外は非表示にします</string>
 </resources>

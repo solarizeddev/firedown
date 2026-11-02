@@ -1,0 +1,30 @@
+{
+  "manifest_version": 2,
+  "name": "Firedown cookie banners",
+  "description": "Answers cookie consent pop-ups with reject, using DuckDuckGo's autoconsent",
+  "version": "1.0",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "consent@solarized.dev"
+    }
+  },
+  "permissions": [
+    "nativeMessaging",
+    "geckoViewAddons",
+    "scripting",
+    "tabs",
+    "<all_urls>"
+  ],
+  "background": {
+    "page": "background.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["js/autoconsent-content.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true
+    }
+  ]
+}

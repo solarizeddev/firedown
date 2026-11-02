@@ -472,6 +472,13 @@ public class SettingsFragment extends BasePreferenceFragment
 
             mGeckoRuntimeHelper.setSafeBrowsing(!disable);
 
+        } else if (Preferences.SETTINGS_REJECT_COOKIE_BANNERS.equals(key)) {
+
+            // The consent extension (assets/consent) answers frames loaded
+            // from now on; the reload below applies it to the page on screen.
+            mGeckoRuntimeHelper.setRejectCookieBanners(
+                    sharedPreferences.getBoolean(key, Preferences.DEFAULT_REJECT_COOKIE_BANNERS));
+
         }
 
         GeckoState geckoState = mGeckoStateViewModel.getCurrentGeckoState();

@@ -1066,4 +1066,6 @@
     <string name="tabs_close_all_action">Tout fermer</string>
     <string name="tab_crashed_again">Cette page continue de planter</string>
     <string name="tab_crashed_reload">Recharger</string>
+    <string name="settings_reject_cookie_banners_title">Refuser les bannières de cookies</string>
+    <string name="settings_reject_cookie_banners_summary">Répond aux fenêtres de consentement par « Refuser » quand c’est possible et masque les autres</string>
 </resources>

@@ -994,4 +994,6 @@
     <string name="tabs_close_all_action">Закрыть все</string>
     <string name="tab_crashed_again">Эта страница постоянно вылетает</string>
     <string name="tab_crashed_reload">Перезагрузить</string>
+    <string name="settings_reject_cookie_banners_title">Отклонять баннеры cookie</string>
+    <string name="settings_reject_cookie_banners_summary">Отвечает на окна согласия «Отклонить», где это возможно, и скрывает остальные</string>
 </resources>

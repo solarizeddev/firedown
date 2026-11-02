@@ -1064,4 +1064,6 @@
     <string name="tabs_close_all_action">Alle schließen</string>
     <string name="tab_crashed_again">Diese Seite stürzt immer wieder ab</string>
     <string name="tab_crashed_reload">Neu laden</string>
+    <string name="settings_reject_cookie_banners_title">Cookie-Banner ablehnen</string>
+    <string name="settings_reject_cookie_banners_summary">Beantwortet Einwilligungs-Pop-ups wo möglich mit „Ablehnen“ und blendet die übrigen aus</string>
 </resources>

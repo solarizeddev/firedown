@@ -72,6 +72,10 @@ import dagger.hilt.android.EntryPointAccessors;
  *   <li>t9: a page whose ad requests uBlock refuses: the capture extension
  *       counts them, the lifetime figure and the page's count move (no
  *       network needed: the refused requests never leave the phone).</li>
+ *   <li>t10: cookie banners (the consent built-in, DuckDuckGo's
+ *       autoconsent): a CookieYes banner gets "Reject all" clicked, and a
+ *       Cookie Law Info bar is rejected through its page-world API (the
+ *       MAIN-world eval). The page reports what was clicked in its title.</li>
  * </ul>
  *
  * <p>Run (device attached; t6–t7 skip without network):
@@ -387,6 +391,66 @@ public class AddonsDeviceTest {
             String page = awaitLive(stats.getAdsBlockedLive(), v -> !"0".equals(v), CHANGE_TIMEOUT_MS);
             assertNotNull("the page's count never arrived", page);
             Log.i(TAG, "refused: lifetime +" + (after - before) + ", page " + page);
+        }
+    }
+
+    private static final String BANNER_STYLE =
+            "<style>.bar{position:fixed;bottom:0;left:0;right:0;padding:16px;background:#eee}</style>";
+
+    /** A CookieYes banner: the title says which button was clicked. */
+    private static final String COOKIEYES_PAGE = "<!doctype html><title>waiting</title>" + BANNER_STYLE
+            + "<p>Article</p><div class=\"cky-consent-container bar\"><p>We use cookies.</p>"
+            + "<button data-cky-tag=\"accept-button\" onclick=\"document.title='accepted';this.parentNode.remove()\">Accept all</button>"
+            + "<button data-cky-tag=\"reject-button\" onclick=\"document.title='rejected';this.parentNode.remove()\">Reject all</button>"
+            + "</div>";
+
+    /** A Cookie Law Info bar: detection and reject go through window.CLI (page world). */
+    private static final String COOKIELAW_PAGE = "<!doctype html><title>waiting</title>" + BANNER_STYLE
+            + "<script>window.CLI={disableAllCookies:function(){},reject_close:function(){document.title='rejected';},"
+            + "accept_close:function(){document.title='accepted';}};</script>"
+            + "<p>Shop</p><div id=\"cookie-law-info-bar\" class=\"bar\">Cookies."
+            + "<a data-cli_action=\"accept\" onclick=\"window.CLI.accept_close()\">Accept</a></div>";
+
+    @Test
+    public void t10_cookieBannersAreRejected() throws Exception {
+        assertEquals("rejected", bannerOutcome(COOKIEYES_PAGE));
+        assertEquals("rejected", bannerOutcome(COOKIELAW_PAGE));
+    }
+
+    /** Loads {@code html} in a fresh tab and returns the title it settles on ("rejected", "accepted" or "waiting"). */
+    private static String bannerOutcome(String html) throws Exception {
+        AtomicReference<String> title = new AtomicReference<>("waiting");
+        CountDownLatch decided = new CountDownLatch(1);
+        AtomicReference<GeckoSession> session = new AtomicReference<>();
+        try (PageServer server = new PageServer(html)) {
+            onMain(() -> {
+                GeckoSession s = new GeckoSession(new GeckoSessionSettings.Builder()
+                        .usePrivateMode(false).allowJavascript(true).build());
+                s.setContentDelegate(new GeckoSession.ContentDelegate() {
+                    @Override
+                    public void onTitleChange(GeckoSession gs, String t) {
+                        if ("rejected".equals(t) || "accepted".equals(t)) {
+                            title.set(t);
+                            decided.countDown();
+                        }
+                    }
+                });
+                sHelper.registerSession(s);
+                s.open(sHelper.getGeckoRuntime());
+                s.setActive(true);
+                s.loadUri(server.url());
+                session.set(s);
+            });
+            decided.await(NETWORK_TIMEOUT_MS / 6, TimeUnit.MILLISECONDS);
+            Log.i(TAG, "banner outcome: " + title.get());
+            return title.get();
+        } finally {
+            onMain(() -> {
+                GeckoSession s = session.get();
+                if (s != null) {
+                    s.close();
+                }
+            });
         }
     }
 

@@ -906,4 +906,6 @@
     <string name="tabs_close_all_action">सभी बंद करें</string>
     <string name="tab_crashed_again">यह पेज बार-बार क्रैश हो रहा है</string>
     <string name="tab_crashed_reload">फिर से लोड करें</string>
+    <string name="settings_reject_cookie_banners_title">कुकी बैनर अस्वीकार करें</string>
+    <string name="settings_reject_cookie_banners_summary">जहाँ संभव हो, सहमति पॉप-अप का जवाब “अस्वीकार करें” से देता है और बाकी को छिपा देता है</string>
 </resources>
