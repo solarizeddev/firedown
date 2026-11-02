@@ -97,6 +97,8 @@ public class AddonManager {
     private static final long DECLINED_HOST_QUIET_MS = TimeUnit.MINUTES.toMillis(5);
     /** More questions than this waiting at once: the rest are answered "no". */
     private static final int MAX_QUEUED_PROMPTS = 4;
+    /** Quiet time after the last change before Gecko's list is read back as the truth. */
+    private static final long REFRESH_DELAY_MS = 300;
 
     /** What GeckoRuntimeHelper lends: it owns the runtime and can't be injected here (cycle). */
     public interface Host {
@@ -854,6 +856,50 @@ public class AddonManager {
             adopt(extension);
         }
         publish();
+        scheduleRefresh();
+    }
+
+    private final Runnable mRefresh = this::refreshFromGecko;
+
+    /**
+     * Gecko's change notices can arrive out of order: allowing private
+     * tabs RELOADS the add-on, and the "disabled" notice of that reload
+     * (or a snapshot taken under the old permission) can land after the
+     * new state, leaving the add-on shown off or not allowed while it runs
+     * with the permission. So once the notices stop, the installed list is
+     * read back from Gecko and replaces what they said.
+     */
+    private void scheduleRefresh() {
+        mMain.removeCallbacks(mRefresh);
+        mMain.postDelayed(mRefresh, REFRESH_DELAY_MS);
+    }
+
+    private void refreshFromGecko() {
+        GeckoRuntime runtime = mRuntime;
+        if (runtime == null) {
+            return;
+        }
+        runtime.getWebExtensionController().list().accept(list -> {
+            if (list == null) {
+                return;
+            }
+            boolean changed = false;
+            for (WebExtension extension : list) {
+                // Only add-ons already known: an install or a removal in
+                // progress is the delegates' to report.
+                if (isUserAddon(extension) && mInstalled.containsKey(extension.id)) {
+                    mInstalled.put(extension.id, extension);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                publish();
+            }
+        }, e -> {
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "refresh list() failed", e);
+            }
+        });
     }
 
     private void forget(@NonNull String id) {

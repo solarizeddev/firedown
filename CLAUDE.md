@@ -4125,6 +4125,14 @@ before changing a flow. The rules, each easy to undo:
 - **Private tabs are opt-in per add-on**, at install and in its page; an
   add-on not allowed there gets no button, no popup and no `tabs.create`
   in a private tab.
+- **Gecko's change notices are not trusted for ORDER.** Allowing private
+  tabs reloads the add-on (`setPrivateBrowsingAllowed` → `addon.reload()`,
+  a disable + enable), and each notice is exported asynchronously, so a
+  late "disabled" or a snapshot under the old permission can arrive after
+  the new state. Every change (`onChanged`) schedules `refreshFromGecko`:
+  300 ms after the last one, `list()` is read back and replaces the known
+  add-ons' state. Found by `AddonsDeviceTest` t7 on a device (the add-on
+  missing from private tabs right after it was allowed there).
 - **Add-on tabs are Firedown tabs.** `tabs.create` returns an UNOPENED
   session GeckoView then opens and loads; the manager completes the result
   in a posted task and shows the tab in the task after GeckoView's open

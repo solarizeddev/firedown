@@ -225,6 +225,7 @@ public class AddonsDeviceTest {
         AmoCatalog.Entry entry = pickCatalogEntry();
         String id = entry.id;
         EventCollector events = new EventCollector();
+        StateTrail trail = new StateTrail(id);
         try {
             onMain(() -> sAddons.installFromCatalog(entry));
             AddonManager.Prompt prompt = awaitPrompt(id);
@@ -244,19 +245,27 @@ public class AddonsDeviceTest {
                 sSession.open(sHelper.getGeckoRuntime());
                 sAddons.registerSession(sSession);
             });
-            assertTrue(contains(actionsFor(sSession, false), id));
-            assertFalse("not in private tabs", contains(actionsFor(sSession, true), id));
+            assertTrue("no row for a tab " + trail, awaitRow(sSession, false, id, true));
+            assertTrue("listed for private tabs " + trail, awaitRow(sSession, true, id, false));
 
             onMain(() -> sAddons.setEnabled(id, false));
             assertNotNull(awaitAddon(id, a -> a != null && !a.enabled));
-            assertFalse(contains(actionsFor(sSession, false), id));
+            assertTrue("still listed when off " + trail, awaitRow(sSession, false, id, false));
 
             onMain(() -> sAddons.setEnabled(id, true));
             assertNotNull(awaitAddon(id, a -> a != null && a.enabled));
+            assertTrue("not listed when on " + trail, awaitRow(sSession, false, id, true));
 
+            // Allowing private tabs reloads the add-on in Gecko: the state
+            // must SETTLE on on + allowed, whatever order the notices came in.
             onMain(() -> sAddons.setAllowedInPrivate(id, true));
             assertNotNull(awaitAddon(id, a -> a != null && a.allowedInPrivateBrowsing));
-            assertTrue(contains(actionsFor(sSession, true), id));
+            assertTrue("not listed for private tabs " + trail, awaitRow(sSession, true, id, true));
+            Thread.sleep(2000);
+            AddonInfo settled = find(valueOf(sAddons.getAddons()), id);
+            assertNotNull(settled);
+            assertTrue("off after allowing private tabs " + trail, settled.enabled);
+            assertTrue("private tabs not kept " + trail, settled.allowedInPrivateBrowsing);
 
             onMain(() -> sAddons.uninstall(id));
             List<AddonInfo> after = awaitLive(sAddons.getAddons(), list -> find(list, id) == null,
@@ -271,6 +280,8 @@ public class AddonsDeviceTest {
             }
             assertFalse("Gecko still lists it", stillInGecko);
         } finally {
+            Log.i(TAG, "t7 states " + trail);
+            trail.stop();
             events.stop();
         }
     }
@@ -338,6 +349,48 @@ public class AddonsDeviceTest {
     private static AddonInfo awaitAddon(String id, Check<AddonInfo> check) throws Exception {
         List<AddonInfo> list = awaitLive(sAddons.getAddons(), l -> check.ok(find(l, id)), CHANGE_TIMEOUT_MS);
         return find(list, id);
+    }
+
+    /** Waits (up to the change timeout) for the add-on's row on a tab to be there, or gone. */
+    private static boolean awaitRow(GeckoSession session, boolean incognito, String id, boolean present)
+            throws Exception {
+        long deadline = System.currentTimeMillis() + CHANGE_TIMEOUT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            if (contains(actionsFor(session, incognito), id) == present) {
+                return true;
+            }
+            Thread.sleep(100);
+        }
+        return false;
+    }
+
+    /** Every state the manager published for one add-on, for a failure's message. */
+    private static final class StateTrail {
+        private final List<String> mStates = new CopyOnWriteArrayList<>();
+        private final long mStart = System.currentTimeMillis();
+        private final Observer<List<AddonInfo>> mObserver;
+
+        StateTrail(String id) throws Exception {
+            mObserver = list -> {
+                AddonInfo info = find(list, id);
+                String state = info == null ? "absent"
+                        : (info.enabled ? "on" : "off") + (info.allowedInPrivateBrowsing ? "+private" : "");
+                int last = mStates.size() - 1;
+                if (last < 0 || !mStates.get(last).endsWith(" " + state)) {
+                    mStates.add((System.currentTimeMillis() - mStart) + "ms " + state);
+                }
+            };
+            onMain(() -> sAddons.getAddons().observeForever(mObserver));
+        }
+
+        void stop() throws Exception {
+            onMain(() -> sAddons.getAddons().removeObserver(mObserver));
+        }
+
+        @Override
+        public String toString() {
+            return mStates.toString();
+        }
     }
 
     private static List<AddonManager.ActionItem> actionsFor(GeckoSession session, boolean incognito)
