@@ -4176,7 +4176,14 @@ before changing a flow. The rules, each easy to undo:
   shapes; 67 checks, six mutants must fail), the JUnit
   `AddonsPureTest`, and on a device `addons/AddonsDeviceTest`
   (`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.addons.AddonsDeviceTest`;
-  the list install, off/on, private, remove need network and skip without).
+  the list install, off/on, private, remove need network and skip
+  without). Green on SM-A426B (Android 12) and SM-A536B (Android 16)
+  after two fixes its first runs found: the out-of-order notices above,
+  and t1 listing Gecko's extensions before the built-ins finished
+  registering (the test waits for uBlock now; the app does not depend on
+  that order). What no test drives: the screens and sheets themselves
+  (catalog, detail page, prompt, ⋮ Add-ons sheet, popup) and an .xpi
+  link from a real page.
 
 ## After changing a parser
 
