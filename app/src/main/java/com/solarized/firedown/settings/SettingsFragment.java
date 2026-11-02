@@ -505,6 +505,8 @@ public class SettingsFragment extends BasePreferenceFragment
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_direct_share);
             case Preferences.SETTINGS_TRANSLATIONS_SCREEN ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_translations);
+            case Preferences.SETTINGS_ADDONS_SCREEN ->
+                    NavigationUtils.navigateSafe(mNavController, R.id.action_settings_to_addons);
             case Preferences.SETTINGS_RESTORE_DOWNLOADS -> showRestoreDownloadsDialog();
             case Preferences.SETTINGS_STORAGE_SCREEN -> openStorageScreen();
             case Preferences.SETTINGS_SYNC ->

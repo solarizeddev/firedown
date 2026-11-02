@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One line of an add-on permission prompt ("•  Access your data for all websites"). -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/TextAppearance.Material3.BodyMedium"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="4dp"
+    android:textColor="?attr/colorOnSurfaceVariant" />

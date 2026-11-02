@@ -47,6 +47,10 @@ public class SettingsActivity extends BaseActivity {
      *  directly, replacing the settings list on the back stack so Back returns
      *  to the caller — the home's blocked line is its sender. */
     public static final String EXTRA_OPEN_BLOCKED_STATS = "com.solarized.firedown.extra.OPEN_BLOCKED_STATS";
+    /** The Add-ons screen ("Manage add-ons" in the browser's Add-ons page). */
+    public static final String EXTRA_OPEN_ADDONS = "com.solarized.firedown.extra.OPEN_ADDONS";
+    /** An add-on's own settings page, by add-on id (runtime.openOptionsPage()). */
+    public static final String EXTRA_OPEN_ADDON_OPTIONS = "com.solarized.firedown.extra.OPEN_ADDON_OPTIONS";
 
     /**
      * Opens {@code url} in a Firedown tab and closes Settings. Every link row in
@@ -177,6 +181,24 @@ public class SettingsActivity extends BaseActivity {
             navController.navigate(R.id.settings_cloud_backup_files, null, opts);
         }
 
+        // Deep-links into Add-ons, replacing the settings list so Back returns
+        // to the browser. A recreated activity keeps its back stack.
+        if (savedInstanceState == null && getIntent().getBooleanExtra(EXTRA_OPEN_ADDONS, false)) {
+            NavOptions opts = new NavOptions.Builder()
+                    .setPopUpTo(R.id.settings, true)
+                    .build();
+            navController.navigate(R.id.settings_addons, null, opts);
+        }
+        String addonOptionsId = getIntent().getStringExtra(EXTRA_OPEN_ADDON_OPTIONS);
+        if (savedInstanceState == null && addonOptionsId != null) {
+            NavOptions opts = new NavOptions.Builder()
+                    .setPopUpTo(R.id.settings, true)
+                    .build();
+            Bundle args = new Bundle();
+            args.putString(Keys.ADDON_ID, addonOptionsId);
+            navController.navigate(R.id.settings_addon_options, args, opts);
+        }
+
         navController.addOnDestinationChangedListener((navController1, navDestination, bundle) -> {
             int id = navDestination.getId();
             if(id == R.id.settings)
@@ -219,6 +241,8 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.folder_backup_place_webdav);
             else if(id == R.id.settings_s3)
                 mToolbar.setTitle(R.string.folder_backup_place_s3);
+            else if(id == R.id.settings_addons)
+                mToolbar.setTitle(R.string.addons_title);
         });
 
         ViewCompat.setOnApplyWindowInsetsListener(mToolbar, (v, windowInsets) -> {

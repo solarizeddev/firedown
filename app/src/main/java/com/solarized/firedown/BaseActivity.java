@@ -35,6 +35,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import androidx.preference.PreferenceManager;
 import com.google.android.material.snackbar.Snackbar;
+import com.solarized.firedown.addons.AddonManager;
 import com.solarized.firedown.crash.CrashReportSheet;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
@@ -48,6 +49,7 @@ import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.manager.tasks.TaskManager;
 import com.solarized.firedown.phone.BrowserMainActivity;
 import com.solarized.firedown.phone.DownloadsActivity;
+import com.solarized.firedown.phone.dialogs.AddonPromptSheetDialogFragment;
 import com.solarized.firedown.phone.fragments.BaseFocusFragment;
 import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.utils.IntentSanitizer;
@@ -90,6 +92,9 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
 
     @Inject
     protected GeckoStateDataRepository mGeckoStateDataRepository;
+
+    @Inject
+    protected AddonManager mAddonManager;
 
     /** Background executor for the crash-sheet's disk scan (keeps it off the main thread). */
     @Inject
@@ -245,6 +250,91 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
 
             dismissSplashAfterNavigation();
         });
+
+        // Add-on questions and results reach whichever screen is in front:
+        // an install started from the browser can be answered in Settings,
+        // and Gecko waits for every answer. LiveData delivers only to a
+        // started activity, so the one in front takes it.
+        if (showsAddonPrompts()) {
+            mAddonManager.getPrompt().observe(this, this::showAddonPrompt);
+            mAddonManager.getEvents().observe(this, this::showAddonEvent);
+        }
+    }
+
+    /** False for a screen that must not show anything over itself (the lock screen). */
+    protected boolean showsAddonPrompts() {
+        return true;
+    }
+
+    private void showAddonPrompt(@Nullable AddonManager.Prompt prompt) {
+        Fragment existing = getSupportFragmentManager().findFragmentByTag(AddonPromptSheetDialogFragment.TAG);
+        AddonPromptSheetDialogFragment sheet = existing instanceof AddonPromptSheetDialogFragment
+                ? (AddonPromptSheetDialogFragment) existing : null;
+        if (prompt == null) {
+            if (sheet != null) {
+                sheet.dismissAllowingStateLoss();
+            }
+            return;
+        }
+        if (sheet != null && sheet.getSeq() == prompt.seq) {
+            return;
+        }
+        if (sheet != null) {
+            sheet.dismissAllowingStateLoss();
+        }
+        if (getSupportFragmentManager().isStateSaved()) {
+            // Delivered again when this screen starts.
+            return;
+        }
+        AddonPromptSheetDialogFragment.newInstance(prompt.seq)
+                .show(getSupportFragmentManager(), AddonPromptSheetDialogFragment.TAG);
+    }
+
+    private void showAddonEvent(@Nullable AddonManager.Event event) {
+        if (event == null || !event.take()) {
+            return;
+        }
+        String text = addonEventText(event);
+        View anchor = getSnackAnchorView();
+        if (text == null || anchor == null) {
+            return;
+        }
+        Snackbar.make(anchor, text, Snackbar.LENGTH_LONG).show();
+    }
+
+    @Nullable
+    private String addonEventText(@NonNull AddonManager.Event event) {
+        String name = event.name;
+        boolean named = name != null && !name.isEmpty();
+        switch (event.type) {
+            case AddonManager.Event.INSTALLED:
+                return named ? getString(R.string.addon_installed, name) : null;
+            case AddonManager.Event.BUILT_IN:
+                return named ? getString(R.string.addon_built_in, name)
+                        : getString(R.string.addon_built_in_generic);
+            case AddonManager.Event.NOT_AN_ADDON:
+                return getString(R.string.addon_not_an_addon);
+            case AddonManager.Event.CORRUPT:
+                return getString(R.string.addon_corrupt);
+            case AddonManager.Event.UNSIGNED:
+                return getString(R.string.addon_unsigned);
+            case AddonManager.Event.TOO_LARGE:
+                return getString(R.string.addon_too_large);
+            case AddonManager.Event.NETWORK:
+                return getString(R.string.addon_network);
+            case AddonManager.Event.BLOCKED:
+                return named ? getString(R.string.addon_blocked, name) : getString(R.string.addon_failed_generic);
+            case AddonManager.Event.INCOMPATIBLE:
+                return named ? getString(R.string.addon_incompatible, name) : getString(R.string.addon_failed_generic);
+            case AddonManager.Event.UPDATED:
+                return named ? getString(R.string.addon_updated, name) : null;
+            case AddonManager.Event.NO_UPDATE:
+                return named ? getString(R.string.addon_no_update, name) : null;
+            case AddonManager.Event.REMOVED:
+                return named ? getString(R.string.addon_removed, name) : null;
+            default:
+                return named ? getString(R.string.addon_failed, name) : getString(R.string.addon_failed_generic);
+        }
     }
 
     // ── System bar appearance ────────────────────────────────────────────────

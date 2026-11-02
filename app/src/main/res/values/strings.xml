@@ -1300,4 +1300,133 @@
     <string name="tabs_close_all_action">Close all</string>
     <string name="tab_crashed_again">This page keeps crashing</string>
     <string name="tab_crashed_reload">Reload</string>
+
+    <!-- Add-ons (Settings → Add-ons, the ⋮ sheet's Add-ons page, the
+         install prompt). Permission and data-collection wording follows
+         Firefox for Android's, so a prompt reads the same in both. -->
+    <string name="addons_title">Add-ons</string>
+    <string name="addons_summary">Firefox extensions made for Android</string>
+    <string name="addons_installed">Installed</string>
+    <string name="addons_none_installed">No add-ons yet</string>
+    <string name="addons_recommended">Recommended for Android</string>
+    <string name="addons_catalog_loading">Loading Mozilla\'s list…</string>
+    <string name="addons_catalog_failed">Couldn\'t load the list</string>
+    <string name="addons_retry">Try again</string>
+    <string name="addons_built_in">Built into Firedown</string>
+    <string name="addons_more">More</string>
+    <string name="addons_install_from_file">Install from file</string>
+    <string name="addons_install_from_file_summary">A signed Firefox add-on (.xpi)</string>
+    <string name="addons_check_updates">Check for updates</string>
+    <string name="addons_footnote">The list is Mozilla\'s selection of add-ons that work on Android, fetched from addons.mozilla.org when you open this screen. Installed add-ons check for updates once a day. Add-ons see the pages you visit and work outside Firedown\'s no-tracking promise.</string>
+    <string name="addons_off">Off</string>
+    <string name="addons_installing">Installing…</string>
+    <string name="addons_update_review">Update needs your review</string>
+    <string name="addons_disabled_blocked">Blocked by Mozilla</string>
+    <string name="addons_disabled_unsupported">Doesn\'t work in this version</string>
+    <string name="addons_source_file">a file on this phone</string>
+    <string name="addons_manage">Manage add-ons</string>
+    <string name="addons_no_button">Works on its own</string>
+    <string name="addons_not_here">Not available on this page</string>
+    <string name="addons_none_here">No add-ons run here</string>
+
+    <string name="addon_enabled">On</string>
+    <string name="addon_private">Run in private tabs</string>
+    <string name="addon_private_summary">It can see what you do in private tabs</string>
+    <string name="addon_private_not_allowed">This add-on doesn\'t run in private tabs</string>
+    <string name="addon_settings">Add-on settings</string>
+    <string name="addon_permissions">Permissions</string>
+    <string name="addon_permissions_none">No special permissions</string>
+    <string name="addon_optional_permissions">Optional permissions</string>
+    <string name="addon_optional_data">Share %1$s with the developer</string>
+    <string name="addon_version">Version %1$s</string>
+    <string name="addon_by">By %1$s</string>
+    <string name="addon_check_update">Check for update</string>
+    <string name="addon_review_update">Review update</string>
+    <string name="addon_review_update_summary">The new version asks for more permissions</string>
+    <string name="addon_page">Add-on page</string>
+    <string name="addon_remove">Remove</string>
+    <string name="addon_remove_title">Remove %1$s?</string>
+    <string name="addon_remove_message">Its settings and data are deleted from this phone.</string>
+
+    <string name="addon_prompt_install_title">Add %1$s?</string>
+    <string name="addon_prompt_update_title">Update %1$s?</string>
+    <string name="addon_prompt_optional_title">%1$s asks for more permissions</string>
+    <string name="addon_prompt_can">It will be able to:</string>
+    <string name="addon_prompt_update_can">The new version will also be able to:</string>
+    <string name="addon_prompt_no_permissions">It doesn\'t need any special permissions.</string>
+    <string name="addon_prompt_source">From %1$s, not from Mozilla\'s list</string>
+    <string name="addon_prompt_not_android">Not made for Android</string>
+    <string name="addon_prompt_not_android_summary">Parts of it may not work.</string>
+    <string name="addon_prompt_footnote">Add-ons see the pages you visit and work outside Firedown\'s no-tracking promise.</string>
+    <string name="addon_prompt_data">The developer says it collects: %1$s</string>
+    <string name="addon_prompt_data_none">The developer says it collects no data.</string>
+    <string name="addon_prompt_add">Add</string>
+    <string name="addon_prompt_update">Update</string>
+    <string name="addon_prompt_allow">Allow</string>
+    <string name="addon_prompt_line" translatable="false">•  %1$s</string>
+
+    <string name="addon_installed">%1$s added. Find it in the ⋮ menu.</string>
+    <string name="addon_failed">Couldn\'t add %1$s</string>
+    <string name="addon_failed_generic">Couldn\'t add the add-on</string>
+    <string name="addon_built_in">%1$s is built into Firedown</string>
+    <string name="addon_built_in_generic">This add-on is built into Firedown</string>
+    <string name="addon_not_an_addon">This file isn\'t a Firefox add-on</string>
+    <string name="addon_corrupt">This add-on is damaged, so Firedown can\'t install it</string>
+    <string name="addon_unsigned">This add-on isn\'t signed by Mozilla, so Firedown can\'t install it</string>
+    <string name="addon_too_large">This file is too large to be an add-on</string>
+    <string name="addon_network">Couldn\'t download the add-on. Check your connection.</string>
+    <string name="addon_blocked">Mozilla has blocked %1$s</string>
+    <string name="addon_incompatible">%1$s doesn\'t work in this version of Firedown</string>
+    <string name="addon_updated">%1$s updated</string>
+    <string name="addon_no_update">%1$s is up to date</string>
+    <string name="addon_removed">%1$s removed</string>
+
+    <string name="addon_perm_all_sites">Access your data for all websites</string>
+    <string name="addon_perm_site">Access your data for %1$s</string>
+    <string name="addon_perm_domain">Access your data for sites in the %1$s domain</string>
+    <plurals name="addon_perm_more_sites">
+        <item quantity="one">Access your data on %d other site</item>
+        <item quantity="other">Access your data on %d other sites</item>
+    </plurals>
+    <plurals name="addon_perm_more_domains">
+        <item quantity="one">Access your data on %d other domain</item>
+        <item quantity="other">Access your data on %d other domains</item>
+    </plurals>
+    <string name="addon_perm_bookmarks">Read and modify bookmarks</string>
+    <string name="addon_perm_browser_settings">Read and modify browser settings</string>
+    <string name="addon_perm_browsing_data">Clear recent browsing history, cookies, and related data</string>
+    <string name="addon_perm_clipboard_read">Get data from the clipboard</string>
+    <string name="addon_perm_clipboard_write">Input data to the clipboard</string>
+    <string name="addon_perm_dnr">Block content on any page</string>
+    <string name="addon_perm_dnr_feedback">Read your browsing history</string>
+    <string name="addon_perm_devtools">Extend developer tools to access your data in open tabs</string>
+    <string name="addon_perm_downloads">Download files and read and modify the browser\'s download history</string>
+    <string name="addon_perm_downloads_open">Open files downloaded to your device</string>
+    <string name="addon_perm_find">Read the text of all open tabs</string>
+    <string name="addon_perm_geolocation">Access your location</string>
+    <string name="addon_perm_history">Access browsing history</string>
+    <string name="addon_perm_management">Monitor extension usage and manage themes</string>
+    <string name="addon_perm_native_messaging">Exchange messages with apps other than this one</string>
+    <string name="addon_perm_notifications">Display notifications to you</string>
+    <string name="addon_perm_pkcs11">Provide cryptographic authentication services</string>
+    <string name="addon_perm_privacy">Read and modify privacy settings</string>
+    <string name="addon_perm_proxy">Control browser proxy settings</string>
+    <string name="addon_perm_sessions">Access recently closed tabs</string>
+    <string name="addon_perm_tab_hide">Hide and show browser tabs</string>
+    <string name="addon_perm_tabs">Access browser tabs</string>
+    <string name="addon_perm_trial_ml">Download and run AI models on your device</string>
+    <string name="addon_perm_user_scripts">Allow unverified third-party scripts to access your data</string>
+    <string name="addon_perm_web_navigation">Access browser activity during navigation</string>
+    <string name="addon_data_authentication">authentication information</string>
+    <string name="addon_data_bookmarks">bookmarks</string>
+    <string name="addon_data_browsing_activity">browsing activity</string>
+    <string name="addon_data_financial">financial and payment information</string>
+    <string name="addon_data_health">health information</string>
+    <string name="addon_data_location">location</string>
+    <string name="addon_data_communications">personal communications</string>
+    <string name="addon_data_identifying">personally identifying information</string>
+    <string name="addon_data_search_terms">search terms</string>
+    <string name="addon_data_technical">technical and interaction data</string>
+    <string name="addon_data_website_activity">website activity</string>
+    <string name="addon_data_website_content">website content</string>
 </resources>

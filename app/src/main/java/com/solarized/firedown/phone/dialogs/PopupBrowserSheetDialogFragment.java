@@ -32,6 +32,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
+import com.solarized.firedown.addons.AddonManager;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.OptionEntity;
@@ -123,6 +124,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
     private String mLastUri;
 
     @Inject SharedPreferences mSharedPreferences;
+    @Inject AddonManager mAddonManager;
 
     @Override
     public void onDestroyView() {
@@ -465,6 +467,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
      */
     private void bindRows() {
         bindTranslateRow();
+        bindAddonsRow();
         mView.findViewById(R.id.popup_bookmarks).setOnClickListener(this);
         mView.findViewById(R.id.popup_history).setOnClickListener(this);
         mView.findViewById(R.id.popup_sync).setOnClickListener(this);
@@ -871,6 +874,18 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
                     : R.string.browser_menu_translate);
         }
         row.setVisibility(View.VISIBLE);
+        row.setOnClickListener(this);
+    }
+
+
+    /**
+     * "Add-ons": shown once an add-on that runs in this tab's mode is
+     * installed (a private tab lists only the ones allowed there).
+     */
+    private void bindAddonsRow() {
+        View row = mView.findViewById(R.id.popup_addons);
+        if (row == null) return;
+        row.setVisibility(mAddonManager.hasAddonsFor(mIsIncognito) ? View.VISIBLE : View.GONE);
         row.setOnClickListener(this);
     }
 

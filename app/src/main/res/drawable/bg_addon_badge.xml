@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- An add-on's badge in the Add-ons sheet; the color is the add-on's own
+     badge color when it sets one (tinted in code), else the brand ink. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="10dp" />
+    <solid android:color="?attr/brandInk" />
+</shape>

@@ -22,6 +22,12 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public class LockActivity extends BaseActivity {
 
+    /** Nothing shows over the lock: an add-on question waits for the screen behind it. */
+    @Override
+    protected boolean showsAddonPrompts() {
+        return false;
+    }
+
     private LockViewModel mViewModel;
     private BiometricPrompt mBiometricPrompt;
 

@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.addons.AddonManager;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.ContextElementEntity;
@@ -60,6 +61,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -104,6 +106,7 @@ public class GeckoComponents {
     private final WebBookmarkDataRepository mWebBookmarkDataRepository;
     private final GeckoMediaController mGeckoMediaController;
     private final GeckoRuntimeHelper mGeckoRuntimeHelper;
+    private final AddonManager mAddonManager;
     /** File-upload prompt staging (copyToCache of user-picked files, possibly
      *  multi-GB) — unbounded file IO, so it rides the HEAVY lane, never
      *  @DiskIO (which must stay free for short DB mutations). */
@@ -122,6 +125,7 @@ public class GeckoComponents {
             WebHistoryDataRepository webHistoryRepository,
             WebBookmarkDataRepository webBookmarkRepository,
             GeckoRuntimeHelper geckoRuntimeHelper,
+            AddonManager addonManager,
             GeckoObserverRegistry observerRegistry,
             SharedPreferences sharedPreferences,
             @Qualifiers.HeavyIO Executor heavyExecutor,
@@ -135,6 +139,7 @@ public class GeckoComponents {
         this.mWebHistoryDataRepository = webHistoryRepository;
         this.mWebBookmarkDataRepository = webBookmarkRepository;
         this.mGeckoRuntimeHelper = geckoRuntimeHelper;
+        this.mAddonManager = addonManager;
         this.mGeckoObserverRegistry = observerRegistry;
         this.mGeckoMediaController = geckoMediaController;
         this.mProgressDelegate = new ProgressDelegate();
@@ -184,6 +189,40 @@ public class GeckoComponents {
 
     public TranslationsDelegate getTranslationsDelegate() {
         return mTranslationsDelegate;
+    }
+
+    /**
+     * Every delegate a tab's session needs, plus the extensions' per-session
+     * delegates. The one list: the browser's tab switch and a tab an add-on
+     * opens ({@code tabs.create}) both connect through here.
+     */
+    @UiThread
+    public void connectSession(@NonNull GeckoSession session) {
+        session.setContentDelegate(mContentDelegate);
+        session.setProgressDelegate(mProgressDelegate);
+        session.setNavigationDelegate(mNavigationDelegate);
+        session.setHistoryDelegate(mHistoryDelegate);
+        session.setMediaSessionDelegate(mMediaSessionDelegate);
+        session.setScrollDelegate(mScrollDelegate);
+        session.setPromptDelegate(mPromptDelegate);
+        session.setPermissionDelegate(mPermissionDelegate);
+        session.setTranslationsSessionDelegate(mTranslationsDelegate);
+        mGeckoRuntimeHelper.registerSession(session);
+    }
+
+    /** A Firefox add-on file: its declared type, or an .xpi path. */
+    static boolean isAddonResponse(@NonNull WebResponse response) {
+        String type = null;
+        for (Map.Entry<String, String> header : response.headers.entrySet()) {
+            if ("content-type".equalsIgnoreCase(header.getKey())) {
+                type = header.getValue();
+            }
+        }
+        if (type != null && type.toLowerCase(Locale.ROOT).startsWith(FileUriHelper.MIMETYPE_XPI)) {
+            return true;
+        }
+        String path = Uri.parse(response.uri).getPath();
+        return path != null && path.toLowerCase(Locale.ROOT).endsWith(".xpi");
     }
 
     // ── Incognito-aware session lookup helpers ──────────────────────────
@@ -891,6 +930,19 @@ public class GeckoComponents {
                         Log.d(TAG, "onExternalResponse: close failed", e);
                     }
                 }
+                return;
+            }
+            // A Firefox add-on (.xpi) linked from the page on screen is
+            // offered as an add-on (Gecko checks the signature and asks
+            // first), not saved to Downloads. A background tab's file keeps
+            // the ordinary download path.
+            if (isCurrentGeckoState(geckoState) && isAddonResponse(response)) {
+                // The prompt names the site the user was on (Firefox's
+                // "this site wants to install"), not the file's CDN host.
+                String page = geckoState.getEntityUri();
+                String pageHost = page == null ? null : Uri.parse(page).getHost();
+                String host = TextUtils.isEmpty(pageHost) ? Uri.parse(response.uri).getHost() : pageHost;
+                mAddonManager.installFromResponse(response, host);
                 return;
             }
             geckoState.setWebResponse(response);
