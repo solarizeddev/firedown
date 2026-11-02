@@ -7539,14 +7539,26 @@ children — the card edges do the grouping).
   folder", the LAST SEEN totals, the body line saying what to do — the card
   states the fact, the CTA acts); not set up → the dashed ROADMAP ① Create
   recovery code → ② Choose backup folder → ③ Back up a finished download
-  from its ⋮ (done = "✓" + muted ink, the current step bold). Each step is
-  a HANGING row (`cb_step_*_mark` + `cb_step_*`): the marker in a column
-  under the header's 28dp glyph (a MINIMUM width, so a large font scale
-  widens it rather than clipping), the text in a column under the title,
-  so a wrapped line continues under its text. It was one TextView per
-  step with "2 ·  " typed in front, and step ②'s second line sat under
-  the number (reported on-device, 2026-10-13); the row carries the spoken
-  line, the two columns are hidden from TalkBack. There is no
+  from its ⋮. Each step is a HANGING row (`cb_step_*_mark` /
+  `cb_step_*_done` + `cb_step_*`): a 20dp marker in the glyph's 24dp
+  column, the text in a column under the title, so a wrapped line
+  continues under its text. The marker is a SHAPE, not typed text: a ring
+  round the number (ahead), the number on a disc filled like the CTA
+  under the card (current — the button performs that step), a check on a
+  tonal disc (done); the numeral is in dp (a glyph of a fixed circle), the
+  text beside it follows the font scale. It was one TextView per step
+  with "2 ·  " typed in front (step ②'s second line sat under the
+  number), then text markers "1 ·" / "✓" / "3 ·" of three widths,
+  start-aligned in a 28dp column, which lined up with nothing (both
+  reported on-device). **The hero sits on the card rows' two axes**: the
+  rows below are a card 16dp from the screen with 16dp padding, a 24dp
+  icon and the title at 72dp, so every state's glyph is 24dp at 32dp
+  (the root's 16dp gutter + the hero's or the dashed card's 16dp), every
+  title, step text, size figure and caption starts at 72dp, and the
+  glyph, the markers and the rows' icons share one centre line (44dp).
+  The glyph was 28dp at the card's edge with the text at 56dp. The row
+  carries the spoken line, the marker column is hidden from TalkBack.
+  There is no
   quota, meter or chip: the folder is the user's own storage, so the only
   facts the card can state are what is in it and whether it answers.
   `mReachable` defaults TRUE so a cold bind never flashes the lost state;

@@ -19,6 +19,14 @@
 
   No quota, no meter, no chip: the folder is the user's own storage, so the
   only facts this card can state are what is in it and whether it answers.
+
+  Geometry: every state sits on the card rows' two axes, so the page reads as
+  one column. The rows below are a card 16dp from the screen, 16dp padding, a
+  24dp icon and the title at 72dp. Here the 16dp gutter is the root's padding,
+  the inner 16dp is the hero's (or the dashed card's) padding, the glyph is
+  24dp, and every line of text starts 16dp after it: the glyph, the step
+  markers and the rows' icons share one centre line (44dp), every title and
+  step text one start (72dp).
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -36,6 +44,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:paddingHorizontal="16dp"
         tools:visibility="visible">
 
         <LinearLayout
@@ -46,8 +55,8 @@
 
             <ImageView
                 android:id="@+id/cb_glyph"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:src="@drawable/cloud_upload_24"
                 app:tint="?attr/colorOnSurfaceVariant"
                 android:importantForAccessibility="no" />
@@ -56,7 +65,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="16dp"
                 android:orientation="vertical">
 
                 <TextView
@@ -80,9 +89,12 @@
 
         </LinearLayout>
 
+        <!-- The figure, caption and alert hang under the title (40dp = the
+             24dp glyph + its 16dp gap), on the rows' text axis. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="40dp"
             android:layout_marginTop="12dp"
             android:orientation="horizontal"
             android:baselineAligned="true">
@@ -114,6 +126,7 @@
             android:id="@+id/cb_caption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="40dp"
             android:layout_marginTop="4dp"
             android:textSize="12sp"
             android:textColor="?attr/colorOnSurfaceVariant"
@@ -125,6 +138,7 @@
             android:id="@+id/cb_alert"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="40dp"
             android:layout_marginTop="8dp"
             android:textSize="12.5sp"
             android:textColor="?attr/colorError"
@@ -152,8 +166,8 @@
             android:gravity="center_vertical">
 
             <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:src="@drawable/cloud_upload_24"
                 app:tint="?attr/colorOnSurfaceVariant"
                 android:importantForAccessibility="no" />
@@ -162,7 +176,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="16dp"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 android:textColor="?attr/colorOnSurface"
@@ -170,44 +184,46 @@
 
         </LinearLayout>
 
-        <!-- Three roadmap lines, each a HANGING row: the marker (✓ or
-             "N ·") in its own column under the cloud glyph, the step's text
-             in a second column under the title (28dp + 12dp, the header's
-             own geometry). A line that wraps continues under its text, never
-             under its number: the steps were one TextView each with the
-             marker typed in front, and step 2's second line ("card") sat
-             under "2 ·" (reported on-device). The marker's 28dp is a
-             MINIMUM, so a large font scale widens it instead of clipping it.
-             CloudStatusPreference sets the marker, the ink (full-contrast
-             bold = the current step) and the row's spoken text; the two
-             columns are hidden from TalkBack so a step reads as one line. -->
+        <!-- Three roadmap lines, each a HANGING row: a 20dp marker centred
+             in the glyph's 24dp column (the markers, the cloud and the rows'
+             icons below share one centre line), the step's text from the
+             title's start, so a wrapped line continues under its text. The
+             marker is one of three shapes, set by
+             CloudStatusPreference.bindStep: ahead = a ring round the number,
+             current = the number on a disc filled like the CTA under the
+             card (the button that performs that step), done = a check on a
+             tonal disc. The numeral is sized in dp: it is a glyph of a fixed
+             circle, and the step's text beside it follows the font scale.
+             The row carries the spoken line; the marker column is hidden
+             from TalkBack. -->
         <LinearLayout
             android:id="@+id/cb_step_code_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:importantForAccessibility="yes"
             android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/cb_step_code_mark"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minWidth="28dp"
-                android:importantForAccessibility="no"
-                android:textSize="12.5sp"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                tools:text="✓" />
+            <FrameLayout
+                android:layout_width="24dp"
+                android:layout_height="20dp"
+                android:importantForAccessibility="noHideDescendants">
+
+                <TextView
+                    android:id="@+id/cb_step_code_mark"
+                    style="@style/Firedown.Widget.BackupStepMark"
+                    tools:text="1" />
+
+                <ImageView
+                    android:id="@+id/cb_step_code_done"
+                    style="@style/Firedown.Widget.BackupStepDone"
+                    tools:ignore="ContentDescription" />
+
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/cb_step_code"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="12dp"
-                android:importantForAccessibility="no"
-                android:textSize="12.5sp"
-                android:textColor="?attr/colorOnSurfaceVariant"
+                style="@style/Firedown.Widget.BackupStepText"
                 tools:text="Create recovery code" />
 
         </LinearLayout>
@@ -216,29 +232,30 @@
             android:id="@+id/cb_step_folder_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="8dp"
             android:importantForAccessibility="yes"
             android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/cb_step_folder_mark"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minWidth="28dp"
-                android:importantForAccessibility="no"
-                android:textSize="12.5sp"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                tools:text="2 ·" />
+            <FrameLayout
+                android:layout_width="24dp"
+                android:layout_height="20dp"
+                android:importantForAccessibility="noHideDescendants">
+
+                <TextView
+                    android:id="@+id/cb_step_folder_mark"
+                    style="@style/Firedown.Widget.BackupStepMark"
+                    tools:text="2" />
+
+                <ImageView
+                    android:id="@+id/cb_step_folder_done"
+                    style="@style/Firedown.Widget.BackupStepDone"
+                    tools:ignore="ContentDescription" />
+
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/cb_step_folder"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="12dp"
-                android:importantForAccessibility="no"
-                android:textSize="12.5sp"
-                android:textColor="?attr/colorOnSurfaceVariant"
+                style="@style/Firedown.Widget.BackupStepText"
                 tools:text="Choose where to back up" />
 
         </LinearLayout>
@@ -247,29 +264,30 @@
             android:id="@+id/cb_step_backup_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="8dp"
             android:importantForAccessibility="yes"
             android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/cb_step_backup_mark"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minWidth="28dp"
-                android:importantForAccessibility="no"
-                android:textSize="12.5sp"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                tools:text="3 ·" />
+            <FrameLayout
+                android:layout_width="24dp"
+                android:layout_height="20dp"
+                android:importantForAccessibility="noHideDescendants">
+
+                <TextView
+                    android:id="@+id/cb_step_backup_mark"
+                    style="@style/Firedown.Widget.BackupStepMark"
+                    tools:text="3" />
+
+                <ImageView
+                    android:id="@+id/cb_step_backup_done"
+                    style="@style/Firedown.Widget.BackupStepDone"
+                    tools:ignore="ContentDescription" />
+
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/cb_step_backup"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="12dp"
-                android:importantForAccessibility="no"
-                android:textSize="12.5sp"
-                android:textColor="?attr/colorOnSurfaceVariant"
+                style="@style/Firedown.Widget.BackupStepText"
                 tools:text="Back up a finished download from its ⋮ menu." />
 
         </LinearLayout>

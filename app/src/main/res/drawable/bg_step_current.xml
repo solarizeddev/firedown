@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backup roadmap marker, the CURRENT step: filled with the CTA's own
+     colour (colorPrimary under colorOnPrimary), so the step and the button
+     that performs it read as one. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="?attr/colorPrimary" />
+</shape>

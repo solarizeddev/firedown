@@ -19,6 +19,8 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.settings.ui.FlatPreference;
 import com.solarized.firedown.sync.BackupStores;
 
+import java.util.Locale;
+
 /**
  * The Backup status hero (custom-layout {@link Preference}, styled by
  * {@code preference_cloud_status.xml}). One card, three states:
@@ -36,8 +38,9 @@ import com.solarized.firedown.sync.BackupStores;
  *       (SyncSettingsFragment); this card only states the fact.</li>
  *   <li><b>Not set up</b> — the dashed onboarding ROADMAP: ① Create recovery
  *       code → ② Choose backup folder → ③ Back up a finished download from
- *       its ⋮ menu. A done step gets a "✓" prefix and muted ink; the current
- *       step keeps bold full-contrast ink so it reads as "you are here".</li>
+ *       its ⋮ menu. A done step gets a check and muted ink; the current
+ *       step's number sits on a disc filled like the CTA under the card,
+ *       with bold full-contrast text, so it reads as "you are here".</li>
  * </ul>
  *
  * A running transfer swaps the caption for the live "Transfer in progress…"
@@ -220,51 +223,56 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
 
     /**
      * The not-set-up empty state is the onboarding ROADMAP: ① recovery code →
-     * ② backup folder → ③ first backup. A DONE step gets a "✓" prefix and
-     * muted ink; the next pending step keeps full-contrast ink so it reads as
-     * "you are here". ③ is by definition pending while the empty state shows
-     * (both ① and ② done IS set up, which flips the card to the hero).
+     * ② backup folder → ③ first backup. A DONE step gets a check and muted
+     * ink; the next pending step is the "you are here" one. ③ is by
+     * definition pending while the empty state shows (both ① and ② done IS
+     * set up, which flips the card to the hero).
      */
     private void bindOnboardingSteps(Context ctx, PreferenceViewHolder holder) {
         boolean codeDone = mHasKey;
         boolean folderDone = mHasFolder;
-        bindStep(holder, R.id.cb_step_code_row, R.id.cb_step_code_mark, R.id.cb_step_code, 1,
-                ctx.getString(R.string.settings_sync_create_title), codeDone, !codeDone);
-        bindStep(holder, R.id.cb_step_folder_row, R.id.cb_step_folder_mark, R.id.cb_step_folder, 2,
-                ctx.getString(R.string.folder_backup_step_folder),
+        bindStep(holder, R.id.cb_step_code_row, R.id.cb_step_code_mark, R.id.cb_step_code_done,
+                R.id.cb_step_code, 1, ctx.getString(R.string.settings_sync_create_title),
+                codeDone, !codeDone);
+        bindStep(holder, R.id.cb_step_folder_row, R.id.cb_step_folder_mark, R.id.cb_step_folder_done,
+                R.id.cb_step_folder, 2, ctx.getString(R.string.folder_backup_step_folder),
                 folderDone, codeDone && !folderDone);
-        bindStep(holder, R.id.cb_step_backup_row, R.id.cb_step_backup_mark, R.id.cb_step_backup, 3,
-                ctx.getString(R.string.cloud_status_empty_body), false, codeDone && folderDone);
+        bindStep(holder, R.id.cb_step_backup_row, R.id.cb_step_backup_mark, R.id.cb_step_backup_done,
+                R.id.cb_step_backup, 3, ctx.getString(R.string.cloud_status_empty_body),
+                false, codeDone && folderDone);
     }
 
     /**
-     * One roadmap row: "✓" muted when done, "N ·" full-contrast bold when
-     * it's the current step, "N ·" muted when still ahead. The marker and the
-     * text are two columns (the hanging indent), so both take the same ink
-     * and weight, and the row carries the line a screen reader speaks.
+     * One roadmap row. The marker is one of three shapes in the same 20dp
+     * slot: a check on a tonal disc when done, the number on a disc filled
+     * like the CTA (colorPrimary under colorOnPrimary) when current, the
+     * number in a ring when still ahead. The step's text is bold
+     * full-contrast when current, muted otherwise. Every view is set in every
+     * branch (the holder recycles). The row carries the spoken line.
      */
-    private static void bindStep(PreferenceViewHolder holder, int rowId, int markId, int textId,
-                                 int number, String text, boolean done, boolean current) {
+    private static void bindStep(PreferenceViewHolder holder, int rowId, int markId, int doneId,
+                                 int textId, int number, String text, boolean done, boolean current) {
         View row = holder.findViewById(rowId);
         TextView mark = (TextView) holder.findViewById(markId);
+        View doneMark = holder.findViewById(doneId);
         TextView label = (TextView) holder.findViewById(textId);
-        if (row == null || mark == null || label == null) {
+        if (row == null || mark == null || doneMark == null || label == null) {
             return;
         }
-        String marker = done ? "✓" : number + " ·";
-        mark.setText(marker);
+        String numeral = String.format(Locale.getDefault(), "%d", number);
+        mark.setText(numeral);
+        mark.setVisibility(done ? View.GONE : View.VISIBLE);
+        doneMark.setVisibility(done ? View.VISIBLE : View.GONE);
+        mark.setBackgroundResource(current ? R.drawable.bg_step_current : R.drawable.bg_step_ahead);
+        mark.setTextColor(current
+                ? MaterialColors.getColor(mark, com.google.android.material.R.attr.colorOnPrimary)
+                : MaterialColors.getColor(mark, com.google.android.material.R.attr.colorOnSurfaceVariant));
         label.setText(text);
-        row.setContentDescription(marker + " " + text);
-        int ink = current
-                ? MaterialColors.getColor(label,
-                        com.google.android.material.R.attr.colorOnSurface)
-                : MaterialColors.getColor(label,
-                        com.google.android.material.R.attr.colorOnSurfaceVariant);
-        int style = current ? Typeface.BOLD : Typeface.NORMAL;
-        for (TextView view : new TextView[] {mark, label}) {
-            view.setTextColor(ink);
-            view.setTypeface(null, style);
-        }
+        label.setTextColor(current
+                ? MaterialColors.getColor(label, com.google.android.material.R.attr.colorOnSurface)
+                : MaterialColors.getColor(label, com.google.android.material.R.attr.colorOnSurfaceVariant));
+        label.setTypeface(null, current ? Typeface.BOLD : Typeface.NORMAL);
+        row.setContentDescription((done ? "✓" : numeral + ".") + " " + text);
     }
 
     /**
