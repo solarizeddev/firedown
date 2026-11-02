@@ -63,6 +63,11 @@ public class AddonPopupSheetDialogFragment extends BaseBottomSheetDialogFragment
         mAddonManager.getPopup().observe(getViewLifecycleOwner(), popup -> {
             if (popup != mPopup) {
                 // Closed by the add-on, or replaced by another add-on's popup.
+                // This runs inside closePopup's setValue, before the session
+                // closes: the view lets go of it first.
+                if (mGeckoView != null) {
+                    mGeckoView.releaseSession();
+                }
                 NavigationUtils.popBackStackSafe(mNavController, R.id.dialog_addon_popup);
             }
         });
@@ -83,6 +88,11 @@ public class AddonPopupSheetDialogFragment extends BaseBottomSheetDialogFragment
         Activity activity = getActivity();
         boolean changing = activity != null && activity.isChangingConfigurations();
         if (mPopup != null && !changing) {
+            // The view lets go of the session before it closes (a closed
+            // session must never stay attached to a GeckoView).
+            if (mGeckoView != null) {
+                mGeckoView.releaseSession();
+            }
             mAddonManager.closePopup(mPopup);
         }
     }

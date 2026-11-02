@@ -726,6 +726,12 @@ public class BrowserFragment extends BaseBrowserFragment
             if (current != null && current.getId() == R.id.dialog_addon_popup) {
                 return;
             }
+            if (!popup.isFresh()) {
+                // Opened while the browser was away (another screen, the
+                // app in the background): not shown long after the fact.
+                mAddonManager.closePopup(popup);
+                return;
+            }
             Bundle args = new Bundle();
             args.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_addon_popup, R.id.browser, args);

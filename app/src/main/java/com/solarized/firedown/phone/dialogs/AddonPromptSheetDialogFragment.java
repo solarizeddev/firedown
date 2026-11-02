@@ -1,6 +1,5 @@
 package com.solarized.firedown.phone.dialogs;
 
-import android.app.Activity;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -19,6 +18,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.addons.AddonIcons;
 import com.solarized.firedown.addons.AddonManager;
 import com.solarized.firedown.addons.AddonPermissionText;
+import com.solarized.firedown.utils.SheetGroups;
 
 import java.util.List;
 
@@ -30,8 +30,9 @@ import dagger.hilt.android.AndroidEntryPoint;
  * The add-on permission question: adding an add-on, an update that asks
  * for more, a permission it asks for while running. Shown by the activity
  * in front ({@code BaseActivity}) for {@link AddonManager#getPrompt()};
- * Gecko waits for the answer, so leaving the sheet any way but the confirm
- * button answers "no".
+ * Gecko waits for the answer, so cancelling the sheet (Back, a swipe, a
+ * tap outside) answers "no"; a sheet that goes away with its screen leaves
+ * the question for the next screen in front.
  */
 @AndroidEntryPoint
 public class AddonPromptSheetDialogFragment extends BaseBottomSheetDialogFragment {
@@ -90,6 +91,9 @@ public class AddonPromptSheetDialogFragment extends BaseBottomSheetDialogFragmen
         TextView data = mView.findViewById(R.id.addon_prompt_data);
         View privateRow = mView.findViewById(R.id.addon_prompt_private_row);
         MaterialSwitch privateSwitch = mView.findViewById(R.id.addon_prompt_private_switch);
+        View technicalRow = mView.findViewById(R.id.addon_prompt_technical_row);
+        MaterialSwitch technicalSwitch = mView.findViewById(R.id.addon_prompt_technical_switch);
+        LinearLayout choices = mView.findViewById(R.id.addon_prompt_choices);
         MaterialButton cancel = mView.findViewById(R.id.addon_prompt_cancel);
         MaterialButton confirm = mView.findViewById(R.id.addon_prompt_confirm);
 
@@ -141,9 +145,16 @@ public class AddonPromptSheetDialogFragment extends BaseBottomSheetDialogFragmen
         boolean offerPrivate = prompt.type == AddonManager.Prompt.INSTALL && prompt.addon.canRunInPrivate();
         privateRow.setVisibility(offerPrivate ? View.VISIBLE : View.GONE);
         privateRow.setOnClickListener(v -> privateSwitch.toggle());
+        // Firefox's opt-in: off unless the user turns it on.
+        boolean offerTechnical = prompt.offersTechnicalData;
+        technicalRow.setVisibility(offerTechnical ? View.VISIBLE : View.GONE);
+        technicalRow.setOnClickListener(v -> technicalSwitch.toggle());
+        choices.setVisibility(offerPrivate || offerTechnical ? View.VISIBLE : View.GONE);
+        SheetGroups.applyCorners(choices);
 
-        cancel.setOnClickListener(v -> answer(false, false));
-        confirm.setOnClickListener(v -> answer(true, offerPrivate && privateSwitch.isChecked()));
+        cancel.setOnClickListener(v -> answer(false, false, false));
+        confirm.setOnClickListener(v -> answer(true, offerPrivate && privateSwitch.isChecked(),
+                offerTechnical && technicalSwitch.isChecked()));
     }
 
     @NonNull
@@ -154,35 +165,25 @@ public class AddonPromptSheetDialogFragment extends BaseBottomSheetDialogFragmen
         return view;
     }
 
-    private void answer(boolean allow, boolean allowPrivate) {
+    private void answer(boolean allow, boolean allowPrivate, boolean allowTechnical) {
         if (mAnswered) {
             return;
         }
         mAnswered = true;
-        mAddonManager.answer(mSeq, allow, allowPrivate);
+        mAddonManager.answer(mSeq, allow, allowPrivate, allowTechnical);
         dismissAllowingStateLoss();
     }
 
     @Override
-    public void onDismiss(@NonNull DialogInterface dialog) {
-        super.onDismiss(dialog);
-        // Back, a swipe down or a tap outside: "no". A rotation doesn't get
-        // here (the activities handle it themselves); an activity finishing
-        // with the sheet up answers through onDestroy.
+    public void onCancel(@NonNull DialogInterface dialog) {
+        super.onCancel(dialog);
+        // Back, a swipe down or a tap outside: "no". Only the user's own
+        // cancel answers: a sheet torn down with its activity (the system
+        // reclaiming a screen behind another one showing the same prompt)
+        // leaves the prompt pending, and the screen in front shows it.
         if (!mAnswered) {
             mAnswered = true;
             mAddonManager.dismissPrompt(mSeq);
         }
-    }
-
-    @Override
-    public void onDestroy() {
-        Activity activity = getActivity();
-        boolean changing = activity != null && activity.isChangingConfigurations();
-        if (!mAnswered && !changing) {
-            mAnswered = true;
-            mAddonManager.dismissPrompt(mSeq);
-        }
-        super.onDestroy();
     }
 }

@@ -236,15 +236,23 @@ public class IntentHandler {
     private void handleOpenSession(Intent intent, NavController navController) {
         int tabId = intent.getIntExtra(Keys.ITEM_ID, 0);
         boolean isHome = intent.getBooleanExtra(Keys.ITEM_IS_HOME, true);
+        // A private tab is looked up in its own list (an add-on's tab).
+        boolean incognito = intent.getBooleanExtra(Keys.IS_INCOGNITO, false);
 
         Log.d(TAG, "handleOpenSession: tabId=" + tabId + " isHome=" + isHome);
 
-        GeckoState geckoState = geckoStateViewModel.getGeckoState(tabId);
+        GeckoState geckoState = incognito
+                ? incognitoStateViewModel.getGeckoState(tabId)
+                : geckoStateViewModel.getGeckoState(tabId);
         if (geckoState == null) {
             Log.w(TAG, "handleOpenSession: tabId=" + tabId + " not found, creating home tab");
             geckoState = new GeckoState(new GeckoStateEntity(true));
         }
-        geckoStateViewModel.setGeckoState(geckoState, true);
+        if (geckoState.isIncognito()) {
+            incognitoStateViewModel.setGeckoState(geckoState, true);
+        } else {
+            geckoStateViewModel.setGeckoState(geckoState, true);
+        }
 
         if (isHome) {
             boolean isIncognito = geckoState.getGeckoStateEntity().isIncognito();

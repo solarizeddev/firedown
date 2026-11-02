@@ -123,43 +123,86 @@
                 tools:text="The developer says it collects no data."
                 tools:visibility="visible" />
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/addon_prompt_private_row"
-                style="@style/Firedown.Widget.SheetRowCard"
-                android:layout_marginTop="12dp"
-                android:visibility="gone"
-                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle"
-                tools:visibility="visible">
+            <!-- The install's two choices: private tabs, and the optional
+                 share of technical and interaction data (only when the
+                 add-on declares it). Grouped; corners set in code. -->
+            <LinearLayout
+                android:id="@+id/addon_prompt_choices"
+                style="@style/Firedown.Widget.SheetGroup">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:minHeight="56dp"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="8dp">
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/addon_prompt_private_row"
+                    style="@style/Firedown.Widget.SheetRowCard"
+                    android:visibility="gone"
+                    tools:visibility="visible">
 
-                    <TextView
-                        style="@style/TextAppearance.Material3.TitleMedium"
-                        android:layout_width="0dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/addon_private"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="16sp" />
+                        android:gravity="center_vertical"
+                        android:minHeight="56dp"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp">
 
-                    <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/addon_prompt_private_switch"
-                        android:layout_width="wrap_content"
+                        <TextView
+                            style="@style/TextAppearance.Material3.TitleMedium"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/addon_private"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="16sp" />
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/addon_prompt_private_switch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:clickable="false"
+                            android:focusable="false" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/addon_prompt_technical_row"
+                    style="@style/Firedown.Widget.SheetRowCard"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:clickable="false"
-                        android:focusable="false" />
+                        android:gravity="center_vertical"
+                        android:minHeight="56dp"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp">
 
-                </LinearLayout>
+                        <TextView
+                            style="@style/TextAppearance.Material3.TitleMedium"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/addon_prompt_technical"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="16sp" />
 
-            </com.google.android.material.card.MaterialCardView>
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/addon_prompt_technical_switch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:clickable="false"
+                            android:focusable="false" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/addon_prompt_footnote"
