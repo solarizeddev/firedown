@@ -189,6 +189,13 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // An add-on's new tab or popup opens in the mode on screen.
+        mAddonManager.setBrowsingPrivate(true);
+    }
+
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 

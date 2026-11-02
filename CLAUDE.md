@@ -4086,8 +4086,12 @@ before changing a flow. The rules, each easy to undo:
   on screen (`GeckoComponents.onExternalResponse` → `installFromResponse`,
   a response served as anything but `application/x-xpinstall`, which Gecko
   takes itself and allows from addons.mozilla.org only). A file's prompt
-  says where it came from (the page's host, or "a file on this phone") and
-  whether its manifest names Firefox for Android.
+  says where it came from (the page the user was on, or "a file on this
+  phone") and whether its manifest names Firefox for Android. A page
+  cannot nag with it: one page install at a time (a second .xpi link while
+  one is staged or asked about is dropped), a site the user said no to is
+  quiet for 5 minutes, and at most 4 questions wait in the queue (the rest
+  are answered "no").
 - **The built-ins can never be replaced.** `AddonPolicy.isBuiltInId`
   (uBlock, `icons@mozac.org`, every `@solarized.dev` id) is refused at three
   points: the list, the file's manifest, and Gecko's install prompt (the one
@@ -4099,8 +4103,15 @@ before changing a flow. The rules, each easy to undo:
   manager (`getPrompt`), `BaseActivity` shows the head as
   `AddonPromptSheetDialogFragment` on whatever screen is in front (not the
   lock screen), and leaving the sheet any way but its button answers "no".
-  The wording follows Firefox's permission strings (`AddonPermissions`,
-  `AddonPermissionText`), with the data-collection line.
+  Only the user's own CANCEL (Back, swipe, tap outside) answers "no"
+  (`onCancel`, never `onDismiss`/`onDestroy`): a sheet torn down with a
+  screen behind another one showing the same question must not deny it,
+  and `BaseActivity.onPostResume` asks again for a question still pending
+  (the observer can consume one it could not show, API 26-27). The wording
+  follows Firefox's permission strings (`AddonPermissions`,
+  `AddonPermissionText`), with the data-collection line and, when the
+  add-on declares it, Firefox's opt-in to share technical and interaction
+  data (off by default, the third `PermissionPromptResponse` value).
 - **Updates: daily while the app runs, never a background job.** One minute
   after attach, at most once a day (`checkForUpdates(false)`); an update
   asking for new permissions is refused in the background and the add-on
@@ -4120,16 +4131,38 @@ before changing a flow. The rules, each easy to undo:
   (the browser opens any session it finds unopened, and two opens crash).
   `tabs.update` is allowed only on a listed tab and only to a web page or
   the add-on's own pages, and the app does NOT load the url: GeckoView
-  loads it after ALLOW (a loadUri there navigated twice); `active: true`
-  switches to the tab. `tabs.remove` takes the `window.close()` path.
+  loads it after ALLOW (a loadUri there navigated twice). A tab put on
+  screen (`tabs.create` active, `tabs.update` `active: true`, a web link
+  from a popup or the options page) goes through `showTab`: an
+  `OPEN_SESSION` intent to the browser activity (with `IS_INCOGNITO`, which
+  `IntentHandler.handleOpenSession` now reads), so it shows from the home,
+  the tab grid or Settings too, not only when the browser is on screen.
+  `tabs.remove` takes the `window.close()` path in a POSTED task: GeckoView
+  answers the add-on through that tab's window, which must still be open
+  when the ALLOW goes out. The mode for a new tab or popup is the one on
+  screen (`setBrowsingPrivate`, from the browser and both homes).
   Hidden sessions (YouTube's token page, the share engine, popups, options
   pages) are never the add-on's to move or close.
 - **The buttons live in the ⋮ sheet, not the toolbar**: "Add-ons" opens a
   sheet listing each add-on's browser or page action as this tab sees it
   (badge, title, enabled), a tap is the add-on's own `click()`, and a popup
-  opens in a sheet (`AddonPopupSheetDialogFragment`, one at a time). An
+  opens in a sheet (`AddonPopupSheetDialogFragment`, one at a time; the
+  view releases the session before it closes, and a popup the browser
+  could not show within 3 s is closed, not shown later). An
   add-on's settings page opens in Settings (`AddonOptionsFragment`), its
   web links in a tab.
+- **Not built, on purpose or for now**: `downloads.download` and
+  `browsingData` for add-ons (Firefox for Android registers no
+  `DownloadDelegate`/`BrowsingDataDelegate` either); an options page with
+  `open_in_tab` opened from Settings shows in Settings (from the add-on,
+  Gecko opens it in a tab itself); a catalog tap goes straight to the
+  install question, no detail page. Known residuals: an .xpi link served
+  as `application/x-xpinstall` from a site other than addons.mozilla.org
+  does nothing (Gecko blocks it, as in Firefox for Android), and an
+  add-on with access to all sites also runs in the hidden sessions
+  (YouTube's token page, the share engine's loopback page, whose port
+  messages it could read); GeckoView has no per-session way to exclude
+  them.
 - **Verify** with `sh scripts/addons-harness/run.sh /path/to/firefox-src`
   (the real pure classes against Firefox's own test fixtures and AMO
   shapes; 67 checks, six mutants must fail), the JUnit

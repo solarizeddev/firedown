@@ -150,6 +150,8 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     @Override
     public void onResume() {
         super.onResume();
+        // An add-on's new tab or popup opens in the mode on screen.
+        mAddonManager.setBrowsingPrivate(false);
         // Being on Home means the user is on the home tab; if the tab list is
         // empty (e.g. just closed the last tab), materialise it so the count and
         // the Tabs screen agree that there's >=1 tab. No-op when a tab exists.

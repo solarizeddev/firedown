@@ -426,6 +426,21 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
     // ── Lifecycle ────────────────────────────────────────────────────────────
 
     @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        // The prompt observer can consume a value without showing it (on
+        // API 26-27 the state is saved before onStop, so isStateSaved() is
+        // true while the observer is still active), and a sheet that went
+        // away with another screen left its question pending: the screen
+        // in front asks again. executePendingTransactions first, so a sheet
+        // the observer just showed is found by its tag.
+        if (showsAddonPrompts()) {
+            getSupportFragmentManager().executePendingTransactions();
+            showAddonPrompt(mAddonManager.getPrompt().getValue());
+        }
+    }
+
+    @Override
     protected void onResume(){
         super.onResume();
         mRootBack.setEnabled(leavesToBrowser() && isTaskRoot());

@@ -1363,6 +1363,7 @@
     <string name="addon_prompt_add">Add</string>
     <string name="addon_prompt_update">Update</string>
     <string name="addon_prompt_allow">Allow</string>
+    <string name="addon_prompt_technical">Share technical and interaction data with the developer</string>
     <string name="addon_prompt_line" translatable="false">•  %1$s</string>
 
     <string name="addon_installed">%1$s added. Find it in the ⋮ menu.</string>

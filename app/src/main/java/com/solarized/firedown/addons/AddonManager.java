@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -16,15 +17,16 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.solarized.firedown.BuildConfig;
+import com.solarized.firedown.IntentActions;
+import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.geckoview.GeckoComponents;
-import com.solarized.firedown.geckoview.GeckoObserverInvoker;
-import com.solarized.firedown.geckoview.GeckoObserverRegistry;
 import com.solarized.firedown.geckoview.GeckoState;
+import com.solarized.firedown.phone.BrowserMainActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 
 import org.mozilla.geckoview.AllowOrDeny;
@@ -91,6 +93,10 @@ public class AddonManager {
     private static final long UPDATE_INTERVAL_MS = TimeUnit.DAYS.toMillis(1);
     /** Let the browser finish starting before the daily update check. */
     private static final long UPDATE_DELAY_MS = TimeUnit.MINUTES.toMillis(1);
+    /** A site whose add-on the user declined is not asked about again for this long. */
+    private static final long DECLINED_HOST_QUIET_MS = TimeUnit.MINUTES.toMillis(5);
+    /** More questions than this waiting at once: the rest are answered "no". */
+    private static final int MAX_QUEUED_PROMPTS = 4;
 
     /** What GeckoRuntimeHelper lends: it owns the runtime and can't be injected here (cycle). */
     public interface Host {
@@ -102,6 +108,7 @@ public class AddonManager {
         public static final int INSTALL = 1;
         public static final int UPDATE = 2;
         public static final int OPTIONAL = 3;
+        static final String TECHNICAL_DATA = "technicalAndInteraction";
 
         public final int seq;
         public final int type;
@@ -113,12 +120,15 @@ public class AddonManager {
         @Nullable public final String source;
         /** The file's manifest doesn't declare Firefox for Android. */
         public final boolean notMadeForAndroid;
+        /** The add-on may share technical and interaction data if the user opts in. */
+        public final boolean offersTechnicalData;
+        @Nullable final String pageHost;
         @Nullable final GeckoResult<WebExtension.PermissionPromptResponse> installResult;
         @Nullable final GeckoResult<AllowOrDeny> allowResult;
 
         Prompt(int seq, int type, @NonNull AddonInfo addon, @NonNull List<String> permissions,
                @NonNull List<String> origins, @NonNull List<String> dataCollection,
-               @Nullable String source, boolean notMadeForAndroid,
+               @Nullable String source, boolean notMadeForAndroid, @Nullable String pageHost,
                @Nullable GeckoResult<WebExtension.PermissionPromptResponse> installResult,
                @Nullable GeckoResult<AllowOrDeny> allowResult) {
             this.seq = seq;
@@ -129,6 +139,9 @@ public class AddonManager {
             this.dataCollection = dataCollection;
             this.source = source;
             this.notMadeForAndroid = notMadeForAndroid;
+            this.offersTechnicalData = type == INSTALL
+                    && addon.optionalDataCollection.contains(TECHNICAL_DATA);
+            this.pageHost = pageHost;
             this.installResult = installResult;
             this.allowResult = allowResult;
         }
@@ -172,14 +185,27 @@ public class AddonManager {
 
     /** An add-on's popup, open in a sheet. */
     public static final class Popup {
+        /** A popup the browser could not show this soon after it was asked for is dropped. */
+        private static final long SHOW_WINDOW_MS = 3000;
+
         @NonNull public final String addonId;
         @NonNull public final String name;
         @NonNull public final GeckoSession session;
+        private final long mCreatedAt = SystemClock.elapsedRealtime();
 
         Popup(@NonNull String addonId, @NonNull String name, @NonNull GeckoSession session) {
             this.addonId = addonId;
             this.name = name;
             this.session = session;
+        }
+
+        /**
+         * False once the moment has passed: a popup an add-on opened while
+         * the browser was not on screen must not appear when the user comes
+         * back later.
+         */
+        public boolean isFresh() {
+            return SystemClock.elapsedRealtime() - mCreatedAt <= SHOW_WINDOW_MS;
         }
     }
 
@@ -198,10 +224,17 @@ public class AddonManager {
     private static final class InstallContext {
         @Nullable final String source;
         final boolean notMadeForAndroid;
+        /** The page's host, for an .xpi linked from a page; null otherwise. */
+        @Nullable final String pageHost;
 
         InstallContext(@Nullable String source, boolean notMadeForAndroid) {
+            this(source, notMadeForAndroid, null);
+        }
+
+        InstallContext(@Nullable String source, boolean notMadeForAndroid, @Nullable String pageHost) {
             this.source = source;
             this.notMadeForAndroid = notMadeForAndroid;
+            this.pageHost = pageHost;
         }
     }
 
@@ -217,7 +250,6 @@ public class AddonManager {
     private final SharedPreferences mPrefs;
     private final GeckoStateDataRepository mRegularRepository;
     private final IncognitoStateRepository mIncognitoRepository;
-    private final GeckoObserverRegistry mObserverRegistry;
     private final Provider<GeckoComponents> mComponents;
     private final Executor mHeavyExecutor;
     private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -234,6 +266,11 @@ public class AddonManager {
     private final Set<String> mInteractiveUpdates = new HashSet<>();
     private final Set<String> mRefusedBuiltIn = new HashSet<>();
     private int mPendingInstalls;
+    /** An .xpi from a page is being staged or is waiting for its answer (one at a time). */
+    private boolean mPageInstallInFlight;
+    /** Host → when the user declined an add-on from it; its links are ignored for a while. */
+    private final Map<String, Long> mDeclinedHosts = new HashMap<>();
+    private boolean mUpdateCheckPosted;
     private int mPromptSeq;
     private boolean mBrowsingPrivate;
     private boolean mLoaded;
@@ -251,14 +288,12 @@ public class AddonManager {
                         SharedPreferences sharedPreferences,
                         GeckoStateDataRepository regularRepository,
                         IncognitoStateRepository incognitoRepository,
-                        GeckoObserverRegistry observerRegistry,
                         Provider<GeckoComponents> components,
                         @Qualifiers.HeavyIO Executor heavyExecutor) {
         mContext = context;
         mPrefs = sharedPreferences;
         mRegularRepository = regularRepository;
         mIncognitoRepository = incognitoRepository;
-        mObserverRegistry = observerRegistry;
         mComponents = components;
         mHeavyExecutor = heavyExecutor;
     }
@@ -474,7 +509,7 @@ public class AddonManager {
             return;
         }
         mInstallContexts.put(entry.id, new InstallContext(null, false));
-        install(entry.downloadUrl, WebExtensionController.INSTALLATION_METHOD_MANAGER, null);
+        install(entry.downloadUrl, WebExtensionController.INSTALLATION_METHOD_MANAGER, null, entry.id);
     }
 
     /** A file the user picked (Settings → Add-ons → Install from file). */
@@ -496,23 +531,71 @@ public class AddonManager {
      * A page linked to an .xpi (GeckoComponents.onExternalResponse): the
      * response is read here instead of being saved to Downloads.
      */
+    @UiThread
     public void installFromResponse(@NonNull WebResponse response, @Nullable String host) {
+        String pageHost = TextUtils.isEmpty(host) ? null : host;
+        if (!mayInstallFromPage(pageHost)) {
+            // A page navigating to .xpi links over and over: one question at
+            // a time, and a declined site is quiet for a while.
+            closeQuietly(response.body);
+            return;
+        }
+        mPageInstallInFlight = true;
         mHeavyExecutor.execute(() -> {
+            boolean handedOver = false;
             InputStream body = response.body;
-            if (body == null) {
-                post(() -> emit(Event.NOT_AN_ADDON, null));
-                return;
-            }
-            try (InputStream in = body) {
-                stageAndInstall(in, TextUtils.isEmpty(host) ? null : host);
+            try {
+                if (body == null) {
+                    post(() -> emit(Event.NOT_AN_ADDON, null));
+                } else {
+                    try (InputStream in = body) {
+                        handedOver = stageAndInstall(in, pageHost);
+                    }
+                }
             } catch (IOException e) {
                 post(() -> emit(Event.NETWORK, null));
+            } finally {
+                if (!handedOver) {
+                    post(() -> mPageInstallInFlight = false);
+                }
             }
         });
     }
 
-    /** Heavy executor: copy, read the manifest, refuse early, then hand the file to Gecko. */
-    private void stageAndInstall(@NonNull InputStream in, @Nullable String host) throws IOException {
+    private boolean mayInstallFromPage(@Nullable String host) {
+        if (mPageInstallInFlight) {
+            return false;
+        }
+        long now = SystemClock.elapsedRealtime();
+        mDeclinedHosts.values().removeIf(at -> now - at > DECLINED_HOST_QUIET_MS);
+        return host == null || !mDeclinedHosts.containsKey(host);
+    }
+
+    private static void closeQuietly(@Nullable InputStream in) {
+        if (in == null) {
+            return;
+        }
+        try {
+            in.close();
+        } catch (IOException e) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "close failed", e);
+            }
+        }
+    }
+
+    /** A manifest name still in its __MSG_x__ form says nothing: no name rather than that. */
+    @Nullable
+    private static String shownName(@Nullable String name) {
+        return name == null || name.startsWith("__MSG_") ? null : name;
+    }
+
+    /**
+     * Heavy executor: copy, read the manifest, refuse early, then hand the
+     * file to Gecko. True once the file was handed over (a page's install
+     * is then finished by Gecko's answer, not here).
+     */
+    private boolean stageAndInstall(@NonNull InputStream in, @Nullable String host) throws IOException {
         File dir = new File(mContext.getCacheDir(), XPI_DIR);
         if (!dir.isDirectory() && !dir.mkdirs()) {
             throw new IOException("no cache dir");
@@ -530,7 +613,7 @@ public class AddonManager {
                 total += read;
                 if (total > MAX_XPI_BYTES) {
                     post(() -> emit(Event.TOO_LARGE, null));
-                    return;
+                    return false;
                 }
                 out.write(buf, 0, read);
             }
@@ -546,39 +629,54 @@ public class AddonManager {
         } catch (XpiManifest.NotAnAddonException e) {
             file.delete();
             post(() -> emit(Event.NOT_AN_ADDON, null));
-            return;
+            return false;
         }
+        String name = shownName(info.name);
         if (AddonPolicy.isBuiltInId(info.id)) {
             file.delete();
-            String name = info.name;
             post(() -> emit(Event.BUILT_IN, name));
-            return;
+            return false;
         }
         if (!info.signed) {
             file.delete();
-            String name = info.name;
             post(() -> emit(Event.UNSIGNED, name));
-            return;
+            return false;
         }
         InstallContext context = new InstallContext(
                 host == null ? mContext.getString(R.string.addons_source_file) : host,
-                !info.declaresAndroid);
+                !info.declaresAndroid, host);
         String declaredId = info.id;
+        boolean fromPage = host != null;
         post(() -> {
             if (declaredId != null) {
                 mInstallContexts.put(declaredId, context);
             }
             mLastFileContext = context;
-            install(Uri.fromFile(file).toString(), WebExtensionController.INSTALLATION_METHOD_FROM_FILE, file);
+            install(Uri.fromFile(file).toString(), WebExtensionController.INSTALLATION_METHOD_FROM_FILE,
+                    file, declaredId, fromPage);
         });
+        return true;
     }
 
-    /** Main thread. {@code staged}, when set, is deleted once Gecko is done with it. */
-    private void install(@NonNull String url, @Nullable String method, @Nullable File staged) {
+    private void install(@NonNull String url, @Nullable String method, @Nullable File staged,
+                         @Nullable String contextId) {
+        install(url, method, staged, contextId, false);
+    }
+
+    /**
+     * Main thread. {@code staged}, when set, is deleted once Gecko is done
+     * with it; {@code contextId}'s install context is dropped if Gecko fails
+     * before asking; {@code fromPage} ends the page's one install in flight.
+     */
+    private void install(@NonNull String url, @Nullable String method, @Nullable File staged,
+                         @Nullable String contextId, boolean fromPage) {
         GeckoRuntime runtime = mRuntime;
         if (runtime == null) {
             if (staged != null) {
                 staged.delete();
+            }
+            if (fromPage) {
+                mPageInstallInFlight = false;
             }
             emit(Event.FAILED, null);
             return;
@@ -586,18 +684,24 @@ public class AddonManager {
         mPendingInstalls++;
         mInstallsInFlight.setValue(mPendingInstalls);
         runtime.getWebExtensionController().install(url, method).accept(extension -> {
-            finishInstall(staged);
+            finishInstall(staged, contextId, fromPage);
         }, e -> {
-            finishInstall(staged);
+            finishInstall(staged, contextId, fromPage);
             report(e);
         });
     }
 
-    private void finishInstall(@Nullable File staged) {
+    private void finishInstall(@Nullable File staged, @Nullable String contextId, boolean fromPage) {
         mPendingInstalls = Math.max(0, mPendingInstalls - 1);
         mInstallsInFlight.setValue(mPendingInstalls);
         if (mPendingInstalls == 0) {
             mLastFileContext = null;
+        }
+        if (contextId != null) {
+            mInstallContexts.remove(contextId);
+        }
+        if (fromPage) {
+            mPageInstallInFlight = false;
         }
         if (staged != null) {
             File file = staged;
@@ -811,14 +915,18 @@ public class AddonManager {
     }
 
     private void scheduleUpdateCheck() {
-        if (mInstalled.isEmpty()) {
+        if (mInstalled.isEmpty() || mUpdateCheckPosted) {
             return;
         }
         long last = mPrefs.getLong(PREF_LAST_UPDATE_CHECK, 0L);
         if (System.currentTimeMillis() - last < UPDATE_INTERVAL_MS) {
             return;
         }
-        mMain.postDelayed(() -> checkForUpdates(false, null), UPDATE_DELAY_MS);
+        mUpdateCheckPosted = true;
+        mMain.postDelayed(() -> {
+            mUpdateCheckPosted = false;
+            checkForUpdates(false, null);
+        }, UPDATE_DELAY_MS);
     }
 
     private void markReview(@NonNull String id) {
@@ -841,8 +949,22 @@ public class AddonManager {
     private void enqueue(@NonNull Prompt prompt) {
         if (mPrompt.getValue() == null) {
             mPrompt.setValue(prompt);
-        } else {
+        } else if (mPromptQueue.size() < MAX_QUEUED_PROMPTS) {
             mPromptQueue.add(prompt);
+        } else {
+            // Nobody answers a pile of questions: Gecko gets its "no" now.
+            complete(prompt, false, false, false);
+        }
+    }
+
+    private static void complete(@NonNull Prompt prompt, boolean allow, boolean allowPrivate,
+                                 boolean allowTechnicalData) {
+        if (prompt.installResult != null) {
+            prompt.installResult.complete(new WebExtension.PermissionPromptResponse(
+                    allow, allow && allowPrivate, allow && allowTechnicalData));
+        }
+        if (prompt.allowResult != null) {
+            prompt.allowResult.complete(allow ? AllowOrDeny.ALLOW : AllowOrDeny.DENY);
         }
     }
 
@@ -853,19 +975,25 @@ public class AddonManager {
      */
     @UiThread
     public void answer(int seq, boolean allow, boolean allowPrivate) {
+        answer(seq, allow, allowPrivate, false);
+    }
+
+    /** {@code allowTechnicalData}: the install prompt's opt-in to share technical and interaction data. */
+    @UiThread
+    public void answer(int seq, boolean allow, boolean allowPrivate, boolean allowTechnicalData) {
         Prompt current = mPrompt.getValue();
         if (current == null || current.seq != seq) {
             return;
         }
-        if (current.installResult != null) {
-            current.installResult.complete(
-                    new WebExtension.PermissionPromptResponse(allow, allow && allowPrivate, false));
-        }
-        if (current.allowResult != null) {
-            current.allowResult.complete(allow ? AllowOrDeny.ALLOW : AllowOrDeny.DENY);
-        }
+        complete(current, allow, allowPrivate, allowTechnicalData && current.offersTechnicalData);
         if (allow && current.type == Prompt.UPDATE) {
             clearReview(current.addon.id);
+        }
+        if (current.pageHost != null) {
+            mPageInstallInFlight = false;
+            if (!allow) {
+                mDeclinedHosts.put(current.pageHost, SystemClock.elapsedRealtime());
+            }
         }
         mPrompt.setValue(mPromptQueue.poll());
     }
@@ -901,7 +1029,7 @@ public class AddonManager {
             InstallContext context = contextFor(extension.id);
             enqueue(new Prompt(++mPromptSeq, Prompt.INSTALL, info, list(permissions), list(origins),
                     list(dataCollectionPermissions), context.source, context.notMadeForAndroid,
-                    result, null));
+                    context.pageHost, result, null));
             return result;
         }
 
@@ -918,7 +1046,7 @@ public class AddonManager {
             }
             enqueue(new Prompt(++mPromptSeq, Prompt.UPDATE, AddonInfo.from(extension),
                     list(newPermissions), list(newOrigins), list(newDataCollectionPermissions),
-                    null, false, null, result));
+                    null, false, null, null, result));
             return result;
         }
 
@@ -934,7 +1062,7 @@ public class AddonManager {
             }
             enqueue(new Prompt(++mPromptSeq, Prompt.OPTIONAL, AddonInfo.from(extension),
                     list(permissions), list(origins), list(dataCollectionPermissions),
-                    null, false, null, result));
+                    null, false, null, null, result));
             return result;
         }
     };
@@ -1180,8 +1308,7 @@ public class AddonManager {
             // No loadUri here: GeckoView loads the url itself once this
             // answers ALLOW (a second load would navigate twice).
             if (Boolean.TRUE.equals(details.active) && !isCurrent(state)) {
-                mObserverRegistry.notifyObservers(GeckoObserverInvoker.NEW_SESSION, state,
-                        state.getEntityUri());
+                showTab(state);
             }
             return GeckoResult.allow();
         }
@@ -1195,7 +1322,13 @@ public class AddonManager {
             }
             // The same path as a page's window.close(): the tab leaves the
             // list, its session closes, the browser moves to another tab.
-            mComponents.get().getContentDelegate().onCloseRequest(session);
+            // Posted: GeckoView answers the add-on through this session's
+            // window, so it must still be open when the ALLOW goes out.
+            mMain.post(() -> {
+                if (findState(session) != null) {
+                    mComponents.get().getContentDelegate().onCloseRequest(session);
+                }
+            });
             return GeckoResult.allow();
         }
     };
@@ -1269,7 +1402,30 @@ public class AddonManager {
             mRegularRepository.setGeckoState(state, active);
         }
         if (active) {
-            mObserverRegistry.notifyObservers(GeckoObserverInvoker.NEW_SESSION, state, url);
+            showTab(state);
+        }
+    }
+
+    /**
+     * Puts a tab on screen from wherever the user is (the browser, its home,
+     * the tab grid, Settings): the browser activity is brought to the front
+     * with the tab, the path a tab picked from the grid takes. An add-on
+     * acting while the app is in the background adds the tab and makes it
+     * current; Android does not let the app come forward by itself.
+     */
+    private void showTab(@NonNull GeckoState state) {
+        Intent intent = new Intent(mContext, BrowserMainActivity.class);
+        intent.setAction(IntentActions.OPEN_SESSION);
+        intent.putExtra(Keys.ITEM_ID, state.getEntityId());
+        intent.putExtra(Keys.ITEM_IS_HOME, false);
+        intent.putExtra(Keys.IS_INCOGNITO, state.isIncognito());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            mContext.startActivity(intent);
+        } catch (RuntimeException e) {
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "showTab failed", e);
+            }
         }
     }
 
@@ -1285,7 +1441,7 @@ public class AddonManager {
         } else {
             mRegularRepository.setGeckoState(state, true);
         }
-        mObserverRegistry.notifyObservers(GeckoObserverInvoker.NEW_SESSION, state, url);
+        showTab(state);
     }
 
     /** {@code runtime.openOptionsPage()}: the add-on's settings, in Settings → Add-ons. */

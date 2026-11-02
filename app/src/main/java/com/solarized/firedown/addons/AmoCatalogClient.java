@@ -158,6 +158,9 @@ public class AmoCatalogClient {
                 throw new IOException("HTTP " + response.code());
             }
             ResponseBody body = response.body();
+            if (body == null) {
+                throw new IOException("empty response");
+            }
             try (InputStream in = body.byteStream()) {
                 return readCapped(in);
             }
