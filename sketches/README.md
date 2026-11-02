@@ -107,3 +107,12 @@ between them show *why* we ended up where we did.
   release tag, so `MOZ_REQUIRE_SIGNING` is compiled in and no pref turns
   signing off.
   Not yet implemented.
+- `shield-blockers.html` — The official uBlock Origin (Mozilla-signed,
+  bundled in the APK, updated from addons.mozilla.org) behind the
+  address bar's shield instead of the custom copy: the security sheet's
+  "Block ads and trackers" switch becomes a uBlock Origin row that opens
+  its own popup; the shield mirrors uBlock's state from the per-tab title
+  it sets on its toolbar button ("uBlock Origin (off)"); rows for other
+  blockers the user installs (two on, another instead, none, private
+  tab); which add-ons get a row. Refresh stays in the bar (it is Stop).
+  Not built.
