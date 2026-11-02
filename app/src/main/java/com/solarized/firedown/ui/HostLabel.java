@@ -11,6 +11,7 @@ import androidx.core.graphics.ColorUtils;
 
 import com.google.android.material.R;
 import com.google.android.material.color.MaterialColors;
+import com.solarized.firedown.utils.RegistrableDomain;
 
 /**
  * A blocked host as both blocked-host lists print it — Settings → Trackers
@@ -36,12 +37,14 @@ import com.google.android.material.color.MaterialColors;
  * incognito overlay covered. Below about 60% the light settings card drops
  * under 4.5:1; re-measure before moving it.</p>
  *
- * <p>The domain is whatever the producer ships beside a host; there is no
- * public suffix list on the Java side. When it is missing or doesn't end the
- * host on a label boundary (an IP, a counter that knows no domains — the
- * capture extension's blocked-request counter ships none), the whole host
- * takes the domain style — never a guess at where the site's name
- * starts.</p>
+ * <p>The domain comes from the public suffix list OkHttp ships
+ * ({@link RegistrableDomain}), so {@code bbc.co.uk} is the site's name in
+ * {@code static.files.bbc.co.uk}, not {@code co.uk}. When there is none (an
+ * IP, a host that is itself a public suffix, the list not read yet in the
+ * first moment after start), the whole host takes the domain style — never
+ * a guess at where the site's name starts. The patched uBlock used to send
+ * its own PSL answer beside each host; the capture extension's counter that
+ * replaced it has no list, which is why the split is worked out here.</p>
  */
 public final class HostLabel {
 
@@ -51,14 +54,13 @@ public final class HostLabel {
     private HostLabel() {}
 
     @NonNull
-    public static CharSequence format(@NonNull Context context, @NonNull String host,
-                                      @Nullable String domain) {
+    public static CharSequence format(@NonNull Context context, @NonNull String host) {
         int domainInk = MaterialColors.getColor(context,
                 R.attr.colorOnSurface, 0);
         int subInk = ColorUtils.setAlphaComponent(domainInk,
                 Math.round(SUBDOMAIN_ALPHA * 255));
         SpannableString label = new SpannableString(host);
-        int split = splitIndex(host, domain);
+        int split = splitIndex(host, RegistrableDomain.of(host));
         if (split > 0) {
             label.setSpan(new ForegroundColorSpan(subInk), 0, split,
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -73,10 +75,10 @@ public final class HostLabel {
         if (domain == null || domain.isEmpty() || domain.length() >= host.length()) {
             return 0;
         }
-        if (!host.endsWith(domain)) {
+        int split = host.length() - domain.length();
+        if (!host.regionMatches(true, split, domain, 0, domain.length())) {
             return 0;
         }
-        int split = host.length() - domain.length();
         if (host.charAt(split - 1) != '.') {
             return 0;
         }

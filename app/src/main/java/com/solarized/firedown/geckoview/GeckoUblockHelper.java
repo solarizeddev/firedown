@@ -11,6 +11,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.solarized.firedown.BuildConfig;
+import com.solarized.firedown.data.di.Qualifiers;
+import com.solarized.firedown.utils.RegistrableDomain;
 
 import dagger.hilt.android.qualifiers.ApplicationContext;
 
@@ -26,6 +28,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -61,16 +64,13 @@ public class GeckoUblockHelper {
     private final MutableLiveData<Map<Category, Long>> mCategoryBlockedLive =
             new MutableLiveData<>(emptyCategoryMap());
 
-    /** A host and how often it was refused. {@code domain} is the host when no
-     *  registrable domain is known ({@link com.solarized.firedown.ui.HostLabel}
-     *  then styles it whole). */
+    /** A host and how often it was refused. The rows split it into
+     *  subdomain and site name themselves ({@link com.solarized.firedown.ui.HostLabel}). */
     public static final class HostCount {
         public final String host;
-        public final String domain;
         public final long count;
-        public HostCount(String host, String domain, long count) {
+        public HostCount(String host, long count) {
             this.host = host;
-            this.domain = domain;
             this.count = count;
         }
     }
@@ -110,7 +110,11 @@ public class GeckoUblockHelper {
     private static final String KEY_TODAY_HOSTS = "blocked.today.hosts";
 
     @Inject
-    public GeckoUblockHelper(@ApplicationContext Context context) {
+    public GeckoUblockHelper(@ApplicationContext Context context,
+                             @Qualifiers.HeavyIO Executor heavyExecutor) {
+        // The host rows' subdomain/site split reads the public suffix list;
+        // read it off the main thread before any row is bound.
+        RegistrableDomain.warmUp(heavyExecutor);
         mPrefs = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
         long cachedBlocked = mPrefs.getLong(KEY_CUMULATIVE_BLOCKED, 0L);
         mCumulativeBlockedLive.postValue(cachedBlocked);
@@ -244,7 +248,7 @@ public class GeckoUblockHelper {
                 String host = row.optString("host", "");
                 long n = row.optLong("count", 0);
                 if (host.isEmpty() || n <= 0) continue;
-                next.add(new HostCount(host, row.optString("domain", host), n));
+                next.add(new HostCount(host, n));
             }
         }
         String value = String.valueOf(Math.max(0L, count));
@@ -319,7 +323,7 @@ public class GeckoUblockHelper {
         List<HostCount> out = new ArrayList<>(Math.min(max, entries.size()));
         for (int i = 0; i < entries.size() && i < max; i++) {
             Map.Entry<String, Long> e = entries.get(i);
-            out.add(new HostCount(e.getKey(), e.getKey(), e.getValue()));
+            out.add(new HostCount(e.getKey(), e.getValue()));
         }
         return out;
     }

@@ -124,7 +124,7 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
         List<BlockedTrackerDetailAdapter.Item> rows = new ArrayList<>(items.size());
         for (GeckoUblockHelper.HostCount hc : items) {
             total += hc.count;
-            rows.add(new BlockedTrackerDetailAdapter.HostRow(hc.host, hc.domain, hc.count));
+            rows.add(new BlockedTrackerDetailAdapter.HostRow(hc.host, hc.count));
         }
 
         mEmptyView.setVisibility(View.GONE);
