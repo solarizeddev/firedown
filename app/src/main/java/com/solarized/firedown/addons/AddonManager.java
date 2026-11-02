@@ -284,6 +284,7 @@ public class AddonManager {
     private final MutableLiveData<Event> mEvent = new MutableLiveData<>(null);
     private final MutableLiveData<Popup> mPopup = new MutableLiveData<>(null);
     private final MutableLiveData<Integer> mInstallsInFlight = new MutableLiveData<>(0);
+    private final MutableLiveData<Set<String>> mInstalling = new MutableLiveData<>(Collections.emptySet());
 
     @Inject
     public AddonManager(@ApplicationContext Context context,
@@ -394,6 +395,29 @@ public class AddonManager {
     @NonNull
     public LiveData<List<AddonInfo>> getAddons() {
         return mAddons;
+    }
+
+    /** In {@link #getInstalling()}: a file the user picked (Install from file). */
+    public static final String INSTALLING_FILE = "file:";
+
+    /**
+     * What is being installed now, for the screen's spinners: the ids of
+     * add-ons from Mozilla's list, and {@link #INSTALLING_FILE} for a picked
+     * file. Set on the tap, cleared when Gecko is done (installed, declined
+     * or failed).
+     */
+    @NonNull
+    public LiveData<Set<String>> getInstalling() {
+        return mInstalling;
+    }
+
+    private void markInstalling(@NonNull String key, boolean on) {
+        Set<String> current = mInstalling.getValue();
+        Set<String> next = new HashSet<>(current == null ? Collections.emptySet() : current);
+        boolean changed = on ? next.add(key) : next.remove(key);
+        if (changed) {
+            mInstalling.setValue(Collections.unmodifiableSet(next));
+        }
     }
 
     /** False until the add-ons a previous run installed have been listed. */
@@ -510,21 +534,40 @@ public class AddonManager {
             emit(Event.BUILT_IN, entry.name);
             return;
         }
+        if (isInstalling(entry.id)) {
+            return;
+        }
         mInstallContexts.put(entry.id, new InstallContext(null, false));
+        markInstalling(entry.id, true);
         install(entry.downloadUrl, WebExtensionController.INSTALLATION_METHOD_MANAGER, null, entry.id);
     }
 
+    private boolean isInstalling(@NonNull String key) {
+        Set<String> current = mInstalling.getValue();
+        return current != null && current.contains(key);
+    }
+
     /** A file the user picked (Settings → Add-ons → Install from file). */
+    @UiThread
     public void installFromUri(@NonNull Uri uri) {
+        if (isInstalling(INSTALLING_FILE)) {
+            return;
+        }
+        markInstalling(INSTALLING_FILE, true);
         mHeavyExecutor.execute(() -> {
+            boolean handedOver = false;
             try (InputStream in = mContext.getContentResolver().openInputStream(uri)) {
                 if (in == null) {
                     post(() -> emit(Event.NOT_AN_ADDON, null));
-                    return;
+                } else {
+                    handedOver = stageAndInstall(in, null);
                 }
-                stageAndInstall(in, null);
             } catch (IOException | SecurityException e) {
                 post(() -> emit(Event.NOT_AN_ADDON, null));
+            } finally {
+                if (!handedOver) {
+                    post(() -> markInstalling(INSTALLING_FILE, false));
+                }
             }
         });
     }
@@ -680,6 +723,12 @@ public class AddonManager {
             if (fromPage) {
                 mPageInstallInFlight = false;
             }
+            if (contextId != null) {
+                markInstalling(contextId, false);
+            }
+            if (staged != null && !fromPage) {
+                markInstalling(INSTALLING_FILE, false);
+            }
             emit(Event.FAILED, null);
             return;
         }
@@ -705,7 +754,14 @@ public class AddonManager {
         if (fromPage) {
             mPageInstallInFlight = false;
         }
+        if (contextId != null) {
+            markInstalling(contextId, false);
+        }
         if (staged != null) {
+            if (!fromPage) {
+                // A picked file (a page's .xpi has no spinner on screen).
+                markInstalling(INSTALLING_FILE, false);
+            }
             File file = staged;
             mHeavyExecutor.execute(file::delete);
         }

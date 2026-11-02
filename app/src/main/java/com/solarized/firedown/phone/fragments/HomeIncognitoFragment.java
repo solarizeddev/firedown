@@ -26,6 +26,7 @@ import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
@@ -186,6 +187,17 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
         });
 
         return v;
+    }
+
+    @Nullable
+    @Override
+    public Snackbar makeScreenSnackbar(@NonNull String text) {
+        if (mBottomNavigationBar == null) {
+            return null;
+        }
+        Snackbar snackbar = makeSnackbar(mBottomNavigationBar, text, true);
+        snackbar.setAnchorView(mBottomNavigationBar);
+        return snackbar;
     }
 
     @Override

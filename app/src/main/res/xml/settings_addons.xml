@@ -22,13 +22,6 @@
             android:summary="@string/addons_none_installed"
             app:iconSpaceReserved="false" />
 
-        <Preference
-            android:key="com.solarized.firedown.preferences.addons.installing"
-            android:selectable="false"
-            android:summary="@string/addons_installing"
-            app:isPreferenceVisible="false"
-            app:iconSpaceReserved="false" />
-
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -67,7 +60,7 @@
             android:summary="@string/addons_find_more_summary"
             app:iconSpaceReserved="false" />
 
-        <Preference
+        <com.solarized.firedown.settings.ui.BusyPreference
             android:key="com.solarized.firedown.preferences.addons.file"
             android:title="@string/addons_install_from_file"
             android:summary="@string/addons_install_from_file_summary"

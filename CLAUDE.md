@@ -4174,6 +4174,22 @@ before changing a flow. The rules, each easy to undo:
   could not show within 3 s is closed, not shown later). An
   add-on's settings page opens in Settings (`AddonOptionsFragment`), its
   web links in a tab.
+- **Lists update in place, never rebuilt per change.** An add-on like
+  Privacy Badger changes its badge many times a page, and Gecko's change
+  notices come in bursts: the ⋮ Add-ons sheet keeps its rows by id and
+  rebinds them (icon loaded once per sheet), and Settings → Add-ons does the
+  same for both lists. Rebuilding restarted every icon from blank, a
+  flicker reported on-device. **An install shows on its row**: tapping an
+  add-on in the list (or "Install from file") turns the row into a
+  `settings/ui/BusyPreference` ("Installing…" + a spinner, taps ignored)
+  until Gecko is done, from `AddonManager.getInstalling()` (ids, plus
+  `INSTALLING_FILE`); GeckoView reports no download progress, so it is
+  indeterminate. **Add-on messages sit above the bottom bar**:
+  `BaseActivity` asks the screen on display
+  (`BaseFocusFragment.makeScreenSnackbar`; the browser's
+  `makeAnchoredSnackbar`, the homes' bottom bar), the same placement as the
+  download and new-tab snackbars, and falls back to the content frame
+  (Settings).
 - **Not built, on purpose or for now**: `downloads.download` and
   `browsingData` for add-ons (Firefox for Android registers no
   `DownloadDelegate`/`BrowsingDataDelegate` either); an options page with

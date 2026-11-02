@@ -30,6 +30,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 
+import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
@@ -145,6 +146,17 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         mActivity.getOnBackPressedDispatcher().addCallback(this, callback);
 
+    }
+
+    @Nullable
+    @Override
+    public Snackbar makeScreenSnackbar(@NonNull String text) {
+        if (mBottomNavigationBar == null) {
+            return null;
+        }
+        Snackbar snackbar = makeSnackbar(mBottomNavigationBar, text, false);
+        snackbar.setAnchorView(mBottomNavigationBar);
+        return snackbar;
     }
 
     @Override
