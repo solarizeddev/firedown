@@ -370,7 +370,11 @@ user runs (sketch: `sketches/shield-blockers.html`).
   `AddonsDeviceTest` t1 (installed from the app's copy, private allowed,
   behind the shield), t4 (forged uBlock refused), t8 (remove → Turn on →
   off → Turn on, the shield following) and t9 (a loopback page whose ad
-  requests uBlock refuses: the lifetime figure and the page count move).
+  requests uBlock refuses: the lifetime figure and the page count move) —
+  green on SM-A536B (Android 16) and SM-A426B (Android 12); t8 first failed
+  on the A536B only because a blocker the phone's user had installed keeps
+  the shield on, which is the rule (the test now expects what the other
+  running blockers dictate).
 
 ### Cookie banners — DuckDuckGo's autoconsent (`consent@solarized.dev`)
 
@@ -417,7 +421,8 @@ uBlock cannot be configured from outside.
   a Cookie Law Info bar, the second rejected through the page-world API;
   switch off; a page with no banner left alone). On a device:
   `AddonsDeviceTest` t10 (both banners in GeckoView, which is what checks
-  Firefox's content-script world and the MAIN-world eval).
+  Firefox's content-script world and the MAIN-world eval) — green on a
+  device, with the rest of the suite.
 
 ## Parser vs. generic catcher — the cardinal rule
 
