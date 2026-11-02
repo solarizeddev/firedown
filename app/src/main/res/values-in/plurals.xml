@@ -1,4 +1,16 @@
 <resources>
+    <plurals name="archive_banner_title">
+        <item quantity="other">%d tab yang baru saja ditutup</item>
+    </plurals>
+    <plurals name="archive_banner_title_day">
+        <item quantity="other">%d tab diarsipkan hari ini</item>
+    </plurals>
+    <plurals name="archive_banner_title_month">
+        <item quantity="other">%d tab diarsipkan bulan ini</item>
+    </plurals>
+    <plurals name="archive_banner_title_week">
+        <item quantity="other">%d tab diarsipkan pekan ini</item>
+    </plurals>
     <plurals name="complete_delete_files_text">
         <item quantity="one">%1$d file dihapus</item>
         <item quantity="other">%1$d file dihapus</item>
@@ -6,6 +18,9 @@
     <plurals name="complete_move_files_text">
         <item quantity="one">%1$d file dipindahkan</item>
         <item quantity="other">%1$d file dipindahkan</item>
+    </plurals>
+    <plurals name="downloads_group_files">
+        <item quantity="other">%d berkas</item>
     </plurals>
     <plurals name="move_file_fail">
         <item quantity="one">Tidak dapat memindahkan file. %1$s</item>
@@ -23,5 +38,8 @@
     <plurals name="home_downloads_file_count">
         <item quantity="one">%d file disimpan</item>
         <item quantity="other">%d file disimpan</item>
+    </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="other">%d tab pribadi terbuka</item>
     </plurals>
 </resources>
