@@ -284,8 +284,6 @@
     <string name="settings_autofill_not_supported">Autofill ist auf diesem Gerät nicht verfügbar.</string>
     <string name="settings_autofill_service_summary">Firedown nutzt deinen System-Autofill-Dienst (Bitwarden, 1Password, Proton Pass etc.). Tippen zum Konfigurieren.</string>
     <string name="settings_autofill_service_title">Passwörter &amp; Autofill</string>
-    <string name="settings_block_cookie_notices_summary">Cookie-Banner und Pop-ups auf Webseiten ausblenden</string>
-    <string name="settings_block_cookie_notices_title">Cookie-Hinweise blockieren</string>
     <string name="settings_block_javascript_summary">Seiten werden möglicherweise schneller geladen, verhalten sich jedoch möglicherweise auch unerwartet</string>
     <string name="settings_block_javascript_title">JavaScript blockieren</string>
     <string name="settings_block_location_summary">Verhindert, dass Webseiten nach deinem Standort fragen</string>

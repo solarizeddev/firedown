@@ -55,6 +55,7 @@ globalThis.browser = {
   },
   webNavigation: {
     onHistoryStateUpdated: evt("webNavigation.onHistoryStateUpdated"),
+    onCommitted: evt("webNavigation.onCommitted"),
     getFrame: async ({ frameId }) => ({ frameId, parentFrameId: frameId > 0 ? 0 : -1 }),
   },
   tabs: {
@@ -112,6 +113,8 @@ expect(count("webRequest.onCompleted") === 2, `webRequest.onCompleted registrati
 expect(count("runtime.onMessage") === 2, `runtime.onMessage listeners == 2 — parsers router + requests.js (got ${count("runtime.onMessage")})`);
 expect(count("tabs.onUpdated") === 2, `tabs.onUpdated listeners == 2 — parsers/common + requests.js (got ${count("tabs.onUpdated")})`);
 expect(count("webNavigation.onHistoryStateUpdated") === 1, `webNavigation.onHistoryStateUpdated == 1 (got ${count("webNavigation.onHistoryStateUpdated")})`);
+// blocked-stats.js: a tab's page tally starts over when its top document commits.
+expect(count("webNavigation.onCommitted") === 1, `webNavigation.onCommitted == 1 (got ${count("webNavigation.onCommitted")})`);
 expect(count("cookies.onChanged") === 1, `cookies.onChanged == 1 (got ${count("cookies.onChanged")})`);
 
 // Message router: feed each expected kind through the recorded onMessage
@@ -2085,6 +2088,80 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   } finally {
     globalThis.fetch = realFetch;
     for (const fn of removed) { fn(82); fn(83); }
+  }
+}
+
+// ── blocked-stats: requests a blocker refused, counted once, whoever refused ──
+// The shield sheet's page tally and Settings' lifetime totals come from here
+// now that the ad blocker is an ordinary add-on. Page: the tab on screen, its
+// hosts, reset on a top-level commit. Totals: deltas, regular tabs only.
+{
+  const bs = await import(pathToFileURL(join(ext, "js/blocked-stats.js")));
+  const ts = await import(pathToFileURL(join(ext, "js/tab-state.js")));
+  const errorOccurred = registrations["webRequest.onErrorOccurred"];
+  const committed = registrations["webNavigation.onCommitted"];
+  const removed = registrations["tabs.onRemoved"];
+  const realGet = browser.tabs.get;
+  const modes = { 91: false, 92: true, 93: false };
+  browser.tabs.get = async (id) => ({ id, incognito: modes[id] ?? false });
+  const fail = (tabId, url, type, error = "NS_ERROR_ABORT", incognito = modes[tabId]) => {
+    for (const fn of errorOccurred) fn({ requestId: `bs-${tabId}-${url}-${Math.random()}`, url, tabId, type, error, incognito });
+  };
+  const before = nativeSent.length;
+  try {
+    bs.setActiveTab(91);
+    await bs.flush();
+    fail(91, "https://ads.example/a.js", "script");
+    fail(91, "https://ads.example/b.js", "script");
+    fail(91, "https://pixel.example/p.gif", "image", "NS_ERROR_TRACKING_URI");
+    fail(91, "https://frames.example/f.html", "sub_frame");
+    fail(91, "https://cdn.example/lazy.jpg", "image", "NS_BINDING_ABORTED");   // a page abort, not a block
+    fail(91, "https://blocked.example/", "main_frame");                        // the document, not a request on it
+    fail(92, "https://ads.example/c.js", "script");                            // a private tab
+    const m = await bs.flush();
+    expect(m && m.totals && m.totals.blocked === 4, `blocked-stats: four refused requests in regular tabs (got ${m?.totals?.blocked})`);
+    expect(m.totals.scripts === 2 && m.totals.pixels === 1 && m.totals.frames === 1 && m.totals.other === 0,
+      "blocked-stats: bucketed by request type");
+    expect(m.totals.hosts[0].host === "ads.example" && m.totals.hosts[0].count === 2,
+      "blocked-stats: the hosts, most refused first");
+    expect(!m.totals.hosts.some((h) => h.host === "ads.example" && h.count === 3),
+      "blocked-stats: a private tab's block never reaches the stored totals");
+    expect(m.page && m.page.tabId === 91 && m.page.count === 4 && m.page.incognito === false,
+      `blocked-stats: the tab on screen gets its page tally (got ${JSON.stringify(m.page)})`);
+    // Nothing new: no message.
+    expect(await bs.flush() === null, "blocked-stats: no change, no message");
+    // Switching to the private tab sends its own tally, marked private.
+    bs.setActiveTab(92);
+    const p = await bs.flush();
+    expect(p && !p.totals && p.page.tabId === 92 && p.page.count === 1 && p.page.incognito === true,
+      "blocked-stats: the private tab's page tally is sent as private");
+    // A top-level commit starts the page over; a sub-frame commit does not.
+    for (const fn of committed) fn({ tabId: 92, frameId: 3 });
+    expect((await bs.flush()) === null, "blocked-stats: a sub-frame commit keeps the page");
+    for (const fn of committed) fn({ tabId: 92, frameId: 0 });
+    const r = await bs.flush();
+    expect(r && r.page.count === 0 && r.page.items.length === 0, "blocked-stats: a top-level commit resets the page");
+    // A tab whose mode the request did not say is asked at the flush: a
+    // private one is not stored, a regular one is, a closed one is dropped.
+    modes[94] = true;
+    modes[95] = false;
+    fail(94, "https://ads.example/d.js", "script", "NS_ERROR_ABORT", undefined);
+    fail(95, "https://ads.example/e.js", "script", "NS_ERROR_ABORT", undefined);
+    fail(96, "https://ads.example/f.js", "script", "NS_ERROR_ABORT", undefined);
+    browser.tabs.get = async (id) => {
+      if (id === 96) throw new Error("no tab");
+      return { id, incognito: modes[id] ?? false };
+    };
+    const u = await bs.flush();
+    expect(u && u.totals && u.totals.blocked === 1 && u.totals.hosts[0].host === "ads.example",
+      `blocked-stats: of three tabs of unknown mode, only the regular one is stored (got ${u?.totals?.blocked})`);
+    expect(ts.peekTabState(94).pageBlocked.count === 1, "blocked-stats: a private one still counts on its page");
+    expect(ts.peekTabState(94).incognito === true, "blocked-stats: the mode asked is remembered");
+    expect(nativeSent.slice(before).every((n) => n.app === "browser" && n.msg.listener === "blockedStats"),
+      "blocked-stats: sent over the browser app as blockedStats");
+  } finally {
+    browser.tabs.get = realGet;
+    for (const fn of removed) { fn(91); fn(92); fn(93); fn(94); fn(95); fn(96); }
   }
 }
 

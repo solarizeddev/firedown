@@ -31,8 +31,9 @@ import dagger.hilt.android.AndroidEntryPoint;
  * today" group (every blocked host, the site's own included — there is no
  * third-party filter, so it doesn't say "trackers"; revealed once the list has
  * a few rows) and a footnote naming the midnight reset and the estimate.
- * Everything is read live from {@link GeckoUblockHelper}, which relays what
- * firedown.js pushes over the uBlock native port; nothing here is a control.
+ * Everything is read live from {@link GeckoUblockHelper}, which adds up what
+ * the capture extension counts (requests any blocker refused, whichever
+ * add-on, and Gecko's own tracker blocking); nothing here is a control.
  * The domain rows share their anatomy with the per-page "Blocked on this
  * page" sheet: a 14sp host ({@link HostCountPreference}) through
  * {@link HostLabel}, the count always shown.

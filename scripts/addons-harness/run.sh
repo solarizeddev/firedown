@@ -4,7 +4,10 @@
 # plain JVM with org.json from Maven Central (sha1-checked, cached). Then
 # MUTANTS that must each fail it: the built-in ID check without our domain,
 # the catalog keeping themes, an http download accepted, the site list not
-# capped, comments in a manifest not read, the signature files ignored.
+# capped, comments in a manifest not read, the signature files ignored,
+# uBlock Origin refused as built in, the blocker rule without its all-sites
+# check, https alone taken for all sites, any add-on's "(off)" believed, a
+# running blocker hiding another's "off", the user's shield switch ignored.
 #
 # usage: sh scripts/addons-harness/run.sh [mozilla-firefox checkout]
 #   With a Firefox source checkout, Firefox's own AMO fixtures are parsed too
@@ -95,4 +98,10 @@ mutant httpfile AmoCatalog 's/if (!downloadUrl.startsWith("https:\/\/")) {/if (d
 mutant nocap AddonPermissions 's/if (sites.size() > MAX_LISTED) {/if (false) {/'
 mutant nocomments XpiManifest 's/manifest = new JSONObject(stripComments(json));/manifest = new JSONObject(json);/'
 mutant nosig XpiManifest 's/|| zip.getEntry("META-INF\/cose.sig") != null;/;/'
+mutant ublockbuiltin AddonPolicy 's/ids.add("icons@mozac.org");/ids.add("icons@mozac.org"); ids.add("ublock0@raymondhill.net");/'
+mutant nohostcheck AddonPolicy 's/return reachesAllSites(permissions) || reachesAllSites(origins);/return true;/'
+mutant httpsenough AddonPolicy 's/return http \&\& https;/return http || https;/'
+mutant anyoff AddonPolicy 's/if (!isUblockId(id) || title == null) {/if (title == null) {/'
+mutant oneonwins AddonPolicy 's/if (Boolean.TRUE.equals(off)) {/if (Boolean.FALSE.equals(off)) {/'
+mutant nooverride AddonPolicy 's/if (override != null) {/if (false) {/'
 exit $status

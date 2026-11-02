@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Add-ons (AddonsFragment). Two dynamic lists the fragment fills: the
      add-ons installed (tap → the add-on's page) and Mozilla's list of
-     add-ons for Android (tap → the install prompt; the one Firedown ships,
-     uBlock Origin, reads "Built into Firedown"). The list is Mozilla's
+     add-ons for Android (tap → the install prompt). uBlock Origin, which
+     Firedown installs itself, is left out of that list: while it is not
+     installed the Installed list offers "Reinstall uBlock Origin" (the
+     official copy in the app, no download). The list is Mozilla's
      short recommended collection; "Find more add-ons" opens Mozilla's
      add-on site for Android in a tab (only add-ons marked as working on
      Android; the user-script managers live there), as Firefox for Android
@@ -21,6 +23,15 @@
             android:selectable="false"
             android:summary="@string/addons_none_installed"
             app:iconSpaceReserved="false" />
+
+        <com.solarized.firedown.settings.ui.BusyPreference
+            android:key="com.solarized.firedown.preferences.addons.reinstall.ublock"
+            android:order="99"
+            android:summary="@string/addons_reinstall_ublock_summary"
+            android:title="@string/addons_reinstall_ublock_title"
+            app:icon="@drawable/ic_shield_24"
+            app:isPreferenceVisible="false"
+            app:singleLineTitle="false" />
 
     </PreferenceCategory>
 

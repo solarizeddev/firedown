@@ -97,6 +97,19 @@ public class AddonManager {
     private static final long DECLINED_HOST_QUIET_MS = TimeUnit.MINUTES.toMillis(5);
     /** More questions than this waiting at once: the rest are answered "no". */
     private static final int MAX_QUEUED_PROMPTS = 4;
+    /** The official uBlock Origin, signed by Mozilla, shipped in the APK (updated from addons.mozilla.org). */
+    static final String BUNDLED_UBLOCK_ASSET = "addons/ublock-origin.xpi";
+    /**
+     * The user removed uBlock Origin: Firedown does not put it back by
+     * itself. In {@code backup_local} (excluded from Auto Backup): add-ons
+     * live in the Gecko profile, which is not backed up, so on a restored
+     * phone the blocker the user chose instead is not there either.
+     */
+    private static final String PREF_UBLOCK_REMOVED = "com.solarized.firedown.addons.ublock.removed";
+    private static final String LOCAL_PREFS = "backup_local";
+    /** Add-ons the user put behind the shield, or took out of it, against what their permissions say. */
+    private static final String PREF_SHIELD_SHOW = "com.solarized.firedown.addons.shield.show";
+    private static final String PREF_SHIELD_HIDE = "com.solarized.firedown.addons.shield.hide";
     /** Quiet time after the last change before Gecko's list is read back as the truth. */
     private static final long REFRESH_DELAY_MS = 300;
 
@@ -228,15 +241,47 @@ public class AddonManager {
         final boolean notMadeForAndroid;
         /** The page's host, for an .xpi linked from a page; null otherwise. */
         @Nullable final String pageHost;
+        /** The copy of uBlock Origin in the app: no question, private tabs allowed. */
+        final boolean bundled;
 
         InstallContext(@Nullable String source, boolean notMadeForAndroid) {
-            this(source, notMadeForAndroid, null);
+            this(source, notMadeForAndroid, null, false);
         }
 
         InstallContext(@Nullable String source, boolean notMadeForAndroid, @Nullable String pageHost) {
+            this(source, notMadeForAndroid, pageHost, false);
+        }
+
+        InstallContext(@Nullable String source, boolean notMadeForAndroid, @Nullable String pageHost,
+                       boolean bundled) {
             this.source = source;
             this.notMadeForAndroid = notMadeForAndroid;
             this.pageHost = pageHost;
+            this.bundled = bundled;
+        }
+    }
+
+    /** A row behind the shield: a blocker and what it does in one tab. */
+    public static final class BlockerItem {
+        /** It runs here and filters the page. */
+        public static final int ON = 0;
+        /** It runs here and the user turned it off for this site. */
+        public static final int OFF_FOR_SITE = 1;
+        /** A private tab, and the add-on is not allowed in private tabs. */
+        public static final int NOT_IN_PRIVATE = 2;
+
+        @NonNull public final AddonInfo addon;
+        @Nullable public final WebExtension.Action action;
+        public final int state;
+
+        BlockerItem(@NonNull AddonInfo addon, @Nullable WebExtension.Action action, int state) {
+            this.addon = addon;
+            this.action = action;
+            this.state = state;
+        }
+
+        public boolean isUblock() {
+            return AddonPolicy.isUblockId(addon.id);
         }
     }
 
@@ -250,6 +295,8 @@ public class AddonManager {
 
     private final Context mContext;
     private final SharedPreferences mPrefs;
+    /** Install-local facts (see {@link #PREF_UBLOCK_REMOVED}). */
+    private final SharedPreferences mLocalPrefs;
     private final GeckoStateDataRepository mRegularRepository;
     private final IncognitoStateRepository mIncognitoRepository;
     private final Provider<GeckoComponents> mComponents;
@@ -267,6 +314,8 @@ public class AddonManager {
     @Nullable private InstallContext mLastFileContext;
     private final Set<String> mInteractiveUpdates = new HashSet<>();
     private final Set<String> mRefusedBuiltIn = new HashSet<>();
+    /** Installs that say nothing when they land (the first run's uBlock Origin). */
+    private final Set<String> mQuietInstalls = new HashSet<>();
     private int mPendingInstalls;
     /** An .xpi from a page is being staged or is waiting for its answer (one at a time). */
     private boolean mPageInstallInFlight;
@@ -295,6 +344,7 @@ public class AddonManager {
                         @Qualifiers.HeavyIO Executor heavyExecutor) {
         mContext = context;
         mPrefs = sharedPreferences;
+        mLocalPrefs = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
         mRegularRepository = regularRepository;
         mIncognitoRepository = incognitoRepository;
         mComponents = components;
@@ -316,9 +366,14 @@ public class AddonManager {
             controller.setPromptDelegate(mPromptDelegate);
             controller.setAddonManagerDelegate(mAddonManagerDelegate);
             controller.list().accept(list -> {
+                WebExtension legacyUblock = null;
                 if (list != null) {
                     for (WebExtension extension : list) {
-                        if (isUserAddon(extension)) {
+                        if (extension.isBuiltIn && AddonPolicy.isUblockId(extension.id)) {
+                            // The patched copy Firedown used to register as a
+                            // built-in; its files no longer ship.
+                            legacyUblock = extension;
+                        } else if (isUserAddon(extension)) {
                             adopt(extension);
                         }
                     }
@@ -327,6 +382,7 @@ public class AddonManager {
                 mLoadedLiveData.setValue(true);
                 publish();
                 scheduleUpdateCheck();
+                ensureUblock(controller, legacyUblock);
             }, e -> {
                 if (BuildConfig.DEBUG) {
                     Log.e(TAG, "list() failed", e);
@@ -496,15 +552,7 @@ public class AddonManager {
             if (incognito && !info.allowedInPrivateBrowsing) {
                 continue;
             }
-            ActionState state = mActions.get(info.id);
-            WebExtension.Action action = null;
-            if (state != null) {
-                action = merged(state.browserDefault, session == null ? null : state.browserOverrides.get(session));
-                if (action == null) {
-                    action = merged(state.pageDefault, session == null ? null : state.pageOverrides.get(session));
-                }
-            }
-            items.add(new ActionItem(info, action));
+            items.add(new ActionItem(info, actionFor(info.id, session)));
         }
         return items;
     }
@@ -523,6 +571,281 @@ public class AddonManager {
 
     public boolean isUpdateWaitingForReview(@NonNull String id) {
         return mPrefs.getStringSet(PREF_UPDATE_REVIEW, Collections.emptySet()).contains(id);
+    }
+
+    // ── uBlock Origin ───────────────────────────────────────────────────
+
+    /**
+     * Firedown installs the official uBlock Origin, the copy in the APK, on
+     * the first run (no question asked: it is the browser's ad blocker, as
+     * the patched built-in was), and replaces the patched built-in of older
+     * versions with it. It is an ordinary add-on from then on: updated from
+     * addons.mozilla.org, turned off or removed by the user, and never put
+     * back by Firedown once removed (the shield sheet's "Turn on" and
+     * Settings → Add-ons do that on the user's tap).
+     */
+    private void ensureUblock(@NonNull WebExtensionController controller, @Nullable WebExtension legacy) {
+        if (legacy != null) {
+            // Same id: the built-in goes first. Its site exceptions are not
+            // carried over (the user sets them again in uBlock's popup).
+            controller.uninstall(legacy).accept(unused -> installBundledUblock(false), e -> {
+                if (BuildConfig.DEBUG) {
+                    Log.w(TAG, "legacy uBlock uninstall failed", e);
+                }
+                installBundledUblock(false);
+            });
+            return;
+        }
+        if (findUblock() == null && !mLocalPrefs.getBoolean(PREF_UBLOCK_REMOVED, false)) {
+            installBundledUblock(false);
+        }
+    }
+
+    @Nullable
+    private WebExtension findUblock() {
+        for (WebExtension extension : mInstalled.values()) {
+            if (AddonPolicy.isUblockId(extension.id)) {
+                return extension;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    public AddonInfo findUblockInfo() {
+        WebExtension extension = findUblock();
+        return extension == null ? null : AddonInfo.from(extension);
+    }
+
+    /**
+     * Installs the copy of uBlock Origin in the app: no download, no
+     * question, allowed in private tabs. {@code announce}: the user asked
+     * (the "Added" message and failures are shown); the first run's install
+     * is quiet.
+     */
+    @UiThread
+    public void installBundledUblock(boolean announce) {
+        if (mRuntime == null || findUblock() != null || isInstalling(AddonPolicy.UBLOCK_ID)) {
+            return;
+        }
+        markInstalling(AddonPolicy.UBLOCK_ID, true);
+        mHeavyExecutor.execute(() -> {
+            File staged = null;
+            try {
+                staged = copyBundledUblock();
+            } catch (IOException e) {
+                if (BuildConfig.DEBUG) {
+                    Log.w(TAG, "bundled uBlock copy failed", e);
+                }
+            }
+            File file = staged;
+            post(() -> {
+                if (file == null) {
+                    markInstalling(AddonPolicy.UBLOCK_ID, false);
+                    if (announce) {
+                        emit(Event.FAILED, null);
+                    }
+                    return;
+                }
+                mInstallContexts.put(AddonPolicy.UBLOCK_ID, new InstallContext(null, false, null, true));
+                if (announce) {
+                    mQuietInstalls.remove(AddonPolicy.UBLOCK_ID);
+                } else {
+                    mQuietInstalls.add(AddonPolicy.UBLOCK_ID);
+                }
+                install(Uri.fromFile(file).toString(), WebExtensionController.INSTALLATION_METHOD_FROM_FILE,
+                        file, AddonPolicy.UBLOCK_ID);
+            });
+        });
+    }
+
+    /** Heavy executor: the asset to a file Gecko can install from. */
+    @NonNull
+    private File copyBundledUblock() throws IOException {
+        File dir = new File(mContext.getCacheDir(), XPI_DIR);
+        if (!dir.isDirectory() && !dir.mkdirs()) {
+            throw new IOException("no cache dir");
+        }
+        File file = new File(dir, UUID.randomUUID() + ".xpi");
+        boolean complete = false;
+        try (InputStream in = mContext.getAssets().open(BUNDLED_UBLOCK_ASSET);
+             FileOutputStream out = new FileOutputStream(file)) {
+            byte[] buf = new byte[64 * 1024];
+            while (true) {
+                int read = in.read(buf);
+                if (read < 0) {
+                    break;
+                }
+                out.write(buf, 0, read);
+            }
+            complete = true;
+        } finally {
+            if (!complete) {
+                file.delete();
+            }
+        }
+        return file;
+    }
+
+    /**
+     * "Turn on" behind the shield: uBlock Origin running in this tab's mode
+     * again — reinstalled from the app's copy, turned back on, and allowed
+     * in private tabs for a private tab, whichever it needs.
+     */
+    @UiThread
+    public void turnOnUblock(boolean incognito) {
+        WebExtension extension = findUblock();
+        if (extension == null) {
+            installBundledUblock(true);
+            return;
+        }
+        String id = extension.id;
+        boolean needsPrivate = incognito && !extension.metaData.allowedInPrivateBrowsing;
+        if (!extension.metaData.enabled) {
+            GeckoRuntime runtime = mRuntime;
+            if (runtime == null) {
+                return;
+            }
+            runtime.getWebExtensionController().enable(extension, WebExtensionController.EnableSource.USER)
+                    .accept(enabled -> {
+                        onChanged(enabled);
+                        // One change at a time: allowing private tabs reloads the add-on.
+                        if (needsPrivate) {
+                            setAllowedInPrivate(id, true);
+                        }
+                    }, e -> {
+                        if (BuildConfig.DEBUG) {
+                            Log.w(TAG, "uBlock enable failed", e);
+                        }
+                        publish();
+                        emit(Event.FAILED, AddonInfo.from(extension).name);
+                    });
+        } else if (needsPrivate) {
+            setAllowedInPrivate(id, true);
+        }
+    }
+
+    // ── Blockers behind the shield ──────────────────────────────────────
+
+    /**
+     * The add-ons that block requests and run as this tab sees them: every
+     * enabled blocker, uBlock Origin first. In a private tab a blocker not
+     * allowed there is listed as {@link BlockerItem#NOT_IN_PRIVATE}.
+     * {@code pageUrl}: uBlock reads "off" for pages it does not filter
+     * (about:, the home), which is not a site the user turned it off for.
+     */
+    @NonNull
+    public List<BlockerItem> blockersFor(@Nullable GeckoSession session, boolean incognito,
+                                         @Nullable String pageUrl) {
+        List<BlockerItem> ublock = new ArrayList<>(1);
+        List<BlockerItem> others = new ArrayList<>();
+        List<AddonInfo> addons = mAddons.getValue();
+        if (addons == null) {
+            return others;
+        }
+        boolean webPage = pageUrl != null && (pageUrl.startsWith("http://") || pageUrl.startsWith("https://"));
+        for (AddonInfo info : addons) {
+            if (!info.enabled || !isBlocker(info)) {
+                continue;
+            }
+            WebExtension.Action action = actionFor(info.id, session);
+            int state;
+            if (incognito && !info.allowedInPrivateBrowsing) {
+                state = BlockerItem.NOT_IN_PRIVATE;
+            } else if (webPage && AddonPolicy.saysOffForSite(info.id, action == null ? null : action.title)) {
+                state = BlockerItem.OFF_FOR_SITE;
+            } else {
+                state = BlockerItem.ON;
+            }
+            BlockerItem item = new BlockerItem(info, action, state);
+            if (AddonPolicy.isUblockId(info.id)) {
+                ublock.add(item);
+            } else {
+                others.add(item);
+            }
+        }
+        ublock.addAll(others);
+        return ublock;
+    }
+
+    /** The shield for a tab: one of {@link AddonPolicy}'s SHIELD_ states. */
+    public int shieldState(@Nullable GeckoSession session, boolean incognito, @Nullable String pageUrl) {
+        List<Boolean> running = new ArrayList<>();
+        for (BlockerItem item : blockersFor(session, incognito, pageUrl)) {
+            if (item.state != BlockerItem.NOT_IN_PRIVATE) {
+                running.add(item.state == BlockerItem.OFF_FOR_SITE);
+            }
+        }
+        return AddonPolicy.shieldState(running);
+    }
+
+    /** Whether the add-on gets a row behind the shield. */
+    public boolean isBlocker(@NonNull AddonInfo info) {
+        List<String> permissions = new ArrayList<>(info.requiredPermissions);
+        permissions.addAll(info.grantedOptionalPermissions);
+        List<String> origins = new ArrayList<>(info.requiredOrigins);
+        origins.addAll(info.grantedOptionalOrigins);
+        return AddonPolicy.isBlocker(info.id, hasButton(info.id),
+                AddonPolicy.blocksRequests(permissions, origins), shieldOverride(info.id));
+    }
+
+    /** Whether the add-on page's "Show behind the shield" switch applies (uBlock is always there). */
+    public boolean canChooseShield(@NonNull AddonInfo info) {
+        return !AddonPolicy.isUblockId(info.id) && hasButton(info.id);
+    }
+
+    /** The add-on page's "Show behind the shield": stored only where it differs from what the permissions say. */
+    @UiThread
+    public void setShowBehindShield(@NonNull String id, boolean show) {
+        AddonInfo info = find(id);
+        if (info == null) {
+            return;
+        }
+        List<String> permissions = new ArrayList<>(info.requiredPermissions);
+        permissions.addAll(info.grantedOptionalPermissions);
+        List<String> origins = new ArrayList<>(info.requiredOrigins);
+        origins.addAll(info.grantedOptionalOrigins);
+        boolean detected = AddonPolicy.blocksRequests(permissions, origins);
+        Set<String> showIds = new HashSet<>(mPrefs.getStringSet(PREF_SHIELD_SHOW, Collections.emptySet()));
+        Set<String> hideIds = new HashSet<>(mPrefs.getStringSet(PREF_SHIELD_HIDE, Collections.emptySet()));
+        showIds.remove(id);
+        hideIds.remove(id);
+        if (show != detected) {
+            (show ? showIds : hideIds).add(id);
+        }
+        mPrefs.edit().putStringSet(PREF_SHIELD_SHOW, showIds).putStringSet(PREF_SHIELD_HIDE, hideIds).apply();
+        mActionsVersion.setValue(nextVersion());
+    }
+
+    @Nullable
+    private Boolean shieldOverride(@NonNull String id) {
+        if (mPrefs.getStringSet(PREF_SHIELD_SHOW, Collections.emptySet()).contains(id)) {
+            return Boolean.TRUE;
+        }
+        if (mPrefs.getStringSet(PREF_SHIELD_HIDE, Collections.emptySet()).contains(id)) {
+            return Boolean.FALSE;
+        }
+        return null;
+    }
+
+    private boolean hasButton(@NonNull String id) {
+        ActionState state = mActions.get(id);
+        return state != null && (state.browserDefault != null || state.pageDefault != null);
+    }
+
+    /** The add-on's button as this tab sees it (its browser action, else its page action). */
+    @Nullable
+    private WebExtension.Action actionFor(@NonNull String id, @Nullable GeckoSession session) {
+        ActionState state = mActions.get(id);
+        if (state == null) {
+            return null;
+        }
+        WebExtension.Action action = merged(state.browserDefault,
+                session == null ? null : state.browserOverrides.get(session));
+        if (action == null) {
+            action = merged(state.pageDefault, session == null ? null : state.pageOverrides.get(session));
+        }
+        return action;
     }
 
     // ── Installing ──────────────────────────────────────────────────────
@@ -734,11 +1057,23 @@ public class AddonManager {
         }
         mPendingInstalls++;
         mInstallsInFlight.setValue(mPendingInstalls);
+        boolean quiet = contextId != null && mQuietInstalls.contains(contextId);
         runtime.getWebExtensionController().install(url, method).accept(extension -> {
             finishInstall(staged, contextId, fromPage);
         }, e -> {
             finishInstall(staged, contextId, fromPage);
-            report(e);
+            // A quiet install's marker is consumed by onInstalled, which
+            // may land before or after this result; a failure never gets one.
+            if (contextId != null) {
+                mQuietInstalls.remove(contextId);
+            }
+            if (quiet) {
+                if (BuildConfig.DEBUG) {
+                    Log.w(TAG, "quiet install failed: " + contextId, e);
+                }
+            } else {
+                report(e);
+            }
         });
     }
 
@@ -897,6 +1232,9 @@ public class AddonManager {
         }
         String name = AddonInfo.from(extension).name;
         runtime.getWebExtensionController().uninstall(extension).accept(unused -> {
+            if (AddonPolicy.isUblockId(id)) {
+                mLocalPrefs.edit().putBoolean(PREF_UBLOCK_REMOVED, true).apply();
+            }
             forget(id);
             emit(Event.REMOVED, name);
         }, e -> {
@@ -1129,6 +1467,11 @@ public class AddonManager {
                 return result;
             }
             InstallContext context = contextFor(extension.id);
+            if (context.bundled && AddonPolicy.isUblockId(extension.id)) {
+                // The copy in the app: Firedown's own ad blocker, in private tabs too.
+                result.complete(new WebExtension.PermissionPromptResponse(true, true, false));
+                return result;
+            }
             enqueue(new Prompt(++mPromptSeq, Prompt.INSTALL, info, list(permissions), list(origins),
                     list(dataCollectionPermissions), context.source, context.notMadeForAndroid,
                     context.pageHost, result, null));
@@ -1179,8 +1522,14 @@ public class AddonManager {
             boolean isNew = !mInstalled.containsKey(extension.id);
             adopt(extension);
             publish();
+            if (AddonPolicy.isUblockId(extension.id)) {
+                mLocalPrefs.edit().remove(PREF_UBLOCK_REMOVED).apply();
+            }
+            boolean quiet = mQuietInstalls.remove(extension.id);
             if (isNew) {
-                emit(Event.INSTALLED, AddonInfo.from(extension).name);
+                if (!quiet) {
+                    emit(Event.INSTALLED, AddonInfo.from(extension).name);
+                }
                 scheduleUpdateCheck();
             }
         }

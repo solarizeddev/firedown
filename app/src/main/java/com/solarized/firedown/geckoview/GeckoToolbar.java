@@ -354,8 +354,9 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
 
     /**
      * Resolves the shield icon from the protection state. The site is
-     * "fully protected" only when both ETP tracking and uBlock ad
-     * filtering are active for it; otherwise the icon flips to the
+     * "fully protected" while an ad blocker add-on runs in the tab and none
+     * says it is off for the site (BrowserFragment.refreshShield, the rule
+     * in AddonPolicy.shieldState); otherwise the icon flips to the
      * privacy-tip variant. This collapses the previous matrix-plus-dot
      * (4 shield variants + a red badge for ads-off) into a single
      * binary glance: full shield = full protection, privacy-tip = a
@@ -366,9 +367,9 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
      * secure   false        ic_shield_bad_24        ic_shield_privacy_tip_bad_24
      */
     private void updateShieldIcon() {
-        // uBlock's per-site filtering is the only per-site state now; Gecko's
-        // tracker blocking stays on globally (the per-site ETP switch that used
-        // to AND into this was removed from the security sheet).
+        // The ad blockers' per-site state is the only per-site state; Gecko's
+        // tracker blocking follows its global level (the per-site ETP switch
+        // that used to AND into this was removed from the security sheet).
         final boolean fullProtection = mAdsEnabled;
         final int icon;
         if (fullProtection) {

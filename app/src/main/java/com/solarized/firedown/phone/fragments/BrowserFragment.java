@@ -42,6 +42,7 @@ import androidx.navigation.NavDestination;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
 
+import com.solarized.firedown.addons.AddonPolicy;
 import com.solarized.firedown.App;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
@@ -1033,10 +1034,10 @@ public class BrowserFragment extends BaseBrowserFragment
             }
         });
 
-        mGeckoStateViewModel.isAdsFilterEnabled().observe(getViewLifecycleOwner(),
-                active -> {
-                    if (!mIsIncognitoThemed) mGeckoToolbar.setAdsEnabled(active);
-                });
+        // The shield follows the ad blockers in the tab on screen: every
+        // button change (uBlock retitles its button per tab, "(off)" when the
+        // user turns it off for the site) and every add-on change land here.
+        mAddonManager.getActionsVersion().observe(getViewLifecycleOwner(), version -> refreshShield());
 
         // Gecko gave up restarting the extension process (see
         // GeckoRuntimeHelper.watchExtensionProcess): capture and ad blocking
@@ -1687,6 +1688,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // URL after the user had already typed a new one (the value read back was
         // whatever the last NavigationDelegate write left, not this event's).
         mGeckoToolbar.onLocationChange(url);
+        refreshShield();
         // A navigation while find-in-page is active dismisses the search bar.
         if (mUiState == UiState.SEARCH) {
             exitSearch();
@@ -3136,6 +3138,26 @@ public class BrowserFragment extends BaseBrowserFragment
         refreshTranslateGlyph(geckoState);
         hideTranslateOffer();
         showPendingDownload(geckoState);
+        refreshShield();
+    }
+
+    /**
+     * The shield's protection half for the tab on screen: full while an ad
+     * blocker runs here and none says it is off for this site
+     * (AddonManager.shieldState, AddonPolicy's rule), the protection-off
+     * shield otherwise — uBlock turned off for the site, turned off or
+     * removed, or not allowed in this private tab.
+     */
+    private void refreshShield() {
+        if (mGeckoToolbar == null) {
+            return;
+        }
+        GeckoState state = peekCurrentGeckoState();
+        if (state == null) {
+            return;
+        }
+        int shield = mAddonManager.shieldState(state.getGeckoSession(), mIsIncognitoThemed, state.getEntityUri());
+        mGeckoToolbar.setAdsEnabled(shield == AddonPolicy.SHIELD_PROTECTED);
     }
 
 

@@ -40,6 +40,7 @@ public class AddonDetailFragment extends BasePreferenceFragment {
     private static final String KEY_HEADER = "com.solarized.firedown.preferences.addon.header";
     private static final String KEY_ENABLED = "com.solarized.firedown.preferences.addon.enabled";
     private static final String KEY_PRIVATE = "com.solarized.firedown.preferences.addon.private";
+    private static final String KEY_SHIELD = "com.solarized.firedown.preferences.addon.shield";
     private static final String KEY_OPTIONS = "com.solarized.firedown.preferences.addon.options";
     private static final String KEY_REVIEW = "com.solarized.firedown.preferences.addon.review";
     private static final String KEY_UPDATE = "com.solarized.firedown.preferences.addon.update";
@@ -56,6 +57,7 @@ public class AddonDetailFragment extends BasePreferenceFragment {
     private Preference mHeader;
     private SwitchPreferenceCompat mEnabled;
     private SwitchPreferenceCompat mPrivate;
+    private SwitchPreferenceCompat mShield;
     private Preference mOptions;
     private Preference mReview;
     private Preference mUpdate;
@@ -76,6 +78,7 @@ public class AddonDetailFragment extends BasePreferenceFragment {
         mHeader = findPreference(KEY_HEADER);
         mEnabled = findPreference(KEY_ENABLED);
         mPrivate = findPreference(KEY_PRIVATE);
+        mShield = findPreference(KEY_SHIELD);
         mOptions = findPreference(KEY_OPTIONS);
         mReview = findPreference(KEY_REVIEW);
         mUpdate = findPreference(KEY_UPDATE);
@@ -96,6 +99,14 @@ public class AddonDetailFragment extends BasePreferenceFragment {
             mPrivate.setOnPreferenceChangeListener((p, value) -> {
                 if (!mBinding && mId != null) {
                     mAddonManager.setAllowedInPrivate(mId, Boolean.TRUE.equals(value));
+                }
+                return true;
+            });
+        }
+        if (mShield != null) {
+            mShield.setOnPreferenceChangeListener((p, value) -> {
+                if (!mBinding && mId != null) {
+                    mAddonManager.setShowBehindShield(mId, Boolean.TRUE.equals(value));
                 }
                 return true;
             });
@@ -184,6 +195,11 @@ public class AddonDetailFragment extends BasePreferenceFragment {
             mPrivate.setEnabled(canRun);
             mPrivate.setChecked(canRun && info.allowedInPrivateBrowsing);
             mPrivate.setSummary(canRun ? R.string.addon_private_summary : R.string.addon_private_not_allowed);
+        }
+        if (mShield != null) {
+            // Add-ons with a toolbar button; uBlock Origin is always behind the shield.
+            mShield.setVisible(mAddonManager.canChooseShield(info));
+            mShield.setChecked(mAddonManager.isBlocker(info));
         }
         if (mOptions != null) {
             mOptions.setVisible(info.optionsPageUrl != null && info.enabled);

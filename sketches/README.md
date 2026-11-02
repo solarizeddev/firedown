@@ -115,4 +115,5 @@ between them show *why* we ended up where we did.
   it sets on its toolbar button ("uBlock Origin (off)"); rows for other
   blockers the user installs (two on, another instead, none, private
   tab); which add-ons get a row. Refresh stays in the bar (it is Stop).
-  Not built.
+  Built, except the number on the shield itself (the address bar keeps no
+  count; the sheet has it).

@@ -58,6 +58,7 @@ public class AddonsFragment extends BasePreferenceFragment {
     private static final String KEY_UPDATES = "com.solarized.firedown.preferences.addons.updates";
     private static final String KEY_FILE = "com.solarized.firedown.preferences.addons.file";
     private static final String KEY_FIND_MORE = "com.solarized.firedown.preferences.addons.more";
+    private static final String KEY_REINSTALL_UBLOCK = "com.solarized.firedown.preferences.addons.reinstall.ublock";
     /**
      * Mozilla's add-on site for Android: only add-ons whose developers mark
      * them as working on Android (Firefox for Android's "Find more
@@ -77,6 +78,8 @@ public class AddonsFragment extends BasePreferenceFragment {
     private PreferenceCategory mInstalledCategory;
     private Preference mInstalledEmpty;
     private BusyPreference mFile;
+    /** Shown while uBlock Origin is not installed: the app's copy, no download. */
+    private BusyPreference mReinstallUblock;
     /** The rows on screen, by add-on id, so a repaint updates them in place (no icon flicker). */
     private final Map<String, Preference> mInstalledRows = new LinkedHashMap<>();
     private final Map<String, BusyPreference> mCatalogRows = new LinkedHashMap<>();
@@ -121,6 +124,15 @@ public class AddonsFragment extends BasePreferenceFragment {
             findMore.setOnPreferenceClickListener(p -> {
                 if (mActivity != null) {
                     SettingsActivity.openInBrowser(mActivity, AMO_ANDROID_URL);
+                }
+                return true;
+            });
+        }
+        mReinstallUblock = findPreference(KEY_REINSTALL_UBLOCK);
+        if (mReinstallUblock != null) {
+            mReinstallUblock.setOnPreferenceClickListener(p -> {
+                if (!mReinstallUblock.isBusy()) {
+                    mAddonManager.installBundledUblock(true);
                 }
                 return true;
             });
@@ -170,8 +182,12 @@ public class AddonsFragment extends BasePreferenceFragment {
             return;
         }
         List<AddonInfo> list = addons == null ? Collections.emptyList() : addons;
+        boolean ublockMissing = mAddonManager.findUblockInfo() == null;
+        if (mReinstallUblock != null) {
+            mReinstallUblock.setVisible(ublockMissing);
+        }
         if (mInstalledEmpty != null) {
-            mInstalledEmpty.setVisible(list.isEmpty());
+            mInstalledEmpty.setVisible(list.isEmpty() && !ublockMissing);
         }
         if (mUpdates != null) {
             mUpdates.setVisible(!list.isEmpty());
@@ -246,7 +262,8 @@ public class AddonsFragment extends BasePreferenceFragment {
         }
         List<AmoCatalog.Entry> shown = new ArrayList<>();
         for (AmoCatalog.Entry entry : state.entries) {
-            if (!installed.contains(entry.id.toLowerCase(Locale.ROOT))) {
+            // uBlock Origin has its own row (the app's copy, no download).
+            if (!installed.contains(entry.id.toLowerCase(Locale.ROOT)) && !AddonPolicy.isUblockId(entry.id)) {
                 shown.add(entry);
             }
         }
@@ -325,6 +342,13 @@ public class AddonsFragment extends BasePreferenceFragment {
             if (p.isBusy() != on) {
                 p.setBusy(on);
                 p.setSummary(on ? getString(R.string.addons_installing) : entry.summary);
+            }
+        }
+        if (mReinstallUblock != null) {
+            boolean on = busy.contains(AddonPolicy.UBLOCK_ID);
+            if (mReinstallUblock.isBusy() != on) {
+                mReinstallUblock.setBusy(on);
+                mReinstallUblock.setSummary(on ? R.string.addons_installing : R.string.addons_reinstall_ublock_summary);
             }
         }
         if (mFile != null) {

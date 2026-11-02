@@ -36,11 +36,12 @@ import com.google.android.material.color.MaterialColors;
  * incognito overlay covered. Below about 60% the light settings card drops
  * under 4.5:1; re-measure before moving it.</p>
  *
- * <p>The domain comes from uBlock's own public suffix list (firedown.js ships
- * it beside every host), so there is no second PSL on the Java side. When it
- * is missing or doesn't end the host on a label boundary (an IP, an older
- * extension build), the whole host takes the domain style — never a guess at
- * where the site's name starts.</p>
+ * <p>The domain is whatever the producer ships beside a host; there is no
+ * public suffix list on the Java side. When it is missing or doesn't end the
+ * host on a label boundary (an IP, a counter that knows no domains — the
+ * capture extension's blocked-request counter ships none), the whole host
+ * takes the domain style — never a guess at where the site's name
+ * starts.</p>
  */
 public final class HostLabel {
 

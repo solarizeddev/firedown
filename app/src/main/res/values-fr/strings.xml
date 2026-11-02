@@ -284,8 +284,6 @@
     <string name="settings_autofill_not_supported">Le remplissage automatique n\'est pas disponible sur cet appareil.</string>
     <string name="settings_autofill_service_summary">Firedown utilise le service de remplissage automatique de votre système (Bitwarden, 1Password, Proton Pass, etc.). Touchez pour configurer.</string>
     <string name="settings_autofill_service_title">Mots de passe &amp; remplissage auto</string>
-    <string name="settings_block_cookie_notices_summary">Masque les bannières et pop-ups de consentement aux cookies sur les sites web</string>
-    <string name="settings_block_cookie_notices_title">Bloquer les avis sur les cookies</string>
     <string name="settings_block_javascript_summary">Les pages peuvent se charger plus rapidement, mais peuvent également se comporter de manière inattendue</string>
     <string name="settings_block_javascript_title">Bloquer JavaScript</string>
     <string name="settings_block_location_summary">Empêche les sites de demander votre localisation</string>

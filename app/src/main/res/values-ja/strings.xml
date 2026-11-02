@@ -284,8 +284,6 @@
     <string name="settings_autofill_not_supported">このデバイスでは自動入力を利用できません。</string>
     <string name="settings_autofill_service_summary">Firedownはシステムの自動入力サービス（Bitwarden、1Password、Proton Passなど）を使用します。タップして設定します。</string>
     <string name="settings_autofill_service_title">パスワードと自動入力</string>
-    <string name="settings_block_cookie_notices_summary">Webサイトのクッキー同意バナーやポップアップを非表示にします</string>
-    <string name="settings_block_cookie_notices_title">クッキー通知をブロック</string>
     <string name="settings_block_javascript_summary">ページの読み込みは速くなりますが、予期しない動作をする場合もあります</string>
     <string name="settings_block_javascript_title">JavaScript をブロック</string>
     <string name="settings_block_location_summary">Webサイトが位置情報を要求するのを防ぎます</string>

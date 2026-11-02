@@ -2,7 +2,7 @@ package com.solarized.firedown.geckoview;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.text.TextUtils;
+import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -10,16 +10,20 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.solarized.firedown.BuildConfig;
+
 import dagger.hilt.android.qualifiers.ApplicationContext;
 
 import java.util.Calendar;
 import java.util.Locale;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,64 +31,39 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
- * Helper class to manage uBlock Origin state and communication.
- * Refactored to use Hilt and LiveData for reactive UI updates.
+ * The blocked-request numbers: this page's count and hosts for the shield
+ * sheet, the lifetime and today figures for Settings → Privacy → "Trackers
+ * and ads blocked" and the home line.
+ *
+ * <p>They come from the capture extension (webrequests/js/blocked-stats.js),
+ * which sees every request a blocker refuses — whichever add-on did it, and
+ * Gecko's own tracker blocking — so the numbers don't depend on one ad
+ * blocker. The extension sends DELTAS for the lifetime figures (regular tabs
+ * only) and this class adds them to what it persisted, which is why a
+ * lifetime count from before the official uBlock Origin carries on.
  */
 @Singleton
 public class GeckoUblockHelper {
 
     private static final String TAG = GeckoUblockHelper.class.getSimpleName();
-    // LiveData streams for the UI to observe.
-    //
-    // Ads-blocked count is per-mode so the incognito toolbar never
-    // reflects counts from regular browsing and vice versa. Callers
-    // that know the session's incognito-ness should call
-    // onAdsCount(count, isIncognito); the no-arg overload exists for
-    // legacy callers and routes to the regular stream.
+
+    /** Requests blocked on the page on screen, per mode (a private tab's count never shows on a regular one). */
     private final MutableLiveData<String> mAdsBlockedLive = new MutableLiveData<>("0");
     private final MutableLiveData<String> mAdsBlockedLiveIncognito = new MutableLiveData<>("0");
-    /** Cumulative blocked requests since uBlock was installed.
-     *  Source of truth lives in {@code µb.requestStats.blockedCount}
-     *  inside the extension — firedown.js pushes the value over the
-     *  native message bus on load + every firewall update + a coarse
-     *  60s interval. Reads here are just a relay. Incognito sessions
-     *  don't contribute (uBlock excludes them from its persisted
-     *  stats). */
+    /** Since install. Regular tabs only. */
     private final MutableLiveData<Long> mCumulativeBlockedLive = new MutableLiveData<>(0L);
-    /** Blocked count since the start of the current calendar day.
-     *  Derived from {@code cumulative - baselineAtMidnight}; baseline
-     *  rolls forward on the first push of a new day. Gives the info
-     *  sheet a 'X today, Y since install' framing without persistent
-     *  per-event storage. */
+    /** Since local midnight: cumulative minus the count the day started at. */
     private final MutableLiveData<Long> mTodayBlockedLive = new MutableLiveData<>(0L);
 
-    /** Per-category breakdown of today's blocked requests, bucketed
-     *  by request type at the uBlock side. uBlock's static engine
-     *  doesn't preserve filter-list origin, so we can't honestly
-     *  bucket by 'Tracker vs Ad'; instead firedown.js groups by the
-     *  filter context's itype (script / image-or-pixel / frame /
-     *  other) and pushes the four-key map alongside the cumulative
-     *  total. Scoped to today (local-time midnight rollover, same key
-     *  as the cumulative day baseline) so the four buckets sum to the
-     *  'Today' hero tile instead of accumulating since-install. */
+    /** Today's blocks by request type (Settings' "Today by request type"). */
     public enum Category { SCRIPTS, PIXELS, FRAMES, OTHER }
 
     private final MutableLiveData<Map<Category, Long>> mCategoryBlockedLive =
             new MutableLiveData<>(emptyCategoryMap());
 
-    /** Top blocked hostnames today — every blocked host, first-party
-     *  ones included (no third-party filter, hence "Most blocked
-     *  domains", not "trackers"). firedown.js maintains a per-host
-     *  counter map (rebuilt at local-time midnight along with the
-     *  category breakdown), evicts at 500 entries, gates on per-tab
-     *  incognito state, and pushes the sorted top 10 over the native
-     *  port. BlockedStatsFragment (Settings → Privacy → Trackers and ads
-     *  blocked) lists them under the per-type breakdown.
-     *
-     *  <p>{@code domain} is the host's registrable domain from uBlock's
-     *  public suffix list, which {@link com.solarized.firedown.ui.HostLabel}
-     *  prints brighter than the subdomain; the host itself when the
-     *  extension sent none (an older build, an IP). */
+    /** A host and how often it was refused. {@code domain} is the host when no
+     *  registrable domain is known ({@link com.solarized.firedown.ui.HostLabel}
+     *  then styles it whole). */
     public static final class HostCount {
         public final String host;
         public final String domain;
@@ -96,147 +75,63 @@ public class GeckoUblockHelper {
         }
     }
 
+    /** Today's ten most refused hosts. */
     private final MutableLiveData<List<HostCount>> mTopTrackersLive =
             new MutableLiveData<>(Collections.emptyList());
 
-    /**
-     * Per-page blocked-host tally for the currently active tab.
-     * Updates only in response to {@link #requestPageBlocks
-     * GeckoRuntimeHelper.requestPageBlocks()}: firedown.js maintains
-     * the per-tab Map on its side and only crosses the port when
-     * Java explicitly asks, so this stream stays cold (and the
-     * BlockedAdsDetailDialogFragment empty) until the SecuritySheet
-     * routes the user into it.
-     *
-     * <p>Per-mode like the ads count: the JS pushes data from the
-     * sending tab regardless of mode, but we land it on the regular
-     * or incognito stream based on the session's incognito-ness so
-     * the incognito sheet never sees data from regular browsing
-     * and vice versa.
-     */
+    /** The hosts refused on the page on screen, per mode. */
     private final MutableLiveData<List<HostCount>> mPageBlocksLive =
             new MutableLiveData<>(Collections.emptyList());
 
     private final MutableLiveData<List<HostCount>> mPageBlocksLiveIncognito =
             new MutableLiveData<>(Collections.emptyList());
 
-    // Firewall activation is a global user preference — not per-mode.
-    private final MutableLiveData<Boolean> mFirewallActiveLive = new MutableLiveData<>();
+    /** Today's per-host counts, the source of the top ten. Bounded. */
+    private final Map<String, Long> mTodayHosts = new HashMap<>();
+    private final Map<Category, Long> mTodayCategories = emptyCategoryMap();
+
+    static final int MAX_TODAY_HOSTS = 500;
+    static final int TOP_HOSTS = 10;
+    /** The breakdown (categories, up to 500 hosts) is written at most this often; the lifetime count every time. */
+    static final long BREAKDOWN_WRITE_INTERVAL_MS = 10_000;
+    private long mLastBreakdownWrite;
 
     private final SharedPreferences mPrefs;
 
-    /** Persists the last known cumulative-blocked count so the Home
-     *  card has something to show on cold start, before uBlock has
-     *  initialised (which only happens when a tab opens, not when
-     *  the user lands on Home). The card shows the cached value
-     *  immediately; the live value overrides it the moment the
-     *  extension pushes a fresh number.
-     *
-     *  <p>Stored in {@code backup_local.xml} — the install-local prefs
-     *  file EXCLUDED from Auto Backup — NOT the default prefs. This
-     *  cache is a mirror of uBlock's {@code µb.requestStats}, which
-     *  lives in the app-private Gecko profile and is itself NOT backed
-     *  up. If the cache rode a backup while its source didn't, a
-     *  reinstall-with-restore would show the pre-uninstall count (e.g.
-     *  "2.1K") from the restored pref, then the freshly-reinstalled
-     *  uBlock (requestStats reset to 0) would push {@code
-     *  cumulativeBlocked:0} and {@link #onCumulativeBlocked} would
-     *  relay it, making the number vanish a moment after launch. Keeping
-     *  the cache install-local means a reinstall starts both sides at 0
-     *  and the card fills back in as uBlock re-counts — no stale figure,
-     *  no disappearing act. On a same-install cold start the file is
-     *  intact, so the cold-start optimisation above still works. */
+    /** In {@code backup_local.xml}, excluded from Auto Backup: these figures
+     *  describe this install's browsing, and a restore onto a new phone
+     *  starts at zero. The key names are the ones the bundled uBlock fed,
+     *  so the lifetime count carries on. */
     private static final String LOCAL_PREFS = "backup_local";
     private static final String KEY_CUMULATIVE_BLOCKED = "ublock.cumulative.blocked";
     private static final String KEY_DAY_BASELINE_DATE  = "ublock.day.baseline.date";
     private static final String KEY_DAY_BASELINE_COUNT = "ublock.day.baseline.count";
+    private static final String KEY_TODAY_CATEGORIES = "blocked.today.categories";
+    private static final String KEY_TODAY_HOSTS = "blocked.today.hosts";
 
     @Inject
     public GeckoUblockHelper(@ApplicationContext Context context) {
         mPrefs = context.getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
         long cachedBlocked = mPrefs.getLong(KEY_CUMULATIVE_BLOCKED, 0L);
-        if (cachedBlocked > 0L) mCumulativeBlockedLive.postValue(cachedBlocked);
-        // Seed today's count from the cached baseline so the sheet
-        // has something to show on cold start before the extension
-        // pushes a fresh cumulative. If the baseline is for an older
-        // date the next push will roll it forward; meanwhile this
-        // value is at worst stale, not wrong.
+        mCumulativeBlockedLive.postValue(cachedBlocked);
         String savedDate = mPrefs.getString(KEY_DAY_BASELINE_DATE, null);
-        if (cachedBlocked > 0L && todayKey().equals(savedDate)) {
+        if (todayKey().equals(savedDate)) {
             long baseline = mPrefs.getLong(KEY_DAY_BASELINE_COUNT, cachedBlocked);
             mTodayBlockedLive.postValue(Math.max(0L, cachedBlocked - baseline));
+            readToday();
         }
     }
 
-
-    /**
-     * @return LiveData containing the current ads/trackers blocked count string
-     * for regular browsing.
-     */
     public LiveData<String> getAdsBlockedLive() {
         return mAdsBlockedLive;
     }
 
-    /**
-     * @return LiveData containing the current ads/trackers blocked count string
-     * for incognito browsing.
-     */
     public LiveData<String> getAdsBlockedLiveIncognito() {
         return mAdsBlockedLiveIncognito;
     }
 
-    /**
-     * @return LiveData containing the current activation status of the uBlock firewall.
-     */
-    public LiveData<Boolean> getFirewallActiveLive() {
-        return mFirewallActiveLive;
-    }
-
-
-    // Cookie-notice blocking is a global filter-list selection, not per-hostname.
-    // Reflects whether fanboy-cookiemonster is in µb.selectedFilterLists.
-    private final MutableLiveData<Boolean> mCookieNoticesBlockedLive = new MutableLiveData<>(false);
-
-    // --- State Management ---
-
-    /**
-     * @return LiveData carrying the cumulative blocked-request count
-     * since install. Updates whenever firedown.js relays a fresh
-     * value from {@code µb.requestStats.blockedCount}.
-     */
     public LiveData<Long> getCumulativeBlockedLive() {
         return mCumulativeBlockedLive;
-    }
-
-    /**
-     * Called from {@code handleUblockMessage} when the extension pushes
-     * a fresh cumulative-blocked count. Just relays — uBlock owns the
-     * source of truth, including legitimate resets when the user
-     * clears the request-stats counter. Caches to SharedPreferences
-     * so a reader has the last value on the next cold start before
-     * the extension finishes loading.
-     */
-    public void onCumulativeBlocked(long blocked) {
-        if (blocked < 0) return;
-        mCumulativeBlockedLive.postValue(blocked);
-
-        // Roll the day baseline if we've crossed midnight since the
-        // last push. Baseline = the cumulative value the day started
-        // at, so 'today' = current - baseline. Storing date as ISO
-        // yyyy-MM-dd keeps the comparison locale-stable. clamp to
-        // zero so a clock skew (user winds backwards, cumulative
-        // suddenly < baseline) doesn't render a negative count.
-        String today = todayKey();
-        String savedDate = mPrefs.getString(KEY_DAY_BASELINE_DATE, null);
-        long baseline = mPrefs.getLong(KEY_DAY_BASELINE_COUNT, blocked);
-        SharedPreferences.Editor editor = mPrefs.edit().putLong(KEY_CUMULATIVE_BLOCKED, blocked);
-        if (!today.equals(savedDate)) {
-            baseline = blocked;
-            editor.putString(KEY_DAY_BASELINE_DATE, today)
-                  .putLong(KEY_DAY_BASELINE_COUNT, baseline);
-        }
-        editor.apply();
-        mTodayBlockedLive.postValue(Math.max(0L, blocked - baseline));
     }
 
     public LiveData<Long> getTodayBlockedLive() {
@@ -247,64 +142,97 @@ public class GeckoUblockHelper {
         return mCategoryBlockedLive;
     }
 
-    /**
-     * Called from {@code handleUblockMessage} when firedown.js relays
-     * the per-category counters. The JS side sends a 4-key object
-     * ({@code scripts}, {@code pixels}, {@code frames}, {@code other});
-     * unknown keys or missing keys default to zero. Negative or NaN
-     * values are clamped to the last good value to keep the sheet from
-     * rendering nonsense if storage gets corrupted.
-     */
     public LiveData<List<HostCount>> getTopTrackersLive() {
         return mTopTrackersLive;
     }
 
-    /**
-     * Called from {@code handleUblockMessage} when firedown.js relays a
-     * top-trackers payload. Format: a JSON array of {host, count, domain}
-     * rows already sorted descending. Entries with empty hostnames or
-     * non-positive counts are dropped defensively.
-     */
-    public void onTopTrackers(@NonNull JSONArray array) {
-        List<HostCount> next = new ArrayList<>(array.length());
-        for (int i = 0; i < array.length(); i++) {
-            JSONObject row = array.optJSONObject(i);
-            if (row == null) continue;
-            String host = row.optString("host", "");
-            long count = row.optLong("count", 0);
-            if (host.isEmpty() || count <= 0) continue;
-            next.add(new HostCount(host, row.optString("domain", host), count));
-        }
-        mTopTrackersLive.postValue(next);
-    }
-
-    /**
-     * @return LiveData with the active tab's blocked-host tally for
-     * regular browsing. See {@link #mPageBlocksLive} for lifecycle.
-     */
     public LiveData<List<HostCount>> getPageBlocksLive() {
         return mPageBlocksLive;
     }
 
-    /**
-     * @return LiveData with the active tab's blocked-host tally for
-     * incognito browsing. See {@link #mPageBlocksLive} for lifecycle.
-     */
     public LiveData<List<HostCount>> getPageBlocksLiveIncognito() {
         return mPageBlocksLiveIncognito;
     }
 
     /**
-     * Called from {@code handleUblockMessage} when firedown.js
-     * responds to a requestPageBlocks. Same JSON shape as the
-     * top-trackers payload — {@code [{host, count, domain}, …]} sorted
-     * descending — but scoped to the active tab and zero-tolerant
-     * (an empty array means "nothing blocked here yet" and is a
-     * valid response, unlike topTrackers where empties are dropped).
-     * Routed to the per-mode stream based on the sending session's
-     * incognito-ness, mirroring onAdsCount.
+     * The extension's lifetime deltas: {@code {blocked, scripts, pixels,
+     * frames, other, hosts:[{host, count}]}}. Added to the persisted
+     * figures; the day's figures start over at local midnight.
      */
-    public void onPageBlocks(@Nullable JSONArray array, boolean isIncognito) {
+    public synchronized void onBlockedTotals(@NonNull JSONObject totals) {
+        long blocked = Math.max(0L, totals.optLong("blocked", 0));
+        if (blocked == 0) {
+            return;
+        }
+        String today = todayKey();
+        String savedDate = mPrefs.getString(KEY_DAY_BASELINE_DATE, null);
+        long previous = mPrefs.getLong(KEY_CUMULATIVE_BLOCKED, 0L);
+        long cumulative = previous + blocked;
+        SharedPreferences.Editor editor = mPrefs.edit().putLong(KEY_CUMULATIVE_BLOCKED, cumulative);
+        long baseline;
+        if (!today.equals(savedDate)) {
+            // The day's first blocks: today counts from the previous total.
+            baseline = previous;
+            editor.putString(KEY_DAY_BASELINE_DATE, today).putLong(KEY_DAY_BASELINE_COUNT, baseline);
+            mTodayHosts.clear();
+            for (Category c : Category.values()) {
+                mTodayCategories.put(c, 0L);
+            }
+        } else {
+            baseline = mPrefs.getLong(KEY_DAY_BASELINE_COUNT, previous);
+        }
+        add(Category.SCRIPTS, totals.optLong("scripts", 0));
+        add(Category.PIXELS, totals.optLong("pixels", 0));
+        add(Category.FRAMES, totals.optLong("frames", 0));
+        add(Category.OTHER, totals.optLong("other", 0));
+        JSONArray hosts = totals.optJSONArray("hosts");
+        if (hosts != null) {
+            for (int i = 0; i < hosts.length(); i++) {
+                JSONObject row = hosts.optJSONObject(i);
+                if (row == null) {
+                    continue;
+                }
+                String host = row.optString("host", "");
+                long count = row.optLong("count", 0);
+                if (host.isEmpty() || count <= 0) {
+                    continue;
+                }
+                Long had = mTodayHosts.get(host);
+                if (had != null) {
+                    mTodayHosts.put(host, had + count);
+                } else if (mTodayHosts.size() < MAX_TODAY_HOSTS) {
+                    mTodayHosts.put(host, count);
+                }
+            }
+        }
+        long now = SystemClock.elapsedRealtime();
+        boolean newDay = !today.equals(savedDate);
+        if (newDay || now - mLastBreakdownWrite >= BREAKDOWN_WRITE_INTERVAL_MS) {
+            // A process death loses at most this interval of the day's
+            // breakdown; the lifetime count is never behind.
+            mLastBreakdownWrite = now;
+            editor.putString(KEY_TODAY_CATEGORIES, categoriesJson().toString())
+                  .putString(KEY_TODAY_HOSTS, hostsJson().toString());
+        }
+        editor.apply();
+        mCumulativeBlockedLive.postValue(cumulative);
+        mTodayBlockedLive.postValue(Math.max(0L, cumulative - baseline));
+        mCategoryBlockedLive.postValue(new EnumMap<>(mTodayCategories));
+        mTopTrackersLive.postValue(top(mTodayHosts, TOP_HOSTS));
+    }
+
+    private void add(@NonNull Category category, long delta) {
+        if (delta > 0) {
+            Long had = mTodayCategories.get(category);
+            mTodayCategories.put(category, (had == null ? 0L : had) + delta);
+        }
+    }
+
+    /**
+     * The page on screen: its count and hosts ({@code [{host, count}]},
+     * most refused first). An empty list is a page with nothing refused.
+     */
+    public void onPageBlocks(long count, @Nullable JSONArray array, boolean isIncognito) {
         List<HostCount> next;
         if (array == null || array.length() == 0) {
             next = Collections.emptyList();
@@ -314,25 +242,86 @@ public class GeckoUblockHelper {
                 JSONObject row = array.optJSONObject(i);
                 if (row == null) continue;
                 String host = row.optString("host", "");
-                long count = row.optLong("count", 0);
-                if (host.isEmpty() || count <= 0) continue;
-                next.add(new HostCount(host, row.optString("domain", host), count));
+                long n = row.optLong("count", 0);
+                if (host.isEmpty() || n <= 0) continue;
+                next.add(new HostCount(host, row.optString("domain", host), n));
             }
         }
+        String value = String.valueOf(Math.max(0L, count));
         if (isIncognito) {
             mPageBlocksLiveIncognito.postValue(next);
+            mAdsBlockedLiveIncognito.postValue(value);
         } else {
             mPageBlocksLive.postValue(next);
+            mAdsBlockedLive.postValue(value);
         }
     }
 
-    public void onCategoryBlocked(long scripts, long pixels, long frames, long other) {
-        Map<Category, Long> next = emptyCategoryMap();
-        next.put(Category.SCRIPTS, Math.max(0L, scripts));
-        next.put(Category.PIXELS,  Math.max(0L, pixels));
-        next.put(Category.FRAMES,  Math.max(0L, frames));
-        next.put(Category.OTHER,   Math.max(0L, other));
-        mCategoryBlockedLive.postValue(next);
+    // ── Persistence of today's breakdown ────────────────────────────────
+
+    private void readToday() {
+        try {
+            JSONObject categories = new JSONObject(mPrefs.getString(KEY_TODAY_CATEGORIES, "{}"));
+            for (Category c : Category.values()) {
+                mTodayCategories.put(c, Math.max(0L, categories.optLong(c.name(), 0)));
+            }
+            JSONArray hosts = new JSONArray(mPrefs.getString(KEY_TODAY_HOSTS, "[]"));
+            for (int i = 0; i < hosts.length() && mTodayHosts.size() < MAX_TODAY_HOSTS; i++) {
+                JSONObject row = hosts.optJSONObject(i);
+                if (row != null && !row.optString("host", "").isEmpty() && row.optLong("count", 0) > 0) {
+                    mTodayHosts.put(row.optString("host"), row.optLong("count"));
+                }
+            }
+        } catch (JSONException e) {
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "today's blocked figures unreadable", e);
+            }
+            mTodayHosts.clear();
+        }
+        mCategoryBlockedLive.postValue(new EnumMap<>(mTodayCategories));
+        mTopTrackersLive.postValue(top(mTodayHosts, TOP_HOSTS));
+    }
+
+    @NonNull
+    private JSONObject categoriesJson() {
+        JSONObject o = new JSONObject();
+        try {
+            for (Map.Entry<Category, Long> e : mTodayCategories.entrySet()) {
+                o.put(e.getKey().name(), e.getValue());
+            }
+        } catch (JSONException e) {
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "categories", e);
+            }
+        }
+        return o;
+    }
+
+    @NonNull
+    private JSONArray hostsJson() {
+        JSONArray a = new JSONArray();
+        try {
+            for (Map.Entry<String, Long> e : mTodayHosts.entrySet()) {
+                a.put(new JSONObject().put("host", e.getKey()).put("count", e.getValue()));
+            }
+        } catch (JSONException e) {
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "hosts", e);
+            }
+        }
+        return a;
+    }
+
+    @NonNull
+    static List<HostCount> top(@NonNull Map<String, Long> hosts, int max) {
+        List<Map.Entry<String, Long>> entries = new ArrayList<>(hosts.entrySet());
+        Collections.sort(entries, (a, b) -> Long.compare(b.getValue(), a.getValue()));
+        List<HostCount> out = new ArrayList<>(Math.min(max, entries.size()));
+        for (int i = 0; i < entries.size() && i < max; i++) {
+            Map.Entry<String, Long> e = entries.get(i);
+            out.add(new HostCount(e.getKey(), e.getKey(), e.getValue()));
+        }
+        return out;
     }
 
     @NonNull
@@ -348,55 +337,5 @@ public class GeckoUblockHelper {
                 c.get(Calendar.YEAR),
                 c.get(Calendar.MONTH) + 1,
                 c.get(Calendar.DAY_OF_MONTH));
-    }
-
-    /**
-     * Session-aware ads count. Routes to the correct per-mode stream.
-     */
-    public void onAdsCount(String count, boolean isIncognito) {
-        String value = TextUtils.isEmpty(count) ? "0" : count;
-        if (isIncognito) {
-            mAdsBlockedLiveIncognito.postValue(value);
-        } else {
-            mAdsBlockedLive.postValue(value);
-        }
-    }
-
-    /**
-     * @return LiveData containing the current state of cookie-notice list
-     * selection. True when fanboy-cookiemonster is selected.
-     */
-    public LiveData<Boolean> getCookieNoticesBlockedLive() {
-        return mCookieNoticesBlockedLive;
-    }
-
-
-    /**
-     * Called when the uBlock firewall settings change.
-     */
-    public void onFirewallChanged(boolean activated, boolean cookieNoticesBlocked) {
-        Log.d(TAG, "onFirewallChanged: " + activated);
-        mFirewallActiveLive.postValue(activated);
-        mCookieNoticesBlockedLive.postValue(cookieNoticesBlocked);
-    }
-
-    public boolean isActivated() {
-        Boolean active = mFirewallActiveLive.getValue();
-        return active != null && active;
-    }
-
-    /**
-     * Resets the helper state (e.g., when a new session starts or engine is cleared).
-     */
-    public void clear() {
-        Log.d(TAG, "onFirewallChanged clear");
-        mAdsBlockedLive.postValue("0");
-        mAdsBlockedLiveIncognito.postValue("0");
-        mFirewallActiveLive.postValue(false);
-        mCookieNoticesBlockedLive.postValue(false);
-        mCategoryBlockedLive.postValue(emptyCategoryMap());
-        mTopTrackersLive.postValue(Collections.emptyList());
-        mPageBlocksLive.postValue(Collections.emptyList());
-        mPageBlocksLiveIncognito.postValue(Collections.emptyList());
     }
 }

@@ -138,9 +138,9 @@ public class SettingsFragment extends BasePreferenceFragment
 
     /**
      * The "Trackers and ads blocked" row's summary is the LIVE lifetime count
-     * from the built-in ad blocker (GeckoUblockHelper relays what firedown.js
-     * pushes; it seeds from its own install-local cache on a cold start, so
-     * the row is right before uBlock has booted). "Protection active" at 0 —
+     * of requests a blocker refused (GeckoUblockHelper adds up what the
+     * capture extension counts and persists it install-locally, so the row
+     * is right on a cold start). "Protection active" at 0 —
      * a fresh install, nothing browsed yet — never "0 blocked". Observed on
      * the VIEW lifecycle, so a recreated screen re-binds.
      */
@@ -366,18 +366,6 @@ public class SettingsFragment extends BasePreferenceFragment
                 geckoState.closeGeckoSession();
             }
 
-        } else if (Preferences.SETTINGS_BLOCK_COOKIE_NOTICES.equals(key)) {
-
-            boolean value = sharedPreferences.getBoolean(key,
-                    Preferences.DEFAULT_BLOCK_COOKIE_NOTICES);
-
-            mGeckoRuntimeHelper.setCookies(value);
-
-            // firedown.js' toggleCookieNotices already reloads the active
-            // tab after applyFilterListSelection + loadFilterLists. Skip the
-            // generic fall-through reload below to avoid a race between the
-            // two reloads while uBO is still recompiling cosmetic rules.
-            return;
 
         } else if (Preferences.SETTINGS_COOKIES.equals(key)) {
 

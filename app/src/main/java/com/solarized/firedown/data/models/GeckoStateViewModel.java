@@ -65,17 +65,9 @@ public class GeckoStateViewModel extends ViewModel {
         return mGeckoUblockHelper.getAdsBlockedLive();
     }
 
-    /**
-     * Per-tab blocked-host tally. Cold-start empty — populates only
-     * after a caller fires {@link com.solarized.firedown.geckoview.GeckoRuntimeHelper#requestPageBlocks()}
-     * and firedown.js responds.
-     */
+    /** The hosts refused on the page on screen (pushed by the capture extension). */
     public LiveData<List<GeckoUblockHelper.HostCount>> getPageBlocks() {
         return mGeckoUblockHelper.getPageBlocksLive();
-    }
-
-    public LiveData<Boolean> isAdsFilterEnabled() {
-        return mGeckoUblockHelper.getFirewallActiveLive();
     }
 
     /**
