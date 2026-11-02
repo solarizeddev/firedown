@@ -146,10 +146,12 @@ brings userscripts with its own maintained <code>GM_*</code> API. This sheet ans
       release, their own site, a file on the phone. Mozilla also signs add-ons it doesn't list, and Gecko checks the
       signature whatever the source, so Mozilla can still block a bad one later. Only the Android filter is lost, so
       Firedown reads the manifest and the prompt says when a file isn't made for Android.</li>
-    <li><strong>Unsigned add-ons: never.</strong> Allowing them turns off signature checking for every install, store
-      ones included, and nothing could block a malicious one afterwards. A downloader's users are exactly who fake
-      "video downloader" add-ons go after. Developers testing their own extension: debug builds at most, and never
-      through <code>ensureBuiltIn</code>, which skips signing and the permission prompt.</li>
+    <li><strong>Unsigned add-ons: never, and this GeckoView can't install them anyway.</strong> It is built from
+      the <code>159.0</code> release tag, which Gecko's configure counts as release, so
+      <code>MOZ_REQUIRE_SIGNING</code> is compiled in and <code>xpinstall.signatures.required</code> is a constant no
+      pref can turn off (checked in firedown-geckoview and Firefox 159's source). Debug app builds use the same AAR.
+      The only way in for unsigned code is <code>ensureBuiltIn</code>, which skips signing and the permission prompt:
+      it stays for Firedown's own extensions, never for anything a user picks.</li>
     <li><strong>Built-in IDs are refused.</strong> Our uBlock is registered as <code>uBlock0@raymondhill.net</code>,
       its AMO ID. Installing it from AMO would replace the patched build and cut the native bridge (shield toggles,
       counts). Same for <code>downloader@</code>, <code>youtube@</code>, <code>p2pshare@</code>,
@@ -263,10 +265,11 @@ brings userscripts with its own maintained <code>GM_*</code> API. This sheet ans
   <h3>2 · Installing: from AMO's Android site, one prompt</h3>
   <p class="descr">The user browses <code>addons.mozilla.org/android</code> in a normal tab (the "Find add-ons" row
   opens it). "Add to Firefox" ends in our prompt, which lists Gecko's own permission strings, the private-tab switch
-  (off) and the one sentence about privacy. Two routes can reach it and the sketch doesn't pick: Gecko's web-install
-  prompt, or a <code>.xpi</code> response that today would be a download. <strong>Check on GeckoView 159 which one
-  AMO's button takes</strong>; either way it ends in <code>WebExtensionController.install()</code>, never in
-  Downloads.</p>
+  (off) and the one sentence about privacy. Our GeckoView turns off AMO's in-page install API
+  (<code>extensions.webapi.enabled</code> false, set in firedown-geckoview's prefs so pages can't probe or trigger
+  installs), so the button should fall back to a plain <code>.xpi</code> link: the same route as 2b.
+  <strong>Check on a device</strong>; whatever arrives ends in <code>WebExtensionController.install()</code>, never
+  in Downloads.</p>
   <div class="phones">
     <div class="step">
       <div class="cap">AMO in a tab</div>
@@ -572,15 +575,16 @@ brings userscripts with its own maintained <code>GM_*</code> API. This sheet ans
       cleanup stays ID-specific.</td></tr>
     <tr><td>GeckoComponents.onExternalResponse</td><td>Every response is a download.</td><td>A <code>.xpi</code>
       (<code>application/x-xpinstall</code>, or the extension) from any https site goes to the cache and the add-on
-      installer, never to Downloads. Check on 159 whether AMO's own button lands here or in Gecko's web-install
-      prompt; both must end in the same installer.</td></tr>
+      installer, never to Downloads. AMO's button should arrive here too, since its in-page install API is off
+      (check on a device).</td></tr>
     <tr><td>New: XpiInstaller</td><td>—</td><td>One pipeline for a link and a file: copy to cache, read
       <code>manifest.json</code> from the zip (bounded: the manifest only, size-capped), refuse built-in IDs and
       non-add-ons, then <code>install(file, FROM_FILE)</code>. Gecko checks the signature. The cached file is deleted
       once installed or refused.</td></tr>
-    <tr><td>firedown-geckoview build</td><td>?</td><td><span class="risk">Check that signing is required</span>
-      (<code>xpinstall.signatures.required</code>, and whether the build compiles it in as Firefox's release builds
-      do). Never flipped by the app. If the pref is settable in this build, the app should pin it on at boot.</td></tr>
+    <tr><td>firedown-geckoview build</td><td>Signing required, compiled in.</td><td><span class="no">No change.</span>
+      Milestone <code>159.0</code> + no <code>MOZ_REQUIRE_SIGNING</code> override → Gecko's <code>REQUIRE_SIGNING</code>
+      is a constant. A future build must not set <code>MOZ_REQUIRE_SIGNING=0</code> or
+      <code>--with-unsigned-addon-scopes</code>.</td></tr>
     <tr><td>PopupBrowserSheetDialogFragment</td><td>Three groups.</td><td>One row (hidden with no add-ons; the existing
       <code>applyCorners</code> pass handles it) and a second page. The places sheet already has the two-page pattern.</td></tr>
     <tr><td>New: AddonPopupSheet</td><td>—</td><td>A sheet hosting a GeckoView for <code>onOpenPopup</code>'s session.
@@ -614,9 +618,8 @@ brings userscripts with its own maintained <code>GM_*</code> API. This sheet ans
       Proposed: allowed, not detected (no reliable way to tell a blocker from its manifest). Revisit if reports come in.</div>
     <div><b>A file not made for Android: warn or refuse?</b>Proposed: warn and let the user decide. Plenty of add-ons
       work on Android without declaring it; the store's filter is stricter than the code.</div>
-    <div><b>Unsigned installs for developers?</b>Proposed: <em>not in release builds</em>. If wanted, a debug-build
-      option only, still with the permission prompt; whether this GeckoView build lets an unsigned add-on in at all
-      is the same check as the signing row above.</div>
+    <div><b>Unsigned installs for developers?</b>Settled by the build: this GeckoView can't install them, debug app
+      builds included. A developer tests in Firefox Nightly, or signs an unlisted test build on AMO.</div>
   </div>
 </div>
 

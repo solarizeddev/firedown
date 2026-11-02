@@ -102,5 +102,8 @@ between them show *why* we ended up where we did.
   Section 2b adds signed `.xpi` files from outside the store (a tapped link
   or Settings → Install from file, one cache + manifest-read pipeline, a
   "Not made for Android" warning when the manifest doesn't declare it, no
-  updates without an `update_url`) and refuses unsigned ones outright.
+  updates without an `update_url`) and refuses unsigned ones outright —
+  which the GeckoView build enforces anyway: it is built from the 159.0
+  release tag, so `MOZ_REQUIRE_SIGNING` is compiled in and no pref turns
+  signing off.
   Not yet implemented.
