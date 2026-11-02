@@ -4239,6 +4239,13 @@ before changing a flow. The rules, each easy to undo:
   screen (`setBrowsingPrivate`, from the browser and both homes).
   Hidden sessions (YouTube's token page, the share engine, popups, options
   pages) are never the add-on's to move or close.
+- **A popup's or options page's new-window link to the add-on's OWN page
+  opens in a tab** (`onNewSession` + `isOwnPage`, the sessions in
+  `mPageSessions`), like a web link. Firefox for Android add-ons open their
+  pages that way: Ghostery's "Enable Ghostery" (its terms page, which it
+  needs before it blocks anything) is a `target=_blank` link on Android
+  (its `openHref`), and the popup used to drop it and close. Another
+  add-on's pages are still refused (`AddonPolicy.mayLoadInTab`).
 - **The buttons live in the ⋮ sheet, not the toolbar**: the browser
   popup's "Add-ons" row is ALWAYS there (it was hidden until an add-on was
   installed, which left no way in from the browser); with none running in
