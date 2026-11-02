@@ -127,14 +127,7 @@ public class AddonsDeviceTest {
 
     @Test
     public void t1_builtInsRunButAreNotUserAddons() throws Exception {
-        List<WebExtension> all = listInstalled();
-        boolean hasUblock = false;
-        for (WebExtension extension : all) {
-            if (UBLOCK_ID.equalsIgnoreCase(extension.id)) {
-                hasUblock = true;
-            }
-        }
-        assertTrue("uBlock should be registered", hasUblock);
+        assertNotNull("uBlock should be registered", awaitUblock());
         List<AddonInfo> shown = valueOf(sAddons.getAddons());
         for (AddonInfo info : shown) {
             assertFalse("built-in shown as a user add-on: " + info.id, AddonPolicy.isBuiltInId(info.id));
@@ -170,12 +163,7 @@ public class AddonsDeviceTest {
         File xpi = xpi(manifest(UBLOCK_ID, "Fake uBlock"), true);
         AddonManager.Event event = installFileAndAwaitEvent(xpi);
         assertEquals(AddonManager.Event.BUILT_IN, event.type);
-        WebExtension ublock = null;
-        for (WebExtension extension : listInstalled()) {
-            if (UBLOCK_ID.equalsIgnoreCase(extension.id)) {
-                ublock = extension;
-            }
-        }
+        WebExtension ublock = awaitUblock();
         assertNotNull("uBlock is gone", ublock);
         assertTrue("uBlock is off", ublock.metaData.enabled);
         String name = ublock.metaData.name;
@@ -420,6 +408,25 @@ public class AddonsDeviceTest {
         }, e -> latch.countDown()));
         assertTrue("list() never answered", latch.await(CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS));
         return list.get();
+    }
+
+    /**
+     * uBlock as Gecko lists it. The built-ins are registered at boot
+     * (ensureBuiltIn, asynchronous; a fresh profile compiles uBlock's lists
+     * first), and the add-on manager does not wait for them, so the first
+     * test can list Gecko's extensions before uBlock is there.
+     */
+    private static WebExtension awaitUblock() throws Exception {
+        long deadline = System.currentTimeMillis() + BOOT_TIMEOUT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            for (WebExtension extension : listInstalled()) {
+                if (UBLOCK_ID.equalsIgnoreCase(extension.id)) {
+                    return extension;
+                }
+            }
+            Thread.sleep(250);
+        }
+        return null;
     }
 
     private static AddonManager.Event installFileAndAwaitEvent(File file) throws Exception {
