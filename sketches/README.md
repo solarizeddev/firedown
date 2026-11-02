@@ -117,3 +117,9 @@ between them show *why* we ended up where we did.
   tab); which add-ons get a row. Refresh stays in the bar (it is Stop).
   Built, except the number on the shield itself (the address bar keeps no
   count; the sheet has it).
+- `shield-sheet-numbers.html` — The security sheet with two ad blockers
+  on: today it shows Firedown's page total beside each add-on's own badge
+  (27, then uBlock 31 and Ghostery 22), three numbers that measure
+  different things. A drops the badges and gives every blocker row a
+  status line (recommended); B keeps each badge on its add-on's icon.
+  Not yet implemented.
