@@ -314,6 +314,17 @@ case_ssh_down() {
     check "uploads nothing" no_event sshdown "gradlew"
 }
 
+case_no_login() {
+    say "no server login anywhere"
+    world nologin
+    printf 'REMOTE_PATH=/var/www/firedown-website/fdroid\n' > "$TMP/nologin/fdroid/.env"
+    run nologin 'y\ny\ny\n'
+    check "stops" rc_is nologin 1
+    check "says where the login goes" said nologin "set REMOTE_USER and REMOTE_HOST"
+    check "tries no server" no_event nologin "ssh "
+    check "uploads nothing" no_event nologin "gradlew"
+}
+
 say() { [ "$QUIET" = 1 ] || printf '%s\n' "$*"; }
 
 case_clean
@@ -326,6 +337,7 @@ case_decline_offer
 case_no_deltas
 case_behind
 case_ssh_down
+case_no_login
 
 # mutant NAME CASE FROM TO: a copy of the script with FROM replaced by TO;
 # CASE must fail against it.
@@ -353,6 +365,7 @@ mutant "no deploy check" case_no_exclude 'if ! grep -qF -- "$DEPLOY_EXCLUDE" "$d
 mutant "no last look before status.json" case_manifest_on_draft '    say "Every file status.json lists, once more:"' '    need_url() { :; }'
 mutant "no checksum on the server" case_corrupt_mirror '[ "$got" = "${F_SHA[$i]}" ] ||' 'true ||'
 mutant "rsync without --delete" case_clean 'rsync -rtpv --chmod=D755,F644 --delete' 'rsync -rtpv --chmod=D755,F644'
+mutant "a login made up when none is set" case_no_login '[ -n "$REMOTE" ] || die "no server login' 'REMOTE=deploy@firedown.app; true || die "no server login'
 
 say ""
 say "$PASS passed, $FAIL failed"

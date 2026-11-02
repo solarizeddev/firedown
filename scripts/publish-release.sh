@@ -27,8 +27,9 @@
 # Folders (siblings of this checkout by default):
 #   FDROID_DIR   the F-Droid repo folder with publish.sh  (../firedown-fdroid)
 #   WEBSITE_DIR  a clone of firedown-website, on main     (../firedown-website)
-# Server (default: REMOTE_USER and REMOTE_HOST from FDROID_DIR/.env, the login
-# publish.sh uses):
+# Server: the login is REMOTE_USER and REMOTE_HOST, from the environment or
+# FDROID_DIR/.env (the login publish.sh uses); there is no default, so the
+# mirror step stops when neither names one.
 #   SITE_PATH    the website's folder on the server (/var/www/firedown-website)
 #
 # The mirror needs the website's deploy to leave /updates/ alone: its rsync
@@ -255,9 +256,13 @@ if [ -z "${REMOTE_USER:-}" ] || [ -z "${REMOTE_HOST:-}" ]; then
         REMOTE_HOST=${REMOTE_HOST:-${env_login#* }}
     fi
 fi
-REMOTE="${REMOTE_USER:-deploy}@${REMOTE_HOST:-firedown.app}"
+REMOTE=
+if [ -n "${REMOTE_USER:-}" ] && [ -n "${REMOTE_HOST:-}" ]; then
+    REMOTE="$REMOTE_USER@$REMOTE_HOST"
+fi
 
 if runs mirror && [ "$MIRROR_NEEDED" = 1 ]; then
+    [ -n "$REMOTE" ] || die "no server login: set REMOTE_USER and REMOTE_HOST in $FDROID_DIR/.env (publish.sh's login) or in the environment"
     command -v rsync >/dev/null 2>&1 || die "rsync is not installed"
     ssh -o BatchMode=yes "$REMOTE" true </dev/null || die "cannot log in to $REMOTE with ssh (REMOTE_USER, REMOTE_HOST)"
     ok "ssh $REMOTE"

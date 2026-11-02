@@ -4629,7 +4629,9 @@ tasks, not hand edits:
   signs the index, syncs and asks first); the `.xz` and patches copied to
   `<SITE_PATH>/updates/` on the server with the login `publish.sh`'s `.env`
   names (older releases' files removed, each file's SHA-256 checked on the
-  server); then, once every URL in status.json answers 200 with its size and
+  server; no login there or in the environment stops it, by design: the
+  server's address and user live only in that uncommitted file, never in
+  this public repo); then, once every URL in status.json answers 200 with its size and
   after one last question, status.json and release-history.json committed and
   pushed to firedown's main and status.json to the website's main
   (`WEBSITE_DIR`, default `../firedown-website`), whose push deploys; last it
@@ -4639,8 +4641,8 @@ tasks, not hand edits:
   without `--exclude='/updates/'` beside `/fdroid/` in `deploy.yml` every
   website push deletes the mirror, and the script refuses to mirror until it
   is there. Verify with `bash scripts/publish-release/selftest.sh` (a
-  simulated GitHub, server, `publish.sh`, ssh and rsync, real git remotes; 62
-  checks, and four planted faults that must each be caught).
+  simulated GitHub, server, `publish.sh`, ssh and rsync, real git remotes; 67
+  checks, and five planted faults that must each be caught).
 
 ### CHANGELOG entries — short, important changes only (HARD RULE)
 
