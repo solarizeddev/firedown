@@ -313,12 +313,15 @@ public class AddonsDeviceTest {
         AddonInfo ublock = awaitUblockAddon(a -> a.enabled, BOOT_TIMEOUT_MS);
         assertNotNull(ublock);
         String id = ublock.id;
+        Log.i(TAG, "t8: other blockers on this phone: " + otherBlockers());
         EventCollector events = new EventCollector();
         try {
             onMain(() -> sAddons.uninstall(id));
             assertNotNull("uBlock still installed",
                     awaitLive(sAddons.getAddons(), list -> find(list, id) == null, CHANGE_TIMEOUT_MS));
-            assertEquals(AddonPolicy.SHIELD_NO_BLOCKER, shield(false));
+            // Another blocker the phone's user installed keeps the shield on.
+            assertEquals("shield without uBlock, other blockers " + otherBlockers(),
+                    shieldWithoutUblock(), shield(false));
 
             onMain(() -> sAddons.turnOnUblock(false));
             AddonInfo back = awaitUblockAddon(a -> a.enabled, FILE_TIMEOUT_MS);
@@ -330,7 +333,8 @@ public class AddonsDeviceTest {
 
             onMain(() -> sAddons.setEnabled(id, false));
             assertNotNull(awaitUblockAddon(a -> !a.enabled, CHANGE_TIMEOUT_MS));
-            assertEquals(AddonPolicy.SHIELD_NO_BLOCKER, shield(false));
+            assertEquals("shield with uBlock off, other blockers " + otherBlockers(),
+                    shieldWithoutUblock(), shield(false));
             onMain(() -> sAddons.turnOnUblock(false));
             assertNotNull("Turn on did not turn uBlock back on", awaitUblockAddon(a -> a.enabled, CHANGE_TIMEOUT_MS));
             assertEquals(AddonPolicy.SHIELD_PROTECTED, shield(false));
@@ -392,6 +396,29 @@ public class AddonsDeviceTest {
         AtomicReference<Integer> state = new AtomicReference<>();
         onMain(() -> state.set(sAddons.shieldState(null, incognito, "https://example.com/")));
         return state.get();
+    }
+
+    /**
+     * The blockers other than uBlock running in a regular tab: the test runs
+     * on the app's real profile, where the phone's user may have installed
+     * one (with one, the shield stays on without uBlock — the rule).
+     */
+    private static List<String> otherBlockers() throws Exception {
+        AtomicReference<List<String>> ids = new AtomicReference<>();
+        onMain(() -> {
+            List<String> list = new ArrayList<>();
+            for (AddonManager.BlockerItem item : sAddons.blockersFor(null, false, "https://example.com/")) {
+                if (!item.isUblock() && item.state != AddonManager.BlockerItem.NOT_IN_PRIVATE) {
+                    list.add(item.addon.id);
+                }
+            }
+            ids.set(list);
+        });
+        return ids.get();
+    }
+
+    private static int shieldWithoutUblock() throws Exception {
+        return otherBlockers().isEmpty() ? AddonPolicy.SHIELD_NO_BLOCKER : AddonPolicy.SHIELD_PROTECTED;
     }
 
     private static boolean isBlocker(AddonInfo info) throws Exception {
