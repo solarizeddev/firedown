@@ -399,7 +399,6 @@
         <item quantity="other">Bu sayfada %d istek engellendi</item>
     </plurals>
     <string name="security_block_ads_trackers">Reklamları ve izleyicileri engelle</string>
-    <string name="security_stat_blocked_scope">bu sayfada engellendi</string>
     <string name="tabs_incognito_empty">Özel sekme yok</string>
     <string name="compress">Sıkıştır</string>
     <string name="media_tools">Medya araçları</string>

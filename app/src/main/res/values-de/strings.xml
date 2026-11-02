@@ -497,7 +497,6 @@
         <item quantity="other">%d Anfragen auf dieser Seite blockiert</item>
     </plurals>
     <string name="security_block_ads_trackers">Werbung und Tracker blockieren</string>
-    <string name="security_stat_blocked_scope">auf dieser Seite blockiert</string>
     <string name="compress">Komprimieren</string>
     <string name="media_tools">Medien-Tools</string>
     <string name="download_saving_compress">Wird komprimiert, bitte warten…</string>

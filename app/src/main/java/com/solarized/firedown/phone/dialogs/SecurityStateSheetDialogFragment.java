@@ -2,8 +2,12 @@ package com.solarized.firedown.phone.dialogs;
 
 import android.app.Dialog;
 import android.content.res.ColorStateList;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,6 +50,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -212,7 +217,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
             int parsed = 0;
             try { parsed = Integer.parseInt(count.trim()); } catch (NumberFormatException ignored) { }
             if (mTotalCountTextView != null) {
-                mTotalCountTextView.setText(String.valueOf(parsed));
+                mTotalCountTextView.setText(blockedSummary(parsed));
             }
         });
 
@@ -275,7 +280,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     /**
      * One row per ad blocker that runs here (AddonManager.blockersFor),
      * uBlock Origin first, or "No ad blocker is on" with Turn on. Rows are
-     * updated in place while the same add-ons are listed: counts change many
+     * updated in place while the same add-ons are listed: buttons change many
      * times a page, and rebuilding restarted every icon from blank.
      */
     private void renderBlockers() {
@@ -339,7 +344,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         ImageView icon = row.findViewById(R.id.blocker_icon);
         TextView title = row.findViewById(R.id.blocker_title);
         TextView subtitle = row.findViewById(R.id.blocker_subtitle);
-        TextView count = row.findViewById(R.id.blocker_count);
         MaterialButton tonal = row.findViewById(R.id.blocker_button_tonal);
         row.findViewById(R.id.blocker_button).setVisibility(View.GONE);
         View chevron = row.findViewById(R.id.blocker_chevron);
@@ -355,18 +359,16 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 sub = R.string.shield_blocker_off_site;
                 break;
             default:
-                // Only uBlock says whether it is on for the site; another
-                // blocker's row shows its name and count alone.
-                sub = item.isUblock() ? R.string.shield_blocker_on_site : 0;
+                // Only uBlock says whether it is on for the site; for another
+                // blocker, enabled here is all there is to read.
+                sub = item.isUblock() ? R.string.shield_blocker_on_site : R.string.shield_blocker_on;
                 break;
         }
-        subtitle.setText(sub == 0 ? null : getString(sub));
-        subtitle.setVisibility(sub == 0 ? View.GONE : View.VISIBLE);
-
-        String badge = action == null ? null : action.badgeText;
-        boolean showCount = item.state == AddonManager.BlockerItem.ON && !TextUtils.isEmpty(badge);
-        count.setText(showCount ? badge : null);
-        count.setVisibility(showCount ? View.VISIBLE : View.GONE);
+        // Every row carries its status line, so the rows read alike. No
+        // count: the add-on's own badge measures something other than the
+        // page total above it, and it is in the add-on's popup.
+        subtitle.setText(sub);
+        subtitle.setVisibility(View.VISIBLE);
 
         if (mIconLoaded.add(item.addon.id)) {
             AddonIcons.load(requireContext(), action != null && action.icon != null ? action.icon : item.addon.icon,
@@ -406,6 +408,23 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         row.setClickable(usable);
     }
 
+    /**
+     * "27 requests blocked on this page", the number in bold: one plural, so
+     * the words agree with the count in every language.
+     */
+    @NonNull
+    private CharSequence blockedSummary(int count) {
+        String number = String.format(Locale.getDefault(), "%d", count);
+        String text = getResources().getQuantityString(R.plurals.blocked_ads_summary, count, count);
+        SpannableString styled = new SpannableString(text);
+        int at = text.indexOf(number);
+        if (at >= 0) {
+            styled.setSpan(new StyleSpan(Typeface.BOLD), at, at + number.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        return styled;
+    }
+
     private void bindNoBlocker(@NonNull MaterialCardView row) {
         ImageView icon = row.findViewById(R.id.blocker_icon);
         icon.setImageResource(R.drawable.ic_shield_privacy_tip_24);
@@ -415,7 +434,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         TextView subtitle = row.findViewById(R.id.blocker_subtitle);
         subtitle.setText(R.string.shield_no_blocker_summary);
         subtitle.setVisibility(View.VISIBLE);
-        row.findViewById(R.id.blocker_count).setVisibility(View.GONE);
         row.findViewById(R.id.blocker_button_tonal).setVisibility(View.GONE);
         row.findViewById(R.id.blocker_chevron).setVisibility(View.GONE);
         MaterialButton button = row.findViewById(R.id.blocker_button);

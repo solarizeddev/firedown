@@ -237,7 +237,6 @@
         <item quantity="other">%d forespørsler blokkert på denne siden</item>
     </plurals>
     <string name="security_block_ads_trackers">Blokker annonser og sporere</string>
-    <string name="security_stat_blocked_scope">blokkert på denne siden</string>
     <string name="tabs_incognito_empty">Ingen private faner</string>
     <string name="browser_menu_back">Tilbake</string>
     <string name="browser_menu_bookmark_this_page_2">Bokmerk side</string>

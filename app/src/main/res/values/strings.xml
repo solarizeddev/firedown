@@ -693,8 +693,8 @@
          spells out what the number counts. -->
     <!-- Security sheet summary row label, follows the count: "7 blocked
          on this page". -->
-    <string name="security_stat_blocked_scope">blocked on this page</string>
     <!-- The shield sheet's ad blocker rows (one per blocker add-on). -->
+    <string name="shield_blocker_on">On</string>
     <string name="shield_blocker_on_site">On for this site</string>
     <string name="shield_blocker_off_site">Off for this site</string>
     <string name="shield_blocker_not_private">Doesn\'t run in private tabs</string>

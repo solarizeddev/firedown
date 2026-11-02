@@ -318,7 +318,6 @@
         <item quantity="other">이 페이지에서 요청 %d개 차단됨</item>
     </plurals>
     <string name="security_block_ads_trackers">광고 및 추적기 차단</string>
-    <string name="security_stat_blocked_scope">이 페이지에서 차단됨</string>
     <string name="tabs_incognito_empty">비공개 탭 없음</string>
     <string name="compress">압축</string>
     <string name="download_saving_compress">압축 중입니다. 잠시 기다려 주세요…</string>

@@ -280,7 +280,10 @@
     <string name="trackers_info_stat_blocked">Αποκλεισμένα</string>
     <string name="trackers_info_stat_saved">Δεδομένα που εξοικονομήθηκαν</string>
     <string name="tabs_incognito_empty">Καμία ιδιωτική καρτέλα</string>
-    <string name="security_stat_blocked_scope">αποκλείστηκαν σε αυτή τη σελίδα</string>
+    <plurals name="blocked_ads_summary">
+        <item quantity="one">%d αίτημα αποκλείστηκε σε αυτή τη σελίδα</item>
+        <item quantity="other">%d αιτήματα αποκλείστηκαν σε αυτή τη σελίδα</item>
+    </plurals>
     <string name="capture_help_menu">Βοήθεια</string>
     <string name="capture_help_banner_title">Δεν εμφανίζεται το βίντεο;</string>
     <string name="capture_help_banner">Ορισμένα ενσωματωμένα μέσα πρέπει να αναπαραχθούν πρώτα. Πατήστε για να μάθετε πώς.</string>

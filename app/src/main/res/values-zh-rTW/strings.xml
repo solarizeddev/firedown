@@ -283,7 +283,9 @@
     <string name="trackers_info_stat_blocked">已封鎖</string>
     <string name="trackers_info_stat_saved">節省資料</string>
     <string name="tabs_incognito_empty">沒有隱私分頁</string>
-    <string name="security_stat_blocked_scope">已在此頁面攔截</string>
+    <plurals name="blocked_ads_summary">
+        <item quantity="other">已在此頁面封鎖 %d 個請求</item>
+    </plurals>
     <string name="capture_help_menu">說明</string>
     <string name="capture_help_banner_title">找不到影片？</string>
     <string name="capture_help_banner">部分嵌入的媒體需先播放才能偵測。輕觸瞭解詳情。</string>

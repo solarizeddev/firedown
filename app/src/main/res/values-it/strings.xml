@@ -319,7 +319,6 @@
         <item quantity="other">%d richieste bloccate in questa pagina</item>
     </plurals>
     <string name="security_block_ads_trackers">Blocca annunci e tracker</string>
-    <string name="security_stat_blocked_scope">bloccati in questa pagina</string>
     <string name="tabs_incognito_empty">Nessuna scheda privata</string>
     <string name="compress">Comprimi</string>
     <string name="download_saving_compress">Compressione in corso, attendere…</string>

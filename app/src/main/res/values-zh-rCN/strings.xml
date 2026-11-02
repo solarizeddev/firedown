@@ -496,7 +496,6 @@
         <item quantity="other">本页面已拦截 %d 个请求</item>
     </plurals>
     <string name="security_block_ads_trackers">拦截广告和跟踪器</string>
-    <string name="security_stat_blocked_scope">已在此页面拦截</string>
     <string name="compress">压缩</string>
     <string name="media_tools">媒体工具</string>
     <string name="download_saving_compress">正在压缩，请稍候…</string>

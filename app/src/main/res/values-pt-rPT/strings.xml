@@ -230,7 +230,11 @@
     <string name="trackers_info_stat_blocked">Bloqueados</string>
     <string name="trackers_info_stat_saved">Dados poupados</string>
     <string name="tabs_incognito_empty">Sem separadores privados</string>
-    <string name="security_stat_blocked_scope">bloqueado nesta página</string>
+    <plurals name="blocked_ads_summary">
+        <item quantity="one">%d pedido bloqueado nesta página</item>
+        <item quantity="many">%d pedidos bloqueados nesta página</item>
+        <item quantity="other">%d pedidos bloqueados nesta página</item>
+    </plurals>
     <string name="bookmark_export">Exportar marcadores</string>
     <string name="bookmark_export_done">%1$d marcadores exportados para Download/Firedown/backup</string>
     <string name="bookmark_import">Importar marcadores</string>

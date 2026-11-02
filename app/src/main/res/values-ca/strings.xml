@@ -280,7 +280,10 @@
     <string name="trackers_info_stat_blocked">Blocat</string>
     <string name="trackers_info_stat_saved">Dades estalviades</string>
     <string name="tabs_incognito_empty">Cap pestanya privada</string>
-    <string name="security_stat_blocked_scope">blocat en aquesta pàgina</string>
+    <plurals name="blocked_ads_summary">
+        <item quantity="one">%d sol·licitud bloquejada en aquesta pàgina</item>
+        <item quantity="other">%d sol·licituds bloquejades en aquesta pàgina</item>
+    </plurals>
     <string name="bookmark_export">Exporta les adreces d\'interès</string>
     <string name="bookmark_export_done">S\'han exportat %1$d adreces d\'interès a Download/Firedown/backup</string>
     <string name="bookmark_import">Importa les adreces d\'interès</string>

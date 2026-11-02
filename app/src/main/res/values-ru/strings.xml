@@ -401,7 +401,6 @@
         <item quantity="other">%d запросов заблокировано на этой странице</item>
     </plurals>
     <string name="security_block_ads_trackers">Блокировать рекламу и трекеры</string>
-    <string name="security_stat_blocked_scope">заблокировано на этой странице</string>
     <string name="tabs_incognito_empty">Нет приватных вкладок</string>
     <string name="compress">Сжать</string>
     <string name="media_tools">Медиаинструменты</string>

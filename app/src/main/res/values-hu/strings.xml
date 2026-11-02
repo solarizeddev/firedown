@@ -280,7 +280,10 @@
     <string name="trackers_info_stat_blocked">Blokkolva</string>
     <string name="trackers_info_stat_saved">Megtakarított adat</string>
     <string name="tabs_incognito_empty">Nincsenek privát lapok</string>
-    <string name="security_stat_blocked_scope">letiltva ezen az oldalon</string>
+    <plurals name="blocked_ads_summary">
+        <item quantity="one">%d kérés letiltva ezen az oldalon</item>
+        <item quantity="other">%d kérés letiltva ezen az oldalon</item>
+    </plurals>
     <string name="capture_help_menu">Súgó</string>
     <string name="capture_help_banner_title">Nincs a listában a videó?</string>
     <string name="capture_help_banner">Egyes beágyazott médiákat előbb le kell játszani. Koppints a részletekért.</string>

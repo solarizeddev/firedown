@@ -496,7 +496,6 @@
         <item quantity="other">このページで %d 件のリクエストをブロック</item>
     </plurals>
     <string name="security_block_ads_trackers">広告とトラッカーをブロック</string>
-    <string name="security_stat_blocked_scope">このページでブロック</string>
     <string name="compress">圧縮</string>
     <string name="media_tools">メディアツール</string>
     <string name="download_saving_compress">圧縮しています。お待ちください…</string>

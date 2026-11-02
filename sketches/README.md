@@ -122,4 +122,4 @@ between them show *why* we ended up where we did.
   (27, then uBlock 31 and Ghostery 22), three numbers that measure
   different things. A drops the badges and gives every blocker row a
   status line (recommended); B keeps each badge on its add-on's icon.
-  Not yet implemented.
+  A is built.

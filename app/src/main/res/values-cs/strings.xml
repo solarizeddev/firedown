@@ -371,7 +371,6 @@
         <item quantity="other">%d požadavků blokováno na této stránce</item>
     </plurals>
     <string name="security_block_ads_trackers">Blokovat reklamy a sledovací prvky</string>
-    <string name="security_stat_blocked_scope">blokováno na této stránce</string>
     <string name="tabs_incognito_empty">Žádné soukromé karty</string>
     <string name="compress">Komprimovat</string>
     <string name="media_tools">Nástroje pro média</string>
