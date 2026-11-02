@@ -32,6 +32,12 @@ public class NotificationID {
      */
     public static final int TASK_ID = 105;
 
+    /**
+     * An add-on update that asks for new permissions waits for the user
+     * (AddonUpdateNotification): one notification for every such update.
+     */
+    public static final int ADDON_UPDATE_REVIEW = 106;
+
     public static final int PERMISSIONS = 101;
 
     public static final int RUNNABLE_ID = 1000;

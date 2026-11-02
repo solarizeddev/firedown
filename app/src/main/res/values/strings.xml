@@ -707,6 +707,12 @@
         <item quantity="one">%d ad blocker is on.</item>
         <item quantity="other">%d ad blockers are on. One is usually enough; more can break sites.</item>
     </plurals>
+    <string name="addons_update_review_notification_one">%1$s wants new permissions</string>
+    <string name="addons_update_review_notification_text">Its update waits for your OK. Tap to review it.</string>
+    <plurals name="addons_update_review_notification_many">
+        <item quantity="one">%d add-on update needs your OK</item>
+        <item quantity="other">%d add-on updates need your OK</item>
+    </plurals>
     <string name="addons_reinstall_ublock_title">Reinstall uBlock Origin</string>
     <string name="addons_reinstall_ublock_summary">The ad blocker Firedown comes with. No download needed</string>
     <string name="addon_detail_shield_title">Show behind the shield</string>

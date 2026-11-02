@@ -51,6 +51,8 @@ public class SettingsActivity extends BaseActivity {
     public static final String EXTRA_OPEN_ADDONS = "com.solarized.firedown.extra.OPEN_ADDONS";
     /** An add-on's own settings page, by add-on id (runtime.openOptionsPage()). */
     public static final String EXTRA_OPEN_ADDON_OPTIONS = "com.solarized.firedown.extra.OPEN_ADDON_OPTIONS";
+    /** The add-on update review notification's tap: that add-on's page, with its update's question. */
+    public static final String EXTRA_REVIEW_ADDON_UPDATE = "com.solarized.firedown.extra.REVIEW_ADDON_UPDATE";
 
     /**
      * Opens {@code url} in a Firedown tab and closes Settings. Every link row in
@@ -188,6 +190,18 @@ public class SettingsActivity extends BaseActivity {
                     .setPopUpTo(R.id.settings, true)
                     .build();
             navController.navigate(R.id.settings_addons, null, opts);
+        }
+        String reviewId = getIntent().getStringExtra(EXTRA_REVIEW_ADDON_UPDATE);
+        if (savedInstanceState == null && reviewId != null) {
+            NavOptions opts = new NavOptions.Builder()
+                    .setPopUpTo(R.id.settings, true)
+                    .build();
+            Bundle args = new Bundle();
+            args.putString(Keys.ADDON_ID, reviewId);
+            navController.navigate(R.id.settings_addon_detail, args, opts);
+            // The update asked for again as the user's own check: its
+            // permission question comes up over the add-on's page.
+            mAddonManager.reviewUpdate(reviewId);
         }
         String addonOptionsId = getIntent().getStringExtra(EXTRA_OPEN_ADDON_OPTIONS);
         if (savedInstanceState == null && addonOptionsId != null) {
