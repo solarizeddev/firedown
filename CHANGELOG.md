@@ -1,5 +1,11 @@
 ## [1.2.6] - 2026-10-29
 
+- Add-ons: install Firefox extensions from Mozilla's list for Android, its add-on site, or a signed file
+- Add-ons run in private tabs only if you allow them, and update by themselves
+- Ad blocking now uses the official uBlock Origin, updated by Mozilla's add-on site
+- The shield shows when your ad blocker is off for a site, turned off, or missing
+- Tap an ad blocker in the shield sheet to open its own settings for the site
+- Blocking cookie notices moved into uBlock Origin's own filter list settings
 - App updates download much less: only the changes when possible, otherwise a compressed copy
 - Installing an update shows its progress until Android takes over
 - Player: playback speed from 0.25× to 2×, with speed and subtitles under the timeline
