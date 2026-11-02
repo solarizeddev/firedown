@@ -4151,8 +4151,11 @@ before changing a flow. The rules, each easy to undo:
   screen (`setBrowsingPrivate`, from the browser and both homes).
   Hidden sessions (YouTube's token page, the share engine, popups, options
   pages) are never the add-on's to move or close.
-- **The buttons live in the ⋮ sheet, not the toolbar**: "Add-ons" opens a
-  sheet listing each add-on's browser or page action as this tab sees it
+- **The buttons live in the ⋮ sheet, not the toolbar**: the browser
+  popup's "Add-ons" row is ALWAYS there (it was hidden until an add-on was
+  installed, which left no way in from the browser); with none running in
+  this tab's mode it goes straight to Settings → Add-ons. Otherwise it
+  opens a sheet listing each add-on's browser or page action as this tab sees it
   (badge, title, enabled), a tap is the add-on's own `click()`, and a popup
   opens in a sheet (`AddonPopupSheetDialogFragment`, one at a time; the
   view releases the session before it closes, and a popup the browser
