@@ -4405,7 +4405,8 @@ Send is `CrashUploader`: an anonymous POST of the stored report JSON —
 byte-identical to what the sheet displays — to `SYNC_DEFAULT_BACKEND` +
 `/v1/crash` (the firedown-api collector; its CLAUDE.md carries the server
 half). No account, no identifiers; the server dedups by a trace signature it
-computes itself and pings the operator's private ntfy on NEW signatures only.
+computes itself and mails the operator on NEW signatures only (SMTP to the
+operator's own Proton mailbox; ntfy until 2026-11).
 The send is HASHCASH-GATED (spam pricing): `CrashUploader` fetches
 `/v1/crash/challenge`, solves with the SAME `sync/crypto/Pow` class the sync
 registration uses — on the OkHttp callback thread, off main — and carries
@@ -4440,7 +4441,7 @@ Design points that are easy to undo:
   keeps it beside the reports (`<DataDir>/mappings`, tarred by the backup
   job) and RETRACES every report of that build on read — the `/v1/crashes`
   page shows the readable trace with the raw one folded under it, and the
-  ntfy push names the real exception class plus the first app frame — so no
+  crash mail names the real exception class plus the first app frame — so no
   laptop keeps an archive, and a report that arrived BEFORE its mapping
   decodes the moment the mapping lands. Keyed by versionCode because the
   report carries it (compat-mode frames carry no `r8-map-id`); the mapping's
@@ -4506,7 +4507,7 @@ free-text note plus an OPTIONAL reply-to the user types to `/v1/feedback` on
 `SYNC_DEFAULT_BACKEND`. Added because the app had no channel short of a
 GitHub issue and the backup/payment numbers showed we don't know what users
 value. Same posture as the crash send; the server half (operator page
-`GET /v1/feedback`, ntfy push per note, retention) is in firedown-api's
+`GET /v1/feedback`, a mail per note with Reply-To = the contact, retention) is in firedown-api's
 CLAUDE.md.
 
 - **ONE anonymous-send implementation: `crash/AnonymousPost`.** The
@@ -4551,7 +4552,7 @@ a new install, not a cloned id); the header rides ONLY the firedown.app
 origin request, never the GitHub Raw fallback. Honest-copy rule: the
 website's privacy page discloses what the ping carries; if the header set
 changes, that page changes with it. The server side (nginx column, the
-stats script's token-first/IP-fallback uniquing, the ntfy digest) is
+stats script's token-first/IP-fallback uniquing, the weekly digest mail) is
 documented in firedown-website's CLAUDE.md under `ops/`.
 
 **What to expect in the numbers as the APK ships.** The server uniques a

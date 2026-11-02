@@ -343,7 +343,7 @@ dependencies {
 //     PUT https://api.firedown.app/v1/mapping/<versionCode>
 // The collector (firedown-api, internal/shared/retrace) keeps it beside the
 // crash reports and RETRACES every report of that build on read — the crash
-// page and the ntfy push name the real class, method and line — so no machine
+// page and the crash mail name the real class, method and line — so no machine
 // has to keep a mapping archive, and a report that arrived before its mapping
 // decodes the moment the mapping lands. The token is the crash page's
 // FIREDOWN_CRASH_ADMIN_TOKEN, read from the USER's Gradle properties
