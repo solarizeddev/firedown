@@ -100,4 +100,38 @@
     <!-- Title of the Identity Credential provider dialog choose. -->
     <!-- Title of the Identity Credential privacy policy dialog title. The %1$s will be replaced with the name of the provider. -->
     <!-- Title of the Identity Credential privacy policy dialog description. The %1$s will be replaced with the name of the provider, %2$s will be replaced with the account, %3$s will be replaced with the privacy policy url and  %4$s will be replaced with the terms of service. -->
+    <!-- Negative confirmation that we should not save the new or updated login -->
+    <string name="prompt_dont_save_2">Tidak sekarang</string>
+    <!-- Negative confirmation that we should not save the updated login -->
+    <string name="prompt_dont_update_2">Tidak sekarang</string>
+    <!-- Error text displayed underneath the password field when it is in an error case -->
+    <string name="prompt_error_empty_password_2">Masukkan kata sandi</string>
+    <!-- Error text displayed underneath the password field when it is in an error case -->
+    <string name="prompt_error_unknown_cause_2">Tidak dapat menyimpan kata sandi</string>
+    <!-- Prompt message displayed when app detects a user has entered a new username and password and user decides if app should save the new password. -->
+    <string name="prompt_login_save_headline_2">Simpan kata sandi?</string>
+    <!-- Prompt message displayed when app detects a user has entered a new password for an existing login and user decides if app should update the password. -->
+    <string name="prompt_login_update_headline_2">Perbarui kata sandi?</string>
+    <!-- Option in expanded select password prompt that links to password settings -->
+    <string name="prompts_manage_logins_2">Kelola kata sandi</string>
+    <!-- Content description for expanding the saved passwords options in the select password prompt -->
+    <string name="prompts_expand_logins_content_description_2">Bentangkan kata sandi tersimpan</string>
+    <!-- Content description for collapsing the saved passwords options in the select password prompt -->
+    <string name="prompts_collapse_logins_content_description_2">Ciutkan kata sandi tersimpan</string>
+    <!-- Header for the select password prompt to allow users to fill a form with a saved password -->
+    <string name="prompts_saved_logins_2">Kata sandi tersimpan</string>
+    <!-- Header for the select card prompt to allow users to fill a form with a saved card. -->
+    <string name="prompts_select_credit_card_2">Gunakan kartu tersimpan</string>
+    <!-- Content description for expanding the saved card options in the select card prompt. -->
+    <string name="prompts_expand_credit_cards_content_description_2">Bentangkan kartu tersimpan</string>
+    <!-- Content description for collapsing the saved card options in the select prompt. -->
+    <string name="prompts_collapse_credit_cards_content_description_2">Ciutkan kartu tersimpan</string>
+    <!-- Option in the expanded select card prompt that links to cards settings. -->
+    <string name="prompts_manage_credit_cards_2">Kelola kartu</string>
+    <!-- Subtitle text displayed under the title of the saved card dialog. Parameter will be replaced by app name -->
+    <string name="prompts_save_credit_card_prompt_body_2">%s mengenkripsi nomor kartu Anda. Kode keamanan Anda tidak akan disimpan.</string>
+    <!-- Content description for expanding the saved addresses options in the select address prompt. -->
+    <string name="prompts_expand_address_content_description_2">Bentangkan alamat tersimpan</string>
+    <!-- Content description for collapsing the saved address options in the select address prompt. -->
+    <string name="prompts_collapse_address_content_description_2">Ciutkan alamat tersimpan</string>
 </resources>

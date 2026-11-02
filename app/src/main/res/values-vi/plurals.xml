@@ -1,4 +1,16 @@
 <resources>
+    <plurals name="archive_banner_title">
+        <item quantity="other">%d thẻ đã đóng gần đây</item>
+    </plurals>
+    <plurals name="archive_banner_title_day">
+        <item quantity="other">%d thẻ đã được lưu trữ hôm nay</item>
+    </plurals>
+    <plurals name="archive_banner_title_month">
+        <item quantity="other">%d thẻ đã được lưu trữ tháng này</item>
+    </plurals>
+    <plurals name="archive_banner_title_week">
+        <item quantity="other">%d thẻ đã được lưu trữ tuần này</item>
+    </plurals>
     <plurals name="complete_delete_files_text">
         <item quantity="other">Đã xóa %1$d tệp</item>
         <item quantity="one">Đã xóa %1$d tệp</item>
@@ -6,6 +18,9 @@
     <plurals name="complete_move_files_text">
         <item quantity="other">Đã chuyển %1$d tệp</item>
         <item quantity="one">Đã chuyển %1$d tệp</item>
+    </plurals>
+    <plurals name="downloads_group_files">
+        <item quantity="other">%d tệp</item>
     </plurals>
     <plurals name="move_file_fail">
         <item quantity="other">Không thể chuyển các tệp. %1$s</item>
@@ -23,5 +38,8 @@
     <plurals name="home_downloads_file_count">
         <item quantity="one">Đã lưu %d tệp</item>
         <item quantity="other">Đã lưu %d tệp</item>
+    </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="other">%d thẻ riêng tư đang mở</item>
     </plurals>
 </resources>
