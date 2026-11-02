@@ -27,9 +27,15 @@ import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.SheetGroups;
 
 import org.mozilla.geckoview.GeckoSession;
+import org.mozilla.geckoview.Image;
 import org.mozilla.geckoview.WebExtension;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -68,6 +74,9 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
                              @Nullable Bundle savedInstanceState) {
         mView = inflater.inflate(R.layout.fragment_dialog_addon_actions, container, false);
         mList = mView.findViewById(R.id.addon_actions_list);
+        // A new view (rotation): the rows of the old one are gone with it.
+        mRows.clear();
+        mIconLoaded.clear();
         mEmpty = mView.findViewById(R.id.addon_actions_empty);
         mIconPx = getResources().getDimensionPixelSize(R.dimen.addon_icon_size);
         mView.findViewById(R.id.addon_actions_manage).setOnClickListener(v -> {
@@ -85,16 +94,44 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
         mAddonManager.getActionsVersion().observe(getViewLifecycleOwner(), version -> render());
     }
 
+    /** The rows on screen, by add-on id, in the order shown. */
+    private final Map<String, MaterialCardView> mRows = new LinkedHashMap<>();
+    /** Add-ons whose icon was already asked for while this sheet is open. */
+    private final Set<String> mIconLoaded = new HashSet<>();
+
+    /**
+     * Repaints on every badge or title change. Rows are updated IN PLACE
+     * when the same add-ons are listed (an add-on like Privacy Badger
+     * changes its count many times a page): rebuilding them restarted every
+     * icon from blank, a visible flicker. The icon is loaded once per
+     * add-on while the sheet is open.
+     */
     private void render() {
         if (mList == null || !isAdded()) {
             return;
         }
         GeckoSession session = mGeckoState == null ? null : mGeckoState.getGeckoSession();
         List<AddonManager.ActionItem> items = mAddonManager.actionsFor(session, mIsIncognito);
-        mList.removeAllViews();
-        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        List<String> ids = new ArrayList<>();
         for (AddonManager.ActionItem item : items) {
-            mList.addView(row(inflater, item));
+            ids.add(item.addon.id);
+        }
+        if (!ids.equals(new ArrayList<>(mRows.keySet()))) {
+            mList.removeAllViews();
+            mRows.clear();
+            LayoutInflater inflater = LayoutInflater.from(requireContext());
+            for (AddonManager.ActionItem item : items) {
+                MaterialCardView card = (MaterialCardView) inflater.inflate(R.layout.item_addon_action, mList, false);
+                mList.addView(card);
+                mRows.put(item.addon.id, card);
+            }
+            mIconLoaded.retainAll(ids);
+        }
+        for (AddonManager.ActionItem item : items) {
+            MaterialCardView card = mRows.get(item.addon.id);
+            if (card != null) {
+                bindRow(card, item);
+            }
         }
         mList.setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
         mEmpty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
@@ -102,9 +139,7 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
         SheetGroups.applyCorners(mView.findViewById(R.id.addon_actions_manage_group));
     }
 
-    @NonNull
-    private View row(@NonNull LayoutInflater inflater, @NonNull AddonManager.ActionItem item) {
-        MaterialCardView card = (MaterialCardView) inflater.inflate(R.layout.item_addon_action, mList, false);
+    private void bindRow(@NonNull MaterialCardView card, @NonNull AddonManager.ActionItem item) {
         ImageView icon = card.findViewById(R.id.addon_action_icon);
         TextView title = card.findViewById(R.id.addon_action_title);
         TextView subtitle = card.findViewById(R.id.addon_action_subtitle);
@@ -124,47 +159,52 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
         } else if (!label.equals(name)) {
             sub = name;
         }
-        if (sub != null) {
-            subtitle.setText(sub);
-            subtitle.setVisibility(View.VISIBLE);
-        }
+        subtitle.setText(sub);
+        subtitle.setVisibility(sub != null ? View.VISIBLE : View.GONE);
 
         if (action != null && !TextUtils.isEmpty(action.badgeText)) {
-            badge.setText(action.badgeText);
-            if (action.badgeBackgroundColor != null) {
-                badge.setBackgroundTintList(ColorStateList.valueOf(action.badgeBackgroundColor));
+            // The layout's ink, kept so an add-on that stops setting its own
+            // badge colors falls back to it on a row reused in place.
+            ColorStateList defaultInk = (ColorStateList) badge.getTag();
+            if (defaultInk == null) {
+                defaultInk = badge.getTextColors();
+                badge.setTag(defaultInk);
             }
+            badge.setText(action.badgeText);
+            badge.setBackgroundTintList(action.badgeBackgroundColor != null
+                    ? ColorStateList.valueOf(action.badgeBackgroundColor) : null);
             if (action.badgeTextColor != null) {
                 badge.setTextColor(action.badgeTextColor);
+            } else {
+                badge.setTextColor(defaultInk);
             }
             badge.setVisibility(View.VISIBLE);
-        }
-
-        if (action != null && action.icon != null) {
-            AddonIcons.load(requireContext(), action.icon, mIconPx, d -> {
-                if (isAdded()) {
-                    icon.setImageDrawable(d);
-                }
-            });
         } else {
-            AddonIcons.load(requireContext(), item.addon.icon, mIconPx, d -> {
+            badge.setVisibility(View.GONE);
+        }
+
+        if (mIconLoaded.add(item.addon.id)) {
+            Image source = action != null && action.icon != null ? action.icon : item.addon.icon;
+            AddonIcons.load(requireContext(), source, mIconPx, d -> {
                 if (isAdded()) {
                     icon.setImageDrawable(d);
                 }
             });
         }
 
-        card.setEnabled(usable);
-        card.setClickable(usable);
-        card.setAlpha(usable ? 1f : 0.6f);
         if (usable) {
             card.setOnClickListener(v -> {
                 // The add-on's own click: it runs its handler, or Gecko asks
-                // for its popup (AddonManager), which the browser shows.
+                // for its popup (AddonManager), which the browser then shows.
                 action.click();
                 NavigationUtils.popBackStackSafe(mNavController, R.id.dialog_addon_actions);
             });
+        } else {
+            card.setOnClickListener(null);
         }
-        return card;
+        // After the listener: setOnClickListener makes a view clickable.
+        card.setEnabled(usable);
+        card.setClickable(usable);
+        card.setAlpha(usable ? 1f : 0.6f);
     }
 }

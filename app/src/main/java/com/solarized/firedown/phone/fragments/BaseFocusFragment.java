@@ -626,6 +626,17 @@ public class BaseFocusFragment extends Fragment {
 
 
 
+    /**
+     * A snackbar for a message the ACTIVITY shows over this screen (an
+     * add-on added or removed), placed the way this screen places its own:
+     * the browser and the homes put it above their bottom bar. Null: the
+     * activity's plain one.
+     */
+    @Nullable
+    public Snackbar makeScreenSnackbar(@NonNull String text) {
+        return null;
+    }
+
     protected Snackbar makeSnackbar(View anchor, String text, boolean incognito) {
         Snackbar snackbar = Snackbar.make(anchor, text, Snackbar.LENGTH_LONG);
         if (incognito) {

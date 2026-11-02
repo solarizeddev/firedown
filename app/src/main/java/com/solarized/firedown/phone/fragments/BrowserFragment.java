@@ -1340,6 +1340,12 @@ public class BrowserFragment extends BaseBrowserFragment
      * to the bottom bar, not anchored) and by the download fragments, which
      * don't anchor to {@code R.id.anchor_view}.
      */
+    @Nullable
+    @Override
+    public Snackbar makeScreenSnackbar(@NonNull String text) {
+        return getView() == null ? null : makeAnchoredSnackbar(text);
+    }
+
     private Snackbar makeAnchoredSnackbar(String text) {
         Snackbar snackbar = makeSnackbar(getSnackAnchorView(), text, mIsIncognitoThemed);
         snackbar.setAnchorView(R.id.anchor_view);

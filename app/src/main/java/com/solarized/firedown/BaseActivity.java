@@ -295,11 +295,37 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
             return;
         }
         String text = addonEventText(event);
-        View anchor = getSnackAnchorView();
-        if (text == null || anchor == null) {
+        if (text == null) {
             return;
         }
-        Snackbar.make(anchor, text, Snackbar.LENGTH_LONG).show();
+        Snackbar snackbar = screenSnackbar(text);
+        if (snackbar != null) {
+            snackbar.show();
+        }
+    }
+
+    /**
+     * The screen on display places it (above the browser's or a home's
+     * bottom bar, like its own download and new-tab snackbars); otherwise
+     * the activity's content frame.
+     */
+    @Nullable
+    private Snackbar screenSnackbar(@NonNull String text) {
+        Fragment current = null;
+        if (mActivityContentFrame != null) {
+            Fragment host = mActivityContentFrame.getFragment();
+            if (host instanceof NavHostFragment) {
+                current = host.getChildFragmentManager().getPrimaryNavigationFragment();
+            }
+        }
+        if (current instanceof BaseFocusFragment) {
+            Snackbar snackbar = ((BaseFocusFragment) current).makeScreenSnackbar(text);
+            if (snackbar != null) {
+                return snackbar;
+            }
+        }
+        View anchor = getSnackAnchorView();
+        return anchor == null ? null : Snackbar.make(anchor, text, Snackbar.LENGTH_LONG);
     }
 
     @Nullable
