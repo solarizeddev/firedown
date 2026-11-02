@@ -57,4 +57,10 @@
         <item quantity="one">сохранён %d файл</item>
         <item quantity="other">сохранено %d файлов</item>
     </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d приватная вкладка открыта</item>
+        <item quantity="few">%d приватные вкладки открыты</item>
+        <item quantity="many">%d приватных вкладок открыто</item>
+        <item quantity="other">%d приватной вкладки открыто</item>
+    </plurals>
 </resources>

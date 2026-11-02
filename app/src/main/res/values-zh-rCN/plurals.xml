@@ -19,6 +19,15 @@
         <plurals name="archive_banner_title">
         <item quantity="other">%d 个最近关闭的标签页</item>
     </plurals>
+    <plurals name="archive_banner_title_day">
+        <item quantity="other">今天归档了 %d 个标签页</item>
+    </plurals>
+    <plurals name="archive_banner_title_month">
+        <item quantity="other">本月归档了 %d 个标签页</item>
+    </plurals>
+    <plurals name="archive_banner_title_week">
+        <item quantity="other">本周归档了 %d 个标签页</item>
+    </plurals>
     <plurals name="home_vault_item_count">
         <item quantity="one">已保存 %d 项</item>
         <item quantity="other">已保存 %d 项</item>
@@ -26,5 +35,8 @@
     <plurals name="home_downloads_file_count">
         <item quantity="one">已保存 %d 个文件</item>
         <item quantity="other">已保存 %d 个文件</item>
+    </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="other">已打开 %d 个隐私标签页</item>
     </plurals>
 </resources>

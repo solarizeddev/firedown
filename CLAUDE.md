@@ -13110,9 +13110,11 @@ lines of `gradle.properties`. `docs/NEW-MACHINE.md` is the checklist.
   translation (the honest-copy rule). The other `values-*` folders are
   partial and nobody keeps them current; what they lack falls back to
   English (MissingTranslation is not build-fatal). Indonesian and
-  Vietnamese joined in 2026-11 with every string filled; the original 16
-  only ever got NEW strings, so each still lacks older ones (160 to 355 of
-  them, measured 2026-11-02). To audit a locale, compare it against
+  Vietnamese joined in 2026-11; on 2026-11-02 every one of the 18 was
+  filled to the full set (the original 16 had only ever got NEW strings
+  and lacked 160 to 355 older ones each). Keep it that way: a string that
+  reaches a maintained locale late is a string some users read in English.
+  To audit a locale, compare it against
   `values/` across `strings.xml`, `plurals.xml` and
   `prompt_strings_mozac.xml` (`arrays.xml` holds only `@string`
   references); skip `translatable="false"` and keys whose comment says the

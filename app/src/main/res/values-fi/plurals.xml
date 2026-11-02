@@ -1,4 +1,20 @@
 <resources>
+    <plurals name="archive_banner_title">
+        <item quantity="one">%d äskettäin suljettu välilehti</item>
+        <item quantity="other">%d äskettäin suljettua välilehteä</item>
+    </plurals>
+    <plurals name="archive_banner_title_day">
+        <item quantity="one">%d välilehti arkistoitu tänään</item>
+        <item quantity="other">%d välilehteä arkistoitu tänään</item>
+    </plurals>
+    <plurals name="archive_banner_title_month">
+        <item quantity="one">%d välilehti arkistoitu tässä kuussa</item>
+        <item quantity="other">%d välilehteä arkistoitu tässä kuussa</item>
+    </plurals>
+    <plurals name="archive_banner_title_week">
+        <item quantity="one">%d välilehti arkistoitu tällä viikolla</item>
+        <item quantity="other">%d välilehteä arkistoitu tällä viikolla</item>
+    </plurals>
     <plurals name="complete_delete_files_text">
         <item quantity="other">%1$d tiedostoa poistettiin</item>
         <item quantity="one">%1$d tiedosto poistettiin</item>
@@ -24,5 +40,9 @@
     <plurals name="home_downloads_file_count">
         <item quantity="one">%d tallennettu tiedosto</item>
         <item quantity="other">%d tallennettua tiedostoa</item>
+    </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d yksityinen välilehti auki</item>
+        <item quantity="other">%d yksityistä välilehteä auki</item>
     </plurals>
 </resources>

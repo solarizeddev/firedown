@@ -41,4 +41,8 @@
         <item quantity="one">%d bestand opgeslagen</item>
         <item quantity="other">%d bestanden opgeslagen</item>
     </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d privétabblad open</item>
+        <item quantity="other">%d privétabbladen open</item>
+    </plurals>
 </resources>

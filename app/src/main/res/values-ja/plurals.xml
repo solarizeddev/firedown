@@ -36,4 +36,7 @@
         <item quantity="one">%d 個のファイル保存済み</item>
         <item quantity="other">%d 個のファイル保存済み</item>
     </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="other">プライベートタブを %d 個開いています</item>
+    </plurals>
 </resources>

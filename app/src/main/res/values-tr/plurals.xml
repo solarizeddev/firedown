@@ -21,6 +21,18 @@
         <item quantity="one">%d yakın zamanda kapatılan sekme</item>
         <item quantity="other">%d yakın zamanda kapatılan sekme</item>
     </plurals>
+    <plurals name="archive_banner_title_day">
+        <item quantity="one">Bugün %d sekme arşivlendi</item>
+        <item quantity="other">Bugün %d sekme arşivlendi</item>
+    </plurals>
+    <plurals name="archive_banner_title_month">
+        <item quantity="one">Bu ay %d sekme arşivlendi</item>
+        <item quantity="other">Bu ay %d sekme arşivlendi</item>
+    </plurals>
+    <plurals name="archive_banner_title_week">
+        <item quantity="one">Bu hafta %d sekme arşivlendi</item>
+        <item quantity="other">Bu hafta %d sekme arşivlendi</item>
+    </plurals>
     <plurals name="home_vault_item_count">
         <item quantity="one">%d öğe kaydedildi</item>
         <item quantity="other">%d öğe kaydedildi</item>
@@ -28,5 +40,9 @@
     <plurals name="home_downloads_file_count">
         <item quantity="one">%d dosya kaydedildi</item>
         <item quantity="other">%d dosya kaydedildi</item>
+    </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d gizli sekme açık</item>
+        <item quantity="other">%d gizli sekme açık</item>
     </plurals>
 </resources>

@@ -39,4 +39,9 @@
         <item quantity="one">%d archivo guardado</item>
         <item quantity="other">%d archivos guardados</item>
     </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d pestaña privada abierta</item>
+        <item quantity="many">%d pestañas privadas abiertas</item>
+        <item quantity="other">%d pestañas privadas abiertas</item>
+    </plurals>
 </resources>

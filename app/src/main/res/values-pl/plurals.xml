@@ -57,4 +57,10 @@
         <item quantity="one">%d zapisany plik</item>
         <item quantity="other">%d zapisanych plików</item>
     </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d otwarta karta prywatna</item>
+        <item quantity="few">%d otwarte karty prywatne</item>
+        <item quantity="many">%d otwartych kart prywatnych</item>
+        <item quantity="other">%d otwartych kart prywatnych</item>
+    </plurals>
 </resources>

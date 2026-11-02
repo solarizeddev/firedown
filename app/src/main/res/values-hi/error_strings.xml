@@ -208,4 +208,63 @@
     <string name="errorpages_httpsonly_title">सुरक्षित साइट उपलब्ध नहीं है</string>
     <!-- Button on error page for websites that do not support HTTPS when HTTPS-Only is turned on. Clicking the button allows the user to nevertheless load the website using HTTP. -->
     <string name="errorpages_httpsonly_button">HTTP साइट को जारी रखें</string>
+    <!-- The document title and heading of the error page shown when a website uses HSTS. -->
+    <string name="errorpages_security_bad_hsts_cert_title">इस वेबसाइट को सुरक्षित कनेक्शन की ज़रूरत है।</string>
+    <!-- The error message shown when a website uses HSTS. -->
+    <string name="errorpages_security_bad_hsts_cert_message"><![CDATA[
+      <ul>
+         <li>आप जो पृष्ठ देखने की कोशिश कर रहे हैं, उसे दिखाया नहीं जा सकता क्योंकि इस वेबसाइट को सुरक्षित कनेक्शन की ज़रूरत है।</li>
+         <li>समस्या संभवतः वेबसाइट में है, और इसे ठीक करने के लिए आप कुछ नहीं कर सकते।</li>
+         <li>आप वेबसाइट के व्यवस्थापक को इस समस्या के बारे में सूचित कर सकते हैं।</li>
+      </ul>
+    ]]></string>
+    <!-- The advanced certificate information shown when a website uses HSTS. The %1$s will be replaced by the website URL and %2$s will be replaced by the app name. It's only shown when a website uses HSTS. -->
+    <string name="errorpages_security_bad_hsts_cert_techInfo2"><![CDATA[
+        <label> <b>%1$s</b> की HTTP Strict Transport Security (HSTS) नाम की एक सुरक्षा नीति है, जिसका अर्थ है कि <b>%2$s</b> इससे केवल सुरक्षित रूप से कनेक्ट हो सकता है। इस साइट पर जाने के लिए आप अपवाद नहीं जोड़ सकते। </label>
+    ]]></string>
+    <!-- In the example, the two URLs in markup do not need to be translated. -->
+    <string name="errorpages_unknown_host_message"><![CDATA[
+      <p>ब्राउज़र दिए गए पते के लिए होस्ट सर्वर नहीं ढूँढ सका।</p>
+      <ul>
+        <li>पते में टाइपिंग की गलतियाँ जाँचें, जैसे
+          <strong>www</strong>.example.com की जगह
+          <strong>ww</strong>.example.com।</li>
+        <li>अगर आप कोई भी पृष्ठ लोड नहीं कर पा रहे हैं, तो अपने डिवाइस का डेटा या वाई-फाई कनेक्शन जाँचें।</li>
+      </ul>
+    ]]></string>
+    <string name="errorpages_malformed_uri_message"><![CDATA[
+      <p>दिया गया पता किसी पहचाने जाने वाले फ़ॉर्मैट में नहीं है। कृपया पता बार में गलतियाँ जाँचें और फिर से कोशिश करें।</p>
+    ]]></string>
+    <string name="errorpages_unknown_protocol_message"><![CDATA[
+      <p>यह पता एक ऐसा प्रोटोकॉल (जैसे, <q>wxyz://</q>) बताता है जिसे ब्राउज़र नहीं पहचानता, इसलिए ब्राउज़र साइट से ठीक से कनेक्ट नहीं हो सकता।</p>
+      <ul>
+        <li>क्या आप मल्टीमीडिया या अन्य गैर-टेक्स्ट सेवाओं तक पहुँचने की कोशिश कर रहे हैं? अतिरिक्त ज़रूरतों के लिए साइट देखें।</li>
+        <li>कुछ प्रोटोकॉल को ब्राउज़र द्वारा पहचाने जाने से पहले तृतीय-पक्ष सॉफ़्टवेयर या प्लगइन की ज़रूरत हो सकती है।</li>
+      </ul>
+    ]]></string>
+    <string name="errorpages_file_not_found_message"><![CDATA[
+      <ul>
+        <li>क्या आइटम का नाम बदला गया, उसे हटाया गया या कहीं और ले जाया गया है?</li>
+        <li>क्या पते में वर्तनी, बड़े-छोटे अक्षरों या टाइपिंग की कोई और गलती है?</li>
+        <li>क्या आपके पास अनुरोधित आइटम तक पहुँचने की पर्याप्त अनुमति है?</li>
+      </ul>
+    ]]></string>
+    <string name="errorpages_proxy_connection_refused_message"><![CDATA[
+      <p>ब्राउज़र प्रॉक्सी सर्वर का उपयोग करने के लिए कॉन्फ़िगर किया गया है, लेकिन प्रॉक्सी ने कनेक्शन अस्वीकार कर दिया।</p>
+      <ul>
+        <li>क्या ब्राउज़र का प्रॉक्सी कॉन्फ़िगरेशन सही है? सेटिंग्स जाँचें और फिर से कोशिश करें।</li>
+        <li>क्या प्रॉक्सी सेवा इस नेटवर्क से कनेक्शन की अनुमति देती है?</li>
+        <li>अब भी समस्या हो रही है? सहायता के लिए अपने नेटवर्क व्यवस्थापक या इंटरनेट प्रदाता से संपर्क करें।</li>
+      </ul>
+    ]]></string>
+    <string name="errorpages_unknown_proxy_host_message"><![CDATA[
+      <p>ब्राउज़र प्रॉक्सी सर्वर का उपयोग करने के लिए कॉन्फ़िगर किया गया है, लेकिन प्रॉक्सी नहीं मिला।</p>
+      <ul>
+        <li>क्या ब्राउज़र का प्रॉक्सी कॉन्फ़िगरेशन सही है? सेटिंग्स जाँचें और फिर से कोशिश करें।</li>
+        <li>क्या डिवाइस किसी सक्रिय नेटवर्क से जुड़ा है?</li>
+        <li>अब भी समस्या हो रही है? सहायता के लिए अपने नेटवर्क व्यवस्थापक या इंटरनेट प्रदाता से संपर्क करें।</li>
+      </ul>
+    ]]></string>
+    <!-- The text of the error page for websites that do not support HTTPS when HTTPS-Only is turned on. %1$s will be replaced with the URL of the website. -->
+    <string name="errorpages_httpsonly_message"><![CDATA[आपने बेहतर सुरक्षा के लिए केवल-HTTPS मोड चालू किया है, और <em>%1$s</em> का HTTPS संस्करण उपलब्ध नहीं है।]]></string>
 </resources>

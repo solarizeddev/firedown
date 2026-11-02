@@ -1,4 +1,20 @@
 <resources>
+    <plurals name="archive_banner_title">
+        <item quantity="one">%d наскоро затворен раздел</item>
+        <item quantity="other">%d наскоро затворени раздела</item>
+    </plurals>
+    <plurals name="archive_banner_title_day">
+        <item quantity="one">%d раздел е архивиран днес</item>
+        <item quantity="other">%d раздела са архивирани днес</item>
+    </plurals>
+    <plurals name="archive_banner_title_month">
+        <item quantity="one">%d раздел е архивиран този месец</item>
+        <item quantity="other">%d раздела са архивирани този месец</item>
+    </plurals>
+    <plurals name="archive_banner_title_week">
+        <item quantity="one">%d раздел е архивиран тази седмица</item>
+        <item quantity="other">%d раздела са архивирани тази седмица</item>
+    </plurals>
     <plurals name="complete_delete_files_text">
         <item quantity="other">Изтрити бяха %1$d файла</item>
         <item quantity="one">Изтрит бе %1$d файл</item>
@@ -24,5 +40,9 @@
     <plurals name="home_downloads_file_count">
         <item quantity="one">%d запазен файл</item>
         <item quantity="other">%d запазени файла</item>
+    </plurals>
+    <plurals name="incognito_notification_title">
+        <item quantity="one">%d отворен поверителен раздел</item>
+        <item quantity="other">%d отворени поверителни раздела</item>
     </plurals>
 </resources>
