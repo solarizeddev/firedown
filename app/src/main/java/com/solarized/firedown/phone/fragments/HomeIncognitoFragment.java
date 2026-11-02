@@ -310,6 +310,10 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
             } else if (id == R.id.popup_settings) {
                 Intent settingsIntent = new Intent(mActivity, SettingsActivity.class);
                 mStartForResult.launch(settingsIntent);
+            } else if (id == R.id.addon_actions_manage) {
+                Intent addonsIntent = new Intent(mActivity, SettingsActivity.class);
+                addonsIntent.putExtra(SettingsActivity.EXTRA_OPEN_ADDONS, true);
+                mStartForResult.launch(addonsIntent);
             } else if (id == R.id.popup_quit) {
                 quitApp();
             }

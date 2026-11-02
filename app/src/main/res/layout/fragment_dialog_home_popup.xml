@@ -145,6 +145,21 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Add-ons — the same row as in the browser menu. Home has no page,
+             so it goes straight to Settings → Add-ons (installed ones,
+             Mozilla's list, more on addons.mozilla.org). -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/popup_addons"
+            style="@style/Firedown.Widget.SheetRowCard"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupMiddle">
+
+            <TextView
+                style="@style/Firedown.Widget.SheetRowText"
+                android:text="@string/addons_title"
+                app:drawableStartCompat="@drawable/extension_24" />
+
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Settings. -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/popup_settings"

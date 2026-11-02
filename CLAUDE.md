@@ -4163,7 +4163,10 @@ before changing a flow. The rules, each easy to undo:
 - **The buttons live in the ⋮ sheet, not the toolbar**: the browser
   popup's "Add-ons" row is ALWAYS there (it was hidden until an add-on was
   installed, which left no way in from the browser); with none running in
-  this tab's mode it goes straight to Settings → Add-ons. Otherwise it
+  this tab's mode it goes straight to Settings → Add-ons. The home menu
+  has the same row, above Settings, and it always goes to Settings →
+  Add-ons (no page there, and no add-on popup without a tab behind it).
+  Otherwise the browser row
   opens a sheet listing each add-on's browser or page action as this tab sees it
   (badge, title, enabled), a tap is the add-on's own `click()`, and a popup
   opens in a sheet (`AddonPopupSheetDialogFragment`, one at a time; the
