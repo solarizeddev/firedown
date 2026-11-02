@@ -2,6 +2,8 @@ package com.solarized.firedown.data.di;
 
 import android.content.SharedPreferences;
 
+import com.solarized.firedown.addons.AddonManager;
+import com.solarized.firedown.addons.AmoCatalogClient;
 import com.solarized.firedown.data.repository.BrowserDownloadRepository;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
@@ -59,4 +61,10 @@ public interface RepositoryEntryPoint {
     // the Downloads bar follows, driven through the same singleton
     // TaskManager writes into.
     TaskRepository getTaskRepository();
+
+    // Exposed for AddonsDeviceTest (androidTest) — the singletons the
+    // runtime helper attaches to the real WebExtensionController.
+    AddonManager getAddonManager();
+
+    AmoCatalogClient getAmoCatalogClient();
 }

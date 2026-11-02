@@ -15,6 +15,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.solarized.firedown.AppLock;
 import com.solarized.firedown.Preferences;
+import com.solarized.firedown.addons.AddonManager;
 import com.solarized.firedown.data.FaviconStore;
 import com.solarized.firedown.autocomplete.AutoCompleteViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
@@ -87,6 +88,8 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
     protected AppLock mAppLock;
     @Inject
     FaviconStore mFaviconStore;
+    @Inject
+    protected AddonManager mAddonManager;
 
     protected GeckoStateViewModel mGeckoStateViewModel;
 

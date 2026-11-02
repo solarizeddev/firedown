@@ -91,6 +91,11 @@
     <dimen name="sheet_group_corner_outer">16dp</dimen>
     <dimen name="sheet_group_corner_inner">4dp</dimen>
     <dimen name="sheet_row_gap">2dp</dimen>
+    <!-- An add-on's icon in a settings row or the Add-ons sheet: the row glyphs' size. -->
+    <dimen name="addon_icon_size">24dp</dimen>
+    <dimen name="addon_prompt_icon_size">48dp</dimen>
+    <!-- An add-on popup's page height in its sheet (the sheet's own cap still applies). -->
+    <dimen name="addon_popup_height">480dp</dimen>
     <dimen name="sheet_group_gap">12dp</dimen>
     <!-- Settings cards (CardPreferenceGroupAdapter): every settings screen's
          rows sit in the sheets' grouped cards (the sheet_group_* corners and

@@ -19,6 +19,8 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
+import com.solarized.firedown.addons.AddonManager;
+import com.solarized.firedown.addons.AddonPolicy;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.GeckoInspectEntity;
 import com.solarized.firedown.data.repository.BrowserDownloadRepository;
@@ -121,6 +123,7 @@ public class GeckoRuntimeHelper {
     private final Executor mNetworkExecutor;
     private final OkHttpClient mOkHttpClient;
     private final P2pShareController mP2pShareController;
+    private final AddonManager mAddonManager;
     private final Map<String, WebExtension.Port> mPorts = new HashMap<>();
     private int mTabId = DEFAULT_TAB_ID;
 
@@ -145,10 +148,12 @@ public class GeckoRuntimeHelper {
             PriorityTaskThreadPoolExecutor priorityExecutor,
             OkHttpClient okHttpClient,
             P2pShareController p2pShareController,
+            AddonManager addonManager,
             @Qualifiers.MainThread Executor mainExecutor,
             @Qualifiers.Network Executor networkExecutor
     ) {
         this.mP2pShareController = p2pShareController;
+        this.mAddonManager = addonManager;
         this.mIconsRepository = iconsRepository;
         this.mBrowserDownloadRepository = browserDownloadRepository;
         this.mGeckoStateDataRepository = geckoStateDataRepository;
@@ -264,6 +269,10 @@ public class GeckoRuntimeHelper {
 
         setupWebExtensions();
         watchExtensionProcess();
+        // Add-ons the user installs (Settings → Add-ons): their own prompt,
+        // add-on manager, action and tab delegates. Built-in extensions above
+        // stay ours; the manager never lists or touches them.
+        mAddonManager.attach(sGeckoRuntime, this::blocksTrackingContent);
 
         // User-facing privacy toggles — defaults pick the privacy-preferring
         // value but every one of them can be flipped from settings. Disk
@@ -637,12 +646,20 @@ public class GeckoRuntimeHelper {
                             entry.getValue(), mMessageDelegate, "parser");
                 }
             }
+            mAddonManager.registerSession(geckoSession);
         });
     }
 
     public final class BrowserSessionActionDelegate implements WebExtension.ActionDelegate {
         @Override
         public void onBrowserAction(@NonNull WebExtension extension, @Nullable GeckoSession session, @NonNull WebExtension.Action action) {
+            // Only uBlock's badge is the blocked count. This delegate is set
+            // on the built-in extensions alone (add-ons have AddonManager's),
+            // and the id check keeps it that way should any of them grow a
+            // button.
+            if (!AddonPolicy.isUblockId(extension.id)) {
+                return;
+            }
             String count = TextUtils.isEmpty(action.badgeText) ? "0" : action.badgeText;
             boolean isIncognito = session != null
                     && mIncognitoStateRepository.getGeckoState(session) != null;

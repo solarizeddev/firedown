@@ -4058,6 +4058,85 @@ away `parser@`). Symptom of this trap: a
 brand-new listener/content-script produces *no logs at all* (or a deleted one
 still does).
 
+## User add-ons — Firefox extensions from Mozilla's Android list (`addons/`)
+
+Settings → General → **Add-ons** installs Firefox extensions beside the
+built-in ones. Asked for as "userscripts": the answer is the add-ons that
+run them (Violentmonkey, Tampermonkey), not a userscript engine of our own.
+GeckoView does the work (install, signature, permissions, background pages,
+content scripts); `addons/AddonManager` (a `@Singleton`, attached by
+`GeckoRuntimeHelper` once the built-ins are registered) is the one class
+that talks to `WebExtensionController` for user add-ons. Fenix's
+`feature/addons` + `support/webextensions` were the reference; read them
+before changing a flow. The rules, each easy to undo:
+
+- **Only Mozilla's list is offered** (`AmoCatalog` / `AmoCatalogClient`):
+  the `Extensions-for-Android` collection of the `mozilla` account on
+  services.addons.mozilla.org, the list Fenix shows, cached 2 days per
+  language, extensions only (themes, http files and ids we refuse dropped).
+  Not every Firefox add-on works on Android, and that list is the one
+  someone tested. Never a search over all of AMO.
+- **A signed .xpi from elsewhere installs, an unsigned one never does.**
+  The GeckoView build is a release build (`MOZ_REQUIRE_SIGNING`, checked in
+  firedown-geckoview), so Gecko refuses anything not signed by Mozilla;
+  `XpiManifest` only refuses EARLY (no `META-INF/mozilla.rsa`/`cose.sig` →
+  "isn't signed") so the user hears why. A signature that does not verify
+  is Gecko's `ERROR_CORRUPT_FILE` (XPIInstall), reported as damaged. Two
+  doors: Settings → Install from file (SAF), and an .xpi link on the page
+  on screen (`GeckoComponents.onExternalResponse` → `installFromResponse`,
+  a response served as anything but `application/x-xpinstall`, which Gecko
+  takes itself and allows from addons.mozilla.org only). A file's prompt
+  says where it came from (the page's host, or "a file on this phone") and
+  whether its manifest names Firefox for Android.
+- **The built-ins can never be replaced.** `AddonPolicy.isBuiltInId`
+  (uBlock, `icons@mozac.org`, every `@solarized.dev` id) is refused at three
+  points: the list, the file's manifest, and Gecko's install prompt (the one
+  place a web install from AMO passes). `ensureBuiltIn` stays for built-ins
+  only. uBlock's toolbar badge stays the blocked count:
+  `GeckoRuntimeHelper.onBrowserAction` reads uBlock's action only.
+- **Every permission question reaches the user, and Gecko always gets an
+  answer.** Install, update and optional-permission prompts queue in the
+  manager (`getPrompt`), `BaseActivity` shows the head as
+  `AddonPromptSheetDialogFragment` on whatever screen is in front (not the
+  lock screen), and leaving the sheet any way but its button answers "no".
+  The wording follows Firefox's permission strings (`AddonPermissions`,
+  `AddonPermissionText`), with the data-collection line.
+- **Updates: daily while the app runs, never a background job.** One minute
+  after attach, at most once a day (`checkForUpdates(false)`); an update
+  asking for new permissions is refused in the background and the add-on
+  marked "Update needs your review" until the user taps it (interactive
+  check → the update prompt). Gecko itself is never booted for this.
+- **Optional permissions are the user's to take back**, as in Firefox:
+  the add-on's page lists each optional permission, site and data kind it
+  declares as a switch, on when granted (`setOptionalPermission` →
+  `add/removeOptionalPermissions`). A permission it asks for at run time
+  is the OPTIONAL prompt.
+- **Private tabs are opt-in per add-on**, at install and in its page; an
+  add-on not allowed there gets no button, no popup and no `tabs.create`
+  in a private tab.
+- **Add-on tabs are Firedown tabs.** `tabs.create` returns an UNOPENED
+  session GeckoView then opens and loads; the manager completes the result
+  in a posted task and shows the tab in the task after GeckoView's open
+  (the browser opens any session it finds unopened, and two opens crash).
+  `tabs.update` is allowed only on a listed tab and only to a web page or
+  the add-on's own pages, and the app does NOT load the url: GeckoView
+  loads it after ALLOW (a loadUri there navigated twice); `active: true`
+  switches to the tab. `tabs.remove` takes the `window.close()` path.
+  Hidden sessions (YouTube's token page, the share engine, popups, options
+  pages) are never the add-on's to move or close.
+- **The buttons live in the ⋮ sheet, not the toolbar**: "Add-ons" opens a
+  sheet listing each add-on's browser or page action as this tab sees it
+  (badge, title, enabled), a tap is the add-on's own `click()`, and a popup
+  opens in a sheet (`AddonPopupSheetDialogFragment`, one at a time). An
+  add-on's settings page opens in Settings (`AddonOptionsFragment`), its
+  web links in a tab.
+- **Verify** with `sh scripts/addons-harness/run.sh /path/to/firefox-src`
+  (the real pure classes against Firefox's own test fixtures and AMO
+  shapes; 67 checks, six mutants must fail), the JUnit
+  `AddonsPureTest`, and on a device `addons/AddonsDeviceTest`
+  (`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.addons.AddonsDeviceTest`;
+  the list install, off/on, private, remove need network and skip without).
+
 ## After changing a parser
 
 - **Run `node scripts/webrequests-smoke.mjs`** — imports the whole background

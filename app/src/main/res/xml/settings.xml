@@ -50,6 +50,16 @@
             app:singleLineTitle="false"
             app:icon="@drawable/translate_24" />
 
+        <!-- DOOR to the Add-ons sub-screen (AddonsFragment): Firefox
+             extensions from Mozilla's list for Android, installed ones and
+             the list itself. -->
+        <Preference
+            android:key="com.solarized.firedown.preferences.addons.screen"
+            android:title="@string/addons_title"
+            android:summary="@string/addons_summary"
+            app:singleLineTitle="false"
+            app:icon="@drawable/extension_24" />
+
         <Preference
             android:key="com.solarized.firedown.preferences.browser.tabs"
             android:title="@string/close_tab"

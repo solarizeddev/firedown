@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One installed add-on (AddonDetailFragment): the header (icon, name,
+     author and version), on/off and private tabs, its own settings page,
+     an update waiting for the user, what it may do, its page on
+     addons.mozilla.org, and Remove. Rows that don't apply are hidden by
+     the fragment. -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        android:key="com.solarized.firedown.preferences.addon.header"
+        android:selectable="false"
+        app:singleLineTitle="false" />
+
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.addon.state.category"
+        app:iconSpaceReserved="false">
+
+        <SwitchPreferenceCompat
+            android:key="com.solarized.firedown.preferences.addon.enabled"
+            android:persistent="false"
+            android:title="@string/addon_enabled"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="com.solarized.firedown.preferences.addon.private"
+            android:persistent="false"
+            android:title="@string/addon_private"
+            android:summary="@string/addon_private_summary"
+            app:singleLineTitle="false"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.addon.more.category"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.addon.options"
+            android:title="@string/addon_settings"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.addon.review"
+            android:title="@string/addon_review_update"
+            android:summary="@string/addon_review_update_summary"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.addon.update"
+            android:title="@string/addon_check_update"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.addon.page"
+            android:title="@string/addon_page"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.addon.permissions.category"
+        android:title="@string/addon_permissions"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.addon.permissions"
+            android:selectable="false"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <!-- One switch per optional permission, site or data kind the add-on
+         declares, filled by the fragment; hidden when it declares none. -->
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.addon.optional.category"
+        android:title="@string/addon_optional_permissions"
+        app:iconSpaceReserved="false" />
+
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.addon.remove.category"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="com.solarized.firedown.preferences.addon.remove"
+            android:title="@string/addon_remove"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

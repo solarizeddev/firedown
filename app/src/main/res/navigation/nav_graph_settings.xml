@@ -85,6 +85,13 @@
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
         <action
+            android:id="@+id/action_settings_to_addons"
+            app:destination="@id/settings_addons"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
             android:id="@+id/action_settings_to_direct_share"
             app:destination="@id/settings_direct_share"
             app:enterAnim="@anim/slide_in_right"
@@ -116,6 +123,32 @@
     <fragment
         android:id="@+id/settings_translations"
         android:name="com.solarized.firedown.settings.TranslationsFragment" />
+    <fragment
+        android:id="@+id/settings_addons"
+        android:name="com.solarized.firedown.settings.AddonsFragment">
+        <action
+            android:id="@+id/action_addons_to_detail"
+            app:destination="@id/settings_addon_detail"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+    <fragment
+        android:id="@+id/settings_addon_detail"
+        android:name="com.solarized.firedown.settings.AddonDetailFragment">
+        <action
+            android:id="@+id/action_addon_detail_to_options"
+            app:destination="@id/settings_addon_options"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+    <fragment
+        android:id="@+id/settings_addon_options"
+        android:name="com.solarized.firedown.settings.AddonOptionsFragment"
+        tools:layout="@layout/fragment_addon_options" />
     <fragment
         android:id="@+id/settings_direct_share"
         android:name="com.solarized.firedown.settings.DirectShareFragment" />

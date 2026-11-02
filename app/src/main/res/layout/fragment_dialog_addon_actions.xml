@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The ⋮ sheet's Add-ons page (AddonActionsSheetDialogFragment): one card
+     per add-on running in this tab, its button as this page sees it (the
+     add-on's own title, badge and on/off for the page), then "Manage
+     add-ons". Rows are added in code (item_addon_action); the grouped
+     corners are recomputed after (SheetGroups.applyCorners). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="12dp">
+
+    <include layout="@layout/dialog_drag_handle" />
+
+    <TextView
+        android:id="@+id/addon_actions_title"
+        style="@style/Firedown.PopupGroupLabel"
+        android:text="@string/addons_title" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp">
+
+            <LinearLayout
+                android:id="@+id/addon_actions_list"
+                style="@style/Firedown.Widget.SheetGroup"
+                android:layout_marginTop="0dp" />
+
+            <TextView
+                android:id="@+id/addon_actions_empty"
+                style="@style/TextAppearance.Material3.BodyMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="12dp"
+                android:text="@string/addons_none_here"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/addon_actions_manage_group"
+                style="@style/Firedown.Widget.SheetGroup">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/addon_actions_manage"
+                    style="@style/Firedown.Widget.SheetRowCard">
+
+                    <TextView
+                        style="@style/Firedown.Widget.SheetRowText"
+                        android:text="@string/addons_manage"
+                        app:drawableStartCompat="@drawable/ic_settings_24" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

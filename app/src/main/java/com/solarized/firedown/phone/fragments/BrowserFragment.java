@@ -37,6 +37,7 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.navigation.NavDestination;
 
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
@@ -715,6 +716,27 @@ public class BrowserFragment extends BaseBrowserFragment
             }
         });
 
+        // An add-on's popup (its button tapped in the Add-ons sheet): shown in
+        // a sheet of its own; AddonManager owns the session.
+        mAddonManager.getPopup().observe(getViewLifecycleOwner(), popup -> {
+            if (popup == null || mNavController == null) {
+                return;
+            }
+            NavDestination current = mNavController.getCurrentDestination();
+            if (current != null && current.getId() == R.id.dialog_addon_popup) {
+                return;
+            }
+            Bundle args = new Bundle();
+            args.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
+            NavigationUtils.navigateSafe(mNavController, R.id.dialog_addon_popup, R.id.browser, args);
+            NavDestination shown = mNavController.getCurrentDestination();
+            if (shown == null || shown.getId() != R.id.dialog_addon_popup) {
+                // Something else owns the screen: no popup rather than an
+                // invisible one holding its session open.
+                mAddonManager.closePopup(popup);
+            }
+        });
+
         mBrowserDialogViewModel.getOptionsEvent().observe(getViewLifecycleOwner(), mOptionEntity -> {
             int id = mOptionEntity.getId();
 
@@ -752,6 +774,14 @@ public class BrowserFragment extends BaseBrowserFragment
                 mStartForResult.launch(syncIntent);
             } else if (id == R.id.popup_settings) {
                 mStartForResult.launch(new Intent(mActivity, SettingsActivity.class));
+            } else if (id == R.id.popup_addons) {
+                Bundle args = new Bundle();
+                args.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
+                NavigationUtils.navigateSafe(mNavController, R.id.dialog_addon_actions, R.id.browser, args);
+            } else if (id == R.id.addon_actions_manage) {
+                Intent addonsIntent = new Intent(mActivity, SettingsActivity.class);
+                addonsIntent.putExtra(SettingsActivity.EXTRA_OPEN_ADDONS, true);
+                mStartForResult.launch(addonsIntent);
             } else if (id == R.id.popup_share) {
                 GeckoState mGeckoState = peekCurrentGeckoState();
                 if (mGeckoState == null) return;
@@ -2709,16 +2739,7 @@ public class BrowserFragment extends BaseBrowserFragment
 
     private void connectSession(GeckoSession session) {
         Log.d(TAG, "ConnectSession");
-        session.setContentDelegate(mGeckoComponents.getContentDelegate());
-        session.setProgressDelegate(mGeckoComponents.getProgressDelegate());
-        session.setNavigationDelegate(mGeckoComponents.getNavigationDelegate());
-        session.setHistoryDelegate(mGeckoComponents.getHistoryDelegate());
-        session.setMediaSessionDelegate(mGeckoComponents.getMediaSessionDelegate());
-        session.setScrollDelegate(mGeckoComponents.getScrollDelegate());
-        session.setPromptDelegate(mGeckoComponents.getPromptDelegate());
-        session.setPermissionDelegate(mGeckoComponents.getPermissionDelegate());
-        session.setTranslationsSessionDelegate(mGeckoComponents.getTranslationsDelegate());
-        mGeckoRuntimeHelper.registerSession(session);
+        mGeckoComponents.connectSession(session);
     }
 
     private void setGeckoViewSession(GeckoState geckoState) {
@@ -2843,6 +2864,8 @@ public class BrowserFragment extends BaseBrowserFragment
      *     repaint.
      */
     private void applyBrowserIncognitoTheme(boolean incognito, boolean armFirstPaintCover) {
+        // A tab or a popup an add-on opens follows the mode on screen.
+        mAddonManager.setBrowsingPrivate(incognito);
         // Sync FLAG_SECURE every call. The Activity's Window may hold
         // FLAG_SECURE from a previous fragment incarnation regardless
         // of what mIsIncognitoThemed currently says.

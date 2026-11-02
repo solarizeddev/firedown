@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- An add-on's popup (AddonPopupSheetDialogFragment): its name, then the
+     add-on's own page in a GeckoView. A fixed height (most of the screen):
+     a popup sizes itself to its content, which a sheet can't measure. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <include layout="@layout/dialog_drag_handle" />
+
+    <TextView
+        android:id="@+id/addon_popup_title"
+        style="@style/Firedown.PopupGroupLabel" />
+
+    <org.mozilla.geckoview.GeckoView
+        android:id="@+id/addon_popup_view"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/addon_popup_height" />
+
+</LinearLayout>

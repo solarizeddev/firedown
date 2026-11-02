@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- An add-on's own settings page (AddonOptionsFragment), full screen under
+     the Settings toolbar: the add-on draws everything inside the GeckoView. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground">
+
+    <org.mozilla.geckoview.GeckoView
+        android:id="@+id/addon_options_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</FrameLayout>

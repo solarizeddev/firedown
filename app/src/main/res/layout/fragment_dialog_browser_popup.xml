@@ -324,13 +324,30 @@
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/popup_translate"
                 style="@style/Firedown.Widget.SheetRowCard"
-                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupMiddle">
 
                 <TextView
                     android:id="@+id/popup_translate_text"
                     style="@style/Firedown.Widget.SheetRowText"
                     android:text="@string/browser_menu_translate"
                     app:drawableStartCompat="@drawable/translate_24" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Add-ons the user installed: their buttons for this page, on a
+                 sheet of their own (AddonActionsSheetDialogFragment). Hidden
+                 until an add-on that runs in this tab's mode is installed, so
+                 the menu is unchanged for everyone else. Never a toolbar icon. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/popup_addons"
+                style="@style/Firedown.Widget.SheetRowCard"
+                android:visibility="gone"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
+
+                <TextView
+                    style="@style/Firedown.Widget.SheetRowText"
+                    android:text="@string/addons_title"
+                    app:drawableStartCompat="@drawable/extension_24" />
 
             </com.google.android.material.card.MaterialCardView>
 

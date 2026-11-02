@@ -11,6 +11,9 @@ public class Keys {
     public static final String SHARE_URL = "com.solarized.firedown.SHARE_URL";
     public static final String EDIT = "com.solarized.firedown.EDIT";
     public static final String TITLE = "com.solarized.firedown.TITLE";
+    /** An installed add-on's Gecko id (the Add-ons screens). */
+    public static final String ADDON_ID = "com.solarized.firedown.keys.ADDON_ID";
+
     public static final String IS_INCOGNITO = "com.solarized.firedown.IS_INCOGNTO";
     public static final String OPEN_INCOGNITO = "com.solarized.firedown.OPEN_INCOGNTO";
     public static final String ITEM_BOOKMARK = "com.solarized.firedown.ITEM_BOOKMARK";

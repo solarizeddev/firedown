@@ -513,6 +513,9 @@ public class Preferences {
     /** Root-settings DOOR to the Translations sub-screen (TranslationsFragment). */
     public static final String SETTINGS_TRANSLATIONS_SCREEN = "com.solarized.firedown.preferences.translations.screen";
 
+    /** Root-settings DOOR to the Add-ons sub-screen (AddonsFragment). */
+    public static final String SETTINGS_ADDONS_SCREEN = "com.solarized.firedown.preferences.addons.screen";
+
     /**
      * Gecko's built-in translator (Firefox Translations). ON by default —
      * GeckoView ships {@code browser.translations.enable=true} and the
