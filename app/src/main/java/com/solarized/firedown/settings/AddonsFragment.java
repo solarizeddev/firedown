@@ -20,6 +20,7 @@ import com.solarized.firedown.addons.AddonManager;
 import com.solarized.firedown.addons.AddonPolicy;
 import com.solarized.firedown.addons.AmoCatalog;
 import com.solarized.firedown.addons.AmoCatalogClient;
+import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import org.mozilla.geckoview.WebExtension;
@@ -53,6 +54,14 @@ public class AddonsFragment extends BasePreferenceFragment {
     private static final String KEY_CATALOG_RETRY = "com.solarized.firedown.preferences.addons.catalog.retry";
     private static final String KEY_UPDATES = "com.solarized.firedown.preferences.addons.updates";
     private static final String KEY_FILE = "com.solarized.firedown.preferences.addons.file";
+    private static final String KEY_FIND_MORE = "com.solarized.firedown.preferences.addons.more";
+    /**
+     * Mozilla's add-on site for Android: only add-ons whose developers mark
+     * them as working on Android (Firefox for Android's "Find more
+     * add-ons"). Installing there is Gecko's own web install, allowed from
+     * addons.mozilla.org only, and asks through the same prompt.
+     */
+    private static final String AMO_ANDROID_URL = "https://addons.mozilla.org/android/";
     private static final String KEY_INSTALLED_PREFIX = "com.solarized.firedown.preferences.addons.installed.row.";
     private static final String KEY_CATALOG_PREFIX = "com.solarized.firedown.preferences.addons.catalog.row.";
 
@@ -98,6 +107,15 @@ public class AddonsFragment extends BasePreferenceFragment {
         if (mUpdates != null) {
             mUpdates.setOnPreferenceClickListener(p -> {
                 mAddonManager.checkForUpdates(true, null);
+                return true;
+            });
+        }
+        Preference findMore = findPreference(KEY_FIND_MORE);
+        if (findMore != null) {
+            findMore.setOnPreferenceClickListener(p -> {
+                if (mActivity != null) {
+                    SettingsActivity.openInBrowser(mActivity, AMO_ANDROID_URL);
+                }
                 return true;
             });
         }
