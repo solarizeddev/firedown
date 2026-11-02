@@ -18,6 +18,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.solarized.firedown.data.di.RepositoryEntryPoint;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
+import com.solarized.firedown.geckoview.GeckoUblockHelper;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -29,8 +30,14 @@ import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.GeckoSessionSettings;
 import org.mozilla.geckoview.WebExtension;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,14 +56,22 @@ import dagger.hilt.android.EntryPointAccessors;
  * to the real WebExtensionController: what the JVM harness can't reach.
  *
  * <ul>
- *   <li>t1: the built-in extensions run but never show as user add-ons.</li>
+ *   <li>t1: uBlock Origin is installed from the copy in the app, as a user
+ *       add-on allowed in private tabs, and it stands behind the shield; the
+ *       built-in extensions never show as user add-ons.</li>
  *   <li>t2–t5: files refused — no signature (by us, before Gecko), a
  *       signature that doesn't verify (by Gecko: this build requires
- *       Mozilla's signature), a built-in ID, not an add-on. uBlock is still
- *       installed and on afterwards.</li>
+ *       Mozilla's signature), a forged uBlock Origin, not an add-on. uBlock
+ *       is still installed and on afterwards.</li>
  *   <li>t6–t7 (network): an add-on from Mozilla's Android list — the prompt,
  *       declining it, then adding it, its button rows for a tab, off/on, run
  *       in private tabs, remove.</li>
+ *   <li>t8: uBlock removed, then the shield sheet's "Turn on": the app's
+ *       copy again, with no question; turned off, then on again. The shield
+ *       follows.</li>
+ *   <li>t9: a page whose ad requests uBlock refuses: the capture extension
+ *       counts them, the lifetime figure and the page's count move (no
+ *       network needed: the refused requests never leave the phone).</li>
  * </ul>
  *
  * <p>Run (device attached; t6–t7 skip without network):
@@ -84,6 +99,8 @@ public class AddonsDeviceTest {
     private static AmoCatalogClient sCatalog;
     private static AmoCatalog.Entry sEntry;
     private static GeckoSession sSession;
+    private static GeckoSession sPage;
+    private static GeckoUblockHelper sStats;
 
     @Before
     public void boot() throws Exception {
@@ -98,6 +115,7 @@ public class AddonsDeviceTest {
             sHelper = entryPoint.getGeckoRuntimeHelper();
             sAddons = entryPoint.getAddonManager();
             sCatalog = entryPoint.getAmoCatalogClient();
+            sStats = entryPoint.getGeckoUblockHelper();
         });
         assertNotNull(sHelper);
         assertNotNull(sAddons);
@@ -121,18 +139,31 @@ public class AddonsDeviceTest {
                 sSession = null;
             });
         }
+        if (sPage != null) {
+            onMain(() -> {
+                sPage.close();
+                sPage = null;
+            });
+        }
     }
 
     // ── t1 ──────────────────────────────────────────────────────────────
 
     @Test
-    public void t1_builtInsRunButAreNotUserAddons() throws Exception {
-        assertNotNull("uBlock should be registered", awaitUblock());
+    public void t1_ublockIsInstalledFromTheAppsCopy() throws Exception {
+        AddonInfo ublock = awaitUblockAddon(a -> a.enabled, BOOT_TIMEOUT_MS);
+        assertNotNull("uBlock Origin was not installed from the app's copy", ublock);
+        assertTrue("uBlock Origin should run in private tabs", ublock.allowedInPrivateBrowsing);
+        assertTrue("uBlock Origin should stand behind the shield", isBlocker(ublock));
+        WebExtension inGecko = awaitUblock();
+        assertNotNull(inGecko);
+        assertFalse("the patched built-in is still registered", inGecko.isBuiltIn);
         List<AddonInfo> shown = valueOf(sAddons.getAddons());
         for (AddonInfo info : shown) {
             assertFalse("built-in shown as a user add-on: " + info.id, AddonPolicy.isBuiltInId(info.id));
         }
-        assertFalse(sAddons.isInstalled(UBLOCK_ID));
+        assertEquals(AddonPolicy.SHIELD_PROTECTED, shield(false));
+        assertEquals(AddonPolicy.SHIELD_PROTECTED, shield(true));
     }
 
     // ── t2–t5: files that must not install ─────────────────────────────
@@ -159,15 +190,16 @@ public class AddonsDeviceTest {
     }
 
     @Test
-    public void t4_aBuiltInIdIsRefusedAndUblockStays() throws Exception {
+    public void t4_aForgedUblockIsRefusedAndUblockStays() throws Exception {
         File xpi = xpi(manifest(UBLOCK_ID, "Fake uBlock"), true);
         AddonManager.Event event = installFileAndAwaitEvent(xpi);
-        assertEquals(AddonManager.Event.BUILT_IN, event.type);
+        assertTrue("a forged signature must be refused, got " + event.type,
+                event.type == AddonManager.Event.CORRUPT || event.type == AddonManager.Event.UNSIGNED);
         WebExtension ublock = awaitUblock();
         assertNotNull("uBlock is gone", ublock);
         assertTrue("uBlock is off", ublock.metaData.enabled);
         String name = ublock.metaData.name;
-        assertFalse("uBlock should still be the bundled copy", name != null && name.contains("Fake"));
+        assertFalse("uBlock should still be the official copy", name != null && name.contains("Fake"));
     }
 
     @Test
@@ -274,7 +306,167 @@ public class AddonsDeviceTest {
         }
     }
 
+    // ── t8–t9: uBlock Origin behind the shield ─────────────────────────
+
+    @Test
+    public void t8_removeThenTurnOnBringsBackTheAppsCopy() throws Exception {
+        AddonInfo ublock = awaitUblockAddon(a -> a.enabled, BOOT_TIMEOUT_MS);
+        assertNotNull(ublock);
+        String id = ublock.id;
+        EventCollector events = new EventCollector();
+        try {
+            onMain(() -> sAddons.uninstall(id));
+            assertNotNull("uBlock still installed",
+                    awaitLive(sAddons.getAddons(), list -> find(list, id) == null, CHANGE_TIMEOUT_MS));
+            assertEquals(AddonPolicy.SHIELD_NO_BLOCKER, shield(false));
+
+            onMain(() -> sAddons.turnOnUblock(false));
+            AddonInfo back = awaitUblockAddon(a -> a.enabled, FILE_TIMEOUT_MS);
+            assertNotNull("Turn on did not reinstall uBlock", back);
+            assertNull("the app's copy asks no question", valueOf(sAddons.getPrompt()));
+            assertTrue("reinstalled without private tabs", back.allowedInPrivateBrowsing);
+            assertTrue(events.await(AddonManager.Event.INSTALLED, CHANGE_TIMEOUT_MS));
+            assertEquals(AddonPolicy.SHIELD_PROTECTED, shield(false));
+
+            onMain(() -> sAddons.setEnabled(id, false));
+            assertNotNull(awaitUblockAddon(a -> !a.enabled, CHANGE_TIMEOUT_MS));
+            assertEquals(AddonPolicy.SHIELD_NO_BLOCKER, shield(false));
+            onMain(() -> sAddons.turnOnUblock(false));
+            assertNotNull("Turn on did not turn uBlock back on", awaitUblockAddon(a -> a.enabled, CHANGE_TIMEOUT_MS));
+            assertEquals(AddonPolicy.SHIELD_PROTECTED, shield(false));
+        } finally {
+            events.stop();
+            // Whatever happened, leave uBlock installed and on.
+            onMain(() -> sAddons.turnOnUblock(false));
+            awaitUblockAddon(a -> a.enabled, FILE_TIMEOUT_MS);
+        }
+    }
+
+    /** Requests the bundled filter lists refuse (no redirect to a neutered copy). */
+    private static final String AD_PAGE = "<!doctype html><title>ads</title>"
+            + "<script src=\"https://cdn.taboola.com/libtrc/firedown-test/loader.js\"></script>"
+            + "<script src=\"https://static.criteo.net/js/ld/publishertag.js\"></script>"
+            + "<img src=\"https://ad.doubleclick.net/ddm/trackimp/N1.firedown;ord=1\">"
+            + "<img src=\"https://pixel.quantserve.com/pixel/p-firedown.gif\">"
+            + "<img src=\"https://www.facebook.com/tr?id=1&ev=PageView\">"
+            + "<p>ads</p>";
+
+    @Test
+    public void t9_aRefusedRequestIsCounted() throws Exception {
+        assertNotNull(awaitUblockAddon(a -> a.enabled, BOOT_TIMEOUT_MS));
+        GeckoUblockHelper stats = sStats;
+        Long start = valueOf(stats.getCumulativeBlockedLive());
+        long before = start == null ? 0L : start;
+        try (PageServer server = new PageServer(AD_PAGE)) {
+            onMain(() -> {
+                if (sPage == null) {
+                    GeckoSession s = new GeckoSession(new GeckoSessionSettings.Builder()
+                            .usePrivateMode(false).allowJavascript(true).build());
+                    sHelper.registerSession(s);
+                    s.open(sHelper.getGeckoRuntime());
+                    s.setActive(true);
+                    sHelper.getGeckoRuntime().getWebExtensionController().setTabActive(s, true);
+                    sPage = s;
+                }
+                sPage.loadUri(server.url());
+            });
+            // A fresh profile compiles uBlock's lists first: reload until it filters.
+            Long after = null;
+            long deadline = System.currentTimeMillis() + NETWORK_TIMEOUT_MS;
+            while (after == null && System.currentTimeMillis() < deadline) {
+                after = awaitLive(stats.getCumulativeBlockedLive(), v -> v > before, 10_000);
+                if (after == null) {
+                    onMain(() -> sPage.reload());
+                }
+            }
+            assertNotNull("no refused request was counted", after);
+            String page = awaitLive(stats.getAdsBlockedLive(), v -> !"0".equals(v), CHANGE_TIMEOUT_MS);
+            assertNotNull("the page's count never arrived", page);
+            Log.i(TAG, "refused: lifetime +" + (after - before) + ", page " + page);
+        }
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────────
+
+    private static int shield(boolean incognito) throws Exception {
+        AtomicReference<Integer> state = new AtomicReference<>();
+        onMain(() -> state.set(sAddons.shieldState(null, incognito, "https://example.com/")));
+        return state.get();
+    }
+
+    private static boolean isBlocker(AddonInfo info) throws Exception {
+        AtomicReference<Boolean> blocker = new AtomicReference<>();
+        onMain(() -> blocker.set(sAddons.isBlocker(info)));
+        return Boolean.TRUE.equals(blocker.get());
+    }
+
+    /** uBlock Origin in the manager's list, once {@code check} holds for it. */
+    private static AddonInfo awaitUblockAddon(Check<AddonInfo> check, long timeoutMs) throws Exception {
+        List<AddonInfo> list = awaitLive(sAddons.getAddons(), l -> {
+            AddonInfo info = findUblock(l);
+            return info != null && check.ok(info);
+        }, timeoutMs);
+        return findUblock(list);
+    }
+
+    private static AddonInfo findUblock(List<AddonInfo> list) {
+        if (list == null) {
+            return null;
+        }
+        for (AddonInfo info : list) {
+            if (AddonPolicy.isUblockId(info.id)) {
+                return info;
+            }
+        }
+        return null;
+    }
+
+    /** One page over plain HTTP on the IPv4 loopback (by name: getLoopbackAddress() is ::1 on Android). */
+    private static final class PageServer implements AutoCloseable {
+        private final ServerSocket mSocket;
+        private final byte[] mBody;
+        private final Thread mThread;
+
+        PageServer(String html) throws Exception {
+            mBody = html.getBytes(StandardCharsets.UTF_8);
+            mSocket = new ServerSocket(0, 8, InetAddress.getByName("127.0.0.1"));
+            mThread = new Thread(this::serve, "fd-test-page");
+            mThread.setDaemon(true);
+            mThread.start();
+        }
+
+        String url() {
+            return "http://127.0.0.1:" + mSocket.getLocalPort() + "/ads.html";
+        }
+
+        private void serve() {
+            while (!mSocket.isClosed()) {
+                try (Socket client = mSocket.accept()) {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(
+                            client.getInputStream(), StandardCharsets.ISO_8859_1));
+                    String line;
+                    while ((line = in.readLine()) != null && !line.isEmpty()) {
+                        // the request head, unread
+                    }
+                    OutputStream out = client.getOutputStream();
+                    out.write(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: "
+                            + mBody.length + "\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n")
+                            .getBytes(StandardCharsets.ISO_8859_1));
+                    out.write(mBody);
+                    out.flush();
+                } catch (Exception e) {
+                    if (!mSocket.isClosed()) {
+                        Log.w(TAG, "page server", e);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void close() throws Exception {
+            mSocket.close();
+        }
+    }
 
     private interface Check<T> {
         boolean ok(T value);
@@ -411,10 +603,9 @@ public class AddonsDeviceTest {
     }
 
     /**
-     * uBlock as Gecko lists it. The built-ins are registered at boot
-     * (ensureBuiltIn, asynchronous; a fresh profile compiles uBlock's lists
-     * first), and the add-on manager does not wait for them, so the first
-     * test can list Gecko's extensions before uBlock is there.
+     * uBlock as Gecko lists it. The add-on manager installs it from the
+     * app's copy after listing what a previous run installed (asynchronous),
+     * so the first test can list Gecko's extensions before it is there.
      */
     private static WebExtension awaitUblock() throws Exception {
         long deadline = System.currentTimeMillis() + BOOT_TIMEOUT_MS;

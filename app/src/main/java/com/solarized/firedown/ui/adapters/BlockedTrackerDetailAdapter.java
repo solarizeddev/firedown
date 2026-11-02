@@ -22,7 +22,7 @@ import java.util.Objects;
 
 /**
  * Per-host rows (host + per-host block count) for the "Blocked on this page"
- * sheet (BlockedAdsDetailDialogFragment, uBlock's per-page list). It used
+ * sheet (BlockedAdsDetailDialogFragment, the page's refused hosts). It used
  * to be a mixed-type adapter with per-category header rows for the ETP
  * trackers sheet; that sheet and the tracker-count pipeline behind it were
  * removed with the per-site tracking switch, and the header row type went

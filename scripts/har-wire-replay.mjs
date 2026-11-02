@@ -170,6 +170,7 @@ globalThis.browser = {
   },
   webNavigation: {
     onHistoryStateUpdated: evt("webNavigation.onHistoryStateUpdated"),
+    onCommitted: evt("webNavigation.onCommitted"),
     getFrame: async ({ frameId }) => frames.find((f) => f.frameId === frameId) || null,
   },
   tabs: {

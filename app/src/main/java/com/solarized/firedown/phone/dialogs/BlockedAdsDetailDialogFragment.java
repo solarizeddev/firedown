@@ -24,22 +24,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Drill-down sheet listing the uBlock-blocked hosts for the active
+ * Drill-down sheet listing the hosts a blocker refused on the active
  * page ("23 requests blocked on this page"). Opened from the
  * SecurityStateSheet's "N blocked on this page" row.
  *
  * <p>The ETP-side twin of this sheet (per-category tracker counts) was
  * removed with the per-site tracking switch: the count row on the security
- * sheet is uBlock's tally and drills here only. Its rows share the anatomy
+ * sheet is the capture extension's tally and drills here only. Its rows share the anatomy
  * of the Settings "Most blocked domains today" list (one grouped card per
  * host, the site's own name brighter, the count always shown); it used to
  * be a "Blocked ads" sheet of 13sp monospace lines, which named one kind of
  * request for a list of all of them.
  *
- * <p>Data flow: this sheet does NOT poll uBlock. It asks once on
- * open via {@link com.solarized.firedown.geckoview.GeckoRuntimeHelper#requestPageBlocks()},
- * and firedown.js responds with the active tab's hostname tally via
- * {@code pageBlocks} on the native port. The
+ * <p>Data flow: the capture extension (webrequests/js/blocked-stats.js)
+ * pushes the tab on screen's tally whenever it changes, whichever blocker
+ * refused the requests. The
  * {@link com.solarized.firedown.geckoview.GeckoUblockHelper}
  * LiveData is per-mode, so an incognito sheet only sees incognito
  * data and vice versa.</p>
@@ -77,7 +76,7 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
         mRecyclerView = mView.findViewById(R.id.detail_recycler);
 
         // BlockedTrackerDetailAdapter: one grouped card per host, the count
-        // trailing. uBlock blocks carry no category, so there are host rows
+        // trailing. A refused request carries no category, so there are host rows
         // only. (Today's "Most blocked domains" list lives on Settings →
         // Privacy → Trackers and ads blocked as CountPreference rows of the
         // same anatomy; this is the per-page list.)
@@ -101,21 +100,12 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Subscribe to the per-mode page-blocks stream. firedown.js now pushes
-        // pageBlocks for the active tab on every block burst (piggybacked on its
-        // updateToolbarIcon hook, debounced 250ms), so this list updates live
-        // while the sheet is open — no polling. The requestPageBlocks() below is
-        // just a one-shot seed for the current state on open.
+        // The per-mode page stream: updated live while the sheet is open.
         LiveData<List<GeckoUblockHelper.HostCount>> stream = mIsIncognito
                 ? mIncognitoStateViewModel.getPageBlocks()
                 : mGeckoStateViewModel.getPageBlocks();
 
         stream.observe(getViewLifecycleOwner(), this::render);
-
-        // Seed the initial state. The previous stream value (if any) keeps
-        // painting until the response lands, so a quick open→close→reopen
-        // doesn't blank the list.
-        mGeckoRuntimeHelper.requestPageBlocks();
     }
 
 

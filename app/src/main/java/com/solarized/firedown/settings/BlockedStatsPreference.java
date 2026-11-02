@@ -20,7 +20,7 @@ import java.util.Locale;
  * The hero of the blocked-stats screen (Settings → Privacy → Trackers and
  * ads blocked): three stat cards — blocked since install, the estimated data
  * saved, blocked today — fed by {@code BlockedStatsFragment} from
- * {@code GeckoUblockHelper}'s uBlock tallies via {@link #setStats}. A flat,
+ * {@code GeckoUblockHelper}'s blocked-request figures via {@link #setStats}. A flat,
  * read-only custom-layout {@link Preference} ({@code preference_blocked_stats
  * .xml}), the CloudStatusPreference / TrackingStatusPreference pattern:
  * fragment observes, setter stores + notifyChanged, bind renders.

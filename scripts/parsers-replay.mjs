@@ -50,7 +50,7 @@ globalThis.browser = {
             return f;
         },
     },
-    webNavigation: { onHistoryStateUpdated: evt("webNavigation.onHistoryStateUpdated") },
+    webNavigation: { onHistoryStateUpdated: evt("webNavigation.onHistoryStateUpdated"), onCommitted: evt("webNavigation.onCommitted") },
     tabs: {
         onUpdated: evt("tabs.onUpdated"), onRemoved: evt("tabs.onRemoved"), onActivated: evt("tabs.onActivated"),
         query: async () => [], get: async (id) => ({ id, incognito: false, url: "https://example.com/" }),

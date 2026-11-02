@@ -20,7 +20,6 @@ import androidx.lifecycle.MutableLiveData;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.addons.AddonManager;
-import com.solarized.firedown.addons.AddonPolicy;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.GeckoInspectEntity;
 import com.solarized.firedown.data.repository.BrowserDownloadRepository;
@@ -32,12 +31,10 @@ import com.solarized.firedown.manager.UrlType;
 import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.JsonHelper;
-import com.solarized.firedown.utils.UrlStringUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mozilla.geckoview.AllowOrDeny;
 import org.mozilla.geckoview.ContentBlocking;
 import org.mozilla.geckoview.ExperimentalGeckoViewApi;
 import org.mozilla.geckoview.GeckoPreferenceController;
@@ -115,7 +112,6 @@ public class GeckoRuntimeHelper {
     private final IncognitoStateRepository mIncognitoStateRepository;
     private final GeckoUblockHelper mGeckoUblockHelper;
     private final Executor mMainExecutor;
-    public final BrowserSessionActionDelegate mBrowserSessionActionDelegate;
     private final MessageDelegate mMessageDelegate;
     private final PoTokenGenerator mPoTokenGenerator;
     private final SharedPreferences mSharedPreferences;
@@ -205,8 +201,7 @@ public class GeckoRuntimeHelper {
                         // getTrackingDbEventsByDateRange, unlocked by the 153 bump) return
                         // nothing — so this gate is the foundation for an honest
                         // "trackers blocked this week/month/all-time" view sourced from a
-                        // persisted, cross-session store, rather than uBlock's in-memory
-                        // µb.requestStats count. Enable it NOW (not when the UI lands) so the
+                        // persisted, cross-session store. Enable it NOW (not when the UI lands) so the
                         // all-time total reflects real history instead of starting at zero.
                         // Stays on-device only (no telemetry) and is wiped by "Delete
                         // browsing data" (DeleteBrowsingDialogFragment → clearTrackingDb).
@@ -265,7 +260,6 @@ public class GeckoRuntimeHelper {
         // same registerSession registrar the PoTokenGenerator gets.
         mP2pShareController.attachRuntime(sGeckoRuntime, this::registerSession);
 
-        mBrowserSessionActionDelegate = new BrowserSessionActionDelegate();
 
         setupWebExtensions();
         watchExtensionProcess();
@@ -428,7 +422,6 @@ public class GeckoRuntimeHelper {
         // delegate is registered under BOTH "browser" and "parser" below.
         registerBuiltIn("resource://android/assets/youtube/", "youtube@solarized.dev", "youtube");
         registerBuiltIn("resource://android/assets/webrequests/", "downloader@solarized.dev", "browser");
-        registerBuiltIn("resource://android/assets/ublock/", "uBlock0@raymondhill.net", "ublock");
         registerBuiltIn("resource://android/assets/icons/", "icons@mozac.org", "icons");
         // P2P share engine — a bridge content script (content.js) that binds
         // to the hidden engine GeckoSession P2pShareController opens on the
@@ -564,9 +557,9 @@ public class GeckoRuntimeHelper {
      * <p>We refuse them. Returning a session here would hand GeckoView a
      * GeckoSession that is never tracked in the Java tab repo (findGeckoState
      * returns null for it) nor closed — a leaked, invisible content process.
-     * Firedown drives everything through native Java messaging and exposes no
-     * extension UI (uBlock's dashboard/logger/etc.), so nothing legitimately
-     * needs this. The former use case (a hidden youtube.com/robots.txt tab for
+     * The built-ins drive everything through native Java messaging and have
+     * no UI, so nothing legitimately needs this (user add-ons get
+     * AddonManager's tab delegate, which makes Firedown tabs). The former use case (a hidden youtube.com/robots.txt tab for
      * BotGuard PO tokens) is obsolete: {@link PoTokenGenerator} now creates and
      * fully lifecycle-manages that session directly, without the Tabs API.
      *
@@ -584,53 +577,11 @@ public class GeckoRuntimeHelper {
         }
     };
 
-    /**
-     * Session-level tab delegate — handles {@code browser.tabs.update(tabId, {url})}.
-     *
-     * <p>uBlock's strict-block path (assets/ublock/js/traffic.js
-     * {@code onBeforeRootFrameRequest}) cancels the blocked navigation and calls
-     * {@code vAPI.tabs.replace} → {@code browser.tabs.update} to swap in its
-     * {@code moz-extension://<uuid>/document-blocked.html} interstitial. GeckoView
-     * routes that to {@link WebExtension.SessionTabDelegate#onUpdateTab} on the
-     * blocked tab's OWN session. With no delegate the update is dropped and the tab
-     * is left blank (the original request was already cancelled) — this is exactly
-     * the "$document block shows about:blank" bug. Loading the URL here is the
-     * app-renders-the-page equivalent of {@link GeckoError}'s error pages, but it
-     * keeps the extension origin so the interstitial's Proceed / "don't warn again"
-     * buttons can still message the uBlock background.
-     *
-     * <p>Unlike {@link #mTabDelegate}'s {@code onNewTab} (refused — it would leak an
-     * untracked session), {@code onUpdateTab} navigates the EXISTING, Firedown-tracked
-     * {@code session} argument, so it is safe to honor. Scoped to {@code moz-extension://}
-     * targets so a loaded extension can only redirect a tab to one of its OWN packaged
-     * pages (the interstitial), never hijack navigation to an arbitrary web URL.
-     */
-    private final WebExtension.SessionTabDelegate mSessionTabDelegate =
-            new WebExtension.SessionTabDelegate() {
-        @Override
-        public GeckoResult<AllowOrDeny> onUpdateTab(@NonNull WebExtension source,
-                                                    @NonNull GeckoSession session,
-                                                    @NonNull WebExtension.UpdateTabDetails details) {
-            String url = details.url;
-            if (url != null && UrlStringUtils.isMozExtensionLike(url)) {
-                session.loadUri(url);
-                return GeckoResult.allow();
-            }
-            return GeckoResult.deny();
-        }
-    };
-
-
     @UiThread
     public void registerSession(GeckoSession geckoSession) {
         mMainExecutor.execute(() -> {
             for (Map.Entry<String, WebExtension> entry : mLoadedExtensions.entrySet()) {
                 geckoSession.getWebExtensionController().setMessageDelegate(entry.getValue(), mMessageDelegate, entry.getKey());
-                geckoSession.getWebExtensionController().setActionDelegate(entry.getValue(), mBrowserSessionActionDelegate);
-                // Honor browser.tabs.update({url}) so uBlock's $document strict-block
-                // can swap in its moz-extension document-blocked.html interstitial
-                // (see mSessionTabDelegate). Without this the tab is left blank.
-                geckoSession.getWebExtensionController().setTabDelegate(entry.getValue(), mSessionTabDelegate);
                 // Mirror the global setMessageDelegate hookup for the
                 // PoTokenGenerator port name so connectNative('youtube_potoken')
                 // from content.js reaches Java on per-session controllers too.
@@ -649,27 +600,6 @@ public class GeckoRuntimeHelper {
             mAddonManager.registerSession(geckoSession);
         });
     }
-
-    public final class BrowserSessionActionDelegate implements WebExtension.ActionDelegate {
-        @Override
-        public void onBrowserAction(@NonNull WebExtension extension, @Nullable GeckoSession session, @NonNull WebExtension.Action action) {
-            // Only uBlock's badge is the blocked count. This delegate is set
-            // on the built-in extensions alone (add-ons have AddonManager's),
-            // and the id check keeps it that way should any of them grow a
-            // button.
-            if (!AddonPolicy.isUblockId(extension.id)) {
-                return;
-            }
-            String count = TextUtils.isEmpty(action.badgeText) ? "0" : action.badgeText;
-            boolean isIncognito = session != null
-                    && mIncognitoStateRepository.getGeckoState(session) != null;
-            if(BuildConfig.DEBUG) {
-                Log.d(TAG, "onBrowserAction: " + count + " is_incognito: " + isIncognito);
-            }
-            mGeckoUblockHelper.onAdsCount(count, isIncognito);
-        }
-    }
-
 
     private final class MessageDelegate implements WebExtension.MessageDelegate {
 
@@ -707,7 +637,6 @@ public class GeckoRuntimeHelper {
                             handleIconsMessage(jsonObject, sender.session);
                         }
                     }
-                    case "ublock" -> handleUblockMessage(jsonObject, sender.session);
                     case "youtube", "parser" -> handleExtractionMessage(jsonObject);
                 }
             } catch (JSONException e) {
@@ -739,6 +668,24 @@ public class GeckoRuntimeHelper {
                 case "onHeadersReceived", "onResponseStarted", "contentScript" -> {
                     handleExtractionMessage(json);
                 }
+                case "blockedStats" -> handleBlockedStats(json);
+            }
+        }
+
+        /**
+         * Requests a blocker refused (webrequests/js/blocked-stats.js):
+         * lifetime deltas, and the tally of the page on screen. A page
+         * tally for a tab that is no longer the one on screen is dropped.
+         */
+        private void handleBlockedStats(JSONObject json) {
+            JSONObject totals = json.optJSONObject("totals");
+            if (totals != null) {
+                mGeckoUblockHelper.onBlockedTotals(totals);
+            }
+            JSONObject page = json.optJSONObject("page");
+            if (page != null && page.optInt("tabId", -1) == mTabId) {
+                mGeckoUblockHelper.onPageBlocks(page.optLong("count", 0),
+                        page.optJSONArray("items"), page.optBoolean("incognito", true));
             }
         }
 
@@ -877,95 +824,6 @@ public class GeckoRuntimeHelper {
             }
         }
 
-        private void handleUblockMessage(JSONObject json, GeckoSession session) throws JSONException {
-            Log.d(TAG, "handleUblockMessage: " + json);
-            // uBlock sends a 'counter' update
-            if (json.has("count")) {
-                String count = json.optString("count", "0");
-                boolean isIncognito = session != null
-                        && mIncognitoStateRepository.getGeckoState(session) != null;
-                mGeckoUblockHelper.onAdsCount(count, isIncognito);
-            }
-
-            // Cumulative blocked-request count from µb.requestStats. Lands
-            // on GeckoUblockHelper; shown by Settings → Privacy → "Trackers
-            // and ads blocked" (the row's summary + BlockedStatsFragment's
-            // hero) — the home counter that read it went with home v6.
-            if (json.has("cumulativeBlocked")) {
-                mGeckoUblockHelper.onCumulativeBlocked(json.optLong("cumulativeBlocked", 0));
-            }
-
-            // Per-category blocked breakdown — the "Blocked by type" rows
-            // of BlockedStatsFragment (Settings → Privacy). firedown.js
-            // bucketises by fctxt.itype (uBlock can't honestly bucket
-            // by source list; see the comment in firedown.js).
-            if (json.has("categoryBlocked")) {
-                JSONObject buckets = json.optJSONObject("categoryBlocked");
-                if (buckets != null) {
-                    mGeckoUblockHelper.onCategoryBlocked(
-                            buckets.optLong("scripts", 0),
-                            buckets.optLong("pixels", 0),
-                            buckets.optLong("frames", 0),
-                            buckets.optLong("other", 0));
-                }
-            }
-
-            // Top-N blocked third-party hostnames, sorted descending by
-            // block count. firedown.js sends this on the same push
-            // triggers as the cumulative total; the host list excludes
-            // incognito tabs via firedown.js's incognitoTabIds gate.
-            if (json.has("topTrackers")) {
-                JSONArray list = json.optJSONArray("topTrackers");
-                if (list != null) {
-                    mGeckoUblockHelper.onTopTrackers(list);
-                }
-            }
-
-            // Per-page blocked-host tally for the currently active tab.
-            // Pushed in response to a {requestPageBlocks:true, tabId:N}
-            // from Java (see requestPageBlocks below). The JS side
-            // echoes back isIncognito (looked up against
-            // incognitoTabIds for the resolved tabId) — we trust that
-            // flag rather than sender.session because messages from
-            // the extension's background script don't carry a
-            // per-tab session, so session.isIncognito would always
-            // resolve to false and the incognito SecuritySheet's
-            // detail list would land on the regular stream.
-            if (json.has("pageBlocks")) {
-                JSONObject payload = json.optJSONObject("pageBlocks");
-                if (payload != null) {
-                    // The JS now pushes pageBlocks proactively on every block
-                    // burst (piggybacked on updateToolbarIcon), which fires for
-                    // whichever tab's badge changed — not necessarily the one
-                    // the user is looking at. Only apply pushes for the active
-                    // tab so the SecuritySheet detail list can't be overwritten
-                    // by a background tab's blocks. tabId<=0 means the JS used
-                    // its getCurrent() fallback (explicit requestPageBlocks),
-                    // which is already active-tab-scoped, so accept those.
-                    int payloadTabId = payload.optInt("tabId", 0);
-                    if (payloadTabId <= 0 || payloadTabId == mTabId) {
-                        JSONArray items = payload.optJSONArray("items");
-                        boolean isIncognito = payload.optBoolean("isIncognito", false);
-                        mGeckoUblockHelper.onPageBlocks(items, isIncognito);
-                    }
-                }
-            }
-
-            // uBlock sends a firewall state change
-            if (json.has("firewall")) {
-                JSONObject firewall = json.optJSONObject("firewall");
-                if (firewall != null) {
-                    mGeckoUblockHelper.onFirewallChanged(
-                            firewall.optBoolean("activated"),
-                            // Wired in firedown.js' updateState() → firewall.cookies.
-                            // Defaults to false if the extension hasn't reported yet,
-                            // matching the "disabled by default" install behaviour.
-                            firewall.optBoolean("cookies", false)
-                    );
-                }
-            }
-        }
-
         /**
          * Logic for categorizing task urgency
          */
@@ -1050,7 +908,7 @@ public class GeckoRuntimeHelper {
 
         @Override
         public void onConnect(@NonNull WebExtension.Port port) {
-            String name = port.name; // This is the native app ID, e.g. "browser", "ublock"
+            String name = port.name; // the native app ID, e.g. "browser"
 
             // The youtube-potoken port is the native bridge the content script
             // opens on robots.txt when running inside the PoTokenGenerator
@@ -1072,22 +930,6 @@ public class GeckoRuntimeHelper {
 
             mPorts.put(name, port);
             port.setDelegate(new PortDelegate());
-            // When the ublock port connects (once per extension lifecycle), push
-            // the user's persisted toggle states so the extension's in-memory
-            // state matches what the UI believes. uBO itself persists
-            // selectedFilterLists in browser.storage.local, so this is mostly
-            // defensive — but it also handles first-run after upgrade where
-            // the new KEY_BLOCK_COOKIE_NOTICES key didn't exist yet.
-            if ("ublock".equals(name)) {
-                boolean blockCookies = mSharedPreferences.getBoolean(
-                        Preferences.SETTINGS_BLOCK_COOKIE_NOTICES, Preferences.DEFAULT_BLOCK_COOKIE_NOTICES);
-                if (blockCookies) {
-                    // Only push if enabled; the uBO default is already "off",
-                    // so pushing false on first run is redundant (and would
-                    // trigger an unnecessary loadFilterLists recompile).
-                    setCookies(true);
-                }
-            }
         }
     }
 
@@ -1222,93 +1064,6 @@ public class GeckoRuntimeHelper {
         getGeckoRuntime()
                 .getStorageController()
                 .clearDataFromHost(host, StorageController.ClearFlags.PERMISSIONS);
-    }
-
-    public void setAds(boolean enable) {
-        try {
-            JSONObject msg = new JSONObject();
-            msg.put("ads", enable);
-            sendPortMessage("ublock", msg);
-        } catch (JSONException e) {
-            Log.e(TAG, "setAds error", e);
-        }
-    }
-
-    /**
-     * Asks firedown.js to push the per-host blocked tally for the
-     * currently active tab (the tabId Java has been tracking via
-     * browser.tabs.onActivated/onUpdated). Routes through the same
-     * long-lived ublock port the setAds toggle uses. Caller observes
-     * {@code GeckoUblockHelper.getPageBlocksLive()} (or the incognito
-     * variant) for the response; the JS side replies with
-     * {@code pageBlocks:{tabId, isIncognito, items:[...]}} which
-     * handleUblockMessage above forwards to onPageBlocks.
-     *
-     * <p>The explicit tabId in the request bypasses vAPI.tabs.getCurrent()
-     * in firedown.js, which queries {active:true, currentWindow:true}
-     * and doesn't reliably resolve to the active incognito tab in
-     * GeckoView — without this, the incognito SecuritySheet's "Ads
-     * blocked" drill-down sat empty even when the badge counter said
-     * a dozen things had been blocked on the page.
-     */
-    public void requestPageBlocks() {
-        try {
-            JSONObject msg = new JSONObject();
-            msg.put("requestPageBlocks", true);
-            msg.put("tabId", mTabId);
-            sendPortMessage("ublock", msg);
-        } catch (JSONException e) {
-            Log.e(TAG, "requestPageBlocks error", e);
-        }
-    }
-
-    public void setJavascript(boolean enable) {
-        try {
-            JSONObject msg = new JSONObject();
-            msg.put("javascript", enable);
-            sendPortMessage("ublock", msg);
-        } catch (JSONException e) {
-            Log.e(TAG, "setJavascript error", e);
-        }
-    }
-
-    public void setMedia(boolean enable) {
-        try {
-            JSONObject msg = new JSONObject();
-            msg.put("media", enable);
-            sendPortMessage("ublock", msg);
-        } catch (JSONException e) {
-            Log.e(TAG, "setMedia error", e);
-        }
-    }
-
-    public void setFonts(boolean enable) {
-        try {
-            JSONObject msg = new JSONObject();
-            msg.put("fonts", enable);
-            sendPortMessage("ublock", msg);
-        } catch (JSONException e) {
-            Log.e(TAG, "setFonts error", e);
-        }
-    }
-
-
-    /**
-     * Toggles cookie-notice blocking. Unlike the per-hostname switches above
-     * (javascript/media/fonts) and unlike the per-tab ads switch, this is a
-     * GLOBAL filter-list selection — enabling adds fanboy-cookiemonster to
-     * µb.selectedFilterLists, persists it via saveSelectedFilterLists, and
-     * recompiles via loadFilterLists. The extension reloads the active tab
-     * so the new cosmetic rules take effect immediately.
-     */
-    public void setCookies(boolean enable) {
-        try {
-            JSONObject msg = new JSONObject();
-            msg.put("cookies", enable);
-            sendPortMessage("ublock", msg);
-        } catch (JSONException e) {
-            Log.e(TAG, "setCookies error", e);
-        }
     }
 
     public void setCookieContext(String targetUrl, int id, boolean incognito) {
@@ -1821,11 +1576,12 @@ public class GeckoRuntimeHelper {
      * Whether a tab blocks tracker LOADS ({@code useTrackingProtection}),
      * Firefox's rule: private tabs always, regular tabs only in Strict. In
      * Standard, Gecko still marks trackers and blocks their cross-site
-     * cookies but lets them load; uBlock blocks the ads and analytics.
+     * cookies but lets them load; the ad blocker add-on blocks the ads and
+     * analytics.
      * Every tab used to block, which made Standard Firefox's Strict: the
      * social-tracker list covers twitter.com, so embedded tweets (and other
      * social embeds) never rendered, with no per-site way to allow them
-     * (uBlock's switch doesn't touch Gecko's lists). Read from the runtime,
+     * (an add-on's site switch doesn't touch Gecko's lists). Read from the runtime,
      * which is what Gecko enforces.
      */
     public boolean blocksTrackingContent(boolean incognito) {

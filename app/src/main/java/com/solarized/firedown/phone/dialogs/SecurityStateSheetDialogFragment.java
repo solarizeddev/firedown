@@ -7,6 +7,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -18,9 +19,14 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
-import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.R;
+import com.solarized.firedown.addons.AddonIcons;
+import com.solarized.firedown.addons.AddonManager;
+import com.solarized.firedown.addons.AddonPolicy;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
@@ -29,31 +35,50 @@ import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.utils.NavigationUtils;
+import com.solarized.firedown.utils.SheetGroups;
 import com.solarized.firedown.utils.UrlStringUtils;
 import com.solarized.firedown.utils.WebUtils;
 
-import java.util.List;
-import java.util.Objects;
+import org.mozilla.geckoview.GeckoSession;
+import org.mozilla.geckoview.WebExtension;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragment
         implements View.OnClickListener {
+
+    /** The row that stands for "no ad blocker runs here" (it has no add-on id). */
+    private static final String NO_BLOCKER_ROW = "";
+
+    @Inject
+    AddonManager mAddonManager;
 
     private GeckoStateViewModel mGeckoStateViewModel;
     private IncognitoStateViewModel mIncognitoStateViewModel;
     private GeckoState mGeckoState;
     private CertificateInfoEntity mCertificateInfoEntity;
-    // Summary count = uBlock ad/filter blocks for this page (getAdsCount).
-    // Matches what the drill-in (BlockedAdsDetailDialogFragment) itemizes, so
-    // the number always equals the list length. (Gecko's ETP still blocks
-    // globally at its Settings level; it has no per-site switch here any
-    // more and no per-page number — see the layout comment.)
+    // Requests refused on this page by any blocker (the capture extension's
+    // count, getAdsCount) — the drill-in (BlockedAdsDetailDialogFragment)
+    // lists their hosts.
     private TextView mTotalCountTextView;
-    private MaterialSwitch mAdsSwitch;
-    /** True while the switch is being set from the ViewModel, so the
-     *  change listener doesn't echo a programmatic bind back as a user
-     *  toggle (the old isPressed() guard, which a card tap → toggle()
-     *  would also have failed). */
-    private boolean mBindingAdsSwitch;
+    private ViewGroup mBlockersGroup;
+    private TextView mBlockersHint;
+    /** The blocker rows on screen, by add-on id ({@link #NO_BLOCKER_ROW} for none), in order. */
+    private final Map<String, MaterialCardView> mBlockerRows = new LinkedHashMap<>();
+    /** Add-ons whose icon was already asked for while this sheet is open. */
+    private final Set<String> mIconLoaded = new HashSet<>();
+    private int mIconPx;
     private TextView mHostText;
     private View mHostCert;
     private View mAdsStatCard;
@@ -104,14 +129,17 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mView = themedInflater.inflate(R.layout.fragment_dialog_security, container, false);
 
         mTotalCountTextView = mView.findViewById(R.id.security_total_count);
-        mAdsSwitch = mView.findViewById(R.id.ads_toogle);
+        mBlockersGroup = mView.findViewById(R.id.blockers_group);
+        mBlockersHint = mView.findViewById(R.id.blockers_hint);
+        mBlockerRows.clear();
+        mIconLoaded.clear();
+        mIconPx = getResources().getDimensionPixelSize(R.dimen.addon_icon_size);
         mHostText = mView.findViewById(R.id.host_secure_text);
         mHostCert = mView.findViewById(R.id.host_secure);
         mAdsStatCard = mView.findViewById(R.id.ads_stat_card);
 
-        // The single "N blocked on this page" summary row drills into the
-        // blocked-host list (uBlock's per-page blocked hosts — the meaningful
-        // "what got blocked here"). The nav action popUpTo dialog_security_info
+        // The "N blocked on this page" summary row drills into the page's
+        // refused hosts. The nav action popUpTo dialog_security_info
         // is inclusive, so back from the detail returns to the browser rather
         // than re-opening this sheet; the detail fragment paints its own
         // "nothing blocked yet" empty state, so the row opens regardless of
@@ -123,18 +151,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                     R.id.action_security_to_blocked_ads_detail,
                     R.id.dialog_security_info,
                     args);
-        });
-
-        // One switch, one engine: uBlock's per-host whitelist. The whole
-        // CARD is the tap target (Android-Settings style), so a tap anywhere
-        // on the row flips the switch; both routes land in the same listener.
-        mAdsSwitch.setOnCheckedChangeListener((button, isChecked) -> {
-            if (mBindingAdsSwitch) return;
-            mGeckoRuntimeHelper.setAds(isChecked);
-        });
-        View adsCard = mView.findViewById(R.id.ads_card);
-        adsCard.setOnClickListener(v -> {
-            if (mAdsSwitch != null) mAdsSwitch.toggle();
         });
 
         TextView host = mView.findViewById(R.id.host);
@@ -186,11 +202,8 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mLastIconUrl = mGeckoState.getEntityIcon();
         loadFavicon(mHostImage, mDomain);
 
-        // Ads count — routed to the correct per-mode stream so the incognito
-        // sheet never reflects counts from regular browsing and vice versa.
-        // Both streams are backed by the same GeckoUblockHelper singleton;
-        // GeckoRuntimeHelper.handleUblockMessage decides which one to post
-        // into based on the sending GeckoSession's incognito-ness.
+        // The page count — per mode, so the incognito sheet never reflects
+        // counts from regular browsing and vice versa.
         LiveData<String> adsCountLive = mIsIncognito
                 ? mIncognitoStateViewModel.getAdsCount()
                 : mGeckoStateViewModel.getAdsCount();
@@ -203,14 +216,10 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
             }
         });
 
-        // Ads filter enabled state is a per-URL whitelist concept (netWhitelist
-        // Map in µb), not per-mode. Always read from the regular ViewModel.
-        mGeckoStateViewModel.isAdsFilterEnabled().observe(getViewLifecycleOwner(), active -> {
-            if (mAdsSwitch == null) return;
-            mBindingAdsSwitch = true;
-            mAdsSwitch.setChecked(active);
-            mBindingAdsSwitch = false;
-        });
+        // The blocker rows follow every button change (counts, "(off)") and
+        // every add-on change; the "Turn on" row follows the install.
+        mAddonManager.getActionsVersion().observe(getViewLifecycleOwner(), version -> renderBlockers());
+        mAddonManager.getInstalling().observe(getViewLifecycleOwner(), installing -> renderBlockers());
 
         return mView;
     }
@@ -261,6 +270,162 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 break;
             }
         });
+    }
+
+    /**
+     * One row per ad blocker that runs here (AddonManager.blockersFor),
+     * uBlock Origin first, or "No ad blocker is on" with Turn on. Rows are
+     * updated in place while the same add-ons are listed: counts change many
+     * times a page, and rebuilding restarted every icon from blank.
+     */
+    private void renderBlockers() {
+        if (mBlockersGroup == null || mGeckoState == null || !isAdded()) {
+            return;
+        }
+        GeckoSession session = mGeckoState.getGeckoSession();
+        List<AddonManager.BlockerItem> items =
+                mAddonManager.blockersFor(session, mIsIncognito, mGeckoState.getEntityUri());
+        int running = 0;
+        for (AddonManager.BlockerItem item : items) {
+            if (item.state != AddonManager.BlockerItem.NOT_IN_PRIVATE) {
+                running++;
+            }
+        }
+        List<String> keys = new ArrayList<>();
+        for (AddonManager.BlockerItem item : items) {
+            keys.add(item.addon.id);
+        }
+        if (running == 0) {
+            // Turn on is offered beside a blocker that only lacks private
+            // tabs too: it brings back uBlock, which Firedown allows there.
+            keys.add(NO_BLOCKER_ROW);
+        }
+        if (!keys.equals(new ArrayList<>(mBlockerRows.keySet()))) {
+            for (MaterialCardView row : mBlockerRows.values()) {
+                mBlockersGroup.removeView(row);
+            }
+            mBlockerRows.clear();
+            LayoutInflater inflater = LayoutInflater.from(mBlockersGroup.getContext());
+            for (String key : keys) {
+                MaterialCardView row = (MaterialCardView) inflater.inflate(R.layout.item_blocker_row,
+                        mBlockersGroup, false);
+                mBlockersGroup.addView(row);
+                mBlockerRows.put(key, row);
+            }
+            mIconLoaded.retainAll(keys);
+        }
+        for (AddonManager.BlockerItem item : items) {
+            MaterialCardView row = mBlockerRows.get(item.addon.id);
+            if (row != null) {
+                bindBlocker(row, item);
+            }
+        }
+        MaterialCardView none = mBlockerRows.get(NO_BLOCKER_ROW);
+        if (none != null) {
+            bindNoBlocker(none);
+        }
+        SheetGroups.applyCorners(mBlockersGroup);
+        if (running > 1) {
+            mBlockersHint.setText(getResources().getQuantityString(
+                    R.plurals.shield_blockers_many, running, running));
+            mBlockersHint.setVisibility(View.VISIBLE);
+        } else {
+            mBlockersHint.setVisibility(View.GONE);
+        }
+    }
+
+    private void bindBlocker(@NonNull MaterialCardView row, @NonNull AddonManager.BlockerItem item) {
+        ImageView icon = row.findViewById(R.id.blocker_icon);
+        TextView title = row.findViewById(R.id.blocker_title);
+        TextView subtitle = row.findViewById(R.id.blocker_subtitle);
+        TextView count = row.findViewById(R.id.blocker_count);
+        MaterialButton tonal = row.findViewById(R.id.blocker_button_tonal);
+        row.findViewById(R.id.blocker_button).setVisibility(View.GONE);
+        View chevron = row.findViewById(R.id.blocker_chevron);
+        WebExtension.Action action = item.action;
+
+        title.setText(item.addon.name);
+        int sub;
+        switch (item.state) {
+            case AddonManager.BlockerItem.NOT_IN_PRIVATE:
+                sub = R.string.shield_blocker_not_private;
+                break;
+            case AddonManager.BlockerItem.OFF_FOR_SITE:
+                sub = R.string.shield_blocker_off_site;
+                break;
+            default:
+                // Only uBlock says whether it is on for the site; another
+                // blocker's row shows its name and count alone.
+                sub = item.isUblock() ? R.string.shield_blocker_on_site : 0;
+                break;
+        }
+        subtitle.setText(sub == 0 ? null : getString(sub));
+        subtitle.setVisibility(sub == 0 ? View.GONE : View.VISIBLE);
+
+        String badge = action == null ? null : action.badgeText;
+        boolean showCount = item.state == AddonManager.BlockerItem.ON && !TextUtils.isEmpty(badge);
+        count.setText(showCount ? badge : null);
+        count.setVisibility(showCount ? View.VISIBLE : View.GONE);
+
+        if (mIconLoaded.add(item.addon.id)) {
+            AddonIcons.load(requireContext(), action != null && action.icon != null ? action.icon : item.addon.icon,
+                    mIconPx, d -> {
+                        if (isAdded()) {
+                            icon.setImageDrawable(d);
+                        }
+                    });
+        }
+        icon.setImageTintList(null);
+
+        if (item.state == AddonManager.BlockerItem.NOT_IN_PRIVATE) {
+            String id = item.addon.id;
+            tonal.setText(R.string.shield_blocker_allow);
+            tonal.setVisibility(View.VISIBLE);
+            tonal.setOnClickListener(v -> mAddonManager.setAllowedInPrivate(id, true));
+            chevron.setVisibility(View.GONE);
+            row.setOnClickListener(null);
+            row.setClickable(false);
+            return;
+        }
+        tonal.setVisibility(View.GONE);
+        tonal.setOnClickListener(null);
+        boolean usable = action != null && !Boolean.FALSE.equals(action.enabled);
+        chevron.setVisibility(usable ? View.VISIBLE : View.GONE);
+        if (usable) {
+            row.setOnClickListener(v -> {
+                // The add-on's own button: its popup (uBlock's per-site
+                // switch lives there), which the browser shows in a sheet
+                // once this one is gone.
+                NavigationUtils.popBackStackSafe(mNavController, R.id.dialog_security_info);
+                action.click();
+            });
+        } else {
+            row.setOnClickListener(null);
+        }
+        row.setClickable(usable);
+    }
+
+    private void bindNoBlocker(@NonNull MaterialCardView row) {
+        ImageView icon = row.findViewById(R.id.blocker_icon);
+        icon.setImageResource(R.drawable.ic_shield_privacy_tip_24);
+        icon.setImageTintList(ColorStateList.valueOf(MaterialColors.getColor(icon,
+                com.google.android.material.R.attr.colorOnSurfaceVariant)));
+        ((TextView) row.findViewById(R.id.blocker_title)).setText(R.string.shield_no_blocker_title);
+        TextView subtitle = row.findViewById(R.id.blocker_subtitle);
+        subtitle.setText(R.string.shield_no_blocker_summary);
+        subtitle.setVisibility(View.VISIBLE);
+        row.findViewById(R.id.blocker_count).setVisibility(View.GONE);
+        row.findViewById(R.id.blocker_button_tonal).setVisibility(View.GONE);
+        row.findViewById(R.id.blocker_chevron).setVisibility(View.GONE);
+        MaterialButton button = row.findViewById(R.id.blocker_button);
+        Set<String> installing = mAddonManager.getInstalling().getValue();
+        boolean busy = installing != null && installing.contains(AddonPolicy.UBLOCK_ID);
+        button.setText(busy ? R.string.shield_installing : R.string.shield_turn_on);
+        button.setEnabled(!busy);
+        button.setVisibility(View.VISIBLE);
+        button.setOnClickListener(v -> mAddonManager.turnOnUblock(mIsIncognito));
+        row.setOnClickListener(null);
+        row.setClickable(false);
     }
 
     @Override
@@ -314,8 +479,10 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         super.onDestroyView();
         mHostCert = null;
         mHostText = null;
-        mAdsSwitch = null;
         mTotalCountTextView = null;
+        mBlockersGroup = null;
+        mBlockersHint = null;
+        mBlockerRows.clear();
         mHostImage = null;
         mAdsStatCard = null;
         mView = null;

@@ -239,7 +239,7 @@ function makeBackgroundStub() {
     webRequest: Object.assign(Object.fromEntries(["onBeforeRequest", "onBeforeSendHeaders", "onSendHeaders",
       "onHeadersReceived", "onResponseStarted", "onCompleted", "onErrorOccurred"].map((k) => [k, evt(`webRequest.${k}`)])),
     { filterResponseData() { throw new Error("no filterResponseData in a replay"); } }),
-    webNavigation: { onHistoryStateUpdated: evt("webNavigation.onHistoryStateUpdated"),
+    webNavigation: { onHistoryStateUpdated: evt("webNavigation.onHistoryStateUpdated"), onCommitted: evt("webNavigation.onCommitted"),
       getFrame: async ({ frameId }) => ({ frameId, parentFrameId: -1 }) },
     tabs: { onUpdated: evt("tabs.onUpdated"), onRemoved: evt("tabs.onRemoved"), onActivated: evt("tabs.onActivated"),
       query: async () => [], get: async (id) => ({ id, url: pageUrl, incognito: false }), sendMessage: async () => null },

@@ -27,8 +27,9 @@ public class AddonsPureTest {
 
     @Test
     public void builtInIdsAreRefused() {
-        assertTrue(AddonPolicy.isBuiltInId("uBlock0@raymondhill.net"));
-        assertTrue(AddonPolicy.isBuiltInId("UBLOCK0@RAYMONDHILL.NET"));
+        // The official uBlock Origin installs as an ordinary add-on.
+        assertFalse(AddonPolicy.isBuiltInId("uBlock0@raymondhill.net"));
+        assertFalse(AddonPolicy.isBuiltInId("UBLOCK0@RAYMONDHILL.NET"));
         assertTrue(AddonPolicy.isBuiltInId("downloader@solarized.dev"));
         assertTrue(AddonPolicy.isBuiltInId("future@solarized.dev"));
         assertTrue(AddonPolicy.isBuiltInId("icons@mozac.org"));
@@ -38,10 +39,30 @@ public class AddonsPureTest {
     }
 
     @Test
-    public void onlyUblocksBadgeIsTheBlockedCount() {
+    public void ublockIsRecognised() {
         assertTrue(AddonPolicy.isUblockId("uBlock0@raymondhill.net"));
         assertFalse(AddonPolicy.isUblockId("{aecec67f-0d10-4fa7-b7c7-609a2db280cf}"));
         assertFalse(AddonPolicy.isUblockId("youtube@solarized.dev"));
+    }
+
+    @Test
+    public void blockersAndTheShield() {
+        assertTrue(AddonPolicy.blocksRequests(Arrays.asList("webRequest", "webRequestBlocking", "<all_urls>"), null));
+        assertTrue(AddonPolicy.blocksRequests(Collections.singletonList("declarativeNetRequest"), null));
+        assertFalse(AddonPolicy.blocksRequests(Collections.singletonList("webRequestBlocking"),
+                Collections.singletonList("https://www.youtube.com/*")));
+        assertFalse(AddonPolicy.blocksRequests(Arrays.asList("storage", "tabs"),
+                Collections.singletonList("<all_urls>")));
+        assertTrue(AddonPolicy.isBlocker("uBlock0@raymondhill.net", false, false, Boolean.FALSE));
+        assertFalse(AddonPolicy.isBlocker("x@y", false, true, null));
+        assertFalse(AddonPolicy.isBlocker("x@y", true, true, Boolean.FALSE));
+        assertTrue(AddonPolicy.isBlocker("x@y", true, false, Boolean.TRUE));
+        assertTrue(AddonPolicy.saysOffForSite("uBlock0@raymondhill.net", "uBlock Origin (off)"));
+        assertFalse(AddonPolicy.saysOffForSite("uBlock0@raymondhill.net", "uBlock Origin (12)"));
+        assertFalse(AddonPolicy.saysOffForSite("other@x", "Other (off)"));
+        assertEquals(AddonPolicy.SHIELD_NO_BLOCKER, AddonPolicy.shieldState(Collections.emptyList()));
+        assertEquals(AddonPolicy.SHIELD_PROTECTED, AddonPolicy.shieldState(Collections.singletonList(false)));
+        assertEquals(AddonPolicy.SHIELD_OFF_FOR_SITE, AddonPolicy.shieldState(Arrays.asList(false, true)));
     }
 
     @Test

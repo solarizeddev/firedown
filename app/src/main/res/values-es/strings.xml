@@ -284,8 +284,6 @@
     <string name="settings_autofill_not_supported">El autocompletado no está disponible en este dispositivo.</string>
     <string name="settings_autofill_service_summary">Firedown usa el servicio de autocompletado del sistema (Bitwarden, 1Password, Proton Pass, etc.). Toca para configurarlo.</string>
     <string name="settings_autofill_service_title">Contraseñas y autocompletado</string>
-    <string name="settings_block_cookie_notices_summary">Oculta los avisos y ventanas de consentimiento de cookies en los sitios web</string>
-    <string name="settings_block_cookie_notices_title">Bloquear avisos de cookies</string>
     <string name="settings_block_javascript_summary">Las páginas pueden cargarse más rápido, pero también pueden comportarse de forma inesperada</string>
     <string name="settings_block_javascript_title">Bloquear JavaScript</string>
     <string name="settings_block_location_summary">Impide que los sitios web pidan tu ubicación</string>

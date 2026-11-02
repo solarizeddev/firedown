@@ -69,7 +69,7 @@ import dagger.hilt.android.EntryPointAccessors;
  *
  * <p>Tests share one booted runtime and run in name order (t1…t5); the
  * runtime is a process singleton so per-test isolation is impossible by
- * construction (the UblockBridgeLiveTest model). Pinned URLs are long-lived
+ * construction (the AddonsDeviceTest model). Pinned URLs are long-lived
  * public content; if one dies, replace it — a 404'd pin fails with the
  * page-specific message, not a mystery.
  */
@@ -291,7 +291,7 @@ public class CaptureLiveTest {
     }
 
     /**
-     * One shared visible-tab session (the UblockBridgeLiveTest pattern):
+     * One shared visible-tab session:
      * delegates registered BEFORE open, marked active AND the active tab, so
      * content scripts run, the tabs API resolves it, and the priority
      * executor treats its captures as foreground.

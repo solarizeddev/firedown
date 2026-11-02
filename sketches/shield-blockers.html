@@ -1,0 +1,289 @@
+<title>Blockers Behind the Shield</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: a short brief, then rows of phone frames (the app's dark theme, fixed) with notes; the page around them follows the viewer's theme. */
+  :root {
+    --bg: #f6f4f6; --ink: #1c1b1f; --ink2: #55505c; --faint: #8a8490; --rule: #e2dde4; --card: #ffffff; --accent: #c4403b;
+    /* Phone tokens: Firedown's dark theme, the same in both page themes. */
+    --p-surface: #131315; --p-sheet: #2a2a2e; --p-row: #1e1e21; --p-row2: #36363a; --p-on: #e6e1e5; --p-onv: #b8b4c0;
+    --p-faint: #7a7681; --p-coral: #ff716c; --p-coral-ink: #460005; --p-line: #2c2c30; --p-scrim: rgba(0, 0, 0, .55);
+    --f-ui: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --f-mono: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #0f0f12; --ink: #ece7ef; --ink2: #b6b0bd; --faint: #7f7986; --rule: #26252b; --card: #17171b; --accent: #ff8a85; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #0f0f12; --ink: #ece7ef; --ink2: #b6b0bd; --faint: #7f7986; --rule: #26252b; --card: #17171b; --accent: #ff8a85; color-scheme: dark }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--f-ui); line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 48px; }
+  main { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  h1 { font-size: 26px; font-weight: 500; margin: 0; text-wrap: balance; }
+  h2 { font-size: 17px; font-weight: 600; margin: 0; text-wrap: balance; }
+  p { margin: 0; max-width: 72ch; color: var(--ink2); font-size: 14px; }
+  p strong, li strong { color: var(--ink); font-weight: 600; }
+  .lede { display: flex; flex-direction: column; gap: 10px; }
+  .eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+  section { background: var(--card); border: 1px solid var(--rule); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .phones { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+  figure { margin: 0; display: flex; flex-direction: column; gap: 8px; width: 262px; max-width: 100%; }
+  figcaption { font-size: 12.5px; color: var(--ink2); line-height: 1.45; }
+  figcaption b { display: block; color: var(--ink); font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+  ul.notes { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--ink2); max-width: 80ch; }
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; font-size: 13px; min-width: 560px; width: 100%; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+  td code { font-family: var(--f-mono); font-size: 12px; color: var(--ink2); }
+  .yes { color: var(--accent); font-weight: 600; } .no { color: var(--faint); }
+
+  /* ── phone ─────────────────────────────────────────── */
+  .phone { width: 262px; max-width: 100%; height: 540px; background: var(--p-surface); border-radius: 28px; overflow: hidden;
+    position: relative; font-size: 12px; color: var(--p-on); border: 1px solid var(--p-line); }
+  .bar { height: 50px; display: flex; align-items: center; gap: 8px; padding: 0 8px; }
+  .pill { flex: 1; min-width: 0; height: 36px; border-radius: 18px; background: var(--p-sheet); display: flex; align-items: center;
+    gap: 8px; padding: 0 10px; color: var(--p-onv); font-size: 11.5px; white-space: nowrap; overflow: hidden; }
+  .pill .url { overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+  .shield { position: relative; width: 18px; height: 20px; flex: none; }
+  .shield svg { width: 18px; height: 20px; display: block; }
+  .shield .n { position: absolute; top: -6px; right: -9px; background: var(--p-coral); color: var(--p-coral-ink); font-size: 8.5px; font-weight: 700;
+    border-radius: 7px; padding: 0 4px; line-height: 13px; font-family: var(--f-ui); }
+  .reload { width: 18px; height: 18px; flex: none; color: var(--p-onv); }
+  .page { padding: 10px 12px; display: flex; flex-direction: column; gap: 9px; }
+  .page .h { height: 18px; width: 70%; background: #3a3a3f; border-radius: 4px; }
+  .page .l { height: 8px; background: #2a2a2f; border-radius: 4px; }
+  .page .img { height: 120px; background: #222226; border-radius: 10px; }
+  .scrim { position: absolute; inset: 0; background: var(--p-scrim); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--p-sheet); border-radius: 22px 22px 0 0; padding: 0 0 14px; }
+  .handle { width: 30px; height: 4px; border-radius: 2px; background: rgba(230, 225, 229, .4); margin: 10px auto 10px; }
+  .ident { display: flex; gap: 10px; align-items: center; padding: 0 16px 10px; }
+  .fav { width: 26px; height: 26px; border-radius: 7px; background: #f2efe9; color: #111; font: 700 9px/26px var(--f-ui); text-align: center; flex: none; }
+  .ident b { display: block; font-size: 13px; font-weight: 500; }
+  .ident small { color: var(--p-onv); font-size: 10.5px; }
+  .grp { margin: 0 12px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .r { background: var(--p-row); min-height: 46px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; border-radius: 4px; }
+  .grp .r:first-child { border-top-left-radius: 16px; border-top-right-radius: 16px; }
+  .grp .r:last-child { border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+  .r .t { flex: 1; min-width: 0; font-size: 12.5px; }
+  .r .t small { display: block; color: var(--p-onv); font-size: 10.5px; margin-top: 1px; }
+  .r .chev { color: var(--p-faint); font-size: 15px; flex: none; }
+  .r .cnt { font-variant-numeric: tabular-nums; color: var(--p-onv); font-size: 12px; flex: none; }
+  .r.new { outline: 1.5px dashed var(--p-coral); outline-offset: -1.5px; }
+  .gi { width: 20px; height: 20px; flex: none; color: var(--p-onv); }
+  .ai { width: 22px; height: 22px; border-radius: 6px; flex: none; display: grid; place-items: center; font: 700 8.5px var(--f-ui); color: #111; }
+  .ub { background: #800000; color: #fff; } .ag { background: #68bc71; } .pb { background: #f4ead2; } .gh { background: #00aef0; color: #fff; }
+  .hint { margin: -4px 16px 10px; color: var(--p-onv); font-size: 10.5px; line-height: 1.4; }
+  .btn { background: var(--p-coral); color: var(--p-coral-ink); border-radius: 16px; padding: 5px 10px; font-size: 11px; font-weight: 600; flex: none; }
+  .btn.tonal { background: var(--p-row2); color: var(--p-on); }
+  /* uBlock popup mock */
+  .addonhead { display: flex; align-items: center; gap: 8px; padding: 0 16px 8px; font-size: 13px; }
+  .ubo { margin: 0 12px; background: #1b1b1e; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .power { width: 64px; height: 64px; border-radius: 50%; margin: 2px auto 0; border: 3px solid #2f8be6; display: grid; place-items: center; color: #2f8be6; font-size: 26px; }
+  .stat { display: flex; justify-content: space-between; font-size: 11px; color: var(--p-onv); }
+  .stat b { color: var(--p-on); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .tools { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .tools span { height: 26px; border-radius: 6px; background: #26262a; display: grid; place-items: center; color: var(--p-onv); font-size: 11px; }
+  .tools span.off { color: #e05a52; }
+  .tag { font-size: 10px; color: var(--p-faint); text-align: center; }
+</style>
+
+<main>
+  <div class="lede">
+    <span class="eyebrow">Firedown · design sketch · official uBlock Origin</span>
+    <h1>Blockers behind the shield</h1>
+    <p>Firedown installs the <strong>official uBlock Origin</strong> (Mozilla-signed, bundled in the APK, updated from addons.mozilla.org) instead of its custom copy. The shield at the start of the address bar becomes the door to it: the security sheet keeps its count and blocked hosts, and the old <strong>Block ads and trackers</strong> switch is replaced by a uBlock Origin row that opens <strong>uBlock's own popup</strong>, where its per-site switch lives. The refresh button stays: it is also Stop.</p>
+    <p>Dashed outlines mark what is new or changed. Numbers are examples.</p>
+  </div>
+
+  <section>
+    <h2>With uBlock Origin (the default)</h2>
+    <div class="phones">
+      <figure>
+        <div class="phone">
+          <div class="bar"><div class="pill">
+            <span class="shield"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 5-3.4 8.6-7 10-3.6-1.4-7-5-7-10V6l7-3z"/></svg><span class="n">23</span></span>
+            <span class="url">elpais.com</span>
+            <svg class="reload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>
+          </div></div>
+          <div class="page"><div class="h"></div><div class="l"></div><div class="l"></div><div class="l" style="width:80%"></div><div class="img"></div><div class="l"></div><div class="l" style="width:60%"></div></div>
+        </div>
+        <figcaption><b>Address bar</b>The shield's number is Firedown's own count of requests blocked on this page, whichever blocker did it. Refresh stays at the end.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="page"><div class="h"></div><div class="l"></div><div class="img"></div></div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="handle"></div>
+            <div class="ident"><span class="fav">EP</span><span><b>elpais.com</b><small>https://elpais.com/</small></span></div>
+            <div class="grp">
+              <div class="r"><svg class="gi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span class="t">Connection is secure</span><span class="chev">›</span></div>
+            </div>
+            <div class="grp">
+              <div class="r"><svg class="gi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 5-3.4 8.6-7 10-3.6-1.4-7-5-7-10V6l7-3z"/></svg><span class="t">23 requests blocked on this page</span><span class="chev">›</span></div>
+              <div class="r new"><span class="ai ub">uB</span><span class="t">uBlock Origin<small>On for this site</small></span><span class="cnt">23</span><span class="chev">›</span></div>
+            </div>
+            <div class="grp">
+              <div class="r"><svg class="gi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><span class="t">Clear browsing data</span><span class="chev">›</span></div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>Shield sheet</b>The switch row becomes a uBlock Origin row: its own number and whether it is on here, read from its toolbar button. Tap opens its popup.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="page"><div class="h"></div><div class="l"></div></div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="handle"></div>
+            <div class="addonhead"><span class="ai ub">uB</span>uBlock Origin</div>
+            <div class="ubo">
+              <div class="power">⏻</div>
+              <div class="tag">Tap to turn off for elpais.com</div>
+              <div class="stat"><span>Blocked on this page</span><b>23 or 12%</b></div>
+              <div class="stat"><span>Blocked since install</span><b>4,512</b></div>
+              <div class="stat"><span>Domains connected</span><b>8 of 14</b></div>
+              <div class="tools"><span>⌖</span><span>◳</span><span class="off">♫</span><span>Aa</span><span class="off">JS</span></div>
+              <div class="tag">Pop-ups · media · cosmetic · fonts · JavaScript, per site</div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>uBlock's own popup</b>Its page, unchanged, in Firedown's add-on sheet. The per-site switch and the script, media and font switches move here from Firedown's UI.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>The shield mirrors the blocker's state</h2>
+    <p>uBlock Origin titles its toolbar button for each tab: <code>uBlock Origin (23)</code> while it filters there, <code>uBlock Origin (off)</code> once the user turns it off for that site (its own code, <code>vapi-background.js</code>, setTitle). Firedown already receives that title per tab, so the shield takes the same state with no bridge. Site exceptions from the custom copy are not carried over; the user sets them again in uBlock's popup.</p>
+    <div class="phones">
+      <figure>
+        <div class="phone" style="height:96px">
+          <div class="bar"><div class="pill">
+            <span class="shield"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 5-3.4 8.6-7 10-3.6-1.4-7-5-7-10V6l7-3z"/></svg><span class="n">23</span></span>
+            <span class="url">elpais.com</span>
+            <svg class="reload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>
+          </div></div>
+        </div>
+        <figcaption><b>On</b>Title <code>uBlock Origin (23)</code>. Plain shield, the page's count.</figcaption>
+      </figure>
+      <figure>
+        <div class="phone" style="height:96px">
+          <div class="bar"><div class="pill">
+            <span class="shield"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 5-3.4 8.6-7 10-3.6-1.4-7-5-7-10V6l7-3z"/><path d="M12 8v5M12 16v.5"/></svg></span>
+            <span class="url">elpais.com</span>
+            <svg class="reload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>
+          </div></div>
+        </div>
+        <figcaption><b>Off for this site</b>Title <code>uBlock Origin (off)</code>. The protection-off shield the app already has (<code>ic_shield_privacy_tip</code>), no count. The sheet row reads "Off for this site".</figcaption>
+      </figure>
+      <figure>
+        <div class="phone" style="height:96px">
+          <div class="bar"><div class="pill">
+            <span class="shield"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 5-3.4 8.6-7 10-3.6-1.4-7-5-7-10V6l7-3z"/><path d="M12 8v5M12 16v.5"/></svg></span>
+            <span class="url">elpais.com</span>
+            <svg class="reload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>
+          </div></div>
+        </div>
+        <figcaption><b>Turned off or removed</b>uBlock disabled in Settings → Add-ons, removed, or not allowed in this private tab, with no other blocker on. Same protection-off shield; the sheet shows "No ad blocker is on".</figcaption>
+      </figure>
+    </div>
+    <ul class="notes">
+      <li><strong>The rule</strong>: protection is on for a tab when at least one blocker is enabled (and allowed in private tabs, for a private tab) and none of the enabled ones says off for this tab. Only uBlock Origin says per-site off through its title; another blocker counts as on while it is enabled.</li>
+      <li><strong>A tab uBlock has not titled yet</strong> (first frame of a page) shows its default title, read as on.</li>
+      <li><strong>The secure / not-secure half</strong> of the shield is unchanged.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>When the user installs another blocker</h2>
+    <p>Every blocker on the page gets its own row, uBlock Origin first. The total is counted once per request, so two blockers cancelling the same request count it once. Each add-on's own number is what that add-on reports (Privacy Badger counts trackers, not requests), so the rows don't add up to the total and the sheet never sums them.</p>
+    <div class="phones">
+      <figure>
+        <div class="phone">
+          <div class="page"><div class="h"></div></div><div class="scrim"></div>
+          <div class="sheet"><div class="handle"></div>
+            <div class="ident"><span class="fav">EP</span><span><b>elpais.com</b><small>https://elpais.com/</small></span></div>
+            <div class="grp"><div class="r"><span class="t">31 requests blocked on this page</span><span class="chev">›</span></div>
+              <div class="r new"><span class="ai ub">uB</span><span class="t">uBlock Origin</span><span class="cnt">23</span><span class="chev">›</span></div>
+              <div class="r new"><span class="ai ag">AG</span><span class="t">AdGuard AdBlocker</span><span class="cnt">19</span><span class="chev">›</span></div>
+            </div>
+            <div class="hint new">Two ad blockers are on. One is usually enough; two can break sites.</div>
+            <div class="grp"><div class="r"><span class="t">Clear browsing data</span><span class="chev">›</span></div></div>
+          </div>
+        </div>
+        <figcaption><b>uBlock Origin + AdGuard</b>Both rows, each opening its own popup. One quiet line, no warning color: the user chose this.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="page"><div class="h"></div></div><div class="scrim"></div>
+          <div class="sheet"><div class="handle"></div>
+            <div class="ident"><span class="fav">EP</span><span><b>elpais.com</b><small>https://elpais.com/</small></span></div>
+            <div class="grp"><div class="r"><span class="t">18 requests blocked on this page</span><span class="chev">›</span></div>
+              <div class="r new"><span class="ai gh">Gh</span><span class="t">Ghostery<small>On for this site</small></span><span class="cnt">18</span><span class="chev">›</span></div>
+            </div>
+            <div class="grp"><div class="r"><span class="t">Clear browsing data</span><span class="chev">›</span></div></div>
+          </div>
+        </div>
+        <figcaption><b>uBlock Origin removed, Ghostery instead</b>Firedown doesn't push uBlock back while another blocker is on. Settings → Add-ons keeps a "Reinstall uBlock Origin" row.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="page"><div class="h"></div></div><div class="scrim"></div>
+          <div class="sheet"><div class="handle"></div>
+            <div class="ident"><span class="fav">EP</span><span><b>elpais.com</b><small>https://elpais.com/</small></span></div>
+            <div class="grp">
+              <div class="r new"><svg class="gi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 5-3.4 8.6-7 10-3.6-1.4-7-5-7-10V6l7-3z"/><path d="M4 4l16 16"/></svg><span class="t">No ad blocker is on<small>Ads and trackers load on this page</small></span><span class="btn">Turn on</span></div>
+            </div>
+            <div class="grp"><div class="r"><span class="t">Clear browsing data</span><span class="chev">›</span></div></div>
+          </div>
+        </div>
+        <figcaption><b>No blocker on</b>"Turn on" re-enables uBlock Origin if it is turned off, or installs the copy bundled in the APK if it was removed (no download, works offline).</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="page"><div class="h"></div></div><div class="scrim"></div>
+          <div class="sheet"><div class="handle"></div>
+            <div class="ident"><span class="fav">EP</span><span><b>elpais.com</b><small>Private tab</small></span></div>
+            <div class="grp"><div class="r"><span class="t">23 requests blocked on this page</span><span class="chev">›</span></div>
+              <div class="r"><span class="ai ub">uB</span><span class="t">uBlock Origin</span><span class="cnt">23</span><span class="chev">›</span></div>
+              <div class="r new"><span class="ai pb">PB</span><span class="t">Privacy Badger<small>Doesn't run in private tabs</small></span><span class="btn tonal">Allow</span></div>
+            </div>
+            <div class="grp"><div class="r"><span class="t">Clear browsing data</span><span class="chev">›</span></div></div>
+          </div>
+        </div>
+        <figcaption><b>Private tab</b>Blockers not allowed in private tabs say so, with Allow (its add-on page). uBlock Origin is allowed in private tabs when Firedown installs it.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Which add-ons get a row</h2>
+    <p>A row is for an add-on that <strong>blocks requests on every site</strong>: it holds <code>webRequestBlocking</code> or <code>declarativeNetRequest</code> with access to all sites, and it has a toolbar button. That is read from the add-on's own permissions, so no list of blocker names to keep. The catch is that a few non-blockers hold the same permissions (an add-on that rewrites links or changes a header), so the add-on's page in Settings gets a <strong>Show behind the shield</strong> switch to correct either way.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Add-on (Mozilla's Android list)</th><th>Blocks requests on all sites</th><th>Row behind the shield</th></tr></thead>
+        <tbody>
+          <tr><td>uBlock Origin</td><td><code>webRequestBlocking</code> · all sites</td><td class="yes">Yes, always first</td></tr>
+          <tr><td>AdGuard AdBlocker, Ghostery, Privacy Badger</td><td>Yes</td><td class="yes">Yes</td></tr>
+          <tr><td>NoScript, Decentraleyes, ClearURLs</td><td>Yes (scripts, CDN copies, link tracking)</td><td class="yes">Yes, they protect the page too</td></tr>
+          <tr><td>Google Search Fixer, FoxyProxy</td><td>Possibly (headers, proxy auth)</td><td class="no">Default yes; user can hide it</td></tr>
+          <tr><td>Dark Reader, Read Aloud, Tomato Clock</td><td>No</td><td class="no">No: ⋮ → Add-ons only</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="notes">
+      <li><strong>The total</strong> comes from Firedown's capture extension, which already sees every request a blocker cancels. It also counts Firefox's own tracker blocking, so it says "requests blocked", not "ads blocked".</li>
+      <li><strong>Each add-on's number and "on for this site"</strong> come from its toolbar button (badge and title), the same source the address bar uses today.</li>
+      <li><strong>Home and Settings → Trackers and ads blocked</strong> keep their numbers from the same counter, now blocker-neutral.</li>
+      <li><strong>Permissions in the table are to be checked</strong> against each add-on's manifest before building the rule.</li>
+    </ul>
+  </section>
+</main>

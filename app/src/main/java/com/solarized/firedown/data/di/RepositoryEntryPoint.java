@@ -31,8 +31,8 @@ public interface RepositoryEntryPoint {
 
     GeckoRuntimeHelper getGeckoRuntimeHelper();
 
-    // Exposed for UblockBridgeLiveTest (androidTest) — same singleton the
-    // runtime helper injects, so the test observes the real LiveData streams.
+    // Exposed for the device tests — the same singleton the runtime helper
+    // feeds, so a test observes the real blocked-request figures.
     GeckoUblockHelper getGeckoUblockHelper();
 
     // Exposed for CaptureLiveTest (androidTest) — the same singleton the

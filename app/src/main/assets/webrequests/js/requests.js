@@ -3,6 +3,7 @@ import * as ParserBlock from './parser-blocklist.js';
 import { handleCookieRequest } from './cookies.js';
 import { MetaCache } from './bounded.js';
 import { tabState, peekTabState, allTabStates, tabClaims } from './tab-state.js';
+import { isBlockedRequest, countBlocked, setActiveTab } from './blocked-stats.js';
 
 // Configuration
 const MAX_PENDING_REQUESTS = 1024;
@@ -204,6 +205,7 @@ browser.tabs.onRemoved.addListener((tabId) => {
 
 browser.tabs.onActivated.addListener((activeInfo) => {
   lastActiveTabId = activeInfo.tabId;
+  setActiveTab(activeInfo.tabId);
   browser.runtime.sendNativeMessage('browser', {
     listener: 'onActivated',
     id: activeInfo.tabId,
@@ -240,6 +242,7 @@ function syncActiveTab() {
       if (!tabs[0] || tabs[0].id === lastActiveTabId) return;
       const previousId = lastActiveTabId;
       lastActiveTabId = tabs[0].id;
+      setActiveTab(tabs[0].id);
       browser.runtime.sendNativeMessage('browser', {
         listener: 'onActivated',
         id: tabs[0].id,
@@ -254,6 +257,7 @@ browser.tabs.query({ active: true, currentWindow: true })
   .then((tabs) => {
     if (!tabs[0]) return;
     lastActiveTabId = tabs[0].id;
+    setActiveTab(tabs[0].id);
     // Bootstrap Java's GeckoRuntimeHelper.mTabId at extension load.
     // Java only updates mTabId from this native "onActivated" message,
     // and Gecko's onActivated event fires only on tab switches — never
@@ -1361,13 +1365,12 @@ browser.webRequest.onCompleted.addListener(
   { urls: ['<all_urls>'] }
 );
 
-// A page request a BLOCKER refused: uBlock's cancel (an extension's webRequest
-// cancel surfaces as NS_ERROR_ABORT — a page or navigation abort is
+// A page request a BLOCKER refused: an ad blocker's cancel (an extension's
+// webRequest cancel surfaces as NS_ERROR_ABORT — a page or navigation abort is
 // NS_BINDING_ABORTED and does not match) or Gecko's own content blocking (the
 // URL classifier's *_URI errors: tracking protection, Safe Browsing). The page
-// scan must not request such a URL again — see the images-detected handler.
-const BLOCKED_REQUEST_ERROR_RE =
-  /^NS_ERROR_(ABORT|(TRACKING|CRYPTOMINING|FINGERPRINTING|SOCIALTRACKING|EMAILTRACKING|MALWARE|PHISHING|UNWANTED|HARMFUL|BLOCKED)_URI)$/;
+// scan must not request such a URL again — see the images-detected handler —
+// and blocked-stats.js counts it for the shield sheet and Settings.
 
 browser.webRequest.onErrorOccurred.addListener(
   (data) => {
@@ -1377,10 +1380,9 @@ browser.webRequest.onErrorOccurred.addListener(
     requestRecords.delete(data.requestId);
     // Our own HEAD probes run with no tab (-1), so a probe that failed or
     // timed out is never mistaken for a blocked page request.
-    if (typeof data.tabId === 'number' && data.tabId >= 0
-        && /^https?:/i.test(data.url || '')
-        && BLOCKED_REQUEST_ERROR_RE.test(data.error || '')) {
+    if (isBlockedRequest(data)) {
       tabState(data.tabId).blocked.add(data.url);
+      countBlocked(data);
     }
   },
   { urls: ['<all_urls>'] }

@@ -57,19 +57,21 @@ public final class AddonsHarness {
     // ---------------------------------------------------------------- policy
 
     private static void policy() {
-        check("policy: uBlock's AMO id is built in", AddonPolicy.isBuiltInId("uBlock0@raymondhill.net"));
-        check("policy: case does not matter", AddonPolicy.isBuiltInId("UBLOCK0@RaymondHill.net"));
-        check("policy: surrounding spaces do not matter", AddonPolicy.isBuiltInId(" uBlock0@raymondhill.net "));
+        check("policy: uBlock Origin is NOT built in (the official build installs as an add-on)",
+                !AddonPolicy.isBuiltInId("uBlock0@raymondhill.net")
+                        && !AddonPolicy.isBuiltInId(" UBLOCK0@RaymondHill.net "));
+        check("policy: surrounding spaces do not matter", AddonPolicy.isBuiltInId(" icons@mozac.org "));
         check("policy: capture extension is built in", AddonPolicy.isBuiltInId("downloader@solarized.dev"));
         check("policy: a future @solarized.dev id is built in", AddonPolicy.isBuiltInId("anything@solarized.dev"));
         check("policy: icons extension is built in", AddonPolicy.isBuiltInId("icons@mozac.org"));
         check("policy: Violentmonkey is not", !AddonPolicy.isBuiltInId("{aecec67f-0d10-4fa7-b7c7-609a2db280cf}"));
         check("policy: a lookalike domain is not ours", !AddonPolicy.isBuiltInId("x@solarized.dev.evil.com"));
         check("policy: null and empty are not", !AddonPolicy.isBuiltInId(null) && !AddonPolicy.isBuiltInId(""));
-        check("policy: uBlock's badge is the blocked count", AddonPolicy.isUblockId("uBlock0@raymondhill.net")
+        check("policy: uBlock Origin is recognised in any case", AddonPolicy.isUblockId("uBlock0@raymondhill.net")
                 && AddonPolicy.isUblockId("ublock0@RAYMONDHILL.net"));
-        check("policy: no other badge is", !AddonPolicy.isUblockId("{aecec67f-0d10-4fa7-b7c7-609a2db280cf}")
+        check("policy: nothing else is uBlock", !AddonPolicy.isUblockId("{aecec67f-0d10-4fa7-b7c7-609a2db280cf}")
                 && !AddonPolicy.isUblockId("downloader@solarized.dev") && !AddonPolicy.isUblockId(null));
+        blockers();
 
         String base = "moz-extension://1234-abcd/";
         check("policy: https loads in a tab", AddonPolicy.mayLoadInTab("https://example.com/", base));
@@ -226,12 +228,69 @@ public final class AddonsHarness {
                         && loc.entries.get(0).summary.length() > 0);
         boolean hasUblock = false;
         for (AmoCatalog.Entry e : loc.entries) {
-            if (AddonPolicy.isBuiltInId(e.id)) {
+            if (AddonPolicy.isUblockId(e.id)) {
                 hasUblock = true;
             }
         }
-        check("fixture: the official list contains an id we ship (uBlock), so the screen must mark it",
+        check("fixture: the official list contains uBlock Origin, which the screen replaces with its reinstall row",
                 hasUblock);
+    }
+
+    /** Which add-ons stand behind the shield, and what the shield says. */
+    private static void blockers() {
+        java.util.List<String> ubo = java.util.Arrays.asList("alarms", "dns", "menus", "privacy", "storage", "tabs",
+                "unlimitedStorage", "webNavigation", "webRequest", "webRequestBlocking", "<all_urls>");
+        check("blockers: uBlock's own manifest (1.75.0) reads as a blocker", AddonPolicy.blocksRequests(ubo, null));
+        check("blockers: webRequestBlocking with <all_urls> as an origin",
+                AddonPolicy.blocksRequests(java.util.Arrays.asList("webRequest", "webRequestBlocking"),
+                        java.util.Collections.singletonList("<all_urls>")));
+        check("blockers: webRequestBlocking with http and https wildcards",
+                AddonPolicy.blocksRequests(java.util.Arrays.asList("webRequestBlocking"),
+                        java.util.Arrays.asList("http://*/*", "https://*/*")));
+        check("blockers: *://*/* is all sites",
+                AddonPolicy.blocksRequests(java.util.Arrays.asList("webRequestBlocking"),
+                        java.util.Collections.singletonList("*://*/*")));
+        check("blockers: declarativeNetRequest blocks without host access",
+                AddonPolicy.blocksRequests(java.util.Collections.singletonList("declarativeNetRequest"), null));
+        check("blockers: webRequestBlocking on one site is not a blocker",
+                !AddonPolicy.blocksRequests(java.util.Arrays.asList("webRequestBlocking"),
+                        java.util.Collections.singletonList("https://www.youtube.com/*")));
+        check("blockers: https wildcard alone is not all sites",
+                !AddonPolicy.blocksRequests(java.util.Arrays.asList("webRequestBlocking"),
+                        java.util.Collections.singletonList("https://*/*")));
+        check("blockers: all sites without a blocking permission is not a blocker (Dark Reader)",
+                !AddonPolicy.blocksRequests(java.util.Arrays.asList("storage", "tabs"),
+                        java.util.Collections.singletonList("<all_urls>")));
+        check("blockers: declarativeNetRequestWithHostAccess needs all sites",
+                !AddonPolicy.blocksRequests(java.util.Collections.singletonList("declarativeNetRequestWithHostAccess"),
+                        java.util.Collections.singletonList("https://a.example/*"))
+                        && AddonPolicy.blocksRequests(java.util.Collections.singletonList("declarativeNetRequestWithHostAccess"),
+                        java.util.Collections.singletonList("<all_urls>")));
+        check("blockers: no permissions, no blocker", !AddonPolicy.blocksRequests(null, null));
+        check("blockers: uBlock is always one, button or not",
+                AddonPolicy.isBlocker("uBlock0@raymondhill.net", false, false, Boolean.FALSE));
+        check("blockers: a blocking add-on with a button is one", AddonPolicy.isBlocker("ag@x", true, true, null));
+        check("blockers: no button, no row", !AddonPolicy.isBlocker("ag@x", false, true, Boolean.TRUE));
+        check("blockers: the user hides a detected one", !AddonPolicy.isBlocker("lnk@x", true, true, Boolean.FALSE));
+        check("blockers: the user shows an undetected one", AddonPolicy.isBlocker("nsc@x", true, false, Boolean.TRUE));
+        check("shield: uBlock's (off) title is off for the site",
+                AddonPolicy.saysOffForSite("uBlock0@raymondhill.net", "uBlock Origin (off)"));
+        check("shield: uBlock's count title is on",
+                !AddonPolicy.saysOffForSite("uBlock0@raymondhill.net", "uBlock Origin (23)")
+                        && !AddonPolicy.saysOffForSite("uBlock0@raymondhill.net", "uBlock Origin (0)"));
+        check("shield: an untitled tab reads as on",
+                !AddonPolicy.saysOffForSite("uBlock0@raymondhill.net", "uBlock Origin")
+                        && !AddonPolicy.saysOffForSite("uBlock0@raymondhill.net", null));
+        check("shield: another add-on's (off) says nothing",
+                !AddonPolicy.saysOffForSite("ag@x", "AdGuard (off)"));
+        check("shield: no blocker running", AddonPolicy.shieldState(java.util.Collections.emptyList())
+                == AddonPolicy.SHIELD_NO_BLOCKER && AddonPolicy.shieldState(null) == AddonPolicy.SHIELD_NO_BLOCKER);
+        check("shield: one on is protected",
+                AddonPolicy.shieldState(java.util.Collections.singletonList(false)) == AddonPolicy.SHIELD_PROTECTED);
+        check("shield: one says off, another on: off for the site",
+                AddonPolicy.shieldState(java.util.Arrays.asList(false, true)) == AddonPolicy.SHIELD_OFF_FOR_SITE);
+        check("shield: two on is protected",
+                AddonPolicy.shieldState(java.util.Arrays.asList(false, false)) == AddonPolicy.SHIELD_PROTECTED);
     }
 
     private static String read(File f) throws Exception {

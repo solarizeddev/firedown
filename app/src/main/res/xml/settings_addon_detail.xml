@@ -30,6 +30,15 @@
             app:singleLineTitle="false"
             app:iconSpaceReserved="false" />
 
+        <SwitchPreferenceCompat
+            android:key="com.solarized.firedown.preferences.addon.shield"
+            android:persistent="false"
+            android:title="@string/addon_detail_shield_title"
+            android:summary="@string/addon_detail_shield_summary"
+            app:isPreferenceVisible="false"
+            app:singleLineTitle="false"
+            app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

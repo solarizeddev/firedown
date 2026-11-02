@@ -284,8 +284,6 @@
     <string name="settings_autofill_not_supported">此设备不支持自动填充。</string>
     <string name="settings_autofill_service_summary">Firedown 使用系统自动填充服务（Bitwarden、1Password、Proton Pass 等）。点击配置。</string>
     <string name="settings_autofill_service_title">密码与自动填充</string>
-    <string name="settings_block_cookie_notices_summary">隐藏网站上的 Cookie 同意横幅和弹窗</string>
-    <string name="settings_block_cookie_notices_title">拦截 Cookie 通知</string>
     <string name="settings_block_javascript_summary">页面加载速度可能更快，但也可能表现出意外</string>
     <string name="settings_block_javascript_title">拦阻 JavaScript</string>
     <string name="settings_block_location_summary">阻止网站请求你的位置</string>

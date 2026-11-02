@@ -36,7 +36,7 @@ expose the real media URL after the page's own JS runs (often on play). So:
 |---------------|--------------------------|------|
 | `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky, Telegram, Videee, Spotify, Deezer, Substack, Acast; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). |
 | `youtube/`    | `youtube@solarized.dev`  | YouTube (separate; uses `PoTokenGenerator` on the Java side). |
-| `ublock/`     | uBlock Origin            | Ad blocking. |
+| `addons/ublock-origin.xpi` | uBlock Origin (official) | Ad blocking. Not a built-in: installed as a user add-on (see "uBlock Origin — the OFFICIAL build"). |
 | `p2pshare/`   | `p2pshare@solarized.dev` | **Not capture** — the P2P direct-share WebRTC engine (see ""Send directly" — P2P share"). |
 | `icons/`, `search/`, `db/`, `error/` | — | Support. |
 
@@ -246,51 +246,105 @@ nativeApp names (globally and per-session, mirroring the youtube/PoToken
 multi-name pattern in `GeckoRuntimeHelper`). Java handles captures in
 `GeckoRuntimeHelper.handleExtractionMessage` / `GeckoInspectTask`.
 
-### The bundled uBlock — a STRIPPED upstream build plus a small patch set
+### uBlock Origin — the OFFICIAL build, installed as an add-on
 
-`ublock/` is the output of upstream's `make firefox` (currently **base
-1.73.0**, manifest version `1.73.12` — a LOCAL revision, bumped for the
-`ensureBuiltIn` version-cache trap like any extension change. **The local
-version MUST stay three digit-only segments** (`1.73.10` → `1.73.11` → …,
-like the old `1.71.12` on base 1.71.0): vapi-common flags the build a
-DEVBUILD when `/^\d+\.\d+\.\d+\D/` matches the version — any non-digit after
-the third numeric group, so a dotted 4th segment like `1.73.0.1` qualifies —
-and a devbuild loads `assets.dev.json`, which the stripped stable bundle
-does not ship, so **zero filter lists select** on a fresh profile; the smoke
-pins this), with the dashboard/
-settings/logger/picker UI, keyboard commands, and most locales removed, and a
-small Firedown patch set on top. The patch set is exactly: `js/firedown.js`
-(NEW — the `"ublock"` native-port bridge: ads/JS/media/fonts/cookie-notice
-toggles + per-page block tallies), `js/vapi-background.js` (native firewall/
-cookie state push on tab complete; null-safe title; browserAction removed),
-`js/tab.js` (shield state on tab activation), `js/contextmenu.js` +
-`js/document-blocked.js` + `document-blocked.html` (Firedown-branded blocked
-page, `img/ill_*.svg`), `js/start.js` (drop the stripped `commands.js`
-import), `background.html` (adds firedown.js), `manifest.json` (strip
-popup/commands/options_ui/`menus`; keep `strict_min_version` 79; add
-`geckoViewAddons`/`nativeMessaging`/`nativeMessagingFromContent`), and
-`_locales/` (trimmed to the app's 16 + hand-made minimal `pt`/`zh` carrying
-only the `docblocked*` strings). Everything else is stock upstream — keep it
-that way: to update, build the new tag, re-apply that list verbatim, and
-verify with **`node scripts/ublock-smoke.mjs`** (loads the real background
-module graph under a stubbed `browser`, and behaviour-tests the CNAME-uncloak
-decision table in the REAL `js/vapi-background-ext.js`). The DEVICE half of
-the bridge — the `ensureBuiltIn` registration, the `connectNative("ublock")`
-port transport, real webRequest blocking against the bundled lists, and the
-per-page/cookie toggles' Java→JS→Java round trips — is covered by the
-instrumented **`UblockBridgeLiveTest`**
-(`app/src/androidTest/.../geckoview/`; `CaptureLiveTest` follows the same
-pattern):
-`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.geckoview.UblockBridgeLiveTest`
-with a device attached (t5 needs network). The node smoke owns JS semantics;
-the live test owns transport — a toggle bug fails the former, a
-port/registration bug only the latter. History the smoke
-pins: the bundle long shipped a one-character local edit there —
-`cnameIgnoreList.test(cn) === false` — that INVERTED the ignore-list guard
-and silently disabled CNAME uncloaking (cloaked trackers rode first-party
-subdomains straight through); the file is stock now and must stay stock.
-Lazy `import()`s of stripped files (`benchmarks.js`, `static-dnr-filtering.js`
-in `messaging.js`) are dead devtools paths and fine to leave unresolved.
+Firedown ships the official, Mozilla-signed uBlock Origin
+(`assets/addons/ublock-origin.xpi`, the `uBlock0_<ver>.firefox.signed.xpi`
+of uBlock's GitHub release; 1.75.0 today) and installs it as an ORDINARY
+user add-on through `AddonManager`, not as a built-in. Until 1.2.x the app
+bundled a stripped, patched build (`assets/ublock/`, a `firedown.js`
+native-port bridge, `scripts/ublock-smoke.mjs`, `UblockBridgeLiveTest`):
+all of it is gone. What that buys: updates come from addons.mozilla.org
+like any add-on (no rebuild-and-repatch per uBlock release), the APK loses
+~5 MB, and uBlock's own popup and dashboard are the per-site and filter-list
+UI. What it costs, accepted: the app cannot talk to uBlock (native messaging
+is for privileged built-ins only), so the per-site switch, the cookie-notice
+toggle and the JS/media/font switches are uBlock's popup now, and site
+exceptions from the patched copy were not carried over.
+
+- **First run, silently** (`AddonManager.ensureUblock`, after `attach`'s
+  `list()`): the asset is copied to the cache and installed FROM_FILE with an
+  install context marked `bundled`; `onInstallPromptRequest` answers it
+  `PermissionPromptResponse(true, private=true, false)` with no prompt and no
+  snackbar (`mQuietInstalls`). It is Firedown's ad blocker, as the built-in
+  was, and it runs in private tabs from the start.
+- **The old built-in is replaced**: a uBlock that Gecko lists with
+  `isBuiltIn` is the patched copy of an older version; it is uninstalled
+  first (same id), then the official one installed. `GeckoRuntimeHelper` no
+  longer registers `assets/ublock/` and must never call
+  `uninstallOrphanedExtension` for this id (it would remove the user's
+  official copy on every boot).
+- **Removed means removed**: the user's Remove sets
+  `…addons.ublock.removed`; Firedown never reinstalls it by itself after
+  that, and doesn't push it back while another blocker is on. Two doors put
+  it back, both from the app's copy, offline: the shield sheet's "Turn on"
+  (`turnOnUblock`: reinstall, or enable, or allow in private tabs, whichever
+  it needs, one Gecko change at a time) and Settings → Add-ons' "Reinstall
+  uBlock Origin" row (uBlock is left out of Mozilla's list there, so there is
+  one door, not two). Either install clears the flag.
+- **Not refused any more**: `AddonPolicy.isBuiltInId` no longer lists
+  uBlock's id; a forged "uBlock" fails Gecko's signature check like any
+  forged add-on (`AddonsDeviceTest` t4).
+- **Its strict-block page** (`document-blocked.html`) arrives through
+  `tabs.update` on the blocked tab, which `AddonManager.onUpdateTab` allows
+  for an add-on's own pages (`AddonPolicy.mayLoadInTab`).
+
+### Blockers behind the shield — the shield mirrors the blocker's state
+
+The address bar's shield and its sheet read the ad blockers, whichever the
+user runs (sketch: `sketches/shield-blockers.html`).
+
+- **Which add-ons are blockers** (`AddonPolicy.blocksRequests` /
+  `isBlocker`): uBlock Origin always; any other add-on that has a toolbar
+  button and holds `webRequestBlocking` with access to all sites, or
+  `declarativeNetRequest` (which blocks without host access). Read from the
+  add-on's own permissions, so there is no list of blocker names to keep.
+  The few non-blockers with the same permissions are corrected by the
+  add-on page's "Show behind the shield" switch (stored only where it
+  differs from the permissions: `…addons.shield.show` / `.hide`).
+- **The rule** (`AddonPolicy.shieldState`): protection is on for a tab when
+  at least one blocker RUNS there (enabled, and allowed in private tabs for
+  a private tab) and none of those says it is off for the site. Only uBlock
+  says so: it titles its button per tab "uBlock Origin (23)" while it
+  filters and "uBlock Origin (off)" once the user turns it off for the site
+  (vapi-background.js `setIcon` → `setTitle`; the word is not translated).
+  An untitled tab reads as on, and the "(off)" uBlock shows on pages it does
+  not filter (about:, the home) is ignored for non-http(s) pages.
+  `BrowserFragment.refreshShield` applies it on every button change
+  (`getActionsVersion`), every location change and every tab switch, in
+  regular AND private tabs (the private toolbar used to show the full
+  shield always).
+- **The sheet** (`SecurityStateSheetDialogFragment`): the connection row;
+  then "N blocked on this page ›" followed by one row per blocker
+  (`item_blocker_row`, uBlock first: its name, "On for this site" / "Off for
+  this site" for uBlock, its own badge count, a tap opens its popup — where
+  uBlock's per-site switch lives); a blocker not allowed in a private tab
+  says so with "Allow"; with none running, "No ad blocker is on · Ads and
+  trackers load on this page · Turn on". More than one running adds one
+  quiet line (no warning colour: the user chose it). Rows are updated in
+  place, as in the ⋮ Add-ons sheet (counts change many times a page).
+- **The counts are blocker-neutral** (`webrequests/js/blocked-stats.js`):
+  the capture extension sees every request a blocker refuses —
+  onErrorOccurred `NS_ERROR_ABORT` for an extension's cancel, a classifier
+  `*_URI` error for Gecko's own blocking — and counts it once, whoever
+  refused it. The page tally of the tab on screen (count + hosts, reset on
+  its top-level commit, a refused main_frame not counted) is sent whenever it
+  changes; the lifetime figures are sent as DELTAS (blocked, by request
+  type, by host), regular tabs only — a request of unknown mode is treated
+  as private — and `GeckoUblockHelper.onBlockedTotals` adds them to what it
+  persisted under the patched uBlock's key names, so the user's lifetime
+  count carries on. One message kind, `listener: "blockedStats"`, over the
+  `"browser"` app; Java drops a page tally for a tab that is not the one on
+  screen. A redirect to a neutered resource is not counted (no error fires),
+  which uBlock's own number does count, so the two differ slightly. The
+  per-add-on number on a row is the add-on's own badge and is never summed.
+  Pinned by the smoke's `blocked-stats:` section.
+- Verify with `sh scripts/addons-harness/run.sh` (the blocker and shield
+  rules, uBlock's 1.75.0 manifest; mutants for each) and on a device
+  `AddonsDeviceTest` t1 (installed from the app's copy, private allowed,
+  behind the shield), t4 (forged uBlock refused), t8 (remove → Turn on →
+  off → Turn on, the shield following) and t9 (a loopback page whose ad
+  requests uBlock refuses: the lifetime figure and the page count move).
 
 ## Parser vs. generic catcher — the cardinal rule
 
@@ -4102,11 +4156,12 @@ before changing a flow. The rules, each easy to undo:
   quiet for 5 minutes, and at most 4 questions wait in the queue (the rest
   are answered "no").
 - **The built-ins can never be replaced.** `AddonPolicy.isBuiltInId`
-  (uBlock, `icons@mozac.org`, every `@solarized.dev` id) is refused at three
+  (`icons@mozac.org`, every `@solarized.dev` id) is refused at three
   points: the list, the file's manifest, and Gecko's install prompt (the one
   place a web install from AMO passes). `ensureBuiltIn` stays for built-ins
-  only. uBlock's toolbar badge stays the blocked count:
-  `GeckoRuntimeHelper.onBrowserAction` reads uBlock's action only.
+  only. uBlock Origin is NOT a built-in any more: it is a user add-on
+  Firedown installs from the copy in the app (see "uBlock Origin — the
+  OFFICIAL build").
 - **Every permission question reaches the user, and Gecko always gets an
   answer.** Install, update and optional-permission prompts queue in the
   manager (`getPrompt`), `BaseActivity` shows the head as
@@ -4212,7 +4267,8 @@ before changing a flow. The rules, each easy to undo:
   after two fixes its first runs found: the out-of-order notices above,
   and t1 listing Gecko's extensions before the built-ins finished
   registering (the test waits for uBlock now; the app does not depend on
-  that order). What no test drives: the screens and sheets themselves
+  that order). t1/t4/t8/t9 cover the official uBlock Origin (see its
+  section). What no test drives: the screens and sheets themselves
   (catalog, detail page, prompt, ⋮ Add-ons sheet, popup) and an .xpi
   link from a real page.
 
@@ -4289,7 +4345,7 @@ before changing a flow. The rules, each easy to undo:
     (network/pin problems — inconclusive, exit 0). Pinned ids override via
     `DM_ID`/`VIMEO_ID`/`APPLE_ID` env vars.
   - **`CaptureLiveTest`** (`app/src/androidTest/.../geckoview/`, the
-    UblockBridgeLiveTest pattern; device + network):
+    AddonsDeviceTest pattern; device + network):
     `./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.geckoview.CaptureLiveTest`
     — boots the real runtime + extensions, LOADS real pages in a real
     GeckoSession and asserts entities land in `BrowserDownloadRepository`:
@@ -6185,7 +6241,9 @@ hero), a "Today by request type" card of read-only `CountPreference` rows
 (title + a trailing count), a "Most blocked domains today" card rebuilt
 from the pushed top-10 and hidden under three rows, and a footnote naming
 the midnight reset and the estimate. All of it reads `GeckoUblockHelper`'s
-uBlock tallies live, exactly what the retired sheet read; the per-PAGE
+figures live — since the official uBlock Origin, the capture extension's
+blocker-neutral count (every request any blocker or Gecko's own tracker
+blocking refused; see "Blockers behind the shield"); the per-PAGE
 count stays on the security sheet, and Gecko's own ETP count stays on the
 Enhanced Tracking Protection screen, a separate measurement never shown
 beside this one. The home line is that screen's second door
@@ -6194,7 +6252,7 @@ beside this one. The home line is that screen's second door
 button. The rules from its 2026-10 pass (canvas "Blocked lists,
 unified"), each easy to undo:
 
-- **Labels say what is MEASURED.** firedown.js buckets a blocked request
+- **Labels say what is MEASURED.** blocked-stats.js (`bucketOf`) buckets a blocked request
   by its request TYPE (script / image, beacon or ping / frame / anything
   else), never by purpose, so the rows read Scripts · Images and beacons ·
   Frames · Other requests. They read "Ads", "Analytics & telemetry",
@@ -6222,10 +6280,12 @@ unified"), each easy to undo:
   on every ground incl. OLED and the incognito purple (measured in the
   class comment). The sheet was
   13sp monospace lines (~30dp) in one card with "×3" counts and nothing
-  for a single block. The domain is uBlock's own PSL answer
-  (`domainOf` in firedown.js, shipped beside every host in both lists);
-  there is no PSL on the Java side, and a host whose domain is missing or
-  doesn't split on a label boundary takes the domain style whole. The
+  for a single block. The domain was the patched uBlock's own PSL answer
+  (`domainOf` in its firedown.js); the capture extension's counter that
+  replaced it ships none, so today every host takes the domain style
+  whole (`HostLabel`'s fallback). There is no PSL on the Java side; a
+  host whose domain is missing or doesn't split on a label boundary takes
+  the domain style whole. The
   adapter re-shapes the bound rows on every list change
   (`PAYLOAD_SHAPE`): the list re-sorts by count as blocks land, so a row's
   first/last role moves without its content changing. No site icons on
@@ -6238,11 +6298,11 @@ unified"), each easy to undo:
   Settings domain group updates its rows in place (row i takes host i;
   rows are added or removed only when the length changes) instead of
   `removeAll()` + ten fresh rows per push.
-- **The shield marks a count; `ads_click` marks the switch.** Every count
-  surface wears `ic_shield_24` — the home line, the address bar, the
-  security sheet's count row, the Settings door, the drill-in's header —
-  and `ads_click_24` is left to the "Block ads and trackers" switch, the
-  one control. The Settings door and the drill-in header both wore
+- **The shield marks a count.** Every count surface wears `ic_shield_24`
+  — the home line, the address bar, the security sheet's count row, the
+  Settings door, the drill-in's header. (`ads_click_24` marked the security
+  sheet's "Block ads and trackers" switch, which went with the patched
+  uBlock: the blocker rows wear each add-on's own icon.) The Settings door and the drill-in header both wore
   ads_click. The drill-in's header is one line, the count itself
   (`blocked_ads_summary`, "23 requests blocked on this page"); it was a
   "Blocked ads" title over that line. With nothing blocked the header
@@ -11101,15 +11161,19 @@ default. (Same reasoning as the `SETTINGS_DISABLE_WASM` migration.) Rename the
 string resources to match (`settings_jit_enabled*` → `settings_jit_disabled*`)
 and update **all** locale files, not just English.
 
-### The security sheet — one switch (uBlock), ETP is GLOBAL, M3 cards as rows
+### The security sheet — blocker rows, ETP is GLOBAL, M3 cards as rows
 
 `SecurityStateSheetDialogFragment` (`fragment_dialog_security.xml`, the
-shield tap) is four rows and ONE switch: "Connection is secure ›" (first
-row under the identity header — it is the page's most important fact and
-drills into the certificate), "N blocked on this page ›" (uBlock's
-per-page tally → `BlockedAdsDetailDialogFragment`), the **"Block ads and
-trackers"** switch, and "Clear browsing data ›". Decisions, each a
-maintainer call after sketches on the design canvas:
+shield tap): "Connection is secure ›" (first row under the identity header
+— it is the page's most important fact and drills into the certificate),
+then "N blocked on this page ›" (the capture extension's blocker-neutral
+per-page tally → `BlockedAdsDetailDialogFragment`) grouped with ONE ROW PER
+AD BLOCKER add-on (uBlock Origin first; a tap opens its popup, where its
+per-site switch lives) or "No ad blocker is on · Turn on", and "Clear
+browsing data ›". The **"Block ads and trackers" switch is GONE** with the
+patched uBlock it talked to — see "Blockers behind the shield" for the
+rows, the shield rule and the count. Decisions, each a maintainer call
+after sketches on the design canvas:
 
 - **The per-site "Tracking protection" switch is GONE, with its whole
   exception machinery.** It flipped `GeckoSessionSettings.
@@ -11120,9 +11184,8 @@ maintainer call after sketches on the design canvas:
   entity's persisted `useTrackingProtection` flag and the toolbar's
   `mTrackingEnabled` half of the shield). Two switches on one sheet were
   two engines saying "trackers" for the same thing, and "break this site"
-  needed BOTH off. uBlock's per-host whitelist (`GeckoRuntimeHelper.setAds`
-  → firedown.js `toggleNetFilteringSwitch`) is the one per-site control
-  now, titled for what it does. Gecko's ETP stays ON at its global level in
+  needed BOTH off. The ad blocker's own per-site switch (uBlock's popup,
+  through its row) is the one per-site control now. Gecko's ETP stays ON at its global level in
   Settings → Privacy (default **Standard** — `settings_tracking.xml`
   `tracking.default` true, `Preferences.getEnhancedTrackingProtectionLevel`
   falls to it; this was verified, not changed), where cookie partitioning /
@@ -11156,8 +11219,8 @@ maintainer call after sketches on the design canvas:
   `TrackingFragment`, as Firefox's `stp`, which only its Strict feature set
   carries. Don't make regular tabs block loads in Standard again, don't
   turn the social blocker on outside Strict, and don't re-add a per-site
-  ETP switch: with loads unblocked in Standard, uBlock's whitelist really is
-  the per-site door.
+  ETP switch: with loads unblocked in Standard, the ad blocker's per-site
+  switch really is the per-site door.
 - **Migration leftovers that must stay:** the sessions file's `tracking_
   protection` key is tolerated in files BELOW v4 (its name lives only in the
   strict reader's `RETIRED_KEYS` map — not in `GeckoStateEntity.KEYS`, which
@@ -11177,20 +11240,18 @@ maintainer call after sketches on the design canvas:
   "Blocked on this page" drill-in feeds it `HostRow`s, in the Settings
   domain rows' anatomy — see the blocked-stats rules under Home; its
   category `Header` row type and `item_blocked_tracker_category_header`
-  are gone). If a per-page
-  "trackers" number is ever wanted again, it is uBlock's tally that
-  should carry it — one engine, one count — not a revived ETP delegate.
+  are gone). The per-page number is the capture extension's count of
+  refused requests (blocked-stats.js), which already includes Gecko's own
+  classifier blocks — one count, not a revived ETP delegate.
 - **Every row is a selectable `MaterialCardView`, grouped** — not a flat
   `LinearLayout` with a ripple (the old sheet, which read as a 2019 list
   with no touch surface). Rows sit on `colorSurfaceContainerLow` over the
   sheet's `surfaceContainerHigh`, 2dp apart, and a group's outer corners
   are 16dp with 4dp inner ones (`ShapeAppearanceOverlay.FireDown.
   SheetGroupTop/Bottom`, the Material 3 Expressive / Android-16-Settings
-  grouping), no dividers. The switch row's whole card toggles the switch
-  (`ads_card` click → `toggle()`), and the ViewModel bind is guarded by
-  `mBindingAdsSwitch` rather than `isPressed()` — a card tap is not a
-  press on the switch, so the old guard would have treated the user's own
-  toggle as a programmatic echo. The count is `onSurface`, not coral:
+  grouping), no dividers; the blocker rows are added and removed as
+  add-ons change, so the group's corners are recomputed in code
+  (`SheetGroups.applyCorners`). The count is `onSurface`, not coral:
   the brand coral is 2.3:1 on the light surface, the one number the
   sheet exists to show was its least readable text.
 - **The FRAME moved to stock Material 3 for EVERY sheet** (they share

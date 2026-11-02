@@ -694,6 +694,23 @@
     <!-- Security sheet summary row label, follows the count: "7 blocked
          on this page". -->
     <string name="security_stat_blocked_scope">blocked on this page</string>
+    <!-- The shield sheet's ad blocker rows (one per blocker add-on). -->
+    <string name="shield_blocker_on_site">On for this site</string>
+    <string name="shield_blocker_off_site">Off for this site</string>
+    <string name="shield_blocker_not_private">Doesn\'t run in private tabs</string>
+    <string name="shield_blocker_allow">Allow</string>
+    <string name="shield_no_blocker_title">No ad blocker is on</string>
+    <string name="shield_no_blocker_summary">Ads and trackers load on this page</string>
+    <string name="shield_turn_on">Turn on</string>
+    <string name="shield_installing">Installing…</string>
+    <plurals name="shield_blockers_many">
+        <item quantity="one">%d ad blocker is on.</item>
+        <item quantity="other">%d ad blockers are on. One is usually enough; more can break sites.</item>
+    </plurals>
+    <string name="addons_reinstall_ublock_title">Reinstall uBlock Origin</string>
+    <string name="addons_reinstall_ublock_summary">The ad blocker Firedown comes with. No download needed</string>
+    <string name="addon_detail_shield_title">Show behind the shield</string>
+    <string name="addon_detail_shield_summary">List it in the address bar\'s shield sheet and count it as an ad blocker</string>
     <string name="select_all">Select all</string>
     <string name="select_all_not">Deselect all</string>
     <string name="separator">·</string>
@@ -713,8 +730,6 @@
     <string name="settings_autofill_not_supported">Autofill is not available on this device.</string>
     <string name="settings_autofill_service_summary">Uses your system autofill service. Tap to configure.</string>
     <string name="settings_autofill_service_title">Passwords &amp; autofill</string>
-    <string name="settings_block_cookie_notices_summary">Hide cookie consent banners and pop-ups on websites</string>
-    <string name="settings_block_cookie_notices_title">Block cookie notices</string>
     <string name="settings_block_javascript_summary">Pages may load faster, but may also behave unexpectedly</string>
     <string name="settings_block_javascript_title">Block JavaScript</string>
     <string name="settings_block_location_summary">Prevent websites from asking for your location</string>
@@ -1035,15 +1050,15 @@
     <!-- Gecko Enhanced Tracking Protection count (persisted ETP database,
          unlocked by the GeckoView 153 bump). Shown as ONE quiet line at the
          top of the ETP settings screen — what the protection has done, above
-         the control that adjusts it. A SEPARATE measurement from uBlock's
-         filter-list stats, deliberately not shown beside them. The SAME
-         string also titles the home's blocked line with uBlock's lifetime
-         count (HomeFragment, canvas frame H2's wording): the words name no
-         engine, and the two counts never share a screen. -->
+         the control that adjusts it. A SEPARATE measurement from the
+         blocked-request stats, deliberately not shown beside them. The SAME
+         string also titles the home's blocked line with the lifetime
+         blocked-request count (HomeFragment, canvas frame H2's wording): the
+         words name no engine, and the two counts never share a screen. -->
     <string name="tracking_status_blocked">%1$s trackers blocked</string>
     <string name="tracking_status_since">Recording since %1$s</string>
     <!-- The stats row's summary and the screen's hero while the count is 0
-         — uBlock hasn't pushed its cumulative count yet, or the count is
+         — nothing refused yet since the count began, or the count is
          genuinely zero (fresh install, no browsing). Avoids a cosmetic
          "0 blocked" that would read as "protection is broken". -->
     <string name="trackers_info_idle">Protection active</string>
