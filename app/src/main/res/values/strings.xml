@@ -1447,4 +1447,6 @@
     <string name="addon_data_technical">technical and interaction data</string>
     <string name="addon_data_website_activity">website activity</string>
     <string name="addon_data_website_content">website content</string>
+    <string name="settings_reject_cookie_banners_title">Reject cookie banners</string>
+    <string name="settings_reject_cookie_banners_summary">Answers consent pop-ups with “reject” where possible and hides the rest</string>
 </resources>

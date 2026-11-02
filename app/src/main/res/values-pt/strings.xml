@@ -972,4 +972,6 @@
     <string name="tabs_close_all_action">Fechar todas</string>
     <string name="tab_crashed_again">Esta página continua travando</string>
     <string name="tab_crashed_reload">Recarregar</string>
+    <string name="settings_reject_cookie_banners_title">Recusar avisos de cookies</string>
+    <string name="settings_reject_cookie_banners_summary">Responde às janelas de consentimento com «Recusar» quando possível e oculta as restantes</string>
 </resources>

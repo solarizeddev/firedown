@@ -897,4 +897,6 @@
     <string name="tabs_close_all_action">Затваряне на всички</string>
     <string name="tab_crashed_again">Тази страница продължава да се срива</string>
     <string name="tab_crashed_reload">Презареждане</string>
+    <string name="settings_reject_cookie_banners_title">Отказване на банери за бисквитки</string>
+    <string name="settings_reject_cookie_banners_summary">Отговаря на прозорците за съгласие с „Отказ“, когато е възможно, и скрива останалите</string>
 </resources>

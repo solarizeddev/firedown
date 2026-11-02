@@ -423,6 +423,9 @@ public class GeckoRuntimeHelper {
         registerBuiltIn("resource://android/assets/youtube/", "youtube@solarized.dev", "youtube");
         registerBuiltIn("resource://android/assets/webrequests/", "downloader@solarized.dev", "browser");
         registerBuiltIn("resource://android/assets/icons/", "icons@mozac.org", "icons");
+        // Cookie banners: DuckDuckGo's autoconsent answers consent pop-ups
+        // with reject. Its switch arrives over the "consent" port (onConnect).
+        registerBuiltIn("resource://android/assets/consent/", "consent@solarized.dev", "consent");
         // P2P share engine — a bridge content script (content.js) that binds
         // to the hidden engine GeckoSession P2pShareController opens on the
         // loopback /engine page (the page-world WebRTC engine needs a real
@@ -930,6 +933,10 @@ public class GeckoRuntimeHelper {
 
             mPorts.put(name, port);
             port.setDelegate(new PortDelegate());
+            if ("consent".equals(name)) {
+                setRejectCookieBanners(mSharedPreferences.getBoolean(
+                        Preferences.SETTINGS_REJECT_COOKIE_BANNERS, Preferences.DEFAULT_REJECT_COOKIE_BANNERS));
+            }
         }
     }
 
@@ -1064,6 +1071,21 @@ public class GeckoRuntimeHelper {
         getGeckoRuntime()
                 .getStorageController()
                 .clearDataFromHost(host, StorageController.ClearFlags.PERMISSIONS);
+    }
+
+    /**
+     * Settings → Privacy → "Reject cookie banners", to the consent
+     * extension: frames that load from now on are answered (or not).
+     */
+    public void setRejectCookieBanners(boolean enabled) {
+        try {
+            JSONObject msg = new JSONObject();
+            msg.put("type", "config");
+            msg.put("enabled", enabled);
+            sendPortMessage("consent", msg);
+        } catch (JSONException e) {
+            Log.e(TAG, "setRejectCookieBanners error", e);
+        }
     }
 
     public void setCookieContext(String targetUrl, int id, boolean incognito) {

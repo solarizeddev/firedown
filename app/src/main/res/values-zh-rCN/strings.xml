@@ -1055,4 +1055,6 @@
     <string name="tabs_close_all_action">全部关闭</string>
     <string name="tab_crashed_again">此页面反复崩溃</string>
     <string name="tab_crashed_reload">重新加载</string>
+    <string name="settings_reject_cookie_banners_title">拒绝 Cookie 横幅</string>
+    <string name="settings_reject_cookie_banners_summary">尽可能以“拒绝”回应同意弹窗，并隐藏其余弹窗</string>
 </resources>

@@ -202,6 +202,15 @@
         <SwitchPreferenceCompat
             android:defaultValue="true"
             app:singleLineTitle="false"
+            android:key="com.solarized.firedown.preferences.consent.reject"
+            android:summary="@string/settings_reject_cookie_banners_summary"
+            android:title="@string/settings_reject_cookie_banners_title"
+            app:icon="@drawable/cookie_24" />
+
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            app:singleLineTitle="false"
             android:key="com.solarized.firedown.preferences.browser.block.location"
             android:summary="@string/settings_block_location_summary"
             android:title="@string/settings_block_location_title"

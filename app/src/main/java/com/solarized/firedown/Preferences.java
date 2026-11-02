@@ -772,6 +772,16 @@ public class Preferences {
     public static final String SETTINGS_TABS_ARCHIVE_BANNER_LAST_INTERVAL = "com.solarized.firedown.preferences.tabs.archive.banner.last.interval";
 
 
+    /**
+     * "Reject cookie banners": the consent extension (assets/consent,
+     * DuckDuckGo's autoconsent) answers consent pop-ups with reject and hides
+     * the ones with no reject. Default ON. It replaced the patched uBlock's
+     * cookie-notice list toggle, which hid banners (a different key: the
+     * meaning changed from hiding to answering).
+     */
+    public static final String SETTINGS_REJECT_COOKIE_BANNERS = "com.solarized.firedown.preferences.consent.reject";
+    public static final boolean DEFAULT_REJECT_COOKIE_BANNERS = true;
+
     public static final String DEFAULT_SEARCH_ENGINE = "DuckDuckGo";
 
     public static final String DEFAULT_SEARCH_AUTOCOMPLETE = "https://duckduckgo.com/ac/?q=%s&type=list";

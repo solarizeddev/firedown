@@ -872,4 +872,6 @@
     <string name="tabs_close_all_action">Sulge kõik</string>
     <string name="tab_crashed_again">See leht jookseb pidevalt kokku</string>
     <string name="tab_crashed_reload">Laadi uuesti</string>
+    <string name="settings_reject_cookie_banners_title">Keeldu küpsisebänneritest</string>
+    <string name="settings_reject_cookie_banners_summary">Vastab nõusolekuakendele võimaluse korral „Keeldu“ ja peidab ülejäänud</string>
 </resources>

@@ -37,6 +37,7 @@ expose the real media URL after the page's own JS runs (often on play). So:
 | `webrequests/`| `downloader@solarized.dev` | **ALL capture** — the former `parser@` extension was MERGED into this one. Two halves in one extension: (1) the per-site **parsers** (`js/parsers/` — one ES module per site: Twitter/X, Instagram, Threads, Facebook, Vimeo, Rumble, Bilibili.tv, Niconico, Kick, Twitch, Dailymotion, Apple Podcasts, News Over Audio, TikTok, Bluesky, Telegram, Videee, Spotify, Deezer, Substack, Acast; emits entries **with metadata** — title, author, thumbnail, duration, quality variants) plus the page-state bridge (`js/page-state-bridge.js`); (2) the **generic catch-all** (`js/requests.js` + `js/content-script.js` — any media URL seen on the wire, no rich metadata). |
 | `youtube/`    | `youtube@solarized.dev`  | YouTube (separate; uses `PoTokenGenerator` on the Java side). |
 | `addons/ublock-origin.xpi` | uBlock Origin (official) | Ad blocking. Not a built-in: installed as a user add-on (see "uBlock Origin — the OFFICIAL build"). |
+| `consent/`    | `consent@solarized.dev`  | **Not capture** — cookie banners: DuckDuckGo's autoconsent answers consent pop-ups with reject (see "Cookie banners — DuckDuckGo's autoconsent"). |
 | `p2pshare/`   | `p2pshare@solarized.dev` | **Not capture** — the P2P direct-share WebRTC engine (see ""Send directly" — P2P share"). |
 | `icons/`, `search/`, `db/`, `error/` | — | Support. |
 
@@ -258,9 +259,10 @@ all of it is gone. What that buys: updates come from addons.mozilla.org
 like any add-on (no rebuild-and-repatch per uBlock release), the APK loses
 ~5 MB, and uBlock's own popup and dashboard are the per-site and filter-list
 UI. What it costs, accepted: the app cannot talk to uBlock (native messaging
-is for privileged built-ins only), so the per-site switch, the cookie-notice
-toggle and the JS/media/font switches are uBlock's popup now, and site
-exceptions from the patched copy were not carried over.
+is for privileged built-ins only), so the per-site switch and the
+JS/media/font switches are uBlock's popup now, the cookie-notice toggle
+became the consent built-in's "Reject cookie banners" (next sections), and
+site exceptions from the patched copy were not carried over.
 
 - **First run, silently** (`AddonManager.ensureUblock`, after `attach`'s
   `list()`): the asset is copied to the cache and installed FROM_FILE with an
@@ -369,6 +371,53 @@ user runs (sketch: `sketches/shield-blockers.html`).
   behind the shield), t4 (forged uBlock refused), t8 (remove → Turn on →
   off → Turn on, the shield following) and t9 (a loopback page whose ad
   requests uBlock refuses: the lifetime figure and the page count move).
+
+### Cookie banners — DuckDuckGo's autoconsent (`consent@solarized.dev`)
+
+Settings → Privacy → **"Reject cookie banners"** (default ON,
+`SETTINGS_REJECT_COOKIE_BANNERS`) answers consent pop-ups with "reject" and
+hides the ones that offer none, with DuckDuckGo's autoconsent (MPL-2.0, the
+library Ghostery and DuckDuckGo's browsers use). It replaced the patched
+uBlock's cookie-notice list, which only HID banners; Firefox's own cookie
+banner handling no longer exists (removed from Gecko), and the official
+uBlock cannot be configured from outside.
+
+- **Its own built-in extension** (`assets/consent/`), not part of the
+  capture extension: autoconsent's content script sends `type: "init"` /
+  `"eval"` messages that the capture extension's message router would also
+  see. Three library files are the npm package's VERBATIM
+  (`js/autoconsent-content.js` = `dist/addon-firefox/content.bundle.js`,
+  `js/autoconsent.esm.js`, `rules/compact-rules.json`, version in
+  `AUTOCONSENT_VERSION`), refreshed with `sh scripts/update-autoconsent.sh
+  [version]` — then bump the manifest `version` (the `ensureBuiltIn` trap).
+  The rules change almost daily upstream; once per release is enough.
+- **`js/background.js` is ours**, the background half the package's own
+  add-on has: `init` → the compact rules that apply to the frame's URL
+  (`filterCompactRules`, the frame set for a sub-frame) and an opt-out
+  config (prehide, cosmetic and generated rules on, logs only in debug
+  builds); `eval` → the library's own snippet (`evalSnippets[id]`, never
+  code from the message) through `scripting.executeScript({world: "MAIN"})`
+  in that frame, answered with its result (false when unknown or thrown).
+  Only http(s) frames are answered; the listener never answers
+  `sendMessage` itself.
+- **The switch arrives over the `"consent"` native port**: Java pushes
+  `{type: "config", enabled}` when the port connects
+  (`GeckoRuntimeHelper.onConnect`) and on every change
+  (`setRejectCookieBanners`, from `SettingsFragment`, which then reloads the
+  tab on screen). Until it has arrived a frame waits (up to 5 s), and a
+  frame that is not answered does nothing — so the switch off means
+  autoconsent never acts, not "acts and then stops".
+- **No network, nothing stored**: the rules ship in the APK; private tabs
+  are handled like regular ones.
+- Verify with `node scripts/consent-smoke.mjs` (the real background under a
+  stubbed `browser`: the wait for the switch, on/off, the rules per frame,
+  the eval path; mutants — accept instead of reject, no eval, the switch
+  ignored — each fail it) and `node scripts/consent-harness.mjs` (the
+  package's real content script in Chromium against a CookieYes banner and
+  a Cookie Law Info bar, the second rejected through the page-world API;
+  switch off; a page with no banner left alone). On a device:
+  `AddonsDeviceTest` t10 (both banners in GeckoView, which is what checks
+  Firefox's content-script world and the MAIN-world eval).
 
 ## Parser vs. generic catcher — the cardinal rule
 

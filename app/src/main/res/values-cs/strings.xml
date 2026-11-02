@@ -963,4 +963,6 @@
     <string name="tabs_close_all_action">Zavřít vše</string>
     <string name="tab_crashed_again">Tato stránka stále padá</string>
     <string name="tab_crashed_reload">Načíst znovu</string>
+    <string name="settings_reject_cookie_banners_title">Odmítat cookie lišty</string>
+    <string name="settings_reject_cookie_banners_summary">Na okna se souhlasem odpoví „Odmítnout“, kde to jde, a ostatní skryje</string>
 </resources>
