@@ -1,5 +1,7 @@
-## [1.2.6] - 2026-10-29
+## [1.2.6] - 2026-11-05
 
+- Updated the GeckoView browser engine to 159.0.20261105170000
+- A page that needs DRM says so, and DRM can be turned on from the shield
 - Add-ons: install Firefox extensions from Mozilla's list for Android, its add-on site, or a signed file
 - Add-ons run in private tabs only if you allow them, and update by themselves
 - Ad blocking now uses the official uBlock Origin, updated by Mozilla's add-on site
@@ -28,6 +30,7 @@
 - Sites asking for your location get a refusal instead of waiting forever
 - Back in the Media tools list returns to the menu on Android 16
 - Back from Storage returns to Settings when opened from there
+- Indonesian and Vietnamese translations, and every other language completed
 
 ## [1.2.5] - 2026-10-28
 
