@@ -2779,8 +2779,11 @@ public class BrowserFragment extends BaseBrowserFragment
         if (mGeckoView == null || geckoState.isIncognito() != mIsIncognitoThemed) {
             return;
         }
+        // Only the tab whose session is on screen. A closed session can be
+        // attached for another reason (a tab left on "keeps crashing"), and a
+        // background tab closing itself must not reopen that one.
         GeckoSession attached = mGeckoView.getSession();
-        if (attached == null || attached.isOpen()) {
+        if (attached == null || attached != geckoState.getGeckoSession() || attached.isOpen()) {
             return;
         }
         mGeckoView.releaseSession();
