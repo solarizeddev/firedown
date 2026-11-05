@@ -871,6 +871,7 @@
     <string name="drm_row_summary">Halaman ini memerlukannya untuk memutar video. Video DRM tidak dapat diunduh.</string>
     <string name="drm_tip_title">DRM nonaktif untuk halaman ini</string>
     <string name="drm_tip_body">Ketuk perisai untuk mengaktifkannya.</string>
+    <string name="media_capture_refused">Firedown tidak membagikan kamera atau mikrofon Anda dengan situs web</string>
     <string name="settings_enhanced_tracking_protection_custom">Khusus</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Perlindungan standar plus penghapusan parameter kueri pelacakan dari URL.</string>
     <string name="settings_gecko_version">GeckoView</string>

@@ -1197,6 +1197,7 @@
     <string name="drm_row_summary">Tato stránka ho potřebuje k přehrání videa. Videa s DRM nelze stáhnout.</string>
     <string name="drm_tip_title">DRM je pro tuto stránku vypnuté</string>
     <string name="drm_tip_body">Klepnutím na štít ho zapnete.</string>
+    <string name="media_capture_refused">Firedown nesdílí s webovými stránkami vaši kameru ani mikrofon</string>
     <string name="settings_enhanced_tracking_protection_custom">Vlastní</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Standardní ochrana a navíc odstraňování sledovacích parametrů z adres URL.</string>
     <string name="settings_gecko_version">GeckoView</string>

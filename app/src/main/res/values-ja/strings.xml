@@ -537,6 +537,7 @@
     <string name="drm_row_summary">このページで動画を再生するには DRM が必要です。DRM 動画はダウンロードできません。</string>
     <string name="drm_tip_title">このページでは DRM がオフです</string>
     <string name="drm_tip_body">盾のアイコンをタップするとオンにできます。</string>
+    <string name="media_capture_refused">Firedown はカメラやマイクをウェブサイトと共有しません</string>
     <string name="settings_wasm_disabled">WebAssemblyを無効にする</string>
     <string name="settings_wasm_disabled_summary">サイトがコンパイル済みのWASMモジュールを実行できないようにします。攻撃対象領域を減らせますが、一部のアプリが動作しなくなります</string>
     <string name="settings_https_only_title">HTTPSのみモード</string>

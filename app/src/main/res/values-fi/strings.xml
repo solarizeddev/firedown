@@ -1167,6 +1167,7 @@
     <string name="drm_row_summary">Tämä sivu tarvitsee sitä videon toistamiseen. DRM-videoita ei voi ladata.</string>
     <string name="drm_tip_title">DRM on pois käytöstä tällä sivulla</string>
     <string name="drm_tip_body">Ota se käyttöön napauttamalla kilpeä.</string>
+    <string name="media_capture_refused">Firedown ei jaa kameraasi tai mikrofoniasi verkkosivustoille</string>
     <string name="settings_enhanced_tracking_protection_custom">Mukautettu</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Vakiosuojaus sekä seurantaan käytettyjen kyselyparametrien poistaminen URL-osoitteista.</string>
     <string name="settings_gecko_version">GeckoView</string>

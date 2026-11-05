@@ -1156,6 +1156,7 @@
     <string name="drm_row_summary">इस पेज को वीडियो चलाने के लिए इसकी ज़रूरत है। DRM वीडियो डाउनलोड नहीं किए जा सकते।</string>
     <string name="drm_tip_title">इस पेज के लिए DRM बंद है</string>
     <string name="drm_tip_body">इसे चालू करने के लिए शील्ड पर टैप करें।</string>
+    <string name="media_capture_refused">Firedown आपका कैमरा या माइक्रोफ़ोन वेबसाइटों के साथ साझा नहीं करता</string>
     <string name="settings_enhanced_tracking_protection_custom">कस्टम</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">मानक सुरक्षा, साथ में URL से ट्रैकिंग क्वेरी पैरामीटर हटाना।</string>
     <string name="settings_gecko_version">GeckoView</string>

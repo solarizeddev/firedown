@@ -20,7 +20,7 @@ public interface GeckoObserverInvoker {
 
     GeckoObserverInvoker DYNAMIC_TOOLBAR = (geckoObserver, objects) -> geckoObserver.onShowDynamicToolbar();
 
-    GeckoObserverInvoker VIEWPORT_FIT_CHANGE = (geckoObserver, objects) -> geckoObserver.onMetaViewportFitChange((String) objects[0]);
+    GeckoObserverInvoker VIEWPORT_FIT_CHANGE = (geckoObserver, objects) -> geckoObserver.onMetaViewportFitChange((GeckoState) objects[0]);
 
     GeckoObserverInvoker KILL_SESSION = (geckoObserver, objects) -> geckoObserver.onKill((GeckoState) objects[0]);
 
@@ -56,6 +56,7 @@ public interface GeckoObserverInvoker {
 
     GeckoObserverInvoker PROMPT_CHOICE = (geckoObserver, objects) -> geckoObserver.onPromptChoice((GeckoState) objects[0], (GeckoSession.PromptDelegate.ChoicePrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
 
+    GeckoObserverInvoker PROMPT_SHARE = (geckoObserver, objects) -> geckoObserver.onPromptShare((GeckoState) objects[0], (GeckoSession.PromptDelegate.SharePrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
     GeckoObserverInvoker PROMPT_ALERT = (geckoObserver, objects) -> geckoObserver.onPromptAlert((GeckoState) objects[0], (GeckoSession.PromptDelegate.AlertPrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
 
     GeckoObserverInvoker PROMPT_BUTTON = (geckoObserver, objects) -> geckoObserver.onPromptButton((GeckoState) objects[0], (GeckoSession.PromptDelegate.ButtonPrompt) objects[1], (GeckoResult<GeckoSession.PromptDelegate.PromptResponse>) objects[2]);
@@ -94,4 +95,5 @@ public interface GeckoObserverInvoker {
     GeckoObserverInvoker TRANSLATION_OFFER = (geckoObserver, objects) -> geckoObserver.onTranslationOffer((GeckoState) objects[0]);
     GeckoObserverInvoker TRANSLATION_STATE = (geckoObserver, objects) -> geckoObserver.onTranslationStateChange((GeckoState) objects[0], (TranslationsController.SessionTranslation.TranslationState) objects[1]);
     GeckoObserverInvoker DRM_DISABLED = (geckoObserver, objects) -> geckoObserver.onDrmDisabled((GeckoState) objects[0]);
+    GeckoObserverInvoker MEDIA_REFUSED = (geckoObserver, objects) -> geckoObserver.onMediaRefused((GeckoState) objects[0]);
 }

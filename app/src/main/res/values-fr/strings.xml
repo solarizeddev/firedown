@@ -543,6 +543,7 @@
     <string name="drm_row_summary">Cette page en a besoin pour lire la vidéo. Les vidéos avec DRM ne peuvent pas être téléchargées.</string>
     <string name="drm_tip_title">Les DRM sont désactivés pour cette page</string>
     <string name="drm_tip_body">Appuyez sur le bouclier pour les activer.</string>
+    <string name="media_capture_refused">Firedown ne partage pas votre caméra ni votre micro avec les sites web</string>
     <string name="settings_wasm_disabled">Désactiver WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Empêche les sites d\'exécuter des modules WASM compilés. Réduit la surface d\'attaque mais casse certaines applis</string>
     <string name="settings_https_only_title">Mode HTTPS uniquement</string>

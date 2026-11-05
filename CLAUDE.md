@@ -8891,6 +8891,57 @@ The API stays (a page gets a plain "denied", as when a user refuses);
 `geo.enabled = false` would remove `navigator.geolocation`, which some
 pages call without checking. Don't add the location permission back.
 
+**Delegate coverage (2026-11 audit against GeckoView's api.txt and Firefox's
+GeckoEngineSession, independently re-checked).** What each previously
+missing callback does now, and what stays off on purpose:
+- **A page's new window gets a real window** (`NavigationDelegate.
+  onNewSession`). It answered null, so `window.open()` returned null and
+  the app loaded the address in an unrelated tab: no `window.opener`, so
+  login and payment popups that `postMessage` back never finished, a form
+  posted into a new tab lost its body, `window.open('')` + `document.write`
+  showed nothing. Now an UNOPENED session goes back to Gecko, which opens
+  it as the page's window. The tab is listed in the background at once (the
+  window's first callbacks must find it), and in the add-on `tabs.create`
+  order — the result completes in a posted task, the tab is made current
+  and shown in the task after GeckoView's open — because the browser opens
+  any session it finds unopened and two opens crash. A window Gecko did not
+  take is removed; one from a tab not on screen stays in the background.
+  `BrowserFragment.onNew` only puts it on screen, mode-filtered.
+- **A dialog the page withdraws closes** (`PromptInstanceDelegate.
+  onPromptDismiss`, set in `promptResultOrDismiss` on the prompt whose
+  dialog is up): navigating away, or a `<select>` removed, left the dialog
+  on screen answering nothing. `onPromptUpdate` (a `<select>`'s options
+  changing while open) is still not handled.
+- **Camera and microphone are refused, and said so**: `onMediaPermissionRequest`
+  rejects, and so does `onAndroidPermissionsRequest` for CAMERA/RECORD_AUDIO
+  (Gecko asks those first to list devices) even though the app holds the
+  camera for its code scanner. The tab on screen gets "Firedown doesn't
+  share your camera or microphone with websites" once per page load
+  (`claimMediaNotice`, reset on page start). Supporting calls would need a
+  dialog, the microphone permission, a recording indicator
+  (`MediaDelegate.onRecordingStatusChanged`) and a background service type;
+  declined by the maintainer, like location.
+- **viewport-fit is per tab** (`GeckoState.getViewportFit`): applied only
+  for the tab on screen and re-applied on every switch (`applyOpenUriUi`).
+  It changes the Activity's window, and a background tab used to move the
+  visible tab under the notch.
+- **`screen.orientation.lock()` works** (`OrientationController` delegate,
+  registered by the browser while resumed): the Activity takes the
+  orientation, unlock sets UNSPECIFIED (GeckoView's guidance, Firefox's
+  `ScreenOrientationFeature`). Android 16+ ignores locks on screens over
+  600dp and in multi-window; the page hears "not supported" there.
+- **navigator.share() opens Android's share sheet** (`onSharePrompt`):
+  text and link once each, the title as subject; SUCCESS once the sheet
+  opens (Android does not report the pick), FAILURE when it cannot, ABORT
+  for a tab not on screen.
+- **Off on purpose**: web notifications (`PERMISSION_DESKTOP_NOTIFICATION`
+  denied, no `WebNotificationDelegate` / `ServiceWorkerDelegate` / push),
+  printing (no `PrintDelegate`; "Save snapshot" keeps pages), client
+  certificates (`onRequestCertificate`), the blocked-popup and
+  frame-redirect prompts (Gecko blocks them, no "Allow" yet), app links
+  inside iframes (`onSubframeLoadRequest` allows; nothing happens).
+  `onSlowScript` stays default (Gecko stops the script, as in Firefox).
+
 #### Long-press context menu — glyphs are index-paired arrays, image rows get a thumbnail
 
 `BrowserContentDialogFragment` zips `context_link`/`context_image` (the

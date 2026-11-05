@@ -906,6 +906,7 @@
     <string name="drm_row_summary">Trang này cần DRM để phát video. Không thể tải xuống video có DRM.</string>
     <string name="drm_tip_title">DRM đang tắt cho trang này</string>
     <string name="drm_tip_body">Nhấn vào biểu tượng khiên để bật.</string>
+    <string name="media_capture_refused">Firedown không chia sẻ camera hoặc micrô của bạn với trang web</string>
     <string name="settings_enhanced_tracking_protection_custom">Tùy chỉnh</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Bảo vệ tiêu chuẩn cùng với loại bỏ tham số truy vấn theo dõi khỏi URL.</string>
     <string name="settings_gecko_version">GeckoView</string>

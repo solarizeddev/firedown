@@ -363,6 +363,7 @@
     <string name="drm_row_summary">Этой странице он нужен для воспроизведения видео. Видео с DRM нельзя скачать.</string>
     <string name="drm_tip_title">DRM выключен для этой страницы</string>
     <string name="drm_tip_body">Нажмите на щит, чтобы включить его.</string>
+    <string name="media_capture_refused">Firedown не даёт сайтам доступ к вашей камере и микрофону</string>
     <string name="settings_wasm_disabled">Отключить WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Запрещает сайтам выполнять скомпилированные модули WASM. Уменьшает поверхность атаки, но нарушает работу некоторых приложений</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Если что-то не работает на этом сайте, попробуйте её отключить.</string>

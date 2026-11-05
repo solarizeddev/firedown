@@ -315,6 +315,7 @@
     <string name="drm_row_summary">Esta página precisa dele para reproduzir vídeo. Vídeos com DRM não podem ser baixados.</string>
     <string name="drm_tip_title">DRM está desativado para esta página</string>
     <string name="drm_tip_body">Toque no escudo para ativá-lo.</string>
+    <string name="media_capture_refused">O Firedown não compartilha sua câmera nem seu microfone com sites</string>
     <string name="settings_wasm_disabled">Desativar WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Impede que os sites executem módulos WASM compilados. Reduz a superfície de ataque, mas quebra alguns aplicativos</string>
     <string name="rename">Renomear</string>
