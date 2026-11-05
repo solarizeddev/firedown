@@ -353,6 +353,7 @@
     <string name="drm_row_summary">Bu sayfanın video oynatmak için buna ihtiyacı var. DRM\'li videolar indirilemez.</string>
     <string name="drm_tip_title">Bu sayfa için DRM kapalı</string>
     <string name="drm_tip_body">Açmak için kalkana dokunun.</string>
+    <string name="media_capture_refused">Firedown kameranızı ve mikrofonunuzu web siteleriyle paylaşmaz</string>
     <string name="settings_wasm_disabled">WebAssembly\'yi devre dışı bırak</string>
     <string name="settings_wasm_disabled_summary">Sitelerin derlenmiş WASM modüllerini çalıştırmasını engeller. Saldırı yüzeyini azaltır ancak bazı uygulamaları bozar</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Site bozuk görünüyorsa kapatmayı deneyin.</string>

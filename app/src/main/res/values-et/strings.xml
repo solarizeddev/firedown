@@ -1147,6 +1147,7 @@
     <string name="drm_row_summary">See leht vajab seda video esitamiseks. DRM-videoid ei saa alla laadida.</string>
     <string name="drm_tip_title">DRM on selle lehe jaoks väljas</string>
     <string name="drm_tip_body">Puuduta kilpi, et see sisse lülitada.</string>
+    <string name="media_capture_refused">Firedown ei jaga sinu kaamerat ega mikrofoni veebisaitidega</string>
     <string name="settings_enhanced_tracking_protection_custom">Kohandatud</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Standardne kaitse ja lisaks jälitavate päringuparameetrite eemaldamine URL-idest.</string>
     <string name="settings_gecko_version">GeckoView</string>

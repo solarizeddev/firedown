@@ -1,5 +1,6 @@
 package com.solarized.firedown.geckoview;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
@@ -11,6 +12,8 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.OpenableColumns;
 import android.text.TextUtils;
 import android.util.Log;
@@ -316,6 +319,9 @@ public class GeckoComponents {
         }
     }
 
+    /** Main-looper tasks that must run after GeckoView's own (see onNewSession). */
+    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
+
     public final class PromptDelegate implements GeckoSession.PromptDelegate {
 
 
@@ -335,6 +341,33 @@ public class GeckoComponents {
             return promptResultOrDismiss(geckoState, prompt, res);
         }
 
+
+        /**
+         * navigator.share(): the system share sheet with the page's title,
+         * text and link. GeckoView's default refused it, so a site's Share
+         * button did nothing. Answered SUCCESS once the sheet opens (Android
+         * does not say whether a target was then picked), FAILURE when it
+         * could not open, ABORT for a tab not on screen.
+         */
+        @Override
+        public GeckoResult<PromptResponse> onSharePrompt(
+                @NonNull final GeckoSession session, @NonNull final SharePrompt prompt) {
+            final GeckoState geckoState = findGeckoState(session);
+
+            if (geckoState == null || !isCurrentGeckoState(geckoState))
+                return GeckoResult.fromValue(prompt.confirm(SharePrompt.Result.ABORT));
+
+            final GeckoResult<PromptResponse> res = new GeckoResult<>();
+
+            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.PROMPT_SHARE, geckoState, prompt, res);
+
+            // No browser on screen took it (another screen in front, the
+            // other mode): the page hears a failure, not silence.
+            if (!prompt.isComplete()) {
+                return GeckoResult.fromValue(prompt.confirm(SharePrompt.Result.FAILURE));
+            }
+            return res;
+        }
 
         @Override
         public GeckoResult<PromptResponse> onBeforeUnloadPrompt(
@@ -627,7 +660,22 @@ public class GeckoComponents {
          */
         private GeckoResult<PromptResponse> promptResultOrDismiss(
                 GeckoState geckoState, BasePrompt prompt, GeckoResult<PromptResponse> res) {
-            if (prompt.isComplete() || geckoState.isPromptDisplaying()) {
+            if (prompt.isComplete()) {
+                return res;
+            }
+            if (geckoState.isPromptDisplaying()) {
+                // Not answered and a dialog is up: it is this prompt's (a
+                // tab shows one dialog at a time, and a prompt that could not
+                // show was answered at the manager's gate). The page can
+                // withdraw it itself (it navigated away, the <select> went):
+                // close the dialog with it, or it stays on screen answering
+                // nothing. Its dismiss listener completes the prompt.
+                prompt.setDelegate(new PromptInstanceDelegate() {
+                    @Override
+                    public void onPromptDismiss(@NonNull BasePrompt withdrawn) {
+                        geckoState.dismissActivePrompt();
+                    }
+                });
                 return res;
             }
             Log.d(TAG, "prompt not consumed by any observer — dismissing");
@@ -1023,7 +1071,14 @@ public class GeckoComponents {
             if(geckoState == null)
                 return;
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.VIEWPORT_FIT_CHANGE, viewportFit);
+            // Kept on the tab and applied only for the tab on screen: the
+            // value changes the Activity's window, and a page loading in
+            // another tab used to move the visible tab under the notch. The
+            // browser re-applies the tab's own value on every switch.
+            geckoState.setViewportFit(viewportFit);
+            if (isCurrentGeckoState(geckoState)) {
+                mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.VIEWPORT_FIT_CHANGE, geckoState);
+            }
         }
 
         @Override
@@ -1132,6 +1187,7 @@ public class GeckoComponents {
             // a page navigated to from a translated one.
             geckoState.setTranslationState(null);
             geckoState.resetDrmNotice();
+            geckoState.resetMediaNotice();
 
             // Per-tab load truth, ungated — the foreground-gated START observer
             // below can't be re-derived later, but this can (openSession reads
@@ -1534,6 +1590,15 @@ public class GeckoComponents {
             // for its location waited for good instead of getting an error.
             if (permissions != null) {
                 for (String permission : permissions) {
+                    // Gecko asks for these before a page's getUserMedia, to
+                    // list its devices. Refused even when the app holds the
+                    // camera for its own code scanner: websites never get it.
+                    if (Manifest.permission.CAMERA.equals(permission)
+                            || Manifest.permission.RECORD_AUDIO.equals(permission)) {
+                        callback.reject();
+                        noticeMediaRefused(session);
+                        return;
+                    }
                     if (ContextCompat.checkSelfPermission(mContext, permission)
                             != PackageManager.PERMISSION_GRANTED) {
                         if (BuildConfig.DEBUG) {
@@ -1545,6 +1610,33 @@ public class GeckoComponents {
                 }
             }
             callback.grant();
+        }
+
+        /**
+         * A page asked for the camera or microphone (getUserMedia). Firedown
+         * never shares them with websites; the page gets NotAllowedError, as
+         * when a user refuses. GeckoView's default refused too, but silently,
+         * so a call site told the user to "check the browser settings" for a
+         * setting that does not exist.
+         */
+        @Override
+        public void onMediaPermissionRequest(@NonNull final GeckoSession session, @NonNull final String uri,
+                                             @Nullable final MediaSource[] video,
+                                             @Nullable final MediaSource[] audio,
+                                             @NonNull final MediaCallback callback) {
+            callback.reject();
+            noticeMediaRefused(session);
+        }
+
+        /** Once per page load, and only for the tab on screen: a background tab is refused quietly. */
+        private void noticeMediaRefused(@NonNull GeckoSession session) {
+            GeckoState geckoState = findGeckoState(session);
+            if (geckoState == null || !isCurrentGeckoState(geckoState)) {
+                return;
+            }
+            if (geckoState.claimMediaNotice()) {
+                mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.MEDIA_REFUSED, geckoState);
+            }
         }
 
         @Override
@@ -1923,11 +2015,57 @@ public class GeckoComponents {
                 geckoStateEntity.setIncognito(true);
             }
 
-            GeckoState geckoState = new GeckoState(geckoStateEntity);
+            final GeckoState geckoState = new GeckoState(geckoStateEntity);
+            final boolean incognito = geckoStateEntity.isIncognito();
 
-            mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.NEW_SESSION, geckoState, uri);
+            // Hand Gecko an UNOPENED session: it opens it as the page's new
+            // window, so window.opener, postMessage back to the opener (login
+            // and payment popups), a form posted into a new tab and
+            // window.open('') + document.write all work. Answering null made
+            // window.open() return null and the address loaded in an
+            // unrelated tab instead.
+            final GeckoSession newSession = geckoState.getOrCreateGeckoSession(
+                    mGeckoRuntimeHelper.blocksTrackingContent(incognito));
+            connectSession(newSession);
+            // Listed now, in the background, so the window's first callbacks
+            // find their tab; made current and shown once Gecko opened it.
+            if (incognito) {
+                mIncognitoStateRepository.setGeckoState(geckoState, false);
+            } else {
+                mGeckoStateDataRepository.setGeckoState(geckoState, false);
+            }
+            final boolean show = isCurrentGeckoState(parentState);
 
-            return GeckoResult.fromValue(null);
+            // Order matters (the add-on tabs.create pattern): GeckoView opens
+            // the session in a callback it queues on the main looper when the
+            // result completes, and the browser opens any session it finds
+            // unopened, so two opens would crash. The result completes in a
+            // posted task and the tab is shown in the task after GeckoView's.
+            final GeckoResult<GeckoSession> result = new GeckoResult<>();
+            mMainHandler.post(() -> {
+                result.complete(newSession);
+                mMainHandler.post(() -> {
+                    if (!newSession.isOpen()) {
+                        // Gecko did not take it (the opener went away).
+                        if (incognito) {
+                            mIncognitoStateRepository.closeGeckoState(geckoState);
+                        } else {
+                            mGeckoStateDataRepository.closeGeckoState(geckoState);
+                        }
+                        return;
+                    }
+                    if (!show) {
+                        return;
+                    }
+                    if (incognito) {
+                        mIncognitoStateRepository.setGeckoState(geckoState, true);
+                    } else {
+                        mGeckoStateDataRepository.setGeckoState(geckoState, true);
+                    }
+                    mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.NEW_SESSION, geckoState, uri);
+                });
+            });
+            return result;
         }
 
 

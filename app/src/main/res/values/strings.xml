@@ -904,6 +904,8 @@
     <string name="drm_row_summary">This page needs it to play video. DRM videos can\'t be downloaded.</string>
     <string name="drm_tip_title">DRM is off for this page</string>
     <string name="drm_tip_body">Tap the shield to turn it on.</string>
+    <!-- A page asked for the camera or microphone; Firedown never shares them with websites. -->
+    <string name="media_capture_refused">Firedown doesn\'t share your camera or microphone with websites</string>
     <string name="settings_wasm_disabled">Disable WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Blocks compiled WASM modules. Breaks some sites</string>
     <string name="settings_https_only_title">HTTPS-only mode</string>

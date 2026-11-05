@@ -2,6 +2,7 @@ package com.solarized.firedown.phone.fragments;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -81,6 +82,7 @@ import com.solarized.firedown.geckoview.NestedGeckoView;
 import com.solarized.firedown.geckoview.NestedGeckoViewBehavior;
 import com.solarized.firedown.geckoview.TranslationLanguageSettings;
 import com.solarized.firedown.geckoview.TranslationLanguages;
+import com.solarized.firedown.geckoview.prompt.GeckoPromptManager;
 import com.solarized.firedown.geckoview.media.GeckoMediaPlaybackService;
 import com.solarized.firedown.geckoview.media.GeckoMetaData;
 import com.solarized.firedown.geckoview.toolbar.BottomNavigationBar;
@@ -106,11 +108,13 @@ import com.solarized.firedown.utils.UrlStringUtils;
 import com.solarized.firedown.utils.WebUtils;
 
 import org.apache.commons.io.FilenameUtils;
+import org.mozilla.geckoview.AllowOrDeny;
 import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoRuntime;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.Image;
 import org.mozilla.geckoview.MediaSession;
+import org.mozilla.geckoview.OrientationController;
 import org.mozilla.geckoview.TranslationsController;
 import org.mozilla.geckoview.WebExtensionController;
 import org.mozilla.geckoview.WebResponse;
@@ -1104,6 +1108,11 @@ public class BrowserFragment extends BaseBrowserFragment
             } else if (Lifecycle.Event.ON_PAUSE.equals(event) || Lifecycle.Event.ON_STOP.equals(event)) {
                 Log.d(TAG, "onPause/onStop");
                 mStop = true;
+                OrientationController orientation =
+                        mGeckoRuntimeHelper.getGeckoRuntime().getOrientationController();
+                if (orientation.getDelegate() == mOrientationDelegate) {
+                    orientation.setDelegate(null);
+                }
                 mSwipeRefreshLayout.setEnabled(false);
             } else if (Lifecycle.Event.ON_START.equals(event)) {
                 Log.d(TAG, "onStart");
@@ -1116,6 +1125,8 @@ public class BrowserFragment extends BaseBrowserFragment
             } else if (Lifecycle.Event.ON_RESUME.equals(event)) {
                 Log.d(TAG, "onResume");
                 mStop = false;
+                mGeckoRuntimeHelper.getGeckoRuntime().getOrientationController()
+                        .setDelegate(mOrientationDelegate);
                 mSwipeRefreshLayout.setEnabled(mUiState != UiState.FULL_SCREEN);
                 mBrowserDownloadViewModel.update();
 
@@ -1802,6 +1813,19 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     /**
+     * The page on screen asked for the camera or microphone, which Firedown
+     * never shares with websites. Said once per page load; the site then
+     * shows its own "blocked" message, which now has an explanation.
+     */
+    @Override
+    public void onMediaRefused(GeckoState geckoState) {
+        if (geckoState.isIncognito() != mIsIncognitoThemed || getView() == null || !isResumed()) {
+            return;
+        }
+        makeAnchoredSnackbar(R.string.media_capture_refused).show();
+    }
+
+    /**
      * The page on screen asked for DRM while the switch is off (Settings →
      * Privacy → Security). Gecko has already refused it, so the site's player
      * just fails. The shield gets its dot at once; the first time a site does
@@ -2129,13 +2153,19 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     @Override
-    public void onMetaViewportFitChange(String viewportFit) {
+    public void onMetaViewportFitChange(GeckoState geckoState) {
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        applyViewportFit(geckoState.getViewportFit());
+    }
+
+    /** The window's cutout mode for a tab's viewport-fit; null (never sent) is the default. */
+    private void applyViewportFit(@Nullable String viewportFit) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return;
         WindowManager.LayoutParams layoutParams = mActivity.getWindow().getAttributes();
-        if (viewportFit.equals("cover")) {
+        if ("cover".equals(viewportFit)) {
             layoutParams.layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-        } else if (viewportFit.equals("contain")) {
+        } else if ("contain".equals(viewportFit)) {
             layoutParams.layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
         } else {
@@ -2164,10 +2194,11 @@ public class BrowserFragment extends BaseBrowserFragment
 
     @Override
     public void onNew(GeckoState geckoState, String uri) {
-        if (geckoState.getGeckoStateEntity().isIncognito()) {
-            mIncognitoStateViewModel.setGeckoState(geckoState, true);
-        } else {
-            mGeckoStateViewModel.setGeckoState(geckoState, true);
+        // A page's new window: GeckoComponents.onNewSession already listed
+        // the tab, made it current and Gecko opened its session; only the
+        // screen follows here. The other mode's browser leaves it alone.
+        if (geckoState.isIncognito() != mIsIncognitoThemed) {
+            return;
         }
         openSession(geckoState);
     }
@@ -2582,6 +2613,40 @@ public class BrowserFragment extends BaseBrowserFragment
         mActivity.setRequestedOrientation(screenOrientation);
     }
 
+    /**
+     * A page's screen.orientation.lock() (a video player in fullscreen):
+     * the Activity takes the requested orientation, unlock gives it back.
+     * Registered only while this browser is resumed, so a hidden or other
+     * mode's browser never rotates the screen. Firefox's rule for Android
+     * 16+, which ignores locks on screens wider than 600dp and in multi-window,
+     * is kept: the page hears "not supported" there rather than a lock that
+     * did nothing.
+     */
+    private final OrientationController.OrientationDelegate mOrientationDelegate =
+            new OrientationController.OrientationDelegate() {
+                @Override
+                public GeckoResult<AllowOrDeny> onOrientationLock(int requestedOrientation) {
+                    if (!isResumed()) {
+                        return GeckoResult.fromValue(AllowOrDeny.DENY);
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA
+                            && (getResources().getConfiguration().smallestScreenWidthDp > 600
+                            || mActivity.isInMultiWindowMode())) {
+                        return GeckoResult.fromException(
+                                new UnsupportedOperationException("orientation lock not supported here"));
+                    }
+                    mActivity.setRequestedOrientation(requestedOrientation);
+                    return GeckoResult.fromValue(AllowOrDeny.ALLOW);
+                }
+
+                @Override
+                public void onOrientationUnlock() {
+                    if (isAdded()) {
+                        mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                    }
+                }
+            };
+
 
     @Override
     public void onPromptFile(GeckoState geckoState,
@@ -2627,6 +2692,57 @@ public class BrowserFragment extends BaseBrowserFragment
                              GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
         if (geckoState.getGeckoStateEntity().isIncognito() != mIsIncognitoThemed) return;
         mGeckoPromptManager.onTextPrompt(mActivity, geckoState, mNavController, prompt, res);
+    }
+
+    /**
+     * A site's Share button (navigator.share): Android's share sheet with
+     * the page's text and link, the title as the subject. No browser in
+     * front, or the other mode's: left for the delegate to fail.
+     */
+    @Override
+    public void onPromptShare(GeckoState geckoState,
+                              GeckoSession.PromptDelegate.SharePrompt prompt,
+                              GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+        if (geckoState.isIncognito() != mIsIncognitoThemed || getView() == null || !isResumed()) {
+            return;
+        }
+        String text = webShareText(prompt.title, prompt.text, prompt.uri);
+        if (text == null || BrowserContextActions.tooLargeToHandOff(text)) {
+            GeckoPromptManager.completeResponse(res,
+                    prompt.confirm(GeckoSession.PromptDelegate.SharePrompt.Result.FAILURE));
+            return;
+        }
+        Intent send = new Intent(Intent.ACTION_SEND)
+                .setType("text/plain")
+                .putExtra(Intent.EXTRA_TEXT, text);
+        if (!TextUtils.isEmpty(prompt.title)) {
+            send.putExtra(Intent.EXTRA_SUBJECT, prompt.title);
+        }
+        int result;
+        try {
+            startActivity(Intent.createChooser(send, null));
+            result = GeckoSession.PromptDelegate.SharePrompt.Result.SUCCESS;
+        } catch (ActivityNotFoundException e) {
+            result = GeckoSession.PromptDelegate.SharePrompt.Result.FAILURE;
+        }
+        GeckoPromptManager.completeResponse(res, prompt.confirm(result));
+    }
+
+    /** The text a share carries: the page's text and its link, each once; the title alone when that is all. */
+    @Nullable
+    private static String webShareText(@Nullable String title, @Nullable String text, @Nullable String uri) {
+        boolean hasText = !TextUtils.isEmpty(text);
+        boolean hasUri = !TextUtils.isEmpty(uri);
+        if (hasText && hasUri) {
+            return text.contains(uri) ? text : text + "\n" + uri;
+        }
+        if (hasText) {
+            return text;
+        }
+        if (hasUri) {
+            return uri;
+        }
+        return TextUtils.isEmpty(title) ? null : title;
     }
 
     @Override
@@ -3324,6 +3440,7 @@ public class BrowserFragment extends BaseBrowserFragment
         showPendingDrmNotice(geckoState);
         dismissDrmTip();
         refreshShield();
+        applyViewportFit(geckoState.getViewportFit());
     }
 
     /**

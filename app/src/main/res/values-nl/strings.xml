@@ -353,6 +353,7 @@
     <string name="drm_row_summary">Deze pagina heeft het nodig om video af te spelen. DRM-video\'s kunnen niet worden gedownload.</string>
     <string name="drm_tip_title">DRM staat uit voor deze pagina</string>
     <string name="drm_tip_body">Tik op het schild om het aan te zetten.</string>
+    <string name="media_capture_refused">Firedown deelt je camera en microfoon niet met websites</string>
     <string name="settings_wasm_disabled">WebAssembly uitschakelen</string>
     <string name="settings_wasm_disabled_summary">Voorkomt dat sites gecompileerde WASM-modules uitvoeren. Verkleint het aanvalsoppervlak, maar maakt sommige apps onbruikbaar</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Als iets op deze website niet werkt, probeer het dan uit te schakelen.</string>

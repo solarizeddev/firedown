@@ -263,6 +263,13 @@ public class GeckoState {
     private boolean mDrmNoticeShown;
 
     /**
+     * "Firedown doesn't share your camera or microphone" was shown for the
+     * document loading now (Gecko asks twice per getUserMedia: the Android
+     * permission, then the site's). Reset on every page start.
+     */
+    private boolean mMediaNoticeShown;
+
+    /**
      * The notice arrived while this tab was not on screen (a background tab,
      * or Settings over the browser). Gecko sends it once per document, so it
      * waits here and shows when the tab is opened. Cleared on page start.
@@ -727,6 +734,33 @@ public class GeckoState {
         }
         mDrmNoticeShown = true;
         return true;
+    }
+
+    /** The page's viewport-fit ("cover", "contain", "auto"), null until it sends one. Not persisted. */
+    @Nullable
+    private String mViewportFit;
+
+    @Nullable
+    public String getViewportFit() {
+        return mViewportFit;
+    }
+
+    public void setViewportFit(@Nullable String viewportFit) {
+        mViewportFit = viewportFit;
+    }
+
+    /** Claims the camera/microphone notice for this page load: true once. */
+    public boolean claimMediaNotice() {
+        if (mMediaNoticeShown) {
+            return false;
+        }
+        mMediaNoticeShown = true;
+        return true;
+    }
+
+    /** A new document: its own camera/microphone notice. */
+    public void resetMediaNotice() {
+        mMediaNoticeShown = false;
     }
 
     /**

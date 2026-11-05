@@ -540,6 +540,7 @@
     <string name="drm_row_summary">Diese Seite braucht es, um Videos abzuspielen. DRM-Videos können nicht heruntergeladen werden.</string>
     <string name="drm_tip_title">DRM ist für diese Seite aus</string>
     <string name="drm_tip_body">Tippe auf den Schild, um es einzuschalten.</string>
+    <string name="media_capture_refused">Firedown gibt deine Kamera und dein Mikrofon nicht an Websites weiter</string>
     <string name="settings_wasm_disabled">WebAssembly deaktivieren</string>
     <string name="settings_wasm_disabled_summary">Verhindert, dass Webseiten kompilierte WASM-Module ausführen. Verringert die Angriffsfläche, beeinträchtigt aber manche Seiten</string>
     <string name="settings_https_only_title">Nur-HTTPS-Modus</string>

@@ -164,7 +164,7 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
     }
 
     @Override
-    public void onMetaViewportFitChange(String viewPortFit) {
+    public void onMetaViewportFitChange(GeckoState geckoState) {
 
     }
 
@@ -221,6 +221,11 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
 
     @Override
     public void onPromptAlert(GeckoState geckoState, GeckoSession.PromptDelegate.AlertPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
+
+    }
+
+    @Override
+    public void onPromptShare(GeckoState geckoState, GeckoSession.PromptDelegate.SharePrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
 
     }
 
@@ -326,6 +331,11 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
 
     @Override
     public void onDrmDisabled(GeckoState geckoState) {
+
+    }
+
+    @Override
+    public void onMediaRefused(GeckoState geckoState) {
 
     }
 

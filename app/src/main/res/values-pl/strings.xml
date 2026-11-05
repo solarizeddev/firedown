@@ -362,6 +362,7 @@
     <string name="drm_row_summary">Ta strona potrzebuje go do odtworzenia filmu. Filmów z DRM nie można pobrać.</string>
     <string name="drm_tip_title">DRM jest wyłączone dla tej strony</string>
     <string name="drm_tip_body">Dotknij tarczy, aby je włączyć.</string>
+    <string name="media_capture_refused">Firedown nie udostępnia stronom internetowym Twojej kamery ani mikrofonu</string>
     <string name="settings_wasm_disabled">Wyłącz WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Uniemożliwia witrynom uruchamianie skompilowanych modułów WASM. Zmniejsza powierzchnię ataku, ale psuje niektóre aplikacje</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Jeśli coś na tej witrynie nie działa, spróbuj ją wyłączyć.</string>

@@ -30,7 +30,8 @@ public interface GeckoObserver {
 
     void onShowDynamicToolbar();
 
-    void onMetaViewportFitChange(String viewPortFit);
+    /** The tab on screen's viewport-fit changed; read it from {@link GeckoState#getViewportFit()}. */
+    void onMetaViewportFitChange(GeckoState geckoState);
 
     void onKill(GeckoState geckoState);
 
@@ -84,6 +85,9 @@ public interface GeckoObserver {
     void onPromptChoice(GeckoState geckoState, GeckoSession.PromptDelegate.ChoicePrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
     void onPromptAlert(GeckoState geckoState, GeckoSession.PromptDelegate.AlertPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
+
+    /** navigator.share() from the tab on screen; complete {@code res} or leave it for the delegate to fail. */
+    void onPromptShare(GeckoState geckoState, GeckoSession.PromptDelegate.SharePrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
     void onPromptButton(GeckoState geckoState, GeckoSession.PromptDelegate.ButtonPrompt prompt, GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res);
 
@@ -141,4 +145,7 @@ public interface GeckoObserver {
      * At most once per page; the page's request has already been refused.
      */
     void onDrmDisabled(GeckoState geckoState);
+
+    /** A page on screen asked for the camera or microphone and was refused (once per page load). */
+    void onMediaRefused(GeckoState geckoState);
 }

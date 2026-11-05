@@ -1156,6 +1156,7 @@
     <string name="drm_row_summary">Тази страница го изисква, за да пусне видео. DRM видеоклиповете не могат да се изтеглят.</string>
     <string name="drm_tip_title">DRM е изключен за тази страница</string>
     <string name="drm_tip_body">Докоснете щита, за да го включите.</string>
+    <string name="media_capture_refused">Firedown не споделя камерата и микрофона ви с уебсайтове</string>
     <string name="settings_enhanced_tracking_protection_custom">Персонализирано</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Стандартна защита плюс премахване на проследяващите параметри на заявката от URL адресите.</string>
     <string name="settings_gecko_version">GeckoView</string>
