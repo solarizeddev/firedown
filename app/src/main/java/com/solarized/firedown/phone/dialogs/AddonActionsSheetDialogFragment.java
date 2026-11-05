@@ -18,6 +18,7 @@ import com.google.android.material.card.MaterialCardView;
 import com.solarized.firedown.R;
 import com.solarized.firedown.addons.AddonIcons;
 import com.solarized.firedown.addons.AddonManager;
+import com.solarized.firedown.addons.AddonPolicy;
 import com.solarized.firedown.data.entity.OptionEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
@@ -139,6 +140,12 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
         SheetGroups.applyCorners(mView.findViewById(R.id.addon_actions_manage_group));
     }
 
+    /** uBlock also says "(off)" on pages it never filters (about:, an add-on's page): not a site the user turned it off for. */
+    private boolean onWebPage() {
+        String url = mGeckoState == null ? null : mGeckoState.getEntityUri();
+        return url != null && (url.startsWith("http://") || url.startsWith("https://"));
+    }
+
     private void bindRow(@NonNull MaterialCardView card, @NonNull AddonManager.ActionItem item) {
         ImageView icon = card.findViewById(R.id.addon_action_icon);
         TextView title = card.findViewById(R.id.addon_action_title);
@@ -147,8 +154,11 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
 
         WebExtension.Action action = item.action;
         String name = item.addon.name;
-        String label = action != null && !TextUtils.isEmpty(action.title) ? action.title : name;
-        title.setText(label);
+        // The add-on's name leads; the button's own title only says something
+        // when it differs from the name and the badge. uBlock titles its button
+        // "uBlock Origin (23)" per tab, which put the count twice on one row
+        // under the name repeated as a subtitle.
+        title.setText(name);
 
         String sub = null;
         boolean usable = action != null && !Boolean.FALSE.equals(action.enabled);
@@ -156,8 +166,10 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
             sub = getString(R.string.addons_no_button);
         } else if (!usable) {
             sub = getString(R.string.addons_not_here);
-        } else if (!label.equals(name)) {
-            sub = name;
+        } else if (onWebPage() && AddonPolicy.saysOffForSite(item.addon.id, action.title)) {
+            sub = getString(R.string.shield_blocker_off_site);
+        } else if (AddonPolicy.actionTitleSaysMore(action.title, name, action.badgeText)) {
+            sub = action.title;
         }
         subtitle.setText(sub);
         subtitle.setVisibility(sub != null ? View.VISIBLE : View.GONE);

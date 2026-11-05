@@ -296,14 +296,34 @@ site exceptions from the patched copy were not carried over.
 The address bar's shield and its sheet read the ad blockers, whichever the
 user runs (sketch: `sketches/shield-blockers.html`).
 
-- **Which add-ons are blockers** (`AddonPolicy.blocksRequests` /
-  `isBlocker`): uBlock Origin always; any other add-on that has a toolbar
-  button and holds `webRequestBlocking` with access to all sites, or
-  `declarativeNetRequest` (which blocks without host access). Read from the
-  add-on's own permissions, so there is no list of blocker names to keep.
-  The few non-blockers with the same permissions are corrected by the
-  add-on page's "Show behind the shield" switch (stored only where it
-  differs from the permissions: `…addons.shield.show` / `.hide`).
+- **Which add-ons are blockers** (`AddonPolicy.isBlocker` /
+  `isKnownBlocker`): uBlock Origin always; any other add-on with a toolbar
+  button that the user put behind the shield, or, when the user said
+  nothing, that is on a short list of KNOWN blockers by add-on ID (uBlock
+  Origin Lite, uMatrix, AdNauseam, AdGuard, Ghostery, Privacy Badger,
+  DuckDuckGo Privacy Essentials, Adblock Plus, AdBlock, Disconnect; each
+  ID read from the add-on's own manifest or its project's records, matched
+  case-insensitively). The rule used to be the PERMISSIONS
+  (`webRequestBlocking` with access to all sites, or
+  `declarativeNetRequest`), with "no list of blocker names to keep", and it
+  called Bypass Paywalls Clean an ad blocker: the sheet said "2 ad blockers
+  are on. One is usually enough" beside uBlock (reported on-device).
+  Paywall bypassers, userscript managers (Violentmonkey, Tampermonkey: the
+  add-ons this feature was asked for) and header editors hold exactly those
+  permissions to rewrite requests, so nothing in a manifest tells them
+  apart. An unknown add-on is not counted on its permissions alone: that
+  claim (the shield on, the "N ad blockers" line) is one nothing here can
+  check, and an unverified claim degrades to the weaker statement. The
+  permissions now only decide whether the add-on page OFFERS "Show behind
+  the shield" (`offersShieldChoice`: a known blocker, an add-on that can
+  block requests, or one already chosen either way, so it can be undone;
+  never uBlock, never an add-on with no button). The switch stores the
+  user's choice either way (`…addons.shield.show` / `.hide`), so a later
+  build's list never overrides it; entries written when it stored only
+  differences from the permissions read the same. The cost: a real blocker
+  not on the list counts only once the user turns that switch on, and
+  until then the shield can say "No ad blocker is on". Add an ID to the
+  list only from the add-on's own manifest.
 - **The rule** (`AddonPolicy.shieldState`): protection is on for a tab when
   at least one blocker RUNS there (enabled, and allowed in private tabs for
   a private tab) and none of those says it is off for the site. Only uBlock
@@ -377,7 +397,9 @@ user runs (sketch: `sketches/shield-blockers.html`).
   needs uBlock's popup); the harness pins the rule, not the transport of a
   per-tab title to the session override.
 - Verify with `sh scripts/addons-harness/run.sh` (the blocker and shield
-  rules, uBlock's 1.75.0 manifest; mutants for each) and on a device
+  rules, the known-ID list, the switch, uBlock's 1.75.0 manifest; mutants
+  for each, including permissions counted as a blocker, the list read
+  case-sensitively and the switch offered to every add-on) and on a device
   `AddonsDeviceTest` t1 (installed from the app's copy, private allowed,
   behind the shield), t4 (forged uBlock refused), t8 (remove → Turn on →
   off → Turn on, the shield following) and t9 (a loopback page whose ad
@@ -4339,7 +4361,13 @@ before changing a flow. The rules, each easy to undo:
   view releases the session before it closes, and a popup the browser
   could not show within 3 s is closed, not shown later). An
   add-on's settings page opens in Settings (`AddonOptionsFragment`), its
-  web links in a tab.
+  web links in a tab. **A row's title is the add-on's NAME, and the
+  button's own title is a second line only when it says something the name
+  and badge do not** (`AddonPolicy.actionTitleSaysMore`): uBlock titles its
+  button "uBlock Origin (23)" per tab, so the row read "uBlock Origin (1)"
+  over "uBlock Origin" beside a "1" badge, the count twice and the name
+  twice. uBlock's "(off)" title reads "Off for this site" there, the
+  shield sheet's words.
 - **Lists update in place, never rebuilt per change.** An add-on like
   Privacy Badger changes its badge many times a page, and Gecko's change
   notices come in bursts: the ⋮ Add-ons sheet keeps its rows by id and
@@ -4361,7 +4389,12 @@ before changing a flow. The rules, each easy to undo:
   `DownloadDelegate`/`BrowsingDataDelegate` either); an options page with
   `open_in_tab` opened from Settings shows in Settings (from the add-on,
   Gecko opens it in a tab itself); a catalog tap goes straight to the
-  install question, no detail page. Known residuals: an .xpi link served
+  install question, no detail page. Known residuals: an add-on whose
+  options page has `open_in_tab` and that calls `runtime.openOptionsPage`
+  more than once gets a new tab each time (GeckoView's `TabBridge` opens a
+  tab per call and desktop Firefox's reuse of an open one is not there;
+  seen with a paywall bypasser that opens its options page twice on
+  install); an .xpi link served
   as `application/x-xpinstall` from a site other than addons.mozilla.org
   does nothing (Gecko blocks it, as in Firefox for Android), and an
   add-on with access to all sites also runs in the hidden sessions
@@ -4370,7 +4403,8 @@ before changing a flow. The rules, each easy to undo:
   them.
 - **Verify** with `sh scripts/addons-harness/run.sh /path/to/firefox-src`
   (the real pure classes against Firefox's own test fixtures and AMO
-  shapes; 67 checks, six mutants must fail), the JUnit
+  shapes; 96 checks without the Firefox fixtures, sixteen mutants must
+  fail), the JUnit
   `AddonsPureTest`, and on a device `addons/AddonsDeviceTest`
   (`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.addons.AddonsDeviceTest`;
   the list install, off/on, private, remove need network and skip

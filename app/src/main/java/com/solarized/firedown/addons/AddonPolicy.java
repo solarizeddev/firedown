@@ -28,10 +28,32 @@ public final class AddonPolicy {
     private static final String OWN_ID_SUFFIX = "@solarized.dev";
     public static final String UBLOCK_ID = "uBlock0@raymondhill.net";
 
+    /**
+     * Ad and tracker blockers counted behind the shield without the user
+     * saying so, lowercase. IDs never change once an add-on is listed, so the
+     * list only grows when a blocker worth naming appears. Each was read from
+     * the add-on's own manifest or its project's records.
+     */
+    private static final Set<String> KNOWN_BLOCKER_IDS;
+
     static {
         Set<String> ids = new HashSet<>();
         ids.add("icons@mozac.org");
         BUILT_IN_IDS = Collections.unmodifiableSet(ids);
+
+        Set<String> blockers = new HashSet<>();
+        blockers.add("ublock0@raymondhill.net");                    // uBlock Origin
+        blockers.add("ubolite@raymondhill.net");                    // uBlock Origin Lite
+        blockers.add("umatrix@raymondhill.net");                    // uMatrix
+        blockers.add("adnauseam@rednoise.org");                     // AdNauseam
+        blockers.add("adguardadblocker@adguard.com");               // AdGuard AdBlocker
+        blockers.add("firefox@ghostery.com");                       // Ghostery
+        blockers.add("jid1-mnnxcxisbpnsxq@jetpack");                // Privacy Badger
+        blockers.add("jid1-zadieub7xozojw@jetpack");                // DuckDuckGo Privacy Essentials
+        blockers.add("{d10d0bf8-f5b5-c8b4-a8b2-2b9879e08c5d}");     // Adblock Plus
+        blockers.add("jid1-niffy2ca8fy1tg@jetpack");                // AdBlock
+        blockers.add("2.0@disconnect.me");                          // Disconnect
+        KNOWN_BLOCKER_IDS = Collections.unmodifiableSet(blockers);
     }
 
     private AddonPolicy() {}
@@ -85,13 +107,14 @@ public final class AddonPolicy {
     // ── Blockers behind the shield ──────────────────────────────────────
 
     /**
-     * Whether an add-on's permissions make it a blocker: it can refuse
-     * requests on every site. {@code webRequestBlocking} with access to all
-     * sites, or {@code declarativeNetRequest} (which blocks without host
-     * access). Read from the add-on's own manifest, so there is no list of
-     * blocker names to keep; the few non-blockers holding the same
-     * permissions are corrected by the user's "Show behind the shield"
-     * switch ({@link #isBlocker}).
+     * Whether an add-on's permissions let it refuse requests on every site:
+     * {@code webRequestBlocking} with access to all sites, or
+     * {@code declarativeNetRequest} (which blocks without host access). That
+     * is what an ad blocker needs, but not what makes one: paywall bypassers,
+     * userscript managers and header editors hold the same permissions to
+     * rewrite requests. So it only decides whether the add-on page OFFERS
+     * the "Show behind the shield" switch ({@link #offersShieldChoice}); what
+     * counts by default is {@link #isKnownBlocker}.
      */
     public static boolean blocksRequests(@Nullable Collection<String> permissions,
                                          @Nullable Collection<String> origins) {
@@ -136,14 +159,20 @@ public final class AddonPolicy {
         return http && https;
     }
 
+    /** A well-known ad or tracker blocker, counted without the user saying so; case-insensitive. */
+    public static boolean isKnownBlocker(@Nullable String id) {
+        return id != null && KNOWN_BLOCKER_IDS.contains(id.trim().toLowerCase(Locale.ROOT));
+    }
+
     /**
      * The add-on gets a row behind the shield: uBlock Origin always; any
      * other add-on that has a toolbar button and either the user said so
-     * ({@code override} true) or its permissions say it blocks and the
-     * user did not hide it ({@code override} false).
+     * ({@code override}), or, when the user said nothing, it is a known
+     * blocker. An add-on we do not know is not called an ad blocker on its
+     * permissions alone: the claim it would make (the shield on, "2 ad
+     * blockers are on") is one nothing here can check.
      */
-    public static boolean isBlocker(@Nullable String id, boolean hasButton, boolean blocksRequests,
-                                    @Nullable Boolean override) {
+    public static boolean isBlocker(@Nullable String id, boolean hasButton, @Nullable Boolean override) {
         if (isUblockId(id)) {
             return true;
         }
@@ -153,7 +182,21 @@ public final class AddonPolicy {
         if (override != null) {
             return override;
         }
-        return blocksRequests;
+        return isKnownBlocker(id);
+    }
+
+    /**
+     * Whether the add-on page shows "Show behind the shield": an add-on with
+     * a toolbar button that is a known blocker, could block requests, or was
+     * already chosen either way (so the user can undo it). Not uBlock, which
+     * is always behind the shield.
+     */
+    public static boolean offersShieldChoice(@Nullable String id, boolean hasButton, boolean blocksRequests,
+                                             @Nullable Boolean override) {
+        if (isUblockId(id) || !hasButton) {
+            return false;
+        }
+        return override != null || isKnownBlocker(id) || blocksRequests;
     }
 
     /**
@@ -168,6 +211,32 @@ public final class AddonPolicy {
             return false;
         }
         return title.trim().endsWith("(off)");
+    }
+
+    /**
+     * Whether an add-on's button title tells the user something its name and
+     * badge do not, so it is worth a line under the name. An empty title, the
+     * name itself, and the name followed by the badge in parentheses (uBlock's
+     * "uBlock Origin (23)") say nothing more.
+     */
+    public static boolean actionTitleSaysMore(@Nullable String title, @Nullable String name,
+                                              @Nullable String badge) {
+        if (title == null) {
+            return false;
+        }
+        String t = title.trim();
+        if (t.isEmpty()) {
+            return false;
+        }
+        String n = name == null ? "" : name.trim();
+        if (t.equals(n)) {
+            return false;
+        }
+        String b = badge == null ? "" : badge.trim();
+        if (!n.isEmpty() && !b.isEmpty() && t.equals(n + " (" + b + ")")) {
+            return false;
+        }
+        return true;
     }
 
     /** What the shield shows for a tab. */

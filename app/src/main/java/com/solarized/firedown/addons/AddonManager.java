@@ -792,38 +792,35 @@ public class AddonManager {
 
     /** Whether the add-on gets a row behind the shield. */
     public boolean isBlocker(@NonNull AddonInfo info) {
-        List<String> permissions = new ArrayList<>(info.requiredPermissions);
-        permissions.addAll(info.grantedOptionalPermissions);
-        List<String> origins = new ArrayList<>(info.requiredOrigins);
-        origins.addAll(info.grantedOptionalOrigins);
-        return AddonPolicy.isBlocker(info.id, hasButton(info.id),
-                AddonPolicy.blocksRequests(permissions, origins), shieldOverride(info.id));
+        return AddonPolicy.isBlocker(info.id, hasButton(info.id), shieldOverride(info.id));
     }
 
     /** Whether the add-on page's "Show behind the shield" switch applies (uBlock is always there). */
     public boolean canChooseShield(@NonNull AddonInfo info) {
-        return !AddonPolicy.isUblockId(info.id) && hasButton(info.id);
-    }
-
-    /** The add-on page's "Show behind the shield": stored only where it differs from what the permissions say. */
-    @UiThread
-    public void setShowBehindShield(@NonNull String id, boolean show) {
-        AddonInfo info = find(id);
-        if (info == null) {
-            return;
-        }
         List<String> permissions = new ArrayList<>(info.requiredPermissions);
         permissions.addAll(info.grantedOptionalPermissions);
         List<String> origins = new ArrayList<>(info.requiredOrigins);
         origins.addAll(info.grantedOptionalOrigins);
-        boolean detected = AddonPolicy.blocksRequests(permissions, origins);
+        return AddonPolicy.offersShieldChoice(info.id, hasButton(info.id),
+                AddonPolicy.blocksRequests(permissions, origins), shieldOverride(info.id));
+    }
+
+    /**
+     * The add-on page's "Show behind the shield": the user's choice is kept
+     * either way, so a later build's list of known blockers never overrides
+     * it. (Before the list, a choice was stored only where it differed from
+     * what the permissions said; those entries read the same now.)
+     */
+    @UiThread
+    public void setShowBehindShield(@NonNull String id, boolean show) {
+        if (find(id) == null) {
+            return;
+        }
         Set<String> showIds = new HashSet<>(mPrefs.getStringSet(PREF_SHIELD_SHOW, Collections.emptySet()));
         Set<String> hideIds = new HashSet<>(mPrefs.getStringSet(PREF_SHIELD_HIDE, Collections.emptySet()));
         showIds.remove(id);
         hideIds.remove(id);
-        if (show != detected) {
-            (show ? showIds : hideIds).add(id);
-        }
+        (show ? showIds : hideIds).add(id);
         mPrefs.edit().putStringSet(PREF_SHIELD_SHOW, showIds).putStringSet(PREF_SHIELD_HIDE, hideIds).apply();
         mActionsVersion.setValue(nextVersion());
     }

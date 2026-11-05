@@ -7,7 +7,10 @@
 # capped, comments in a manifest not read, the signature files ignored,
 # uBlock Origin refused as built in, the blocker rule without its all-sites
 # check, https alone taken for all sites, any add-on's "(off)" believed, a
-# running blocker hiding another's "off", the user's shield switch ignored.
+# running blocker hiding another's "off", the user's shield switch ignored,
+# any add-on that can block requests counted as an ad blocker, the known-ID
+# list read case-sensitively, the shield switch offered to every add-on, and
+# uBlock's per-tab title echoed under its name.
 #
 # usage: sh scripts/addons-harness/run.sh [mozilla-firefox checkout]
 #   With a Firefox source checkout, Firefox's own AMO fixtures are parsed too
@@ -104,4 +107,8 @@ mutant httpsenough AddonPolicy 's/return http \&\& https;/return http || https;/
 mutant anyoff AddonPolicy 's/if (!isUblockId(id) || title == null) {/if (title == null) {/'
 mutant oneonwins AddonPolicy 's/if (Boolean.TRUE.equals(off)) {/if (Boolean.FALSE.equals(off)) {/'
 mutant nooverride AddonPolicy 's/if (override != null) {/if (false) {/'
+mutant permsblock AddonPolicy 's/return isKnownBlocker(id);/return true;/'
+mutant nocase AddonPolicy 's/KNOWN_BLOCKER_IDS.contains(id.trim().toLowerCase(Locale.ROOT))/KNOWN_BLOCKER_IDS.contains(id)/'
+mutant anyswitch AddonPolicy 's/return override != null || isKnownBlocker(id) || blocksRequests;/return true;/'
+mutant titleecho AddonPolicy 's/if (!n.isEmpty() \&\& !b.isEmpty() \&\& t.equals(n + " (" + b + ")")) {/if (false) {/'
 exit $status

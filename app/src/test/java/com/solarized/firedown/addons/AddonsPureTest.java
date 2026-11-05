@@ -53,10 +53,18 @@ public class AddonsPureTest {
                 Collections.singletonList("https://www.youtube.com/*")));
         assertFalse(AddonPolicy.blocksRequests(Arrays.asList("storage", "tabs"),
                 Collections.singletonList("<all_urls>")));
-        assertTrue(AddonPolicy.isBlocker("uBlock0@raymondhill.net", false, false, Boolean.FALSE));
-        assertFalse(AddonPolicy.isBlocker("x@y", false, true, null));
-        assertFalse(AddonPolicy.isBlocker("x@y", true, true, Boolean.FALSE));
-        assertTrue(AddonPolicy.isBlocker("x@y", true, false, Boolean.TRUE));
+        assertTrue(AddonPolicy.isBlocker("uBlock0@raymondhill.net", false, Boolean.FALSE));
+        assertTrue(AddonPolicy.isBlocker("firefox@ghostery.com", true, null));
+        assertFalse(AddonPolicy.isBlocker("magnolia@12.34", true, null));
+        assertFalse(AddonPolicy.isBlocker("firefox@ghostery.com", false, null));
+        assertFalse(AddonPolicy.isBlocker("firefox@ghostery.com", true, Boolean.FALSE));
+        assertTrue(AddonPolicy.isBlocker("x@y", true, Boolean.TRUE));
+        assertTrue(AddonPolicy.offersShieldChoice("magnolia@12.34", true, true, null));
+        assertFalse(AddonPolicy.offersShieldChoice("addon@darkreader.org", true, false, null));
+        assertFalse(AddonPolicy.offersShieldChoice("uBlock0@raymondhill.net", true, true, null));
+        assertFalse(AddonPolicy.actionTitleSaysMore("uBlock Origin (12)", "uBlock Origin", "12"));
+        assertFalse(AddonPolicy.actionTitleSaysMore("uBlock Origin", "uBlock Origin", null));
+        assertTrue(AddonPolicy.actionTitleSaysMore("Paused on this site", "Some Add-on", "3"));
         assertTrue(AddonPolicy.saysOffForSite("uBlock0@raymondhill.net", "uBlock Origin (off)"));
         assertFalse(AddonPolicy.saysOffForSite("uBlock0@raymondhill.net", "uBlock Origin (12)"));
         assertFalse(AddonPolicy.saysOffForSite("other@x", "Other (off)"));
