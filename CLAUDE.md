@@ -8796,6 +8796,20 @@ Symptom this prevents: the "open in app" dialog (or an alert/file picker) from
 a *previous* tab appearing after you switch tabs (repro: open bilibili.com,
 switch tab mid-load; it fires a `bilibili://` deeplink from the background).
 
+**A tab on screen that closes ITSELF hands the view to the next tab**
+(`BrowserFragment.onClose`). `window.close()` and an add-on's `tabs.remove`
+reach `ContentDelegate.onCloseRequest`, which drops the tab, moves the
+current tab and closes the session, and nothing re-attached the view: it
+kept the closed session, so the page stayed on screen and every tap went
+nowhere until the app was left and resumed (on-device: a paywall bypasser's
+install opt-in page, which closes itself after its button). Now the
+fragment releases a closed attached session on `CLOSE_SESSION` and runs
+`ensureSessionConnected` (the next current tab, or the home when none is
+left) — only while resumed; otherwise its own onResume does it, since going
+home would be a fragment commit after the state was saved. A background
+tab closing itself leaves the view alone (its session is not the attached
+one), and the other mode's tab is filtered like every observer.
+
 **A download a page starts belongs to THAT page's tab, in its mode**
 (`GeckoComponents.onExternalResponse`). It was handed to whichever tab was
 on screen, so a background private tab's download (a countdown page) was
