@@ -135,4 +135,10 @@ public interface GeckoObserver {
      */
     void onTranslationStateChange(GeckoState geckoState,
                                   TranslationsController.SessionTranslation.TranslationState state);
+
+    /**
+     * The (foreground) tab's page asked for DRM while the DRM switch is off.
+     * At most once per page; the page's request has already been refused.
+     */
+    void onDrmDisabled(GeckoState geckoState);
 }

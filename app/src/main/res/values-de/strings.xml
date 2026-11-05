@@ -532,6 +532,17 @@
     <string name="settings_webgl_disabled_summary">Blockiert GPU-Fingerprinting, 3D-Inhalte können kaputt erscheinen</string>
     <string name="settings_drm_enabled">DRM-Wiedergabe aktivieren</string>
     <string name="settings_drm_enabled_summary">Erlaubt Widevine auf Seiten, die DRM benötigen (Netflix, Spotify, …). Firedown kann DRM-geschützte Inhalte trotzdem nicht herunterladen.</string>
+    <string name="drm_sheet_title">Dieses Video braucht DRM</string>
+    <string name="drm_sheet_site">%1$s · DRM ist ausgeschaltet</string>
+    <string name="drm_sheet_plays">Wenn du es einschaltest, kann diese Seite das Video abspielen</string>
+    <string name="drm_sheet_no_download">DRM-Videos können nicht heruntergeladen werden, auch nicht mit DRM</string>
+    <string name="drm_sheet_privacy">Websites können sehen, welches DRM dein Telefon unterstützt</string>
+    <string name="drm_sheet_turn_on">DRM einschalten</string>
+    <string name="drm_sheet_footnote">Du kannst es in den Einstellungen wieder ausschalten</string>
+    <string name="drm_row_title">DRM ist aus</string>
+    <string name="drm_row_summary">Diese Seite braucht es, um Videos abzuspielen. DRM-Videos können nicht heruntergeladen werden.</string>
+    <string name="drm_tip_title">DRM ist für diese Seite aus</string>
+    <string name="drm_tip_body">Tippe auf den Schild, um es einzuschalten.</string>
     <string name="settings_wasm_disabled">WebAssembly deaktivieren</string>
     <string name="settings_wasm_disabled_summary">Verhindert, dass Webseiten kompilierte WASM-Module ausführen. Verringert die Angriffsfläche, beeinträchtigt aber manche Seiten</string>
     <string name="settings_https_only_title">Nur-HTTPS-Modus</string>

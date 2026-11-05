@@ -1,6 +1,7 @@
 package com.solarized.firedown.phone.dialogs;
 
 import android.app.Dialog;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -27,6 +28,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.GlideHelper;
+import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.addons.AddonIcons;
 import com.solarized.firedown.addons.AddonManager;
@@ -68,6 +70,9 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
 
     @Inject
     AddonManager mAddonManager;
+
+    @Inject
+    SharedPreferences mSharedPreferences;
 
     private GeckoStateViewModel mGeckoStateViewModel;
     private IncognitoStateViewModel mIncognitoStateViewModel;
@@ -192,6 +197,8 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         }
 
         mHostCert.setEnabled(mCertificateInfoEntity != null);
+
+        bindDrmRow();
 
         host.setText(mGeckoState.getEntityTitle());
         hostUrl.setText(mDomain);
@@ -423,6 +430,29 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         return styled;
+    }
+
+    /**
+     * "DRM is off   [Turn on]" under the connection row, while the page on
+     * screen asked for DRM and it is off: the row the shield's dot points
+     * to. Turn on answers the way the DRM sheet does, so the browser turns
+     * it on and reloads (one implementation, in BrowserFragment).
+     */
+    private void bindDrmRow() {
+        View row = mView.findViewById(R.id.drm_row);
+        boolean show = mGeckoState.isDrmRefusedHere()
+                && !Preferences.getDRMEnabled(mSharedPreferences);
+        row.setVisibility(show ? View.VISIBLE : View.GONE);
+        SheetGroups.applyCorners(mView.findViewById(R.id.connection_group));
+        if (!show) {
+            return;
+        }
+        String host = WebUtils.getDomainName(mGeckoState.getEntityUri());
+        mView.findViewById(R.id.drm_row_turn_on).setOnClickListener(v -> {
+            getParentFragmentManager().setFragmentResult(DrmSheetDialogFragment.RESULT_KEY,
+                    DrmSheetDialogFragment.result(true, host, false));
+            dismiss();
+        });
     }
 
     private void bindNoBlocker(@NonNull MaterialCardView row) {

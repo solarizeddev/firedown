@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  "This video needs DRM" sheet (DrmSheetDialogFragment). Opens once per site
+  when a page asks for DRM while the switch is off; after that the site gets
+  only the dot on the address bar's shield, and the security sheet's
+  "DRM is off" row turns it on.
+
+  Built from the app's sheet parts so it reads like its siblings:
+  the security sheet's identity row (a 40dp rounded tile, here the key —
+  DRM is a licence key, the same glyph as the security sheet's DRM row;
+  never the lock, which is the Safe Folder's and the connection's), a
+  TitleMedium title, then ONE group of SheetRowCards with
+  SheetRowText labels (allowed to wrap: they are facts, not menu items, and
+  not tappable), the footnote under the group, and the confirm row every
+  ask-sheet uses (a text button, then the filled action, end-aligned:
+  the translate picker, the notifications priming sheet).
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <include layout="@layout/dialog_drag_handle" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:overScrollMode="never">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/bg_popup_favicon"
+                    android:importantForAccessibility="no"
+                    android:padding="8dp"
+                    android:scaleType="centerInside"
+                    app:srcCompat="@drawable/ic_key_24"
+                    app:tint="?attr/brandInk" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/drm_sheet_title"
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:accessibilityHeading="true"
+                        android:text="@string/drm_sheet_title"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:id="@+id/drm_sheet_site"
+                        style="@style/TextAppearance.Material3.BodyMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="middle"
+                        android:singleLine="true"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        tools:text="example.com · DRM is turned off" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical">
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Firedown.Widget.SheetRowCard"
+                    android:layout_marginTop="0dp"
+                    android:clickable="false"
+                    android:focusable="false"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop">
+
+                    <TextView
+                        style="@style/Firedown.Widget.SheetRowText"
+                        android:maxLines="3"
+                        android:paddingVertical="12dp"
+                        android:text="@string/drm_sheet_plays"
+                        app:drawableStartCompat="@drawable/drm_play_24" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Firedown.Widget.SheetRowCard"
+                    android:clickable="false"
+                    android:focusable="false"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupMiddle">
+
+                    <TextView
+                        style="@style/Firedown.Widget.SheetRowText"
+                        android:maxLines="3"
+                        android:paddingVertical="12dp"
+                        android:text="@string/drm_sheet_no_download"
+                        app:drawableStartCompat="@drawable/drm_download_off_24" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Firedown.Widget.SheetRowCard"
+                    android:clickable="false"
+                    android:focusable="false"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
+
+                    <TextView
+                        style="@style/Firedown.Widget.SheetRowText"
+                        android:maxLines="3"
+                        android:paddingVertical="12dp"
+                        android:text="@string/drm_sheet_privacy"
+                        app:drawableStartCompat="@drawable/drm_visibility_24" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+            <TextView
+                style="@style/TextAppearance.Material3.BodySmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:paddingHorizontal="16dp"
+                android:text="@string/drm_sheet_footnote"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="end|center_vertical"
+                android:orientation="horizontal"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/drm_sheet_not_now"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/translate_not_now" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/drm_sheet_turn_on"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/drm_sheet_turn_on" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

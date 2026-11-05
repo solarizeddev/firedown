@@ -1,33 +1,22 @@
-## [1.2.6] - 2026-10-29
+## [1.2.6] - 2026-11-05
 
-- Add-ons: install Firefox extensions from Mozilla's list for Android, its add-on site, or a signed file
-- Add-ons run in private tabs only if you allow them, and update by themselves
-- Ad blocking now uses the official uBlock Origin, updated by Mozilla's add-on site
+- Updated the GeckoView browser engine to 159.0.20261105170000
+- Add-ons: install Firefox extensions from Mozilla's list, its add-on site, or a signed file
+- Ad blocking now uses the official uBlock Origin, with its own per-site settings from the shield
 - The shield shows when your ad blocker is off for a site, turned off, or missing
-- Tap an ad blocker in the shield sheet to open its own settings for the site
-- Cookie banners are answered with “reject” where possible, and hidden otherwise
-- App updates download much less: only the changes when possible, otherwise a compressed copy
-- Installing an update shows its progress until Android takes over
-- Player: playback speed from 0.25× to 2×, with speed and subtitles under the timeline
-- Player: press and hold the video to play at 2× until you let go
-- Tapping a link meant for an app asks first, naming the app; staying opens the site's web version
-- GIF, audio and Safe Folder tasks keep running with the screen off, with a progress notification you can cancel
-- Making a GIF no longer gets stuck near the end or ignores Cancel
-- Downloads shows a running task's progress and Cancel when you come back to it
-- Opening the app from its icon returns to the screen you left, and background playback keeps going
-- Tapping a finished-download notification no longer closes your private tabs
-- Playing a video or song extracted from an archive no longer crashes the app
-- GIFs are up to 30 seconds long, and on a long video the trim strip scrolls to pick the part
-- When notifications are off, Firedown says so once, and Settings has a row to turn them back on
-- An occasional request to support Firedown, shown at most three times and never after you tap Donate
-- Capture and ad blocking restart by themselves if they stop working, and say so if it happens again
-- Downloads a page starts in a private or background tab are no longer lost or saved publicly
-- Other apps can no longer open Firedown's player, Safe Folder or settings directly
+- Cookie banners are rejected where possible, and hidden otherwise
+- App updates download much less, and show their progress while installing
+- A page that needs DRM says so, and DRM can be turned on from the shield
+- Player: playback speed from 0.25× to 2×, and press and hold to play at 2×
+- Links meant for an app ask first, naming the app
+- GIF, audio and Safe Folder tasks keep running in the background, with a notification you can cancel
+- GIFs are up to 30 seconds long and no longer get stuck near the end
+- The app icon returns to the screen you left, and notifications no longer close private tabs
+- Downloads from private or background tabs are no longer lost or saved publicly
 - Close all tabs closes only the tabs on screen, after asking
-- A page that keeps crashing no longer reloads in a loop
-- Sites asking for your location get a refusal instead of waiting forever
-- Back in the Media tools list returns to the menu on Android 16
-- Back from Storage returns to Settings when opened from there
+- Capture and ad blocking restart by themselves if they stop working
+- An occasional request to support Firedown, shown at most three times
+- Indonesian and Vietnamese translations, and every other language completed
 
 ## [1.2.5] - 2026-10-28
 

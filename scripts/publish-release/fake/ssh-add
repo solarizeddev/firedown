@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Stand-in for ssh-add in the publish-release self-test. FAKE_AGENT names the
+# agent's state before the run: 0 holds a key (default), 1 empty, 2 none.
+# A started agent (fake ssh-agent) is recorded in $FAKE_WORLD/agent.
+state=${FAKE_AGENT:-0}
+[ -e "$FAKE_WORLD/agent" ] && state=1
+if [ "${1:-}" = -l ]; then
+    printf 'ssh-add -l\n' >> "$FAKE_WORLD/events"
+    exit "$state"
+fi
+printf 'ssh-add load\n' >> "$FAKE_WORLD/events"
+exit 0

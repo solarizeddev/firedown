@@ -65,6 +65,9 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
     private MaterialButton mClearButton;
 
     private MaterialButton mAddressBarButton;
+    /** The shield's DRM dot (see {@link #setDrmAttention}). */
+    private View mSecurityDot;
+    private boolean mDrmAttention;
 
     private MaterialButton mReloadButton;
 
@@ -159,6 +162,7 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         mBackground = v.findViewById(R.id.address_bar_background);
         mClearButton = v.findViewById(R.id.clear_button);
         mAddressBarButton = v.findViewById(R.id.security_button);
+        mSecurityDot = v.findViewById(R.id.security_dot);
         mSearchDownButton = v.findViewById(R.id.search_down);
         mSearchUpButton = v.findViewById(R.id.search_up);
         mSearchText = v.findViewById(R.id.search_text);
@@ -350,6 +354,30 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
     public void setAdsEnabled(boolean value) {
         mAdsEnabled = value;
         updateShieldIcon();
+    }
+
+    /**
+     * The page on screen asked for DRM while it is off: a coral dot on the
+     * shield, on top of whatever the shield shows (protection on or off), so
+     * it replaces neither. The shield opens the security sheet, whose
+     * "DRM is off" row turns DRM on. Set from BrowserFragment.refreshShield;
+     * hidden with the shield (field focused) and on the home toolbar.
+     */
+    public void setDrmAttention(boolean attention) {
+        mDrmAttention = attention;
+        applyDrmDotVisibility(mEditText != null && mEditText.hasFocus());
+    }
+
+    private void applyDrmDotVisibility(boolean hasFocus) {
+        if (mSecurityDot == null) return;
+        boolean show = mDrmAttention && !mHomeEnabled && !hasFocus;
+        mSecurityDot.setVisibility(show ? VISIBLE : GONE);
+    }
+
+    /** The shield, for anchoring the one-time DRM tip under it. */
+    @Nullable
+    public View getSecurityButton() {
+        return mAddressBarButton;
     }
 
     /**
@@ -617,6 +645,7 @@ public class GeckoToolbar extends FrameLayout implements View.OnClickListener, V
         final boolean hasText = !TextUtils.isEmpty(mEditText.getText());
 
         mAddressBarButton.setVisibility(hasFocus ? GONE : VISIBLE);
+        applyDrmDotVisibility(hasFocus);
         mClearButton.setVisibility(hasFocus && hasText ? VISIBLE : GONE);
 
         if (mHomeEnabled) {

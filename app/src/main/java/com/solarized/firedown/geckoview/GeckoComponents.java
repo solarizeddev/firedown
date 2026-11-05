@@ -41,6 +41,7 @@ import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.UrlStringUtils;
+import com.solarized.firedown.utils.WebUtils;
 
 import org.mozilla.geckoview.AllowOrDeny;
 import org.mozilla.geckoview.GeckoResult;
@@ -1130,6 +1131,7 @@ public class GeckoComponents {
             // it; without this the popup would still read "Show original" for
             // a page navigated to from a translated one.
             geckoState.setTranslationState(null);
+            geckoState.resetDrmNotice();
 
             // Per-tab load truth, ungated — the foreground-gated START observer
             // below can't be re-derived later, but this can (openSession reads
@@ -1572,18 +1574,32 @@ public class GeckoComponents {
                 case PERMISSION_AUTOPLAY_INAUDIBLE:
                     return GeckoResult.fromValue(ContentPermission.VALUE_ALLOW);
                 case PERMISSION_MEDIA_KEY_SYSTEM_ACCESS:
-                    // The EME pref cluster (media.eme.enabled,
-                    // media.gmp-widevinecdm.*, media.gmp-manager.*,
-                    // browser.eme.ui.enabled) doesn't gate this prompt —
-                    // PERMISSION_MEDIA_KEY_SYSTEM_ACCESS is a separate
-                    // per-page content permission that fires every time
-                    // a page calls navigator.requestMediaKeySystemAccess,
-                    // regardless of whether we have a CDM to grant. With
-                    // the DRM toggle off, auto-deny silently so the user
-                    // doesn't see a prompt for a feature they explicitly
-                    // turned off.
-                    if (!mSharedPreferences.getBoolean(Preferences.SETTINGS_ENABLE_DRM, false)) {
-                        return GeckoResult.fromValue(ContentPermission.VALUE_DENY);
+                    // With the DRM switch off, media.eme.enabled is false and
+                    // Gecko refuses the page's request itself; this callback
+                    // then comes only from the engine's notice (firedown-
+                    // geckoview patch 0010), once per window, and the answer
+                    // changes nothing for the page. Say so to the user, once
+                    // per page load, and answer PROMPT (GeckoView stores every
+                    // answer; a PROMPT row is one nothing reads). Gecko never
+                    // repeats the notice for that document, so a tab that is
+                    // not on screen keeps it until it is opened.
+                    if (!Preferences.getDRMEnabled(mSharedPreferences)) {
+                        if (findGeckoState != null && findGeckoState.claimDrmNotice()) {
+                            if (isCurrentGeckoState(findGeckoState)) {
+                                mGeckoObserverRegistry.notifyObservers(
+                                        GeckoObserverInvoker.DRM_DISABLED, findGeckoState);
+                            } else {
+                                findGeckoState.setDrmNoticePending(true);
+                            }
+                        }
+                        return GeckoResult.fromValue(ContentPermission.VALUE_PROMPT);
+                    }
+                    // The user turned DRM on from the notice for this site in
+                    // this tab: that tap was the consent, don't ask again on
+                    // the page it reloaded.
+                    if (findGeckoState != null
+                            && findGeckoState.isDrmAllowedHost(WebUtils.getDomainName(perm.uri))) {
+                        return GeckoResult.fromValue(ContentPermission.VALUE_ALLOW);
                     }
                     resId = R.string.request_media_key_system_access;
                     break;

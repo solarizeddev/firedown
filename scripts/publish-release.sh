@@ -239,13 +239,50 @@ ok "${#F_SHA[@]} update file(s) match status.json"
 for tool in git curl python3; do
     command -v "$tool" >/dev/null 2>&1 || die "$tool is not installed"
 done
+
+# Everything closed on exit: an ssh agent this script started, the mirror's
+# ssh connection. One trap, since a second `trap … EXIT` replaces the first.
+STARTED_AGENT=
+SSH_CTL_DIR=
+cleanup() {
+    if [ -n "$SSH_CTL_DIR" ]; then
+        [ -S "$SSH_CTL_DIR/ctl" ] && ssh -O exit -o ControlPath="$SSH_CTL_DIR/ctl" "$REMOTE" >/dev/null 2>&1
+        rm -rf "$SSH_CTL_DIR"
+    fi
+    [ -n "$STARTED_AGENT" ] && ssh-agent -k >/dev/null 2>&1
+    return 0
+}
+trap cleanup EXIT
+
+# The key's passphrase, once. The git fetches and pushes, publish.sh's own
+# ssh and rsync, and the mirror each open a connection, and without an agent
+# each asked for it (eight times in one run). An agent that already holds a
+# key is used as it is; otherwise one is started for this run, given the
+# default keys and stopped on exit. A key that won't load is not fatal: ssh
+# then asks per connection, as before.
+if runs fdroid || runs mirror || runs manifest; then
+    agent_state=0
+    ssh-add -l >/dev/null 2>&1 || agent_state=$?
+    if [ "$agent_state" = 2 ] && command -v ssh-agent >/dev/null 2>&1; then
+        eval "$(ssh-agent -s)" >/dev/null && STARTED_AGENT=1 && agent_state=1
+    fi
+    if [ "$agent_state" = 1 ]; then
+        say "ssh key passphrase (asked once for this run):"
+        if ssh-add; then
+            ok "ssh key loaded"
+        else
+            note "no key loaded: ssh will ask for each connection"
+        fi
+    fi
+fi
 if runs github; then
     command -v gh >/dev/null 2>&1 || die "gh is not installed (https://cli.github.com)"
     gh auth status >/dev/null 2>&1 || die "gh is not signed in: gh auth login"
     [ -x "$GRADLEW" ] || die "no $GRADLEW"
 fi
 if runs fdroid; then
-    [ -x "$FDROID_DIR/publish.sh" ] || die "no publish.sh in $FDROID_DIR (set FDROID_DIR)"
+    # -f, not -x: a checkout can lose the executable bit (it is run with bash).
+    [ -f "$FDROID_DIR/publish.sh" ] || die "no publish.sh in $FDROID_DIR (set FDROID_DIR)"
 fi
 
 if [ -z "${REMOTE_USER:-}" ] || [ -z "${REMOTE_HOST:-}" ]; then
@@ -257,6 +294,7 @@ if [ -z "${REMOTE_USER:-}" ] || [ -z "${REMOTE_HOST:-}" ]; then
     fi
 fi
 REMOTE=
+SSH_OPTS=
 if [ -n "${REMOTE_USER:-}" ] && [ -n "${REMOTE_HOST:-}" ]; then
     REMOTE="$REMOTE_USER@$REMOTE_HOST"
 fi
@@ -264,7 +302,14 @@ fi
 if runs mirror && [ "$MIRROR_NEEDED" = 1 ]; then
     [ -n "$REMOTE" ] || die "no server login: set REMOTE_USER and REMOTE_HOST in $FDROID_DIR/.env (publish.sh's login) or in the environment"
     command -v rsync >/dev/null 2>&1 || die "rsync is not installed"
-    ssh -o BatchMode=yes "$REMOTE" true </dev/null || die "cannot log in to $REMOTE with ssh (REMOTE_USER, REMOTE_HOST)"
+    # ONE login, asked here (a key's passphrase or the account's password,
+    # as publish.sh's own ssh would ask), then shared by every later ssh and
+    # rsync through a control socket. It used to be BatchMode, which never
+    # asks: a key with a passphrase and no agent read as "cannot log in".
+    SSH_CTL_DIR=$(mktemp -d) || die "mktemp failed"
+    SSH_OPTS="-o ControlMaster=auto -o ControlPath=$SSH_CTL_DIR/ctl -o ControlPersist=3600"
+    # shellcheck disable=SC2086 # SSH_OPTS is a list of words
+    ssh $SSH_OPTS "$REMOTE" true </dev/null || die "cannot log in to $REMOTE with ssh (REMOTE_USER, REMOTE_HOST)"
     ok "ssh $REMOTE"
 fi
 
@@ -317,7 +362,7 @@ fi
 
 if runs fdroid; then
     step "F-Droid repo"
-    (cd "$FDROID_DIR" && ./publish.sh "$APK") || die "publish.sh failed; after fixing it run: $0 --from fdroid"
+    (cd "$FDROID_DIR" && bash ./publish.sh "$APK") || die "publish.sh failed; after fixing it run: $0 --from fdroid"
     for url in $APK_FALLBACKS; do
         need_url "$url" "$APK_SIZE" 6
     done
@@ -332,8 +377,9 @@ if runs mirror; then
     else
         dest=$SITE_PATH/updates
         # shellcheck disable=SC2029 # the path is meant to expand here
-        ssh "$REMOTE" "mkdir -p '$dest'" </dev/null || die "could not make $dest on $REMOTE"
-        rsync -rtpv --chmod=D755,F644 --delete \
+        # shellcheck disable=SC2086
+        ssh $SSH_OPTS "$REMOTE" "mkdir -p '$dest'" </dev/null || die "could not make $dest on $REMOTE"
+        rsync -e "ssh $SSH_OPTS" -rtpv --chmod=D755,F644 --delete \
             --include='*.xz' --include='*.fdpatch' --exclude='*' \
             "$UPD/" "$REMOTE:$dest/" </dev/null || die "rsync to $REMOTE:$dest failed"
         names=''
@@ -343,7 +389,8 @@ if runs mirror; then
             i=$((i + 1))
         done
         # shellcheck disable=SC2029 # the path is meant to expand here
-        sums=$(ssh "$REMOTE" "cd '$dest' && sha256sum$names" </dev/null) || die "could not read the mirror's checksums on $REMOTE"
+        # shellcheck disable=SC2086
+        sums=$(ssh $SSH_OPTS "$REMOTE" "cd '$dest' && sha256sum$names" </dev/null) || die "could not read the mirror's checksums on $REMOTE"
         i=0
         while [ "$i" -lt "${#F_SHA[@]}" ]; do
             file=${F_GITHUB[$i]##*/}

@@ -1189,6 +1189,17 @@
     <string name="settings_doh_server_working">Funguje to!</string>
     <string name="settings_drm_enabled">Povolit přehrávání DRM</string>
     <string name="settings_drm_enabled_summary">Povolí Widevine na webech, které vyžadují DRM. Obsah chráněný DRM ale Firedown stáhnout nemůže.</string>
+    <string name="drm_sheet_title">Toto video potřebuje DRM</string>
+    <string name="drm_sheet_site">%1$s · DRM je vypnuté</string>
+    <string name="drm_sheet_plays">Když ho zapnete, stránka video přehraje</string>
+    <string name="drm_sheet_no_download">Videa s DRM nelze stáhnout, ani když je zapnuté</string>
+    <string name="drm_sheet_privacy">Weby poznají, jaké DRM váš telefon podporuje</string>
+    <string name="drm_sheet_turn_on">Zapnout DRM</string>
+    <string name="drm_sheet_footnote">Znovu ho můžete vypnout v Nastavení</string>
+    <string name="drm_row_title">DRM je vypnuté</string>
+    <string name="drm_row_summary">Tato stránka ho potřebuje k přehrání videa. Videa s DRM nelze stáhnout.</string>
+    <string name="drm_tip_title">DRM je pro tuto stránku vypnuté</string>
+    <string name="drm_tip_body">Klepnutím na štít ho zapnete.</string>
     <string name="settings_enhanced_tracking_protection_custom">Vlastní</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Standardní ochrana a navíc odstraňování sledovacích parametrů z adres URL.</string>
     <string name="settings_gecko_version">GeckoView</string>

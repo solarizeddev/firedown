@@ -48,6 +48,26 @@
         app:layout_constraintTop_toTopOf="parent"
         app:shapeAppearance="@style/ShapeAppearanceOverlay.Button.Circle" />
 
+    <!-- The shield's DRM dot: a page on screen asked for DRM while it is
+         off (GeckoToolbar.setDrmAttention). Sits on the shield's top-end
+         corner; tapping the shield opens the security sheet, whose
+         "DRM is off" row turns it on. Not focusable: the shield itself is
+         the control. 6dp, Material 3's small badge, centred on the shield's
+         top-end shoulder (measured on-device: the shield's outline turns
+         down 3dp below where a corner-of-the-glyph badge sits, which left
+         the dot floating above it). -->
+    <View
+        android:id="@+id/security_dot"
+        android:layout_width="6dp"
+        android:layout_height="6dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/bg_drm_dot"
+        android:importantForAccessibility="no"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@id/security_button"
+        app:layout_constraintTop_toTopOf="@id/security_button" />
+
 
     <com.solarized.firedown.autocomplete.AutoCompleteEditText
         android:id="@+id/edit_text"

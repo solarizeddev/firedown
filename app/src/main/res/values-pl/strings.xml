@@ -351,6 +351,17 @@
     <string name="settings_jit_disabled_summary">JIT przyspiesza witryny intensywnie korzystające z JavaScriptu, ale zwiększa powierzchnię ataku. Jest domyślnie włączony; włącz tę opcję, aby wzmocnić przeglądarkę kosztem wydajności. Ta zmiana spowoduje ponowne uruchomienie przeglądarki</string>
     <string name="settings_drm_enabled">Włącz odtwarzanie DRM</string>
     <string name="settings_drm_enabled_summary">Zezwala Widevine w witrynach wymagających DRM (Netflix, Spotify, …). Firedown nadal nie może pobierać treści chronionych DRM.</string>
+    <string name="drm_sheet_title">Ten film wymaga DRM</string>
+    <string name="drm_sheet_site">%1$s · DRM jest wyłączone</string>
+    <string name="drm_sheet_plays">Po włączeniu ta strona będzie mogła odtworzyć film</string>
+    <string name="drm_sheet_no_download">Filmów z DRM nie można pobrać, nawet gdy DRM jest włączone</string>
+    <string name="drm_sheet_privacy">Strony mogą sprawdzić, jakie DRM obsługuje Twój telefon</string>
+    <string name="drm_sheet_turn_on">Włącz DRM</string>
+    <string name="drm_sheet_footnote">Możesz je ponownie wyłączyć w Ustawieniach</string>
+    <string name="drm_row_title">DRM jest wyłączone</string>
+    <string name="drm_row_summary">Ta strona potrzebuje go do odtworzenia filmu. Filmów z DRM nie można pobrać.</string>
+    <string name="drm_tip_title">DRM jest wyłączone dla tej strony</string>
+    <string name="drm_tip_body">Dotknij tarczy, aby je włączyć.</string>
     <string name="settings_wasm_disabled">Wyłącz WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Uniemożliwia witrynom uruchamianie skompilowanych modułów WASM. Zmniejsza powierzchnię ataku, ale psuje niektóre aplikacje</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Jeśli coś na tej witrynie nie działa, spróbuj ją wyłączyć.</string>

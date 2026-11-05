@@ -4966,9 +4966,18 @@ tasks, not hand edits:
   deploy to leave `/updates/` alone**: its rsync runs with `--delete`, so
   without `--exclude='/updates/'` beside `/fdroid/` in `deploy.yml` every
   website push deletes the mirror, and the script refuses to mirror until it
-  is there. Verify with `bash scripts/publish-release/selftest.sh` (a
-  simulated GitHub, server, `publish.sh`, ssh and rsync, real git remotes; 67
-  checks, and five planted faults that must each be caught).
+  is there. **The ssh key's passphrase is asked ONCE per run**: the git
+  fetches and pushes, `publish.sh`'s ssh and rsync and the mirror each open
+  a connection, and with an encrypted key and no agent each asked (eight
+  prompts in the 1.2.6 run). An agent that holds a key is used as it is,
+  otherwise the script starts one, runs `ssh-add` (the DEFAULT key files
+  only; a key named by `IdentityFile` alone still asks per connection) and
+  stops it on exit; the mirror's own calls share one ssh control socket.
+  Never BatchMode for the login check: it cannot prompt, and a passphrase
+  key read as "cannot log in". Verify with
+  `bash scripts/publish-release/selftest.sh` (a simulated GitHub, server,
+  `publish.sh`, ssh, ssh-agent and rsync, real git remotes; 75 checks, and
+  six planted faults that must each be caught).
 
 ### CHANGELOG entries — short, important changes only (HARD RULE)
 
@@ -11533,6 +11542,91 @@ after sketches on the design canvas:
   DeleteBrowsing) is a centred `MaterialAlertDialog` and stays one; the
   long-press context dialog (BrowserContent) is a centred CUSTOM dialog
   whose rows are the card rows (the one centred surface that is a menu).
+
+### DRM off, and the "Turn on" notice (engine patch 0010)
+
+"Enable DRM playback" (`SETTINGS_ENABLE_DRM`, Security door, default OFF)
+drives `GeckoRuntimeHelper.setDRM`: `media.eme.enabled` and the GMP prefs.
+Two facts about Gecko that the code used to get wrong:
+- **The pref does not remove the API.** `navigator.requestMediaKeySystemAccess`
+  always exists; with the pref off Gecko refuses every Widevine request with
+  "EME has been preffed off" BEFORE probing the device
+  (`MediaKeySystemAccessManager::RequestMediaKeySystemAccess`). That uniform
+  refusal is what keeps a page from learning which DRM formats the phone
+  supports. Never "fix" detection by leaving EME on and refusing through the
+  permission instead: that answer comes after the probe, so a page could tell
+  supported configurations from refused ones.
+- **The refusal comes before GeckoView asks the app**, so on a stock engine
+  `PERMISSION_MEDIA_KEY_SYSTEM_ACCESS` never arrives while the switch is off.
+  Gecko's own "api-disabled" notice (`mediakeys-request`) is heard only by
+  desktop Firefox.
+
+firedown-geckoview patch **0010** (`FIREDOWN-EME-DISABLED-NOTICE`) makes the
+pref-off branch also start an app-approval request, once per window, whose
+answer is ignored: the page is refused exactly as before. With the switch
+off, `GeckoComponents.PermissionDelegate` treats that request as the notice:
+once per page load (`GeckoState.claimDrmNotice`, reset on page start; a player
+in an iframe is a second window) it raises `onDrmDisabled` for the current
+tab, and answers `VALUE_PROMPT` (GeckoView stores every answer; a PROMPT row
+is one nothing reads, Gecko asks the app every time). **Gecko never repeats
+the notice for a document**, so one for a tab that is not on screen, or one
+that lands while Settings/Downloads covers the browser, waits on the tab
+(`setDrmNoticePending`) and shows from `applyOpenUriUi` / `onResume`
+(`showPendingDrmNotice`, the `showPendingDownload` shape); dropping it lost
+the message for good. **What the user sees** (canvas "DRM notice
+alternatives", boards C–E, picked over a snackbar that was too easy to miss):
+- **Once per site, the "This video needs DRM" sheet**
+  (`DrmSheetDialogFragment`, `fragment_dialog_drm_notice`; the older
+  `fragment_dialog_drm` is the Allow dialog's view, a different thing): the
+  key in the security sheet's 40dp identity tile, "<site> · DRM is turned
+  off", three facts in one group of `SheetRowCard`s with `SheetRowText`
+  labels (allowed to wrap, not tappable) — turning it on lets the page play
+  the video, DRM videos can't be downloaded even with it on, sites can tell
+  which DRM the phone supports (the privacy cost, kept on purpose: it is why
+  DRM is off by default) — the footnote, then the ask-sheet confirm row (Not
+  now as a text button, Turn on DRM filled, end-aligned). Built only from the
+  app's sheet parts, glyphs from Material Symbols; DRM's glyph is the KEY
+  (the security sheet's DRM row too), never the lock, which already means
+  the Safe Folder and the connection. The first build had a 48dp disc, a
+  TitleLarge title, hand-drawn stroke glyphs and BodyLarge rows, and read as
+  foreign next to the other sheets (on-device). A site is marked when the sheet OPENS (`DrmNoticeSites`, truncated
+  SHA-256 of the host, 200 at most, in `backup_local.xml`: a hash so the list
+  is not a readable record of visited sites), whatever the answer; another
+  dialog owning the screen leaves the sheet for the site's next page.
+- **Every time, a coral dot on the address bar's shield**
+  (`GeckoToolbar.setDrmAttention`, set in `refreshShield` from
+  `GeckoState.isDrmRefusedHere()` while DRM is off): on top of whatever the
+  shield shows, so it replaces neither protection state. A lock glyph of its
+  own in the bar was sketched and dropped (maintainer: the shield is where
+  people already look at a site's settings).
+- **Tapping the shield**: the security sheet gains "DRM is off · This page
+  needs it to play video. DRM videos can't be downloaded. [Turn on]" in the
+  connection group (`drm_row`, `bindDrmRow`, corners via `applyCorners`).
+- **Once ever, after the first Not now**: a tip under the shield, "DRM is off
+  for this page · Tap the shield to turn it on" (`popup_drm_shield_tip`,
+  6 s, a tap or a touch outside dismisses it, and so does a navigation or a
+  tab switch). The once is claimed only when the tip can show: the shield
+  visible and the toolbar not scrolled away (a PopupWindow does not follow
+  the toolbar's translation). Its width is the WINDOW's (`drm_tip_width`):
+  inflated without a parent, the layout's own width is dropped.
+- `onResume` repaints the shield: Settings turns DRM on without a reload,
+  and the dot must not outlive the security sheet's row.
+- The sheet and the row answer through ONE fragment result
+  (`DrmSheetDialogFragment.RESULT_KEY`), handled by
+  `BrowserFragment.onDrmResult`, so turning DRM on has one implementation.
+The download sentence is load-bearing on both surfaces: Turn on skips the
+Allow dialog, whose subtitle was the only other place the user
+heard it before choosing. Turn on writes the
+setting, calls `setDRM(false)` (which now returns the pref write's result) and
+reloads the tab when Gecko has the values. The host is read AT THE TAP and
+allowed only if the tab is still on the page the notice was about
+(`allowDrmForReload`), and only for the document the reload brings: the next
+page start after it clears the host, so a shortcut can't outlive its tap. Private tabs refuse every
+content permission before this branch, so they never show the notice (DRM
+could not play there anyway). On an engine without 0010 nothing changes: the
+notice simply never arrives. Reviewed by a second model against the 159.0.1
+sources (lifetime, page-visible effects, threading, host matching); on-device
+unverified at write time.
 
 ### UTC timezone spoofing toggle (FPP target, not a code patch)
 

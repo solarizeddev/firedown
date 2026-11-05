@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- download_24 with the Material _off slash and its gap (cut with shapely, no Material Symbols download_off in the repo): the DRM sheet's 'DRM videos can't be downloaded' row. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960"
+    android:tint="?attr/colorOnSurfaceVariant">
+  <path
+      android:fillColor="@android:color/white"
+      android:pathData="M440,358L520,438L520,160L440,160ZM680,440L624,382L544,462L601,519ZM98,138L822,862L862,822L138,98ZM519,601L318,400L280,440L480,640ZM800,718L800,600L720,600L720,638ZM160,720L160,728L161,736L163,743L166,751L169,758L173,764L178,770L184,776L190,782L196,787L202,791L209,794L217,797L224,799L232,800L240,800L718,800L638,720L240,720L240,600L160,600Z"/>
+</vector>

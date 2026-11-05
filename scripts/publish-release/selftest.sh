@@ -74,7 +74,8 @@ world() {
     local w=$TMP/$1 deltas=${2:-1} exclude=${3:-1} upd
     rm -rf "$w"
     mkdir -p "$w/bin" "$w/github" "$w/server/www/updates" "$w/fdroid"
-    cp "$HERE/fake/curl" "$HERE/fake/rsync" "$HERE/fake/ssh" "$HERE/fake/gh" "$w/bin/"
+    cp "$HERE/fake/curl" "$HERE/fake/rsync" "$HERE/fake/ssh" "$HERE/fake/ssh-add" \
+        "$HERE/fake/ssh-agent" "$HERE/fake/gh" "$w/bin/"
     chmod +x "$w/bin/"*
     : > "$w/events"
 
@@ -303,6 +304,27 @@ case_behind() {
     check "uploads nothing" no_event behind "gradlew"
 }
 
+case_no_agent() {
+    say "no ssh agent: one is started, loaded once, stopped"
+    world noagent
+    EXTRA=(FAKE_AGENT=2)
+    run noagent 'y\ny\ny\n'
+    EXTRA=()
+    check "publishes" rc_is noagent 0
+    check "starts an agent before the first git fetch" in_order noagent "ssh-agent start" "ssh-add load" "ssh deploy@203.0.113.5 true"
+    check "loads the key once" test "$(grep -c 'ssh-add load' "$TMP/noagent/events")" = 1
+    check "stops the agent on exit" event noagent "ssh-agent stop"
+}
+
+case_agent_has_key() {
+    say "an agent that holds a key is used as it is"
+    world haskey
+    run haskey 'y\ny\ny\n'
+    check "publishes" rc_is haskey 0
+    check "starts no agent" no_event haskey "ssh-agent start"
+    check "asks for no passphrase" no_event haskey "ssh-add load"
+}
+
 case_ssh_down() {
     say "the server refuses the login"
     world sshdown
@@ -336,6 +358,8 @@ case_corrupt_mirror
 case_decline_offer
 case_no_deltas
 case_behind
+case_no_agent
+case_agent_has_key
 case_ssh_down
 case_no_login
 
@@ -364,8 +388,9 @@ say "planted faults"
 mutant "no deploy check" case_no_exclude 'if ! grep -qF -- "$DEPLOY_EXCLUDE" "$deploy"; then' 'if false; then'
 mutant "no last look before status.json" case_manifest_on_draft '    say "Every file status.json lists, once more:"' '    need_url() { :; }'
 mutant "no checksum on the server" case_corrupt_mirror '[ "$got" = "${F_SHA[$i]}" ] ||' 'true ||'
-mutant "rsync without --delete" case_clean 'rsync -rtpv --chmod=D755,F644 --delete' 'rsync -rtpv --chmod=D755,F644'
+mutant "rsync without --delete" case_clean 'rsync -e "ssh $SSH_OPTS" -rtpv --chmod=D755,F644 --delete' 'rsync -e "ssh $SSH_OPTS" -rtpv --chmod=D755,F644'
 mutant "a login made up when none is set" case_no_login '[ -n "$REMOTE" ] || die "no server login' 'REMOTE=deploy@firedown.app; true || die "no server login'
+mutant "no agent started" case_no_agent 'if [ "$agent_state" = 2 ] && command -v ssh-agent' 'if false && command -v ssh-agent'
 
 say ""
 say "$PASS passed, $FAIL failed"

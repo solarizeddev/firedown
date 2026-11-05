@@ -1159,6 +1159,17 @@
     <string name="settings_doh_server_working">Se toimii!</string>
     <string name="settings_drm_enabled">Ota DRM-toisto käyttöön</string>
     <string name="settings_drm_enabled_summary">Sallii Widevinen sivustoilla, jotka vaativat DRM:n. Firedown ei silti voi ladata DRM-sisältöä.</string>
+    <string name="drm_sheet_title">Tämä video tarvitsee DRM:n</string>
+    <string name="drm_sheet_site">%1$s · DRM on poissa käytöstä</string>
+    <string name="drm_sheet_plays">Kun otat sen käyttöön, sivu voi toistaa videon</string>
+    <string name="drm_sheet_no_download">DRM-videoita ei voi ladata, vaikka DRM olisi käytössä</string>
+    <string name="drm_sheet_privacy">Sivustot voivat nähdä, mitä DRM:ää puhelimesi tukee</string>
+    <string name="drm_sheet_turn_on">Ota DRM käyttöön</string>
+    <string name="drm_sheet_footnote">Voit poistaa sen taas käytöstä asetuksista</string>
+    <string name="drm_row_title">DRM on pois käytöstä</string>
+    <string name="drm_row_summary">Tämä sivu tarvitsee sitä videon toistamiseen. DRM-videoita ei voi ladata.</string>
+    <string name="drm_tip_title">DRM on pois käytöstä tällä sivulla</string>
+    <string name="drm_tip_body">Ota se käyttöön napauttamalla kilpeä.</string>
     <string name="settings_enhanced_tracking_protection_custom">Mukautettu</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Vakiosuojaus sekä seurantaan käytettyjen kyselyparametrien poistaminen URL-osoitteista.</string>
     <string name="settings_gecko_version">GeckoView</string>

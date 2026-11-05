@@ -304,6 +304,17 @@
     <string name="settings_jit_disabled_summary">O JIT acelera sites com muito JavaScript, mas aumenta a superfície de ataque. Está ativado por padrão; ative isto para reforçar o navegador à custa de algum desempenho. Esta alteração reiniciará o seu navegador</string>
     <string name="settings_drm_enabled">Ativar reprodução DRM</string>
     <string name="settings_drm_enabled_summary">Permite o Widevine em sites que exigem DRM (Netflix, Spotify, …). O Firedown ainda não pode baixar conteúdo protegido por DRM.</string>
+    <string name="drm_sheet_title">Este vídeo precisa de DRM</string>
+    <string name="drm_sheet_site">%1$s · DRM está desativado</string>
+    <string name="drm_sheet_plays">Ativá-lo permite que esta página reproduza o vídeo</string>
+    <string name="drm_sheet_no_download">Vídeos com DRM não podem ser baixados, mesmo com DRM ativado</string>
+    <string name="drm_sheet_privacy">Os sites podem saber qual DRM seu telefone suporta</string>
+    <string name="drm_sheet_turn_on">Ativar DRM</string>
+    <string name="drm_sheet_footnote">Você pode desativá-lo novamente nas Configurações</string>
+    <string name="drm_row_title">DRM está desativado</string>
+    <string name="drm_row_summary">Esta página precisa dele para reproduzir vídeo. Vídeos com DRM não podem ser baixados.</string>
+    <string name="drm_tip_title">DRM está desativado para esta página</string>
+    <string name="drm_tip_body">Toque no escudo para ativá-lo.</string>
     <string name="settings_wasm_disabled">Desativar WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Impede que os sites executem módulos WASM compilados. Reduz a superfície de ataque, mas quebra alguns aplicativos</string>
     <string name="rename">Renomear</string>

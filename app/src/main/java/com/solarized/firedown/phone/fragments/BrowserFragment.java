@@ -4,6 +4,8 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,6 +21,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityManager;
 import android.webkit.URLUtil;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
@@ -68,6 +71,7 @@ import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.data.models.WebBookmarkViewModel;
 import com.solarized.firedown.data.repository.WebBookmarkDataRepository;
+import com.solarized.firedown.geckoview.DrmNoticeSites;
 import com.solarized.firedown.geckoview.GeckoComponents;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.GeckoSwipeRefreshLayout;
@@ -85,6 +89,7 @@ import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
+import com.solarized.firedown.phone.dialogs.DrmSheetDialogFragment;
 import com.solarized.firedown.phone.dialogs.OpenInAppSheetDialogFragment;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.OnItemClickListener;
@@ -98,6 +103,7 @@ import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.UrlStringUtils;
+import com.solarized.firedown.utils.WebUtils;
 
 import org.apache.commons.io.FilenameUtils;
 import org.mozilla.geckoview.GeckoResult;
@@ -141,6 +147,13 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     private boolean mIsIncognitoThemed = false;
+
+    /** How long the one-time "tap the shield" DRM tip stays. */
+    private static final long DRM_TIP_DURATION_MS = 6000;
+
+    /** The one-time DRM tip under the shield while it shows. */
+    @Nullable
+    private PopupWindow mDrmTip;
 
     /**
      * Set to true while {@link #recreateSession(GeckoState)} is in flight
@@ -405,6 +418,10 @@ public class BrowserFragment extends BaseBrowserFragment
         // Settings is another Activity, so a toggle there lands here on the
         // way back — no navigation event would otherwise repaint the bar.
         applyAddressBarDisplayPref();
+        // The DRM switch may have changed in Settings (it applies without a
+        // reload): repaint the shield's dot so it never outlives the row.
+        refreshShield();
+        showPendingDrmNotice(peekCurrentGeckoState());
     }
 
     /** Host-only address bar at rest — see {@link Preferences#SETTINGS_ADDRESS_BAR_HOST_ONLY}. */
@@ -1165,6 +1182,13 @@ public class BrowserFragment extends BaseBrowserFragment
                 getViewLifecycleOwner(),
                 (requestKey, result) -> onOpenInAppResult(result));
 
+        // The DRM sheet and the security sheet's "DRM is off" row both
+        // answer here, so turning DRM on has one implementation.
+        getParentFragmentManager().setFragmentResultListener(
+                DrmSheetDialogFragment.RESULT_KEY,
+                getViewLifecycleOwner(),
+                (requestKey, result) -> onDrmResult(result));
+
         Log.d(TAG, "onViewCreated finished");
     }
 
@@ -1234,6 +1258,7 @@ public class BrowserFragment extends BaseBrowserFragment
         super.onDestroyView();
         Log.d(TAG, "onDestroyView: releasing GeckoView session");
         dismissSnapshotSnackbar();
+        dismissDrmTip();
         if (mSwipeRefreshLayout != null) {
             mSwipeRefreshLayout.setOnRefreshListener(null);
             mSwipeRefreshLayout.setOnChildScrollUpCallback(null);
@@ -1688,6 +1713,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // URL after the user had already typed a new one (the value read back was
         // whatever the last NavigationDelegate write left, not this event's).
         mGeckoToolbar.onLocationChange(url);
+        dismissDrmTip();
         refreshShield();
         // A navigation while find-in-page is active dismisses the search bar.
         if (mUiState == UiState.SEARCH) {
@@ -1773,6 +1799,141 @@ public class BrowserFragment extends BaseBrowserFragment
                 Preferences.DEFAULT_TRANSLATIONS_OFFER)) return;
         Log.d(TAG, "onTranslationOffer: language=" + geckoState.getDetectedDocLanguage());
         showOfferUnlessNever(geckoState);
+    }
+
+    /**
+     * The page on screen asked for DRM while the switch is off (Settings →
+     * Privacy → Security). Gecko has already refused it, so the site's player
+     * just fails. The shield gets its dot at once; the first time a site does
+     * this, the "This video needs DRM" sheet says why, that DRM videos can't
+     * be downloaded and what turning it on lets sites see, and offers the
+     * switch. After that the site gets only the dot, and the security
+     * sheet's row is the way to turn it on. A private tab never gets here
+     * (all content permissions are refused there). Gecko sends the notice
+     * once per document, so one that lands while the browser is not in
+     * front (Settings over it) waits on the tab and shows on the way back,
+     * like a background tab's ({@link #showPendingDrmNotice}).
+     */
+    @Override
+    public void onDrmDisabled(GeckoState geckoState) {
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        refreshShield();
+        if (getView() == null || !isResumed()) {
+            geckoState.setDrmNoticePending(true);
+            return;
+        }
+        showDrmNotice(geckoState);
+    }
+
+    /** A notice that waited for this tab (see {@link #onDrmDisabled}). Posted:
+     *  this runs inside a tab switch or a resume. */
+    private void showPendingDrmNotice(@Nullable GeckoState geckoState) {
+        if (geckoState == null || mGeckoView == null) return;
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        if (!geckoState.takeDrmNoticePending()) return;
+        mGeckoView.post(() -> {
+            if (!isAdded() || getView() == null || peekCurrentGeckoState() != geckoState) {
+                return;
+            }
+            showDrmNotice(geckoState);
+        });
+    }
+
+    /**
+     * Opens the DRM sheet unless this site already showed it. A site is
+     * marked when the sheet actually opens, whatever the answer, so another
+     * dialog owning the screen leaves the sheet for the site's next page.
+     */
+    private void showDrmNotice(@NonNull GeckoState geckoState) {
+        refreshShield();
+        String host = WebUtils.getDomainName(geckoState.getEntityUri());
+        if (host == null || host.isEmpty()) return;
+        if (DrmNoticeSites.wasShown(mActivity, host)) return;
+        NavDestination current = mNavController.getCurrentDestination();
+        if (current == null || current.getId() != R.id.browser) return;
+        NavigationUtils.navigateSafe(mNavController, R.id.dialog_drm, R.id.browser,
+                DrmSheetDialogFragment.args(host, mIsIncognitoThemed));
+        NavDestination shown = mNavController.getCurrentDestination();
+        if (shown != null && shown.getId() == R.id.dialog_drm) {
+            DrmNoticeSites.markShown(mActivity, host);
+        }
+    }
+
+    /**
+     * The answer of the DRM sheet or the security sheet's row. Turn on writes
+     * the setting, applies it to Gecko (the Settings listeners are not
+     * registered while the browser is in front) and reloads the tab once
+     * Gecko has the new value; the reload's own DRM request for this site is
+     * allowed without asking again, but only when the tab is still on the
+     * site the question was about. Not now from the sheet shows, once ever,
+     * where the switch lives now: the shield.
+     */
+    private void onDrmResult(@NonNull Bundle result) {
+        GeckoState geckoState = peekCurrentGeckoState();
+        if (geckoState == null) return;
+        String questionHost = result.getString(DrmSheetDialogFragment.RESULT_HOST);
+        if (result.getBoolean(DrmSheetDialogFragment.RESULT_TURN_ON, false)) {
+            dismissDrmTip();
+            mSharedPreferences.edit().putBoolean(Preferences.SETTINGS_ENABLE_DRM, true).apply();
+            String host = WebUtils.getDomainName(geckoState.getEntityUri());
+            if (host != null && host.equals(questionHost)) {
+                geckoState.allowDrmForReload(host);
+            }
+            refreshShield();
+            mGeckoRuntimeHelper.setDRM(false).accept(ignored -> geckoState.reload());
+            return;
+        }
+        if (result.getBoolean(DrmSheetDialogFragment.RESULT_FROM_SHEET, false)
+                && geckoState.isDrmRefusedHere()) {
+            showDrmTip();
+        }
+    }
+
+    /**
+     * "DRM is off for this page · Tap the shield to turn it on", under the
+     * shield, once ever. The once is claimed only when the tip can actually
+     * show: the shield on screen and the toolbar not scrolled away (the
+     * popup does not follow the toolbar's translation).
+     */
+    private void showDrmTip() {
+        if (mGeckoToolbar == null || mGeckoView == null) return;
+        View anchor = mGeckoToolbar.getSecurityButton();
+        if (anchor == null || !anchor.isAttachedToWindow() || anchor.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        Rect visible = new Rect();
+        if (!anchor.getGlobalVisibleRect(visible) || visible.height() < anchor.getHeight()) {
+            return;
+        }
+        if (!DrmNoticeSites.claimShieldTip(mActivity)) {
+            return;
+        }
+        dismissDrmTip();
+        View content = LayoutInflater.from(anchor.getContext())
+                .inflate(R.layout.popup_drm_shield_tip, null, false);
+        // Inflated without a parent, so the layout's own width is dropped:
+        // the window carries it.
+        int width = getResources().getDimensionPixelSize(R.dimen.drm_tip_width);
+        PopupWindow tip = new PopupWindow(content, width, ViewGroup.LayoutParams.WRAP_CONTENT, false);
+        // A background lets a touch outside dismiss it; the card draws its own.
+        tip.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        tip.setOutsideTouchable(true);
+        content.setOnClickListener(v -> dismissDrmTip());
+        tip.showAsDropDown(anchor, 0, 0);
+        mDrmTip = tip;
+        mGeckoView.postDelayed(() -> {
+            if (mDrmTip == tip) {
+                dismissDrmTip();
+            }
+        }, DRM_TIP_DURATION_MS);
+    }
+
+    private void dismissDrmTip() {
+        PopupWindow tip = mDrmTip;
+        mDrmTip = null;
+        if (tip != null && tip.isShowing()) {
+            tip.dismiss();
+        }
     }
 
     /**
@@ -3138,6 +3299,8 @@ public class BrowserFragment extends BaseBrowserFragment
         refreshTranslateGlyph(geckoState);
         hideTranslateOffer();
         showPendingDownload(geckoState);
+        showPendingDrmNotice(geckoState);
+        dismissDrmTip();
         refreshShield();
     }
 
@@ -3158,6 +3321,8 @@ public class BrowserFragment extends BaseBrowserFragment
         }
         int shield = mAddonManager.shieldState(state.getGeckoSession(), mIsIncognitoThemed, state.getEntityUri());
         mGeckoToolbar.setAdsEnabled(shield == AddonPolicy.SHIELD_PROTECTED);
+        mGeckoToolbar.setDrmAttention(state.isDrmRefusedHere()
+                && !Preferences.getDRMEnabled(mSharedPreferences));
     }
 
 

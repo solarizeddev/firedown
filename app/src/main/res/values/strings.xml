@@ -896,6 +896,17 @@
     <string name="settings_webgl_disabled_summary">Blocks GPU fingerprinting, may break 3D content</string>
     <string name="settings_drm_enabled">Enable DRM playback</string>
     <string name="settings_drm_enabled_summary">Allows Widevine on sites that require DRM. Firedown still can\'t download DRM content.</string>
+    <string name="drm_sheet_title">This video needs DRM</string>
+    <string name="drm_sheet_site">%1$s · DRM is turned off</string>
+    <string name="drm_sheet_plays">Turning it on lets this page play the video</string>
+    <string name="drm_sheet_no_download">DRM videos can\'t be downloaded, even with it on</string>
+    <string name="drm_sheet_privacy">Sites can tell which DRM your phone supports</string>
+    <string name="drm_sheet_turn_on">Turn on DRM</string>
+    <string name="drm_sheet_footnote">You can turn it off again in Settings</string>
+    <string name="drm_row_title">DRM is off</string>
+    <string name="drm_row_summary">This page needs it to play video. DRM videos can\'t be downloaded.</string>
+    <string name="drm_tip_title">DRM is off for this page</string>
+    <string name="drm_tip_body">Tap the shield to turn it on.</string>
     <string name="settings_wasm_disabled">Disable WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Blocks compiled WASM modules. Breaks some sites</string>
     <string name="settings_https_only_title">HTTPS-only mode</string>

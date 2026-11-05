@@ -325,6 +325,11 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
     }
 
     @Override
+    public void onDrmDisabled(GeckoState geckoState) {
+
+    }
+
+    @Override
     public void onTranslationStateChange(GeckoState geckoState,
                                          TranslationsController.SessionTranslation.TranslationState state) {
 

@@ -863,6 +863,17 @@
     <string name="settings_donate">Donasi</string>
     <string name="settings_drm_enabled">Aktifkan pemutaran DRM</string>
     <string name="settings_drm_enabled_summary">Mengizinkan Widevine di situs yang memerlukan DRM. Firedown tetap tidak dapat mengunduh konten DRM.</string>
+    <string name="drm_sheet_title">Video ini memerlukan DRM</string>
+    <string name="drm_sheet_site">%1$s · DRM dinonaktifkan</string>
+    <string name="drm_sheet_plays">Jika diaktifkan, halaman ini dapat memutar videonya</string>
+    <string name="drm_sheet_no_download">Video DRM tidak dapat diunduh, meskipun DRM aktif</string>
+    <string name="drm_sheet_privacy">Situs dapat mengetahui DRM yang didukung ponsel Anda</string>
+    <string name="drm_sheet_turn_on">Aktifkan DRM</string>
+    <string name="drm_sheet_footnote">Anda dapat menonaktifkannya lagi di Setelan</string>
+    <string name="drm_row_title">DRM nonaktif</string>
+    <string name="drm_row_summary">Halaman ini memerlukannya untuk memutar video. Video DRM tidak dapat diunduh.</string>
+    <string name="drm_tip_title">DRM nonaktif untuk halaman ini</string>
+    <string name="drm_tip_body">Ketuk perisai untuk mengaktifkannya.</string>
     <string name="settings_enhanced_tracking_protection_custom">Khusus</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Perlindungan standar plus penghapusan parameter kueri pelacakan dari URL.</string>
     <string name="settings_gecko_version">GeckoView</string>

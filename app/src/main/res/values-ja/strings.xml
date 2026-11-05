@@ -529,6 +529,17 @@
     <string name="settings_webgl_disabled_summary">GPUフィンガープリントを防止、3Dコンテンツが動作しない場合があります</string>
     <string name="settings_drm_enabled">DRM 再生を有効にする</string>
     <string name="settings_drm_enabled_summary">DRM が必要なサイト（Netflix、Spotify など）で Widevine 再生を許可します。Firedown では DRM で保護されたコンテンツのダウンロードはできません。</string>
+    <string name="drm_sheet_title">この動画には DRM が必要です</string>
+    <string name="drm_sheet_site">%1$s · DRM はオフです</string>
+    <string name="drm_sheet_plays">オンにすると、このページで動画を再生できます</string>
+    <string name="drm_sheet_no_download">DRM 動画は、DRM をオンにしてもダウンロードできません</string>
+    <string name="drm_sheet_privacy">お使いのスマートフォンが対応する DRM をサイトが知ることができます</string>
+    <string name="drm_sheet_turn_on">DRM をオンにする</string>
+    <string name="drm_sheet_footnote">設定でいつでもオフに戻せます</string>
+    <string name="drm_row_title">DRM はオフです</string>
+    <string name="drm_row_summary">このページで動画を再生するには DRM が必要です。DRM 動画はダウンロードできません。</string>
+    <string name="drm_tip_title">このページでは DRM がオフです</string>
+    <string name="drm_tip_body">盾のアイコンをタップするとオンにできます。</string>
     <string name="settings_wasm_disabled">WebAssemblyを無効にする</string>
     <string name="settings_wasm_disabled_summary">サイトがコンパイル済みのWASMモジュールを実行できないようにします。攻撃対象領域を減らせますが、一部のアプリが動作しなくなります</string>
     <string name="settings_https_only_title">HTTPSのみモード</string>
