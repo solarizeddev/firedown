@@ -52,13 +52,15 @@
          off (GeckoToolbar.setDrmAttention). Sits on the shield's top-end
          corner; tapping the shield opens the security sheet, whose
          "DRM is off" row turns it on. Not focusable: the shield itself is
-         the control. -->
+         the control. 6dp, Material 3's small badge: the 24dp shield spans
+         16..32dp of the 48dp button, so the dot's centre (34, 14) sits just
+         off the shield's top-end corner instead of over its outline. -->
     <View
         android:id="@+id/security_dot"
-        android:layout_width="10dp"
-        android:layout_height="10dp"
+        android:layout_width="6dp"
+        android:layout_height="6dp"
         android:layout_marginTop="11dp"
-        android:layout_marginEnd="10dp"
+        android:layout_marginEnd="11dp"
         android:background="@drawable/bg_drm_dot"
         android:importantForAccessibility="no"
         android:visibility="gone"
