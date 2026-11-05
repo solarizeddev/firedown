@@ -11,6 +11,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.solarized.firedown.data.TabThumbnailStore;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
+import com.solarized.firedown.geckoview.DrmNoticeSites;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.media.GeckoMediaController;
 
@@ -282,6 +283,7 @@ public class IncognitoStateRepository {
      */
     public void deleteAll() {
         mGeckoMediaController.clearMedia();
+        DrmNoticeSites.clearPrivate();
         List<GeckoState> toClose;
         synchronized (mGeckoStates) {
             toClose = new ArrayList<>(mGeckoStates);

@@ -11690,7 +11690,18 @@ summary and the notice sheet. Returning from Settings reloads a tab whose
 DRM answer the switch just changed, both ways (`onResume`: refused and now
 on, `isDrmRefusedHere`; granted and now off, `isDrmGrantedHere`, set on the
 ALLOW, cleared on page start): Gecko reads the pref when the page loads, so
-the page on screen keeps the old answer until then. Reviewed by Fable after
+the page on screen keeps the old answer until then. The same check
+(`BrowserFragment.reconcileDrm`) runs when an already-open tab is switched
+onto (end of `setGeckoViewSession`, never on a tab that is loading: a
+reload there would abort the load), and `showDrmNotice` drops a notice
+that waited while the switch was turned on. A page reloaded because DRM
+was turned OFF has its site marked as told, so it gets the dot and the row
+but not the "Turn on" sheet right after the user turned it off. Private
+tabs' remembered sites are cleared with "close all private tabs"
+(`DrmNoticeSites.clearPrivate`). Known, not built: Android's Widevine
+CDM is provisioned per device, so a license server can link DRM playback
+in a private tab to the same phone as a regular tab (nothing new is
+stored by playing). Reviewed by Fable after
 the first cut, which traced code paths but never what the user saw per case
 (on/off × regular/private × fresh/already open); keep that table in mind
 for any change here.

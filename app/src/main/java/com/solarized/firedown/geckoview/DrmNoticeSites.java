@@ -10,6 +10,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -37,8 +38,8 @@ public final class DrmNoticeSites {
     private static final String KEY_TIP_SHOWN = "drm_shield_tip_shown";
     static final int MAX_SITES = 200;
 
-    /** Private tabs' sites (hashes), this process only. Main thread. */
-    private static final Set<String> sPrivateSites = new HashSet<>();
+    /** Private tabs' sites (hashes), until the private tabs are all closed. */
+    private static final Set<String> sPrivateSites = Collections.synchronizedSet(new HashSet<>());
 
     private DrmNoticeSites() {}
 
@@ -78,6 +79,11 @@ public final class DrmNoticeSites {
             sites.remove(0);
         }
         p.edit().putString(KEY_SITES, String.join(",", sites)).apply();
+    }
+
+    /** The private tabs were all closed: their sites go with them. */
+    public static void clearPrivate() {
+        sPrivateSites.clear();
     }
 
     /** True the first time it is asked, false after: the shield tip shows once. */

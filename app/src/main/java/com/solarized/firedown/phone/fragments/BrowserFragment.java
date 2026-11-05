@@ -423,24 +423,43 @@ public class BrowserFragment extends BaseBrowserFragment
         // way back — no navigation event would otherwise repaint the bar.
         applyAddressBarDisplayPref();
         // The DRM switch may have changed in Settings: repaint the shield's
-        // dot so it never outlives the row, and reload a page whose DRM
-        // answer the switch just changed, either way (Gecko reads the switch
-        // when a page loads, so the page on screen keeps the old answer
-        // until it reloads).
+        // dot so it never outlives the row, and bring the page on screen in
+        // line with the switch.
         refreshShield();
         GeckoState current = peekCurrentGeckoState();
-        if (current != null && current.isIncognito() == mIsIncognitoThemed) {
-            boolean drmOn = Preferences.getDRMEnabled(mSharedPreferences);
-            boolean stale = drmOn ? current.isDrmRefusedHere() : current.isDrmGrantedHere();
-            if (stale) {
-                current.resetDrmNotice();
-                refreshShield();
-                // Through setDRM, so the reload never races the Settings
-                // screen's own write of the value (idempotent).
-                mGeckoRuntimeHelper.setDRM(!drmOn).accept(ignored -> current.reload());
-            }
-        }
+        reconcileDrm(current);
         showPendingDrmNotice(current);
+    }
+
+    /**
+     * Reloads a tab whose page holds a DRM answer the switch has since
+     * changed, either way: Gecko reads the switch when a page loads, so a
+     * page refused while DRM was off stays refused after it is turned on,
+     * and a page granted DRM keeps playing after it is turned off. Runs when
+     * the browser comes back (Settings is another Activity) and when a tab
+     * is switched onto (a background tab missed the change). A page reloaded
+     * because DRM was turned OFF has its site marked as told, so the reload
+     * gets the dot and the security sheet's row but not the "Turn on" sheet
+     * right after the user turned it off.
+     */
+    private void reconcileDrm(@Nullable GeckoState geckoState) {
+        if (geckoState == null || geckoState.isIncognito() != mIsIncognitoThemed) {
+            return;
+        }
+        boolean drmOn = Preferences.getDRMEnabled(mSharedPreferences);
+        boolean stale = drmOn ? geckoState.isDrmRefusedHere() : geckoState.isDrmGrantedHere();
+        if (!stale) {
+            return;
+        }
+        if (!drmOn) {
+            DrmNoticeSites.markShown(mActivity,
+                    WebUtils.getDomainName(geckoState.getEntityUri()), geckoState.isIncognito());
+        }
+        geckoState.resetDrmNotice();
+        refreshShield();
+        // Through setDRM, so the reload never races the Settings screen's
+        // own write of the value (idempotent).
+        mGeckoRuntimeHelper.setDRM(!drmOn).accept(ignored -> geckoState.reload());
     }
 
     /** Host-only address bar at rest — see {@link Preferences#SETTINGS_ADDRESS_BAR_HOST_ONLY}. */
@@ -1885,6 +1904,8 @@ public class BrowserFragment extends BaseBrowserFragment
      */
     private void showDrmNotice(@NonNull GeckoState geckoState) {
         refreshShield();
+        // A notice that waited while the switch was turned on is stale.
+        if (Preferences.getDRMEnabled(mSharedPreferences)) return;
         String host = WebUtils.getDomainName(geckoState.getEntityUri());
         if (host == null || host.isEmpty()) return;
         boolean privateTab = geckoState.isIncognito();
@@ -3111,7 +3132,10 @@ public class BrowserFragment extends BaseBrowserFragment
 
         mAutoCompleteEditText.setEnabled(true);
 
-        if (!newSession.isOpen()) {
+        // An already-open tab is put on screen without a load; a freshly
+        // opened one loads (or restores) its page below.
+        boolean wasOpen = newSession.isOpen();
+        if (!wasOpen) {
             Log.d(TAG, "setGeckoViewSession: session not open, opening + loading URI");
             newSession.open(mGeckoRuntimeHelper.getGeckoRuntime());
             newSession.setActive(true);
@@ -3165,6 +3189,14 @@ public class BrowserFragment extends BaseBrowserFragment
         // Every attach, the plain tab switch included (an open session skips
         // applyOpenUriUi): the window's cutout mode is the tab's own.
         applyViewportFit(geckoState.getViewportFit());
+        // A tab switched onto while it was in the background may hold a DRM
+        // answer the switch has since changed, or a notice that waited for
+        // it (applyOpenUriUi covers the tabs that load here). Not for a tab
+        // that is loading now: its page start resets both.
+        if (wasOpen) {
+            reconcileDrm(geckoState);
+            showPendingDrmNotice(geckoState);
+        }
 
         if (geckoState.getGeckoStateEntity().isIncognito()) {
             mIncognitoStateViewModel.setGeckoState(geckoState, true);
