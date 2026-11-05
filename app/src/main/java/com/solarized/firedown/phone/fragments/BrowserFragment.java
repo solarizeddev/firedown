@@ -3152,6 +3152,9 @@ public class BrowserFragment extends BaseBrowserFragment
         // setActive is idempotent, so asserting it here is safe and removes
         // that dependency.
         newSession.setActive(true);
+        // Every attach, the plain tab switch included (an open session skips
+        // applyOpenUriUi): the window's cutout mode is the tab's own.
+        applyViewportFit(geckoState.getViewportFit());
 
         if (geckoState.getGeckoStateEntity().isIncognito()) {
             mIncognitoStateViewModel.setGeckoState(geckoState, true);
@@ -3440,7 +3443,6 @@ public class BrowserFragment extends BaseBrowserFragment
         showPendingDrmNotice(geckoState);
         dismissDrmTip();
         refreshShield();
-        applyViewportFit(geckoState.getViewportFit());
     }
 
     /**

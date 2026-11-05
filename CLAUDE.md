@@ -8906,23 +8906,35 @@ missing callback does now, and what stays off on purpose:
   and shown in the task after GeckoView's open — because the browser opens
   any session it finds unopened and two opens crash. A window Gecko did not
   take is removed; one from a tab not on screen stays in the background.
-  `BrowserFragment.onNew` only puts it on screen, mode-filtered.
+  `BrowserFragment.onNew` only puts it on screen, mode-filtered. Residual:
+  "on screen" is per repository, so a window from the private repo's
+  current tab while regular tabs are on screen becomes the private repo's
+  current tab (the next switch to private lands on it).
 - **A dialog the page withdraws closes** (`PromptInstanceDelegate.
   onPromptDismiss`, set in `promptResultOrDismiss` on the prompt whose
   dialog is up): navigating away, or a `<select>` removed, left the dialog
   on screen answering nothing. `onPromptUpdate` (a `<select>`'s options
   changing while open) is still not handled.
 - **Camera and microphone are refused, and said so**: `onMediaPermissionRequest`
-  rejects, and so does `onAndroidPermissionsRequest` for CAMERA/RECORD_AUDIO
-  (Gecko asks those first to list devices) even though the app holds the
-  camera for its code scanner. The tab on screen gets "Firedown doesn't
-  share your camera or microphone with websites" once per page load
-  (`claimMediaNotice`, reset on page start). Supporting calls would need a
+  rejects (NotAllowedError, as when a user refuses) and the tab on screen
+  gets "Firedown doesn't share your camera or microphone with websites"
+  once per page load (`claimMediaNotice`, reset on page start). Gecko first
+  asks `onAndroidPermissionsRequest` for CAMERA/RECORD_AUDIO to list
+  devices, through its MOST RECENT window (not necessarily the requesting
+  tab), and goes on if refused; a device it then cannot list fails the
+  request as "no device" before `onMediaPermissionRequest`. So the camera
+  stays granted at that level when the app holds it (the code scanner),
+  which is what lets a camera request reach the refusal on the right tab;
+  the microphone (never held) is refused there with a best-effort notice.
+  Don't refuse CAMERA at the Android level "to be safe": it moves the
+  refusal to the wrong place, as the first version of this did. Supporting calls would need a
   dialog, the microphone permission, a recording indicator
   (`MediaDelegate.onRecordingStatusChanged`) and a background service type;
   declined by the maintainer, like location.
 - **viewport-fit is per tab** (`GeckoState.getViewportFit`): applied only
-  for the tab on screen and re-applied on every switch (`applyOpenUriUi`).
+  for the tab on screen and re-applied on every attach (end of
+  `setGeckoViewSession`, which a tab-grid switch to an open session reaches
+  without `applyOpenUriUi`).
   It changes the Activity's window, and a background tab used to move the
   visible tab under the notch.
 - **`screen.orientation.lock()` works** (`OrientationController` delegate,

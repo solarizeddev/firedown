@@ -1590,21 +1590,23 @@ public class GeckoComponents {
             // for its location waited for good instead of getting an error.
             if (permissions != null) {
                 for (String permission : permissions) {
-                    // Gecko asks for these before a page's getUserMedia, to
-                    // list its devices. Refused even when the app holds the
-                    // camera for its own code scanner: websites never get it.
-                    if (Manifest.permission.CAMERA.equals(permission)
-                            || Manifest.permission.RECORD_AUDIO.equals(permission)) {
-                        callback.reject();
-                        noticeMediaRefused(session);
-                        return;
-                    }
                     if (ContextCompat.checkSelfPermission(mContext, permission)
                             != PackageManager.PERMISSION_GRANTED) {
                         if (BuildConfig.DEBUG) {
                             Log.d(TAG, "onAndroidPermissionsRequest: refusing " + permission);
                         }
                         callback.reject();
+                        // Gecko asks for the microphone (and the camera, when
+                        // the scanner never got it) before a page's
+                        // getUserMedia, to list devices, and goes on without
+                        // them: that request then fails with no device and
+                        // never reaches onMediaPermissionRequest. Best effort:
+                        // Gecko asks through its most recent window, which is
+                        // usually the tab on screen.
+                        if (Manifest.permission.CAMERA.equals(permission)
+                                || Manifest.permission.RECORD_AUDIO.equals(permission)) {
+                            noticeMediaRefused(session);
+                        }
                         return;
                     }
                 }
@@ -1617,7 +1619,10 @@ public class GeckoComponents {
          * never shares them with websites; the page gets NotAllowedError, as
          * when a user refuses. GeckoView's default refused too, but silently,
          * so a call site told the user to "check the browser settings" for a
-         * setting that does not exist.
+         * setting that does not exist. The camera is granted to Gecko at the
+         * Android level when the app holds it (its code scanner) precisely so
+         * a camera request gets here, on the requesting tab: refused there,
+         * it fails as no device instead, and the notice can miss the tab.
          */
         @Override
         public void onMediaPermissionRequest(@NonNull final GeckoSession session, @NonNull final String uri,
