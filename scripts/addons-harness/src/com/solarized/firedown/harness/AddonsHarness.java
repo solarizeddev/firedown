@@ -240,7 +240,7 @@ public final class AddonsHarness {
     private static void blockers() {
         java.util.List<String> ubo = java.util.Arrays.asList("alarms", "dns", "menus", "privacy", "storage", "tabs",
                 "unlimitedStorage", "webNavigation", "webRequest", "webRequestBlocking", "<all_urls>");
-        check("blockers: uBlock's own manifest (1.75.0) reads as a blocker", AddonPolicy.blocksRequests(ubo, null));
+        check("blockers: uBlock's own manifest (1.75.0) can block requests", AddonPolicy.blocksRequests(ubo, null));
         check("blockers: webRequestBlocking with <all_urls> as an origin",
                 AddonPolicy.blocksRequests(java.util.Arrays.asList("webRequest", "webRequestBlocking"),
                         java.util.Collections.singletonList("<all_urls>")));
@@ -268,11 +268,40 @@ public final class AddonsHarness {
                         java.util.Collections.singletonList("<all_urls>")));
         check("blockers: no permissions, no blocker", !AddonPolicy.blocksRequests(null, null));
         check("blockers: uBlock is always one, button or not",
-                AddonPolicy.isBlocker("uBlock0@raymondhill.net", false, false, Boolean.FALSE));
-        check("blockers: a blocking add-on with a button is one", AddonPolicy.isBlocker("ag@x", true, true, null));
-        check("blockers: no button, no row", !AddonPolicy.isBlocker("ag@x", false, true, Boolean.TRUE));
-        check("blockers: the user hides a detected one", !AddonPolicy.isBlocker("lnk@x", true, true, Boolean.FALSE));
-        check("blockers: the user shows an undetected one", AddonPolicy.isBlocker("nsc@x", true, false, Boolean.TRUE));
+                AddonPolicy.isBlocker("uBlock0@raymondhill.net", false, Boolean.FALSE));
+        check("blockers: a known blocker with a button is one (AdGuard, Privacy Badger, Ghostery)",
+                AddonPolicy.isBlocker("adguardadblocker@adguard.com", true, null)
+                        && AddonPolicy.isBlocker("jid1-MnnxcxisBPnSXQ@jetpack", true, null)
+                        && AddonPolicy.isBlocker("firefox@ghostery.com", true, null));
+        check("blockers: the known list matches whatever the ID's case",
+                AddonPolicy.isKnownBlocker("JID1-NIFFY2CA8FY1TG@JETPACK")
+                        && AddonPolicy.isKnownBlocker(" uBOLite@raymondhill.net "));
+        check("blockers: an unknown add-on is not one on its permissions alone (Bypass Paywalls Clean)",
+                !AddonPolicy.isBlocker("magnolia@12.34", true, null));
+        check("blockers: no button, no row", !AddonPolicy.isBlocker("adguardadblocker@adguard.com", false, Boolean.TRUE));
+        check("blockers: the user hides a known one",
+                !AddonPolicy.isBlocker("firefox@ghostery.com", true, Boolean.FALSE));
+        check("blockers: the user shows an unknown one", AddonPolicy.isBlocker("nsc@x", true, Boolean.TRUE));
+        check("blockers: the switch is offered to an add-on that can block requests",
+                AddonPolicy.offersShieldChoice("magnolia@12.34", true, true, null));
+        check("blockers: the switch is offered to a known blocker whatever its permissions",
+                AddonPolicy.offersShieldChoice("2.0@disconnect.me", true, false, null));
+        check("blockers: no switch for an add-on that cannot block anything (Dark Reader)",
+                !AddonPolicy.offersShieldChoice("addon@darkreader.org", true, false, null));
+        check("blockers: a choice already made keeps its switch, so it can be undone",
+                AddonPolicy.offersShieldChoice("addon@darkreader.org", true, false, Boolean.TRUE));
+        check("blockers: no switch for uBlock or an add-on with no button",
+                !AddonPolicy.offersShieldChoice("uBlock0@raymondhill.net", true, true, null)
+                        && !AddonPolicy.offersShieldChoice("magnolia@12.34", false, true, null));
+        check("sheet: uBlock's per-tab title repeats the name and badge, no second line",
+                !AddonPolicy.actionTitleSaysMore("uBlock Origin (23)", "uBlock Origin", "23"));
+        check("sheet: a title equal to the name says nothing more",
+                !AddonPolicy.actionTitleSaysMore("Bypass Paywalls Clean", "Bypass Paywalls Clean", "^")
+                        && !AddonPolicy.actionTitleSaysMore("  ", "x", null)
+                        && !AddonPolicy.actionTitleSaysMore(null, "x", null));
+        check("sheet: a title with its own words is shown",
+                AddonPolicy.actionTitleSaysMore("Privacy Badger (3 trackers)", "Privacy Badger", "3")
+                        && AddonPolicy.actionTitleSaysMore("uBlock Origin (24)", "uBlock Origin", "23"));
         check("shield: uBlock's (off) title is off for the site",
                 AddonPolicy.saysOffForSite("uBlock0@raymondhill.net", "uBlock Origin (off)"));
         check("shield: uBlock's count title is on",
