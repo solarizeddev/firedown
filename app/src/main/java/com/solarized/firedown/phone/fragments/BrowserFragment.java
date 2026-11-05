@@ -443,7 +443,11 @@ public class BrowserFragment extends BaseBrowserFragment
      * right after the user turned it off.
      */
     private void reconcileDrm(@Nullable GeckoState geckoState) {
-        if (geckoState == null || geckoState.isIncognito() != mIsIncognitoThemed) {
+        // No mode filter: this acts on the tab it is handed, and on a
+        // regular <-> private switch the attach runs before the browser's
+        // mode is applied. A load the user issued that has not started yet
+        // is left alone: a reload now would replace it with the old page.
+        if (geckoState == null || geckoState.getPendingUserLoadUri() != null) {
             return;
         }
         boolean drmOn = Preferences.getDRMEnabled(mSharedPreferences);
@@ -1934,6 +1938,9 @@ public class BrowserFragment extends BaseBrowserFragment
         if (result.getBoolean(DrmSheetDialogFragment.RESULT_TURN_ON, false)) {
             dismissDrmTip();
             mSharedPreferences.edit().putBoolean(Preferences.SETTINGS_ENABLE_DRM, true).apply();
+            // Cleared before the reload is scheduled, as reconcileDrm does,
+            // so a resume or tab switch meanwhile can't reload a second time.
+            geckoState.resetDrmNotice();
             refreshShield();
             mGeckoRuntimeHelper.setDRM(false).accept(ignored -> geckoState.reload());
             return;
