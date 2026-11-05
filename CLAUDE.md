@@ -11569,11 +11569,18 @@ alternatives", boards C–E, picked over a snackbar that was too easy to miss):
 - **Once per site, the "This video needs DRM" sheet**
   (`DrmSheetDialogFragment`, `fragment_dialog_drm_notice`; the older
   `fragment_dialog_drm` is the Allow dialog's view, a different thing): the
-  lock, "<site> · DRM is turned off", three facts in grouped cards — turning
-  it on lets the page play the video, DRM videos can't be downloaded even
-  with it on, sites can tell which DRM the phone supports (the privacy cost,
-  kept on purpose: it is why DRM is off by default) — then Not now / Turn on
-  DRM. A site is marked when the sheet OPENS (`DrmNoticeSites`, truncated
+  key in the security sheet's 40dp identity tile, "<site> · DRM is turned
+  off", three facts in one group of `SheetRowCard`s with `SheetRowText`
+  labels (allowed to wrap, not tappable) — turning it on lets the page play
+  the video, DRM videos can't be downloaded even with it on, sites can tell
+  which DRM the phone supports (the privacy cost, kept on purpose: it is why
+  DRM is off by default) — the footnote, then the ask-sheet confirm row (Not
+  now as a text button, Turn on DRM filled, end-aligned). Built only from the
+  app's sheet parts, glyphs from Material Symbols; DRM's glyph is the KEY
+  (the security sheet's DRM row too), never the lock, which already means
+  the Safe Folder and the connection. The first build had a 48dp disc, a
+  TitleLarge title, hand-drawn stroke glyphs and BodyLarge rows, and read as
+  foreign next to the other sheets (on-device). A site is marked when the sheet OPENS (`DrmNoticeSites`, truncated
   SHA-256 of the host, 200 at most, in `backup_local.xml`: a hash so the list
   is not a readable record of visited sites), whatever the answer; another
   dialog owning the screen leaves the sheet for the site's next page.

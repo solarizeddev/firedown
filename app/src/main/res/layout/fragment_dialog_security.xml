@@ -190,7 +190,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:importantForAccessibility="no"
-                        app:srcCompat="@drawable/drm_video_off_24"
+                        app:srcCompat="@drawable/ic_key_24"
                         app:tint="?attr/brandInk" />
 
                     <LinearLayout
