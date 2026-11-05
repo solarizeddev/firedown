@@ -371,8 +371,6 @@
     <string name="quit_application">Wyłączanie aplikacji, aby zastosować zmiany…</string>
     <string name="rename">Przemianować</string>
     <string name="rename_file">Zmień nazwę pliku</string>
-    <string name="request_media_key_system_access">Umożliwić&lt;b&gt;%s&lt;/b&gt; odtwarzanie treści chronionych DRM?</string>
-    <string name="request_media_key_system_access_subtitle">Należy pamiętać, że pliki chronione DRM nie mogą być pobierane przez Firedown</string>
     <string name="request_storage">Zezwolić na dostęp do pamięci urządzenia dla&lt;b&gt;%s&lt;/b&gt; ?</string>
     <string name="request_storage_access">Zezwolić stronom trzecim na dostęp do pamięci masowej pierwszej strony&lt;b&gt;%s&lt;/b&gt; ?</string>
     <string name="restart_origin">Uruchom ponownie</string>

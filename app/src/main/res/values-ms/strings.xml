@@ -123,8 +123,6 @@
     <string name="popup_toggle">Togol pandangan</string>
     <string name="rename">Namakan semula</string>
     <string name="rename_file">Namakan semula fail</string>
-    <string name="request_media_key_system_access">Benarkan &lt;b&gt;%s&lt;/b&gt; memainkan kandungan dikawal DRM?</string>
-    <string name="request_media_key_system_access_subtitle">Ambil perhatian, bahawa fail yang dilindungi DRM tidak boleh dimuat turun oleh Firedown</string>
     <string name="request_storage">Benarkan akses kepada storan peranti untuk &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_storage_access">Benarkan pihak ketiga mengakses storan pihak pertama untuk &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Mula semula</string>

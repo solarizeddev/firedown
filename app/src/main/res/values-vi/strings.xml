@@ -299,8 +299,6 @@
     <string name="quit_application">Đang thoát ứng dụng để áp dụng các thay đổi…</string>
     <string name="rename">Đổi tên</string>
     <string name="rename_file">Đổi tên tập tin</string>
-    <string name="request_media_key_system_access">Cho phép &lt;b&gt;%s&lt;/b&gt; phát nội dung được kiểm soát bởi DRM?</string>
-    <string name="request_media_key_system_access_subtitle">Lưu ý rằng các tệp được bảo vệ bằng DRM không thể được tải xuống bằng Firedown</string>
     <string name="request_storage">Cho phép truy cập vào bộ nhớ thiết bị cho &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_storage_access">Cho phép bên thứ ba truy cập vào bộ nhớ của bên thứ nhất cho &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Khởi động lại</string>

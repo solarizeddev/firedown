@@ -341,8 +341,6 @@
     <string name="quit_application">Закриття програми для застосування змін…</string>
     <string name="rename">Перейменувати</string>
     <string name="rename_file">Перейменувати файл</string>
-    <string name="request_media_key_system_access">Дозволити &lt;b&gt;%s&lt;/b&gt; відтворювати вміст, керований DRM?</string>
-    <string name="request_media_key_system_access_subtitle">Зверніть увагу, що Firedown не може завантажити файли, захищені DRM</string>
     <string name="request_storage">Надати доступ до пам’яті пристрою для &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_storage_access">Дозволити третім сторонам отримувати доступ до основного сховища для &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Перезапустити</string>

@@ -178,8 +178,6 @@
     <string name="quit_application">변경 사항을 적용하기 위해 애플리케이션을 종료하는 중…</string>
     <string name="rename">이름 바꾸기</string>
     <string name="rename_file">파일 이름 바꾸기</string>
-    <string name="request_media_key_system_access">&lt;b&gt;%s&lt;/b&gt;이(가) DRM으로 제어되는 콘텐츠를 재생하도록 허용하시겠습니까?</string>
-    <string name="request_media_key_system_access_subtitle">DRM으로 보호된 파일은 Firedown으로 다운로드할 수 없습니다.</string>
     <string name="request_storage">&lt;b&gt;%s&lt;/b&gt; 의 장치 저장소에 대한 액세스를 허용하시겠습니까?</string>
     <string name="request_storage_access">제3자가 &lt;b&gt;%s&lt;/b&gt;의 첫 번째 당사자 저장소에 액세스하도록 허용하시겠습니까?</string>
     <string name="restart_origin">다시 시작</string>

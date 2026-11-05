@@ -362,8 +362,6 @@
     <string name="quit_application">Değişiklikleri uygulamak için uygulamadan çıkılıyor…</string>
     <string name="rename">Yeniden isimlendirmek</string>
     <string name="rename_file">Dosyayı yeniden adlandır</string>
-    <string name="request_media_key_system_access">&lt;b&gt;%s&lt;/b&gt; uygulamasının DRM kontrollü içerikleri oynatmasına izin verilsin mi?</string>
-    <string name="request_media_key_system_access_subtitle">DRM korumalı dosyaların Firedown tarafından indirilemeyeceğini unutmayın</string>
     <string name="request_storage">&lt;b&gt;%s&lt;/b&gt; için cihaz depolama alanına erişime izin verilsin mi?</string>
     <string name="request_storage_access">Üçüncü tarafların &lt;b&gt;%s&lt;/b&gt; için birinci taraf depolama alanına erişmesine izin verilsin mi?</string>
     <string name="restart_origin">Tekrar başlat</string>

@@ -393,8 +393,6 @@
     <string name="quit_application">退出应用程序以应用更改…</string>
     <string name="rename">重命名</string>
     <string name="rename_file">重命名文件</string>
-    <string name="request_media_key_system_access">允许&lt;b&gt;%s&lt;/b&gt;播放受 DRM 控制的内容？</string>
-    <string name="request_media_key_system_access_subtitle">请注意，受 DRM 保护的文件无法通过 Firedown 下载</string>
     <string name="request_storage">允许访问设备存储空间&lt;b&gt;%s&lt;/b&gt;？</string>
     <string name="request_storage_access">允许第三方访问第一方存储&lt;b&gt;%s&lt;/b&gt;？</string>
     <string name="restart_origin">重新开始</string>

@@ -122,8 +122,6 @@
     <string name="popup_toggle">ਦ੍ਰਿਸ਼ ਨੂੰ ਟੌਗਲ ਕਰੋ</string>
     <string name="rename">ਨਾਮ ਬਦਲੋ</string>
     <string name="rename_file">ਫਾਈਲ ਦਾ ਨਾਮ ਬਦਲੋ</string>
-    <string name="request_media_key_system_access">ਕੀ &lt;b&gt; %s &lt;/b&gt; ਨੂੰ DRM-ਨਿਯੰਤਰਿਤ ਸਮੱਗਰੀ ਚਲਾਉਣ ਦੀ ਇਜਾਜ਼ਤ ਦੇਣੀ ਹੈ?</string>
-    <string name="request_media_key_system_access_subtitle">ਨੋਟ ਕਰੋ, ਕਿ DRM ਸੁਰੱਖਿਅਤ ਫਾਈਲਾਂ ਫਾਇਰਡਾਊਨ ਦੁਆਰਾ ਡਾਊਨਲੋਡ ਨਹੀਂ ਕੀਤੀਆਂ ਜਾ ਸਕਦੀਆਂ ਹਨ</string>
     <string name="request_storage">&lt;b&gt; %s &lt;/b&gt; ਲਈ ਡਿਵਾਈਸ ਸਟੋਰੇਜ ਤੱਕ ਪਹੁੰਚ ਦੀ ਇਜਾਜ਼ਤ ਦੇਣੀ ਹੈ?</string>
     <string name="request_storage_access">ਕੀ ਤੀਜੀ ਧਿਰ ਨੂੰ &lt;b&gt; %s &lt;/b&gt; ਲਈ ਪਹਿਲੀ ਪਾਰਟੀ ਸਟੋਰੇਜ ਤੱਕ ਪਹੁੰਚ ਕਰਨ ਦੀ ਇਜਾਜ਼ਤ ਦੇਣੀ ਹੈ?</string>
     <string name="restart_origin">ਰੀਸਟਾਰਟ ਕਰੋ</string>

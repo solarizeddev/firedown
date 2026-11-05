@@ -277,18 +277,6 @@ public class GeckoState {
     private boolean mDrmNoticePending;
 
     /**
-     * The host the user turned DRM on for from the notice. That tap was the
-     * consent, so the reload's DRM requests for this host are granted without
-     * asking again — for that ONE document: the next page start after the
-     * reload's own clears it ({@link #mDrmAllowArmed}). Not persisted.
-     */
-    @Nullable
-    private String mDrmAllowedHost;
-
-    /** Set by the tap; the reload's page start spends it and keeps the host. */
-    private boolean mDrmAllowArmed;
-
-    /**
      * The latest state Gecko's built-in translator reported for this tab's
      * CURRENT document (detected languages on load; requested pair, engine
      * readiness and any error after a translate request). Stored ungated on
@@ -763,19 +751,10 @@ public class GeckoState {
         mMediaNoticeShown = false;
     }
 
-    /**
-     * A new document (top-level page start): its DRM request gets its own
-     * notice, and a host allowed from the notice lasts only through the
-     * document the tap reloaded.
-     */
+    /** A new document (top-level page start): its DRM request gets its own notice. */
     public void resetDrmNotice() {
         mDrmNoticeShown = false;
         mDrmNoticePending = false;
-        if (mDrmAllowArmed) {
-            mDrmAllowArmed = false;
-        } else {
-            mDrmAllowedHost = null;
-        }
     }
 
     /**
@@ -796,17 +775,6 @@ public class GeckoState {
         boolean pending = mDrmNoticePending;
         mDrmNoticePending = false;
         return pending;
-    }
-
-    /** The user turned DRM on for {@code host}; the reload that follows is allowed. */
-    public void allowDrmForReload(@Nullable String host) {
-        mDrmAllowedHost = host;
-        mDrmAllowArmed = host != null;
-    }
-
-    /** True when the user turned DRM on from this tab's notice for {@code host}. */
-    public boolean isDrmAllowedHost(@Nullable String host) {
-        return host != null && host.equals(mDrmAllowedHost);
     }
 
     // ── Translation (see mTranslationState) ─────────────────────────────────

@@ -422,10 +422,22 @@ public class BrowserFragment extends BaseBrowserFragment
         // Settings is another Activity, so a toggle there lands here on the
         // way back — no navigation event would otherwise repaint the bar.
         applyAddressBarDisplayPref();
-        // The DRM switch may have changed in Settings (it applies without a
-        // reload): repaint the shield's dot so it never outlives the row.
+        // The DRM switch may have changed in Settings: repaint the shield's
+        // dot so it never outlives the row, and reload a page that asked for
+        // DRM and was refused (Gecko reads the switch when a page loads, so
+        // the page on screen keeps the old answer until it reloads).
         refreshShield();
-        showPendingDrmNotice(peekCurrentGeckoState());
+        GeckoState current = peekCurrentGeckoState();
+        if (current != null && current.isIncognito() == mIsIncognitoThemed
+                && current.isDrmRefusedHere()
+                && Preferences.getDRMEnabled(mSharedPreferences)) {
+            current.resetDrmNotice();
+            refreshShield();
+            // Through setDRM, so the reload never races the Settings
+            // screen's own write of the value (idempotent).
+            mGeckoRuntimeHelper.setDRM(false).accept(ignored -> current.reload());
+        }
+        showPendingDrmNotice(current);
     }
 
     /** Host-only address bar at rest — see {@link Preferences#SETTINGS_ADDRESS_BAR_HOST_ONLY}. */
@@ -1887,22 +1899,16 @@ public class BrowserFragment extends BaseBrowserFragment
      * The answer of the DRM sheet or the security sheet's row. Turn on writes
      * the setting, applies it to Gecko (the Settings listeners are not
      * registered while the browser is in front) and reloads the tab once
-     * Gecko has the new value; the reload's own DRM request for this site is
-     * allowed without asking again, but only when the tab is still on the
-     * site the question was about. Not now from the sheet shows, once ever,
-     * where the switch lives now: the shield.
+     * Gecko has the new value; with the switch on, the reloaded page's DRM
+     * request is granted without a dialog. Not now from the sheet shows,
+     * once ever, where the switch lives now: the shield.
      */
     private void onDrmResult(@NonNull Bundle result) {
         GeckoState geckoState = peekCurrentGeckoState();
         if (geckoState == null) return;
-        String questionHost = result.getString(DrmSheetDialogFragment.RESULT_HOST);
         if (result.getBoolean(DrmSheetDialogFragment.RESULT_TURN_ON, false)) {
             dismissDrmTip();
             mSharedPreferences.edit().putBoolean(Preferences.SETTINGS_ENABLE_DRM, true).apply();
-            String host = WebUtils.getDomainName(geckoState.getEntityUri());
-            if (host != null && host.equals(questionHost)) {
-                geckoState.allowDrmForReload(host);
-            }
             refreshShield();
             mGeckoRuntimeHelper.setDRM(false).accept(ignored -> geckoState.reload());
             return;

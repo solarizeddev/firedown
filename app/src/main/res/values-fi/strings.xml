@@ -347,8 +347,6 @@
     <string name="quit_application">Lopetetaan sovellus, jotta muutokset tulevat voimaan…</string>
     <string name="rename">Nimeä uudelleen</string>
     <string name="rename_file">Nimeä tiedosto uudelleen</string>
-    <string name="request_media_key_system_access">Saako &lt;b&gt;%s&lt;/b&gt; toistaa DRM-ohjattua sisältöä?</string>
-    <string name="request_media_key_system_access_subtitle">Huomaa, että Firedown ei voi ladata DRM-suojattuja tiedostoja</string>
     <string name="request_storage">Sallitaanko laitteen &lt;b&gt;%s&lt;/b&gt; käyttö laitteen tallennustilaan?</string>
     <string name="request_storage_access">Saako kolmansien osapuolien käyttää ensimmäisen osapuolen tallennustilaa verkkotunnukselle &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Uudelleenkäynnistää</string>

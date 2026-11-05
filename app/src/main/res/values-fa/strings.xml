@@ -161,8 +161,6 @@
     <string name="quit_application">خروج از برنامه برای اعمال تغییرات…</string>
     <string name="rename">تغییر نام دهید</string>
     <string name="rename_file">تغییر نام فایل</string>
-    <string name="request_media_key_system_access">آیا به &lt;b&gt;%s&lt;/b&gt; اجازه می‌دهید محتوای کنترل‌شده با DRM را پخش کند؟</string>
-    <string name="request_media_key_system_access_subtitle">توجه داشته باشید که فایل‌های محافظت شده DRM توسط Firedown قابل دانلود نیستند</string>
     <string name="request_storage">آیا اجازه دسترسی به فضای ذخیره‌سازی دستگاه برای &lt;b&gt;%s&lt;/b&gt; را می‌دهید؟</string>
     <string name="request_storage_access">آیا به اشخاص ثالث اجازه می‌دهید به فضای ذخیره‌سازی شخص اول برای &lt;b&gt;%s&lt;/b&gt; دسترسی داشته باشند؟</string>
     <string name="restart_origin">راه اندازی مجدد</string>

@@ -372,8 +372,6 @@
     <string name="quit_application">Выход из приложения для применения изменений…</string>
     <string name="rename">Переименовать</string>
     <string name="rename_file">Переименуйте файл</string>
-    <string name="request_media_key_system_access">Разрешить &lt;b&gt;%s&lt;/b&gt; воспроизводить контент, контролируемый DRM?</string>
-    <string name="request_media_key_system_access_subtitle">Обратите внимание, что файлы, защищенные DRM, не могут быть загружены с помощью Firedown.</string>
     <string name="request_storage">Разрешить доступ к хранилищу устройства для &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_storage_access">Разрешить третьим лицам доступ к основному хранилищу для &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Перезапуск</string>

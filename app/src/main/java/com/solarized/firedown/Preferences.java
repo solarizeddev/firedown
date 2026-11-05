@@ -890,10 +890,9 @@ public class Preferences {
     }
 
     /**
-     * DRM defaults to off. Firedown can't download DRM-protected content,
-     * so the request_media_key_system_access prompt is dead-end noise for
-     * the few sites that still gate playback on it. Users who want DRM
-     * playback flip the toggle in settings.
+     * DRM defaults to off: Firedown can't download DRM-protected content,
+     * and with EME off a page can't learn which DRM formats the phone
+     * supports. On, every page that asks for DRM gets it without a dialog.
      */
     public static boolean getDRMEnabled(SharedPreferences sharedPreferences){
         return sharedPreferences.getBoolean(SETTINGS_ENABLE_DRM, false);

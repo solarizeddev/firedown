@@ -163,8 +163,6 @@
     <string name="quit_application">Τερματισμός εφαρμογής για εφαρμογή των αλλαγών…</string>
     <string name="rename">Μετονομάζω</string>
     <string name="rename_file">Μετονόμασε το αρχείο</string>
-    <string name="request_media_key_system_access">Να επιτρέπεται στο &lt;b&gt;%s&lt;/b&gt; η αναπαραγωγή περιεχομένου που ελέγχεται με DRM;</string>
-    <string name="request_media_key_system_access_subtitle">Σημειώστε ότι τα αρχεία με προστασία DRM δεν μπορούν να ληφθούν από το Firedown</string>
     <string name="request_storage">Να επιτρέπεται η πρόσβαση στον αποθηκευτικό χώρο της συσκευής για το &lt;b&gt;%s&lt;/b&gt;;</string>
     <string name="request_storage_access">Να επιτρέπεται σε τρίτα μέρη να έχουν πρόσβαση στον αποθηκευτικό χώρο πρώτου μέρους για &lt;b&gt;%s&lt;/b&gt;;</string>
     <string name="restart_origin">Επανεκκίνηση</string>

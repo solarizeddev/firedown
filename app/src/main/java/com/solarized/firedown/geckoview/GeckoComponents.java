@@ -44,7 +44,6 @@ import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.UrlStringUtils;
-import com.solarized.firedown.utils.WebUtils;
 
 import org.mozilla.geckoview.AllowOrDeny;
 import org.mozilla.geckoview.GeckoResult;
@@ -1691,15 +1690,11 @@ public class GeckoComponents {
                         }
                         return GeckoResult.fromValue(ContentPermission.VALUE_PROMPT);
                     }
-                    // The user turned DRM on from the notice for this site in
-                    // this tab: that tap was the consent, don't ask again on
-                    // the page it reloaded.
-                    if (findGeckoState != null
-                            && findGeckoState.isDrmAllowedHost(WebUtils.getDomainName(perm.uri))) {
-                        return GeckoResult.fromValue(ContentPermission.VALUE_ALLOW);
-                    }
-                    resId = R.string.request_media_key_system_access;
-                    break;
+                    // The switch is the consent: with DRM on, every page
+                    // that asks gets it, with no dialog (a per-site Allow on
+                    // top of the switch made the switch look inert). Private
+                    // tabs were refused above.
+                    return GeckoResult.fromValue(ContentPermission.VALUE_ALLOW);
                 case PERMISSION_STORAGE_ACCESS:
                     resId = R.string.request_storage_access;
                     break;

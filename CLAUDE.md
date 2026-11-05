@@ -11677,6 +11677,16 @@ after sketches on the design canvas:
 
 "Enable DRM playback" (`SETTINGS_ENABLE_DRM`, Security door, default OFF)
 drives `GeckoRuntimeHelper.setDRM`: `media.eme.enabled` and the GMP prefs.
+**The switch IS the consent**: on, `PERMISSION_MEDIA_KEY_SYSTEM_ACCESS` is
+answered `VALUE_ALLOW` with no dialog (private tabs are refused before it).
+There used to be a per-site "Allow <site> to play DRM-controlled content?"
+dialog on top of the switch, and issue #310's reporter read the switch as
+doing nothing: on or off, a DRM page met a prompt. The dialog, its layout
+and its two strings are gone; the download caveat lives in the switch's
+summary and the notice sheet. Returning from Settings with the switch on
+reloads a tab whose page was refused (`onResume`, `isDrmRefusedHere`):
+Gecko reads the pref when the page loads, so the page on screen keeps the
+old answer until then.
 Two facts about Gecko that the code used to get wrong:
 - **The pref does not remove the API.** `navigator.requestMediaKeySystemAccess`
   always exists; with the pref off Gecko refuses every Widevine request with
@@ -11706,8 +11716,7 @@ that lands while Settings/Downloads covers the browser, waits on the tab
 the message for good. **What the user sees** (canvas "DRM notice
 alternatives", boards C–E, picked over a snackbar that was too easy to miss):
 - **Once per site, the "This video needs DRM" sheet**
-  (`DrmSheetDialogFragment`, `fragment_dialog_drm_notice`; the older
-  `fragment_dialog_drm` is the Allow dialog's view, a different thing): the
+  (`DrmSheetDialogFragment`, `fragment_dialog_drm_notice`): the
   key in the security sheet's 40dp identity tile, "<site> · DRM is turned
   off", three facts in one group of `SheetRowCard`s with `SheetRowText`
   labels (allowed to wrap, not tappable) — turning it on lets the page play
@@ -11739,19 +11748,15 @@ alternatives", boards C–E, picked over a snackbar that was too easy to miss):
   visible and the toolbar not scrolled away (a PopupWindow does not follow
   the toolbar's translation). Its width is the WINDOW's (`drm_tip_width`):
   inflated without a parent, the layout's own width is dropped.
-- `onResume` repaints the shield: Settings turns DRM on without a reload,
-  and the dot must not outlive the security sheet's row.
+- `onResume` repaints the shield (the dot must not outlive the security
+  sheet's row) and reloads a refused page when Settings turned DRM on.
 - The sheet and the row answer through ONE fragment result
   (`DrmSheetDialogFragment.RESULT_KEY`), handled by
   `BrowserFragment.onDrmResult`, so turning DRM on has one implementation.
-The download sentence is load-bearing on both surfaces: Turn on skips the
-Allow dialog, whose subtitle was the only other place the user
-heard it before choosing. Turn on writes the
-setting, calls `setDRM(false)` (which now returns the pref write's result) and
-reloads the tab when Gecko has the values. The host is read AT THE TAP and
-allowed only if the tab is still on the page the notice was about
-(`allowDrmForReload`), and only for the document the reload brings: the next
-page start after it clears the host, so a shortcut can't outlive its tap. Private tabs refuse every
+The download sentence is load-bearing on both surfaces and on the switch's
+summary: no dialog states it at the moment a page plays. Turn on writes the
+setting, calls `setDRM(false)` (which returns the pref write's result) and
+reloads the tab when Gecko has the values. Private tabs refuse every
 content permission before this branch, so they never show the notice (DRM
 could not play there anyway). On an engine without 0010 nothing changes: the
 notice simply never arrives. Reviewed by a second model against the 159.0.1

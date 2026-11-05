@@ -393,8 +393,6 @@
     <string name="quit_application">変更を適用するためアプリケーションを終了します...</string>
     <string name="rename">名前の変更</string>
     <string name="rename_file">ファイルの名前を変更</string>
-    <string name="request_media_key_system_access">許可する&lt;b&gt;%s&lt;/b&gt;DRM 制御コンテンツを再生するには?</string>
-    <string name="request_media_key_system_access_subtitle">DRM で保護されたファイルは Firedown ではダウンロードできないことに注意してください。</string>
     <string name="request_storage">デバイスのストレージへのアクセスを許可する&lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_storage_access">第三者がファーストパーティのストレージにアクセスできるようにしますか&lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">再起動</string>

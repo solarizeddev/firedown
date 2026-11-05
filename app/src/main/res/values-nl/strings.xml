@@ -362,8 +362,6 @@
     <string name="quit_application">De toepassing wordt afgesloten om wijzigingen toe te passen…</string>
     <string name="rename">Hernoemen</string>
     <string name="rename_file">Bestand hernoemen</string>
-    <string name="request_media_key_system_access">&lt;b&gt;%s&lt;/b&gt; toestaan DRM-gestuurde content af te spelen?</string>
-    <string name="request_media_key_system_access_subtitle">Houd er rekening mee dat DRM-beveiligde bestanden niet door Firedown kunnen worden gedownload</string>
     <string name="request_storage">Toegang tot apparaatopslag toestaan voor &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_storage_access">Derden toegang geven tot first party-opslag voor &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Herstarten</string>

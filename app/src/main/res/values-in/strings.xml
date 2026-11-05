@@ -772,8 +772,6 @@
     <string name="player_subtitles_unsupported">Berkas ini bukan subtitel yang dapat ditampilkan pemutar</string>
     <string name="popup_group_this_page">Halaman ini</string>
     <string name="quality_section_title">Kualitas</string>
-    <string name="request_media_key_system_access">Izinkan &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt; memutar konten yang dikendalikan DRM?</string>
-    <string name="request_media_key_system_access_subtitle">Berkas yang dilindungi DRM tidak dapat diunduh</string>
     <string name="request_storage">Izinkan akses ke penyimpanan perangkat untuk &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
     <string name="request_storage_access">Izinkan pihak ketiga mengakses penyimpanan pihak pertama untuk &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
     <string name="restore_downloads_button">Pulihkan unduhan sebelumnya</string>

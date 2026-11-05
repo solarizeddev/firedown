@@ -396,8 +396,6 @@
     <string name="quit_application">Beenden der Anwendung, um Änderungen zu übernehmen…</string>
     <string name="rename">Umbenennen</string>
     <string name="rename_file">Datei umbenennen</string>
-    <string name="request_media_key_system_access">&lt;b&gt;%s&lt;/b&gt; erlauben, DRM-kontrollierte Inhalte abzuspielen?</string>
-    <string name="request_media_key_system_access_subtitle">Beachten Sie, dass DRM-geschützte Dateien nicht von Firedown heruntergeladen werden können</string>
     <string name="request_storage">Zugriff auf den Gerätespeicher für &lt;b&gt;%s&lt;/b&gt; erlauben?</string>
     <string name="request_storage_access">Dritten Zugriff auf First-Party-Speicher für &lt;b&gt;%s&lt;/b&gt; gewähren?</string>
     <string name="restart_origin">Neu starten</string>
