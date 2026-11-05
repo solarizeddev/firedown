@@ -157,7 +157,6 @@
     <string name="quit_application">Se închide aplicația pentru a aplica modificări…</string>
     <string name="rename">Redenumiți</string>
     <string name="rename_file">Redenumiți fișierul</string>
-    <string name="request_geolocation">Partajați locația dispozitivului dvs. cu &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Permiteți &lt;b&gt;%s&lt;/b&gt; să redea conținut controlat prin DRM?</string>
     <string name="request_media_key_system_access_subtitle">Rețineți că fișierele protejate DRM nu pot fi descărcate de Firedown</string>
     <string name="request_storage">Permiteți accesul la stocarea dispozitivului pentru &lt;b&gt;%s&lt;/b&gt;?</string>

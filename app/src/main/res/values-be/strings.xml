@@ -155,7 +155,6 @@
     <string name="quit_application">Выхад з праграмы, каб прымяніць змены…</string>
     <string name="rename">Перайменаваць</string>
     <string name="rename_file">Перайменаваць файл</string>
-    <string name="request_geolocation">Падзяліцца месцазнаходжаннем прылады з &lt;b&gt; %s &lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Дазволіць &lt;b&gt; %s &lt;/b&gt; прайграваць кантэнт, які кантралюецца DRM?</string>
     <string name="request_media_key_system_access_subtitle">Звярніце ўвагу, што файлы, абароненыя DRM, не могуць быць загружаны Firedown</string>
     <string name="request_storage">Дазволіць доступ да сховішча прылады для &lt;b&gt; %s &lt;/b&gt;?</string>

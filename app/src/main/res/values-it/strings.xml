@@ -178,7 +178,6 @@
     <string name="quit_application">Chiusura in corso per applicare le modifiche…</string>
     <string name="rename">Rinomina</string>
     <string name="rename_file">Rinomina il file</string>
-    <string name="request_geolocation">Condividere la posizione del dispositivo con &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Consentire a &lt;b&gt;%s&lt;/b&gt; di riprodurre contenuti controllati da DRM?</string>
     <string name="request_media_key_system_access_subtitle">Nota che i file protetti da DRM non possono essere scaricati da Firedown</string>
     <string name="request_storage">Consentire l\'accesso allo spazio di archiviazione del dispositivo per &lt;b&gt;%s&lt;/b&gt;?</string>

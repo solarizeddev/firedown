@@ -361,7 +361,6 @@
     <string name="quit_application">Değişiklikleri uygulamak için uygulamadan çıkılıyor…</string>
     <string name="rename">Yeniden isimlendirmek</string>
     <string name="rename_file">Dosyayı yeniden adlandır</string>
-    <string name="request_geolocation">Cihazınızın konumu &lt;b&gt;%s&lt;/b&gt; ile paylaşılsın mı?</string>
     <string name="request_media_key_system_access">&lt;b&gt;%s&lt;/b&gt; uygulamasının DRM kontrollü içerikleri oynatmasına izin verilsin mi?</string>
     <string name="request_media_key_system_access_subtitle">DRM korumalı dosyaların Firedown tarafından indirilemeyeceğini unutmayın</string>
     <string name="request_storage">&lt;b&gt;%s&lt;/b&gt; için cihaz depolama alanına erişime izin verilsin mi?</string>
@@ -1188,8 +1187,6 @@
     <string name="settings_autofill_service_title">Parolalar &amp; otomatik doldurma</string>
     <string name="settings_block_app_redirects_summary">Sizi uygulamalarını açmaya veya yüklemeye yönlendiren siteleri engeller</string>
     <string name="settings_block_app_redirects_title">Uygulama yönlendirmelerini engelle</string>
-    <string name="settings_block_location_summary">Web sitelerinin konumunuzu istemesini engeller</string>
-    <string name="settings_block_location_title">Konum isteklerini engelle</string>
     <string name="settings_clear_browsing_error">%s verileri temizlenemedi</string>
     <string name="settings_clear_browsing_success">%s verileri temizlendi</string>
     <string name="settings_doh_server_working">Çalışıyor!</string>

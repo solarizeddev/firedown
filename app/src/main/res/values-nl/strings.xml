@@ -361,7 +361,6 @@
     <string name="quit_application">De toepassing wordt afgesloten om wijzigingen toe te passen…</string>
     <string name="rename">Hernoemen</string>
     <string name="rename_file">Bestand hernoemen</string>
-    <string name="request_geolocation">De locatie van uw apparaat delen met &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">&lt;b&gt;%s&lt;/b&gt; toestaan DRM-gestuurde content af te spelen?</string>
     <string name="request_media_key_system_access_subtitle">Houd er rekening mee dat DRM-beveiligde bestanden niet door Firedown kunnen worden gedownload</string>
     <string name="request_storage">Toegang tot apparaatopslag toestaan voor &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -1188,8 +1187,6 @@
     <string name="settings_autofill_service_title">Wachtwoorden en automatisch invullen</string>
     <string name="settings_block_app_redirects_summary">Blokkeert sites die je doorsturen om hun app te openen of te installeren</string>
     <string name="settings_block_app_redirects_title">App-omleidingen blokkeren</string>
-    <string name="settings_block_location_summary">Voorkom dat websites om je locatie vragen</string>
-    <string name="settings_block_location_title">Locatieverzoeken blokkeren</string>
     <string name="settings_clear_browsing_error">Kan gegevens voor %s niet wissen</string>
     <string name="settings_clear_browsing_success">Gegevens voor %s gewist</string>
     <string name="settings_doh_server_working">Het werkt!</string>

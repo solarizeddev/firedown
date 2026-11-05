@@ -162,7 +162,6 @@
     <string name="quit_application">กำลังปิดแอปพลิเคชันเพื่อนำการเปลี่ยนแปลงไปใช้…</string>
     <string name="rename">เปลี่ยนชื่อ</string>
     <string name="rename_file">เปลี่ยนชื่อไฟล์</string>
-    <string name="request_geolocation">แบ่งปันตำแหน่งอุปกรณ์ของคุณด้วย&lt;b&gt;%s&lt;/b&gt; ?</string>
     <string name="request_media_key_system_access">อนุญาต&lt;b&gt;%s&lt;/b&gt; ที่จะเล่นเนื้อหาที่ควบคุมโดย DRM ได้อย่างไร?</string>
     <string name="request_media_key_system_access_subtitle">โปรดทราบว่าไฟล์ที่ได้รับการป้องกันด้วย DRM ไม่สามารถดาวน์โหลดได้จาก Firedown</string>
     <string name="request_storage">อนุญาตการเข้าถึงพื้นที่เก็บข้อมูลอุปกรณ์สำหรับ&lt;b&gt;%s&lt;/b&gt; ?</string>

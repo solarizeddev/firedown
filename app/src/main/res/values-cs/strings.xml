@@ -354,7 +354,6 @@
     <string name="quit_application">Ukončování aplikace pro použití změn…</string>
     <string name="rename">Přejmenovat</string>
     <string name="rename_file">Přejmenuj soubor</string>
-    <string name="request_geolocation">Sdílet polohu svého zařízení s uživatelem &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Povolit aplikaci &lt;b&gt;%s&lt;/b&gt; přehrávat obsah řízený DRM?</string>
     <string name="request_media_key_system_access_subtitle">Upozorňujeme, že pomocí Firedown nelze stahovat soubory chráněné DRM</string>
     <string name="request_storage">Povolit aplikaci &lt;b&gt;%s&lt;/b&gt; přístup k úložišti zařízení?</string>
@@ -1180,8 +1179,6 @@
     <string name="settings_autofill_service_title">Hesla a automatické vyplňování</string>
     <string name="settings_block_app_redirects_summary">Blokuje weby, které vás přesměrovávají k otevření nebo instalaci své aplikace</string>
     <string name="settings_block_app_redirects_title">Blokovat přesměrování do aplikací</string>
-    <string name="settings_block_location_summary">Zabránit webům v žádostech o vaši polohu</string>
-    <string name="settings_block_location_title">Blokovat žádosti o polohu</string>
     <string name="settings_clear_browsing_error">Data webu %s se nepodařilo vymazat</string>
     <string name="settings_clear_browsing_success">Data webu %s vymazána</string>
     <string name="settings_disk_cache_disabled">Zakázat mezipaměť na disku</string>

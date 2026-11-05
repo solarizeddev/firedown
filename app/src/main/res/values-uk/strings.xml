@@ -341,7 +341,6 @@
     <string name="quit_application">Закриття програми для застосування змін…</string>
     <string name="rename">Перейменувати</string>
     <string name="rename_file">Перейменувати файл</string>
-    <string name="request_geolocation">Поділитися геоданими свого пристрою з &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Дозволити &lt;b&gt;%s&lt;/b&gt; відтворювати вміст, керований DRM?</string>
     <string name="request_media_key_system_access_subtitle">Зверніть увагу, що Firedown не може завантажити файли, захищені DRM</string>
     <string name="request_storage">Надати доступ до пам’яті пристрою для &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -1170,8 +1169,6 @@
     <string name="settings_autofill_service_title">Паролі та автозаповнення</string>
     <string name="settings_block_app_redirects_summary">Блокує сайти, які перенаправляють вас, щоб відкрити або встановити свій застосунок</string>
     <string name="settings_block_app_redirects_title">Блокувати переходи в застосунки</string>
-    <string name="settings_block_location_summary">Не дозволяти сайтам запитувати ваше місцезнаходження</string>
-    <string name="settings_block_location_title">Блокувати запити місцезнаходження</string>
     <string name="settings_clear_browsing_error">Не вдалося видалити дані для %s</string>
     <string name="settings_clear_browsing_success">Дані для %s видалено</string>
     <string name="settings_disk_cache_disabled">Вимкнути дисковий кеш</string>

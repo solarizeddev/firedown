@@ -347,7 +347,6 @@
     <string name="quit_application">Lopetetaan sovellus, jotta muutokset tulevat voimaan…</string>
     <string name="rename">Nimeä uudelleen</string>
     <string name="rename_file">Nimeä tiedosto uudelleen</string>
-    <string name="request_geolocation">Jaa laitteesi sijainti henkilön &lt;b&gt;%s&lt;/b&gt; kanssa?</string>
     <string name="request_media_key_system_access">Saako &lt;b&gt;%s&lt;/b&gt; toistaa DRM-ohjattua sisältöä?</string>
     <string name="request_media_key_system_access_subtitle">Huomaa, että Firedown ei voi ladata DRM-suojattuja tiedostoja</string>
     <string name="request_storage">Sallitaanko laitteen &lt;b&gt;%s&lt;/b&gt; käyttö laitteen tallennustilaan?</string>
@@ -1150,8 +1149,6 @@
     <string name="settings_autofill_service_title">Salasanat &amp; automaattinen täyttö</string>
     <string name="settings_block_app_redirects_summary">Estää sivustot, jotka ohjaavat sinut avaamaan tai asentamaan niiden sovelluksen</string>
     <string name="settings_block_app_redirects_title">Estä sovellusohjaukset</string>
-    <string name="settings_block_location_summary">Estä verkkosivustoja kysymästä sijaintiasi</string>
-    <string name="settings_block_location_title">Estä sijaintipyynnöt</string>
     <string name="settings_clear_browsing_error">Tietojen tyhjentäminen epäonnistui: %s</string>
     <string name="settings_clear_browsing_success">Tiedot tyhjennetty: %s</string>
     <string name="settings_disk_cache_disabled">Poista levyvälimuisti käytöstä</string>

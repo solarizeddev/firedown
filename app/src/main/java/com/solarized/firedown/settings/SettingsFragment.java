@@ -446,12 +446,6 @@ public class SettingsFragment extends BasePreferenceFragment
             boolean enabled = sharedPreferences.getBoolean(key, Preferences.DEFAULT_SPOOF_TIMEZONE);
 
             mGeckoRuntimeHelper.setTimezoneSpoofing(enabled);
-        } else if (Preferences.SETTINGS_BLOCK_LOCATION.equals(key)) {
-
-            boolean block = sharedPreferences.getBoolean(key, false);
-
-            mGeckoRuntimeHelper.setGeo(block);
-
         } else if (Preferences.SETTINGS_HTTPS_ONLY.equals(key)) {
 
             boolean enable = sharedPreferences.getBoolean(key, Preferences.DEFAULT_HTTPS_ONLY);

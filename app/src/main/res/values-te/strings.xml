@@ -148,7 +148,6 @@
     <string name="quick_settings_sheet_secure_connection_2">అనుసంధానం సురక్షితం</string>
     <string name="rename">పేరు మార్చండి</string>
     <string name="rename_file">ఫైల్ పేరు మార్చండి</string>
-    <string name="request_geolocation">మీ పరికర స్థానాన్ని &lt;b&gt; %s &lt;/b&gt;తో భాగస్వామ్యం చేయాలా?</string>
     <string name="request_media_key_system_access">DRM-నియంత్రిత కంటెంట్‌ని ప్లే చేయడానికి &lt;b&gt; %s &lt;/b&gt;ని అనుమతించాలా?</string>
     <string name="request_media_key_system_access_subtitle">DRM రక్షిత ఫైల్‌లను Firedown ద్వారా డౌన్‌లోడ్ చేయడం సాధ్యం కాదని గమనించండి</string>
     <string name="request_storage">&lt;b&gt; %s &lt;/b&gt; కోసం పరికర నిల్వకు ప్రాప్యతను అనుమతించాలా?</string>

@@ -158,7 +158,6 @@
     <string name="quit_application">Затварање апликације ради примене промена…</string>
     <string name="rename">Преименуј</string>
     <string name="rename_file">Преименуј датотеку</string>
-    <string name="request_geolocation">Желите да делите локацију уређаја са &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Дозволити &lt;b&gt;%s&lt;/b&gt; да репродукује садржај који контролише DRM?</string>
     <string name="request_media_key_system_access_subtitle">Имајте на уму да Firedown не може преузети датотеке заштићене DRM-ом</string>
     <string name="request_storage">Желите ли да дозволите приступ складишту уређаја за &lt;b&gt;%s&lt;/b&gt;?</string>

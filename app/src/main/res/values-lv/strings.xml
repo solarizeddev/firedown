@@ -123,7 +123,6 @@
     <string name="popup_toggle">Pārslēgt skatu</string>
     <string name="rename">Pārdēvēt</string>
     <string name="rename_file">Pārdēvēt failu</string>
-    <string name="request_geolocation">Vai kopīgot savas ierīces atrašanās vietu ar &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Vai atļaut lietotnei &lt;b&gt;%s&lt;/b&gt; atskaņot DRM kontrolētu saturu?</string>
     <string name="request_media_key_system_access_subtitle">Ņemiet vērā, ka Firedown nevar lejupielādēt DRM aizsargātus failus</string>
     <string name="request_storage">Vai atļaut piekļuvi ierīces krātuvei &lt;b&gt;%s&lt;/b&gt;?</string>

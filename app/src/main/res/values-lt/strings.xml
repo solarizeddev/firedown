@@ -149,7 +149,6 @@
     <string name="quick_settings_sheet_secure_connection_2">Ryšys yra saugus</string>
     <string name="rename">Pervardyti</string>
     <string name="rename_file">Pervardyti failą</string>
-    <string name="request_geolocation">Bendrinti įrenginio vietą su &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Suteikti leidimą &lt;b&gt;%s&lt;/b&gt; leisti DRM valdomą turinį?</string>
     <string name="request_media_key_system_access_subtitle">Atminkite, kad „Firedown“ negali atsisiųsti DRM apsaugotų failų</string>
     <string name="request_storage">Suteikti leidimą pasiekti įrenginio saugyklą &lt;b&gt;%s&lt;/b&gt;?</string>
