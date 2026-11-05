@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
@@ -417,6 +418,9 @@ public class BrowserFragment extends BaseBrowserFragment
         // Settings is another Activity, so a toggle there lands here on the
         // way back — no navigation event would otherwise repaint the bar.
         applyAddressBarDisplayPref();
+        // The DRM switch may have changed in Settings (it applies without a
+        // reload): repaint the shield's dot so it never outlives the row.
+        refreshShield();
         showPendingDrmNotice(peekCurrentGeckoState());
     }
 
@@ -1709,6 +1713,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // URL after the user had already typed a new one (the value read back was
         // whatever the last NavigationDelegate write left, not this event's).
         mGeckoToolbar.onLocationChange(url);
+        dismissDrmTip();
         refreshShield();
         // A navigation while find-in-page is active dismisses the search bar.
         if (mUiState == UiState.SEARCH) {
@@ -1879,31 +1884,48 @@ public class BrowserFragment extends BaseBrowserFragment
             return;
         }
         if (result.getBoolean(DrmSheetDialogFragment.RESULT_FROM_SHEET, false)
-                && geckoState.isDrmRefusedHere()
-                && DrmNoticeSites.claimShieldTip(mActivity)) {
+                && geckoState.isDrmRefusedHere()) {
             showDrmTip();
         }
     }
 
-    /** "DRM is off for this page · Tap the shield to turn it on", under the shield. */
+    /**
+     * "DRM is off for this page · Tap the shield to turn it on", under the
+     * shield, once ever. The once is claimed only when the tip can actually
+     * show: the shield on screen and the toolbar not scrolled away (the
+     * popup does not follow the toolbar's translation).
+     */
     private void showDrmTip() {
-        if (mGeckoToolbar == null) return;
+        if (mGeckoToolbar == null || mGeckoView == null) return;
         View anchor = mGeckoToolbar.getSecurityButton();
         if (anchor == null || !anchor.isAttachedToWindow() || anchor.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        Rect visible = new Rect();
+        if (!anchor.getGlobalVisibleRect(visible) || visible.height() < anchor.getHeight()) {
+            return;
+        }
+        if (!DrmNoticeSites.claimShieldTip(mActivity)) {
             return;
         }
         dismissDrmTip();
         View content = LayoutInflater.from(anchor.getContext())
                 .inflate(R.layout.popup_drm_shield_tip, null, false);
-        PopupWindow tip = new PopupWindow(content,
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
+        // Inflated without a parent, so the layout's own width is dropped:
+        // the window carries it.
+        int width = getResources().getDimensionPixelSize(R.dimen.drm_tip_width);
+        PopupWindow tip = new PopupWindow(content, width, ViewGroup.LayoutParams.WRAP_CONTENT, false);
         // A background lets a touch outside dismiss it; the card draws its own.
         tip.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         tip.setOutsideTouchable(true);
         content.setOnClickListener(v -> dismissDrmTip());
         tip.showAsDropDown(anchor, 0, 0);
         mDrmTip = tip;
-        content.postDelayed(this::dismissDrmTip, DRM_TIP_DURATION_MS);
+        mGeckoView.postDelayed(() -> {
+            if (mDrmTip == tip) {
+                dismissDrmTip();
+            }
+        }, DRM_TIP_DURATION_MS);
     }
 
     private void dismissDrmTip() {
@@ -3278,6 +3300,7 @@ public class BrowserFragment extends BaseBrowserFragment
         hideTranslateOffer();
         showPendingDownload(geckoState);
         showPendingDrmNotice(geckoState);
+        dismissDrmTip();
         refreshShield();
     }
 

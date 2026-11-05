@@ -77,7 +77,7 @@
                         android:singleLine="true"
                         android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:textColor="?attr/colorOnSurfaceVariant"
-                        tools:text="buydrm.com · DRM is turned off" />
+                        tools:text="example.com · DRM is turned off" />
 
                 </LinearLayout>
 

@@ -91,6 +91,8 @@
     <dimen name="sheet_group_corner_outer">16dp</dimen>
     <dimen name="sheet_group_corner_inner">4dp</dimen>
     <dimen name="sheet_row_gap">2dp</dimen>
+    <!-- The one-time DRM tip under the address bar's shield (popup_drm_shield_tip). -->
+    <dimen name="drm_tip_width">260dp</dimen>
     <!-- An add-on's icon in a settings row or the Add-ons sheet: the row glyphs' size. -->
     <dimen name="addon_icon_size">24dp</dimen>
     <dimen name="addon_prompt_icon_size">48dp</dimen>

@@ -11588,7 +11588,13 @@ alternatives", boards C–E, picked over a snackbar that was too easy to miss):
   connection group (`drm_row`, `bindDrmRow`, corners via `applyCorners`).
 - **Once ever, after the first Not now**: a tip under the shield, "DRM is off
   for this page · Tap the shield to turn it on" (`popup_drm_shield_tip`,
-  6 s, a tap or a touch outside dismisses it).
+  6 s, a tap or a touch outside dismisses it, and so does a navigation or a
+  tab switch). The once is claimed only when the tip can show: the shield
+  visible and the toolbar not scrolled away (a PopupWindow does not follow
+  the toolbar's translation). Its width is the WINDOW's (`drm_tip_width`):
+  inflated without a parent, the layout's own width is dropped.
+- `onResume` repaints the shield: Settings turns DRM on without a reload,
+  and the dot must not outlive the security sheet's row.
 - The sheet and the row answer through ONE fragment result
   (`DrmSheetDialogFragment.RESULT_KEY`), handled by
   `BrowserFragment.onDrmResult`, so turning DRM on has one implementation.
