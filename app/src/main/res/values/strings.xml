@@ -896,6 +896,7 @@
     <string name="settings_webgl_disabled_summary">Blocks GPU fingerprinting, may break 3D content</string>
     <string name="settings_drm_enabled">Enable DRM playback</string>
     <string name="settings_drm_enabled_summary">Allows Widevine on sites that require DRM. Firedown still can\'t download DRM content.</string>
+    <string name="drm_disabled_notice">This page needs DRM, which is turned off</string>
     <string name="settings_wasm_disabled">Disable WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Blocks compiled WASM modules. Breaks some sites</string>
     <string name="settings_https_only_title">HTTPS-only mode</string>

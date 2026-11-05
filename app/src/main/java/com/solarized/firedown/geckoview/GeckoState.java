@@ -256,6 +256,21 @@ public class GeckoState {
     private boolean mShowingErrorPage;
 
     /**
+     * The "DRM is off" notice was raised for the document loading now. Gecko
+     * sends one notice per window, so a page whose player sits in an iframe
+     * sends two; the user hears it once per load. Reset on every page start.
+     */
+    private boolean mDrmNoticeShown;
+
+    /**
+     * The host the user turned DRM on for from the notice. That tap was the
+     * consent, so the reload's DRM request for this host in this tab is
+     * granted without asking again. Not persisted.
+     */
+    @Nullable
+    private String mDrmAllowedHost;
+
+    /**
      * The latest state Gecko's built-in translator reported for this tab's
      * CURRENT document (detected languages on load; requested pair, engine
      * readiness and any error after a translate request). Stored ungated on
@@ -689,6 +704,32 @@ public class GeckoState {
 
     public boolean isShowingErrorPage() {
         return mShowingErrorPage;
+    }
+
+    /**
+     * Claims the "DRM is off" notice for the document loading now: true the
+     * first time, false for a second window (an iframe) of the same load.
+     */
+    public boolean claimDrmNotice() {
+        if (mDrmNoticeShown) {
+            return false;
+        }
+        mDrmNoticeShown = true;
+        return true;
+    }
+
+    /** A new document: its DRM request gets its own notice. */
+    public void resetDrmNotice() {
+        mDrmNoticeShown = false;
+    }
+
+    public void setDrmAllowedHost(@Nullable String host) {
+        mDrmAllowedHost = host;
+    }
+
+    /** True when the user turned DRM on from this tab's notice for {@code host}. */
+    public boolean isDrmAllowedHost(@Nullable String host) {
+        return host != null && host.equals(mDrmAllowedHost);
     }
 
     // ── Translation (see mTranslationState) ─────────────────────────────────

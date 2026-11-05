@@ -1189,6 +1189,7 @@
     <string name="settings_doh_server_working">Funguje to!</string>
     <string name="settings_drm_enabled">Povolit přehrávání DRM</string>
     <string name="settings_drm_enabled_summary">Povolí Widevine na webech, které vyžadují DRM. Obsah chráněný DRM ale Firedown stáhnout nemůže.</string>
+    <string name="drm_disabled_notice">Tato stránka potřebuje DRM, které je vypnuté</string>
     <string name="settings_enhanced_tracking_protection_custom">Vlastní</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Standardní ochrana a navíc odstraňování sledovacích parametrů z adres URL.</string>
     <string name="settings_gecko_version">GeckoView</string>

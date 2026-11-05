@@ -11534,6 +11534,41 @@ after sketches on the design canvas:
   long-press context dialog (BrowserContent) is a centred CUSTOM dialog
   whose rows are the card rows (the one centred surface that is a menu).
 
+### DRM off, and the "Turn on" notice (engine patch 0010)
+
+"Enable DRM playback" (`SETTINGS_ENABLE_DRM`, Security door, default OFF)
+drives `GeckoRuntimeHelper.setDRM`: `media.eme.enabled` and the GMP prefs.
+Two facts about Gecko that the code used to get wrong:
+- **The pref does not remove the API.** `navigator.requestMediaKeySystemAccess`
+  always exists; with the pref off Gecko refuses every Widevine request with
+  "EME has been preffed off" BEFORE probing the device
+  (`MediaKeySystemAccessManager::RequestMediaKeySystemAccess`). That uniform
+  refusal is what keeps a page from learning which DRM formats the phone
+  supports. Never "fix" detection by leaving EME on and refusing through the
+  permission instead: that answer comes after the probe, so a page could tell
+  supported configurations from refused ones.
+- **The refusal comes before GeckoView asks the app**, so on a stock engine
+  `PERMISSION_MEDIA_KEY_SYSTEM_ACCESS` never arrives while the switch is off.
+  Gecko's own "api-disabled" notice (`mediakeys-request`) is heard only by
+  desktop Firefox.
+
+firedown-geckoview patch **0010** (`FIREDOWN-EME-DISABLED-NOTICE`) makes the
+pref-off branch also start an app-approval request, once per window, whose
+answer is ignored: the page is refused exactly as before. With the switch
+off, `GeckoComponents.PermissionDelegate` treats that request as the notice:
+for the current tab, once per page load (`GeckoState.claimDrmNotice`, reset on
+page start; a player in an iframe is a second window), it raises
+`onDrmDisabled`, and answers `VALUE_PROMPT` (GeckoView persists whatever is
+answered; PROMPT stores no decision). `BrowserFragment.onDrmDisabled` shows
+"This page needs DRM, which is turned off · Turn on" (8 s). Turn on writes the
+setting, calls `setDRM(false)` (which now returns the pref write's result) and
+reloads the tab when Gecko has the values; the host is remembered on the tab
+(`setDrmAllowedHost`) so the reload's request is allowed without the
+"Allow … to play DRM-controlled content?" dialog. Private tabs refuse every
+content permission before this branch, so they never show the notice (DRM
+could not play there anyway). On an engine without 0010 nothing changes: the
+notice simply never arrives. On-device unverified at write time.
+
 ### UTC timezone spoofing toggle (FPP target, not a code patch)
 
 `SETTINGS_SPOOF_TIMEZONE` is an **enable-style opt-in** (default OFF, like Resist

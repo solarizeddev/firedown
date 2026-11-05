@@ -532,6 +532,7 @@
     <string name="settings_webgl_disabled_summary">Blockiert GPU-Fingerprinting, 3D-Inhalte können kaputt erscheinen</string>
     <string name="settings_drm_enabled">DRM-Wiedergabe aktivieren</string>
     <string name="settings_drm_enabled_summary">Erlaubt Widevine auf Seiten, die DRM benötigen (Netflix, Spotify, …). Firedown kann DRM-geschützte Inhalte trotzdem nicht herunterladen.</string>
+    <string name="drm_disabled_notice">Diese Seite braucht DRM, das ausgeschaltet ist</string>
     <string name="settings_wasm_disabled">WebAssembly deaktivieren</string>
     <string name="settings_wasm_disabled_summary">Verhindert, dass Webseiten kompilierte WASM-Module ausführen. Verringert die Angriffsfläche, beeinträchtigt aber manche Seiten</string>
     <string name="settings_https_only_title">Nur-HTTPS-Modus</string>

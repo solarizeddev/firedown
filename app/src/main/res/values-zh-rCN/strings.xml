@@ -529,6 +529,7 @@
     <string name="settings_webgl_disabled_summary">阻止GPU指纹识别，可能影响3D内容</string>
     <string name="settings_drm_enabled">启用 DRM 播放</string>
     <string name="settings_drm_enabled_summary">允许在需要 DRM 的网站（Netflix、Spotify 等）上使用 Widevine 播放。Firedown 仍然无法下载受 DRM 保护的内容。</string>
+    <string name="drm_disabled_notice">此页面需要 DRM，但 DRM 已关闭</string>
     <string name="settings_wasm_disabled">禁用 WebAssembly</string>
     <string name="settings_wasm_disabled_summary">阻止站点运行已编译的 WASM 模块。可减少攻击面，但会导致部分应用无法工作</string>
     <string name="settings_https_only_title">仅 HTTPS 模式</string>

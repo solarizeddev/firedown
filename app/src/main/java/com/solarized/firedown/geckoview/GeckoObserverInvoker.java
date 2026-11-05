@@ -93,4 +93,5 @@ public interface GeckoObserverInvoker {
     GeckoObserverInvoker CRASH = (geckoObserver, objects) -> geckoObserver.onCrash((GeckoState) objects[0]);
     GeckoObserverInvoker TRANSLATION_OFFER = (geckoObserver, objects) -> geckoObserver.onTranslationOffer((GeckoState) objects[0]);
     GeckoObserverInvoker TRANSLATION_STATE = (geckoObserver, objects) -> geckoObserver.onTranslationStateChange((GeckoState) objects[0], (TranslationsController.SessionTranslation.TranslationState) objects[1]);
+    GeckoObserverInvoker DRM_DISABLED = (geckoObserver, objects) -> geckoObserver.onDrmDisabled((GeckoState) objects[0]);
 }

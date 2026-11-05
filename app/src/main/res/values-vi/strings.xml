@@ -898,6 +898,7 @@
     <string name="settings_donate">Quyên góp</string>
     <string name="settings_drm_enabled">Bật phát nội dung DRM</string>
     <string name="settings_drm_enabled_summary">Cho phép Widevine trên các trang yêu cầu DRM. Firedown vẫn không thể tải xuống nội dung DRM.</string>
+    <string name="drm_disabled_notice">Trang này cần DRM, nhưng DRM đang tắt</string>
     <string name="settings_enhanced_tracking_protection_custom">Tùy chỉnh</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Bảo vệ tiêu chuẩn cùng với loại bỏ tham số truy vấn theo dõi khỏi URL.</string>
     <string name="settings_gecko_version">GeckoView</string>

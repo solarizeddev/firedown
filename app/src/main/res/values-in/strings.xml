@@ -863,6 +863,7 @@
     <string name="settings_donate">Donasi</string>
     <string name="settings_drm_enabled">Aktifkan pemutaran DRM</string>
     <string name="settings_drm_enabled_summary">Mengizinkan Widevine di situs yang memerlukan DRM. Firedown tetap tidak dapat mengunduh konten DRM.</string>
+    <string name="drm_disabled_notice">Halaman ini memerlukan DRM, yang sedang dinonaktifkan</string>
     <string name="settings_enhanced_tracking_protection_custom">Khusus</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Perlindungan standar plus penghapusan parameter kueri pelacakan dari URL.</string>
     <string name="settings_gecko_version">GeckoView</string>

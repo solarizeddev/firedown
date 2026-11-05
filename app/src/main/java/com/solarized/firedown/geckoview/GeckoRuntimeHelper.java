@@ -1299,24 +1299,21 @@ public class GeckoRuntimeHelper {
 
 
     /**
-     * Toggle DRM (Encrypted Media Extensions).
+     * Toggle DRM (Encrypted Media Extensions), the IronFox / Mull / Tor
+     * stance: with the switch off the whole EME + GMP machinery is off.
      *
-     * IronFox / Mull / Tor Browser for Android stance: when the user
-     * has DRM off, kill the entire EME + GMP machinery. The EME API
-     * surface itself ({@code requestMediaKeySystemAccess}, supported-
-     * key-system enumeration, codec / robustness probing) is a stable
-     * fingerprint vector; even with no CDM behind it, "EME exists but
-     * rejects everything" is a distinctive signal. Flipping
-     * {@code media.eme.enabled = false} removes the API entirely so
-     * the page can't probe at all.
+     * <p>{@code media.eme.enabled = false} does NOT remove the API:
+     * {@code navigator.requestMediaKeySystemAccess} always exists, and Gecko
+     * refuses every Widevine request with the same "EME has been preffed off"
+     * before checking which configurations the device supports. That uniform
+     * refusal is the privacy point: a page learns "DRM is off" and nothing
+     * about the phone's DRM. ClearKey is not proprietary and still works.
      *
-     * Trade-off: a small number of DASH/HLS players call
-     * {@code requestMediaKeySystemAccess} synchronously at load and
-     * abort if it throws, even when the rendition they would have
-     * selected is unencrypted. Modern players (Shaka, dash.js,
-     * hls.js, the Max bespoke player) catch and continue; some long-
-     * tail players don't. We accept that breakage in exchange for
-     * the privacy posture.
+     * <p>The refusal happens before GeckoView asks the app, so stock
+     * GeckoView never tells the app a page wanted DRM. firedown-geckoview
+     * patch 0010 adds a notice for it (an app-approval request whose answer
+     * is ignored); {@code GeckoComponents.PermissionDelegate} turns it into
+     * the "DRM is off · Turn on" snackbar.
      *
      *   media.eme.enabled                = !disable
      *   media.gmp-widevinecdm.enabled    = !disable
@@ -1325,27 +1322,16 @@ public class GeckoRuntimeHelper {
      *   media.gmp-provider.enabled       = !disable
      *   browser.eme.ui.enabled           = !disable
      *
-     * Net effect with the toggle OFF:
-     *   - {@code navigator.requestMediaKeySystemAccess} is undefined
-     *     / throws — page can't fingerprint EME capability.
-     *   - GMP install / consent path is disabled at every layer.
-     *   - No DRM playback (clear-only).
+     * <p>With the switch on, Android plays Widevine through MediaDrm
+     * ({@code media.mediadrm-widevinecdm.visible}, on in GeckoView); the GMP
+     * prefs only stop Gecko-internal plugin pathways. Each page's request then
+     * goes through the app's "Allow … to play DRM-controlled content?" prompt.
      *
-     * Net effect with the toggle ON: every pref above flips back to
-     * true, the EME API is callable, and the full GMP install /
-     * consent flow runs. (Stock GeckoView for Android still doesn't
-     * fetch the Widevine binary — that needs a build with MediaDrm-
-     * backed EME compiled in — but the prefs are correct.)
-     *
-     * The defence-in-depth pieces still apply: the GMP-level disables
-     * stop Gecko-internal pathways, and
-     * PermissionDelegate.onContentPermissionRequest auto-denies
-     * PERMISSION_MEDIA_KEY_SYSTEM_ACCESS when the toggle is off
-     * (covers any pre-loaded page whose EME API binding survives a
-     * runtime toggle flip).
+     * @return completes once Gecko has the new values (also on failure), so a
+     *         caller can reload a page that should see them.
      */
     @OptIn(markerClass = ExperimentalGeckoViewApi.class)
-    public void setDRM(boolean disable) {
+    public GeckoResult<Void> setDRM(boolean disable) {
 
         boolean enable = !disable;
 
@@ -1395,7 +1381,7 @@ public class GeckoRuntimeHelper {
         // value (e.g. locked pref, unknown name, branch mismatch) and the
         // pref retains whatever it was before — that's exactly the
         // scenario we want surfaced when video stops working.
-        geckoResult.accept(map -> {
+        return geckoResult.accept(map -> {
             if (map == null) {
                 Log.w(TAG, "setDRM: setGeckoPrefs returned null map (runtime not ready?)");
                 return;

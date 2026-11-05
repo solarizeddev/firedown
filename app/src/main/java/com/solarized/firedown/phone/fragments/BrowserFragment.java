@@ -98,6 +98,7 @@ import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.UrlStringUtils;
+import com.solarized.firedown.utils.WebUtils;
 
 import org.apache.commons.io.FilenameUtils;
 import org.mozilla.geckoview.GeckoResult;
@@ -141,6 +142,9 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     private boolean mIsIncognitoThemed = false;
+
+    /** How long the "DRM is off" snackbar stays: long enough to read and reach. */
+    private static final int DRM_NOTICE_DURATION_MS = 8000;
 
     /**
      * Set to true while {@link #recreateSession(GeckoState)} is in flight
@@ -1773,6 +1777,31 @@ public class BrowserFragment extends BaseBrowserFragment
                 Preferences.DEFAULT_TRANSLATIONS_OFFER)) return;
         Log.d(TAG, "onTranslationOffer: language=" + geckoState.getDetectedDocLanguage());
         showOfferUnlessNever(geckoState);
+    }
+
+    /**
+     * The page on screen asked for DRM while the switch is off (Settings →
+     * Privacy → Security). Gecko has already refused it, so the site's player
+     * just fails; this says why and offers the switch. Turn on writes the
+     * setting, applies it to Gecko (the Settings listeners are not registered
+     * while the browser is in front) and reloads the tab once Gecko has the
+     * new value; the tap counts as allowing this site in this tab, so the
+     * reload does not ask a second time. A private tab never gets here (all
+     * content permissions are refused there).
+     */
+    @Override
+    public void onDrmDisabled(GeckoState geckoState) {
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        if (getView() == null) return;
+        final String host = WebUtils.getDomainName(geckoState.getEntityUri());
+        Snackbar snackbar = makeAnchoredSnackbar(R.string.drm_disabled_notice);
+        snackbar.setDuration(DRM_NOTICE_DURATION_MS);
+        snackbar.setAction(R.string.shield_turn_on, v -> {
+            mSharedPreferences.edit().putBoolean(Preferences.SETTINGS_ENABLE_DRM, true).apply();
+            geckoState.setDrmAllowedHost(host);
+            mGeckoRuntimeHelper.setDRM(false).accept(ignored -> geckoState.reload());
+        });
+        snackbar.show();
     }
 
     /**
