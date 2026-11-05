@@ -8879,6 +8879,18 @@ already holds is granted, anything else refused. It used to log and return,
 so a page asking for its location (not even in the manifest) waited forever
 for an answer instead of getting an error.
 
+**Websites never get the device's location** (maintainer: "you have other
+browser for that"). `PERMISSION_GEOLOCATION` is answered DENY without a
+dialog, and `GeckoRuntimeHelper.denyGeolocation` writes
+`permissions.default.geo = 2` at every boot. There was a "Block location
+requests" switch (default on); turned off, it showed "Share your device
+location?" and then failed after Allow, because the app holds no location
+permission. The switch, its dialog, its strings and its icon are gone, and
+the boot write replaces the PROMPT (3) that switch left in the user branch.
+The API stays (a page gets a plain "denied", as when a user refuses);
+`geo.enabled = false` would remove `navigator.geolocation`, which some
+pages call without checking. Don't add the location permission back.
+
 #### Long-press context menu — glyphs are index-paired arrays, image rows get a thumbnail
 
 `BrowserContentDialogFragment` zips `context_link`/`context_image` (the

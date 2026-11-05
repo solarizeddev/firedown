@@ -207,10 +207,6 @@ public class Preferences {
     /** Settings row opening the system's notification settings for the app. */
     public static final String SETTINGS_NOTIFICATIONS = "com.solarized.firedown.preferences.notifications";
 
-    public static final String SETTINGS_BLOCK_LOCATION = "com.solarized.firedown.preferences.browser.block.location";
-
-    public static final boolean DEFAULT_BLOCK_LOCATION = true;
-
     /**
      * Block "open in app" / "install our app" links a page fires BY ITSELF
      * (no tap, not typed: GeckoView's hasUserGesture false), Play Store

@@ -396,7 +396,6 @@
     <string name="quit_application">Beenden der Anwendung, um Änderungen zu übernehmen…</string>
     <string name="rename">Umbenennen</string>
     <string name="rename_file">Datei umbenennen</string>
-    <string name="request_geolocation">Ihren Gerätestandort mit &lt;b&gt;%s&lt;/b&gt; teilen?</string>
     <string name="request_media_key_system_access">&lt;b&gt;%s&lt;/b&gt; erlauben, DRM-kontrollierte Inhalte abzuspielen?</string>
     <string name="request_media_key_system_access_subtitle">Beachten Sie, dass DRM-geschützte Dateien nicht von Firedown heruntergeladen werden können</string>
     <string name="request_storage">Zugriff auf den Gerätespeicher für &lt;b&gt;%s&lt;/b&gt; erlauben?</string>
@@ -421,8 +420,6 @@
     <string name="settings_autofill_service_title">Passwörter &amp; Autofill</string>
     <string name="settings_block_javascript_summary">Seiten werden möglicherweise schneller geladen, verhalten sich jedoch möglicherweise auch unerwartet</string>
     <string name="settings_block_javascript_title">JavaScript blockieren</string>
-    <string name="settings_block_location_summary">Verhindert, dass Webseiten nach deinem Standort fragen</string>
-    <string name="settings_block_location_title">Standortabfragen blockieren</string>
     <string name="block_redirect_snackbar">Weiterleitung zum Play Store blockiert</string>
     <string name="settings_clear_browsing">Browserdaten löschen</string>
     <string name="settings_clear_browsing_dialog">Sind Sie sicher, dass Sie alle Cookies und Daten für die Website &lt;b&gt;%s&lt;/b&gt; löschen möchten? </string>

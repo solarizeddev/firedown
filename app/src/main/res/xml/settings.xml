@@ -211,15 +211,6 @@
         <SwitchPreferenceCompat
             android:defaultValue="true"
             app:singleLineTitle="false"
-            android:key="com.solarized.firedown.preferences.browser.block.location"
-            android:summary="@string/settings_block_location_summary"
-            android:title="@string/settings_block_location_title"
-            app:icon="@drawable/location_off_24" />
-
-
-        <SwitchPreferenceCompat
-            android:defaultValue="true"
-            app:singleLineTitle="false"
             android:key="com.solarized.firedown.preferences.browser.https.only"
             android:summary="@string/settings_https_only_summary"
             android:title="@string/settings_https_only_title"

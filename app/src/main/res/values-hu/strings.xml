@@ -163,7 +163,6 @@
     <string name="quit_application">Kilépés az alkalmazásból a módosítások alkalmazásához…</string>
     <string name="rename">Átnevezés</string>
     <string name="rename_file">Fájl átnevezése</string>
-    <string name="request_geolocation">Megosztja eszköze helyét a következővel: &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Engedélyezi a(z) &lt;b&gt;%s&lt;/b&gt; számára a DRM által vezérelt tartalmak lejátszását?</string>
     <string name="request_media_key_system_access_subtitle">Vegye figyelembe, hogy a DRM-védett fájlokat a Firedown nem tudja letölteni</string>
     <string name="request_storage">Engedélyezi a hozzáférést az eszköztárhoz a következő számára: &lt;b&gt;%s&lt;/b&gt;?</string>

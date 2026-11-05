@@ -175,7 +175,6 @@
     <string name="quit_application">Afslutter appen for at anvende ændringerne…</string>
     <string name="rename">Omdøb</string>
     <string name="rename_file">Omdøb fil</string>
-    <string name="request_geolocation">Ønsker du at dele din enheds placering med &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Ønsker du at tillade &lt;b&gt;%s&lt;/b&gt; at afspille DRM-kontrolleret indhold?</string>
     <string name="request_media_key_system_access_subtitle">Bemærk, at DRM-beskyttede filer ikke kan downloades af Firedown</string>
     <string name="request_storage">Ønsker du at tillade adgang til enhedens lagerplads for &lt;b&gt;%s&lt;/b&gt;?</string>

@@ -399,7 +399,6 @@
     <string name="quit_application">Saliendo de la aplicación para aplicar los cambios…</string>
     <string name="rename">Renombrar</string>
     <string name="rename_file">Renombrar archivo</string>
-    <string name="request_geolocation">¿Quieres compartir la ubicación de tu dispositivo con &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">¿Permitir que &lt;b&gt;%s&lt;/b&gt; reproduzca contenido controlado por DRM?</string>
     <string name="request_media_key_system_access_subtitle">Ten en cuenta que Firedown no puede descargar archivos protegidos por DRM.</string>
     <string name="request_storage">¿Permitir el acceso al almacenamiento del dispositivo para &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -424,8 +423,6 @@
     <string name="settings_autofill_service_title">Contraseñas y autocompletado</string>
     <string name="settings_block_javascript_summary">Las páginas pueden cargarse más rápido, pero también pueden comportarse de forma inesperada</string>
     <string name="settings_block_javascript_title">Bloquear JavaScript</string>
-    <string name="settings_block_location_summary">Impide que los sitios web pidan tu ubicación</string>
-    <string name="settings_block_location_title">Bloquear solicitudes de ubicación</string>
     <string name="block_redirect_snackbar">Redirección a Play Store bloqueada</string>
     <string name="settings_clear_browsing">Eliminar datos de navegación</string>
     <string name="settings_clear_browsing_dialog">¿Estás seguro de que quieres borrar todas las cookies y los datos del sitio &lt;b&gt;%s&lt;/b&gt;? </string>

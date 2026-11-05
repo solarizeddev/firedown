@@ -1562,11 +1562,11 @@ public class GeckoComponents {
 
             switch (perm.permission) {
                 case PERMISSION_GEOLOCATION:
-                    if(mSharedPreferences.getBoolean(Preferences.SETTINGS_BLOCK_LOCATION, Preferences.DEFAULT_BLOCK_LOCATION)){
-                        return GeckoResult.fromValue(ContentPermission.VALUE_DENY);
-                    }
-                    resId = R.string.request_geolocation;
-                    break;
+                    // Firedown never shares the device's location: the app
+                    // holds no location permission, so an Allow could only
+                    // fail after the user agreed. The page gets a plain
+                    // "denied", as when a user refuses.
+                    return GeckoResult.fromValue(ContentPermission.VALUE_DENY);
                 case PERMISSION_PERSISTENT_STORAGE:
                     resId = R.string.request_storage;
                     break;

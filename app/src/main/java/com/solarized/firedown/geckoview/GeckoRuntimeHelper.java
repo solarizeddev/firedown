@@ -289,8 +289,7 @@ public class GeckoRuntimeHelper {
                 Preferences.DEFAULT_DISABLE_JIT));
         setWebGL(sharedPreferences.getBoolean(Preferences.SETTINGS_DISABLE_WEBGL,
                 Preferences.DEFAULT_DISABLE_WEBGL));
-        setGeo(sharedPreferences.getBoolean(Preferences.SETTINGS_BLOCK_LOCATION,
-                Preferences.DEFAULT_BLOCK_LOCATION));
+        denyGeolocation();
         setResistFingerPrinting(sharedPreferences.getBoolean(Preferences.SETTINGS_ENABLE_RESIST_FINGERPRINTING,
                 Preferences.DEFAULT_RESIST_FINGERPRINTING));
         setTimezoneSpoofing(sharedPreferences.getBoolean(Preferences.SETTINGS_SPOOF_TIMEZONE,
@@ -1281,20 +1280,16 @@ public class GeckoRuntimeHelper {
 
 
     @OptIn(markerClass = ExperimentalGeckoViewApi.class)
-    public void setGeo(boolean block) {
-
-        // const uint32_t ALLOW_ACTION = 1;
-        // const uint32_t DENY_ACTION = 2;
-        // const uint32_t PROMPT_ACTION = 3;
-
-        int value = block ? 2 : 3;
-
-        GeckoResult<Void> geckoResult = GeckoPreferenceController
-                .setGeckoPref("permissions.default.geo", value, GeckoPreferenceController.PREF_BRANCH_USER);
-
-        geckoResult.accept(unused -> {
-            Log.d(TAG, "setGeo: " + unused);
-        });
+    /**
+     * Every site is denied the device's location, without asking. Written to
+     * the user branch at every boot: the removed "Block location requests"
+     * switch, turned off, saved PROMPT (3) there, and a saved user value
+     * outlives the switch that wrote it.
+     */
+    private void denyGeolocation() {
+        // Gecko's permission actions: 1 allow, 2 deny, 3 prompt.
+        GeckoPreferenceController.setGeckoPref("permissions.default.geo", 2,
+                GeckoPreferenceController.PREF_BRANCH_USER);
     }
 
 

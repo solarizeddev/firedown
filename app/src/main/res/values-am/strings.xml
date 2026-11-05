@@ -159,7 +159,6 @@
     <string name="quit_application">ለውጦችን ለመተግበር መተግበሪያውን በማቆም ላይ…</string>
     <string name="rename">እንደገና ይሰይሙ</string>
     <string name="rename_file">ፋይል እንደገና ይሰይሙ</string>
-    <string name="request_geolocation">የመሣሪያዎ አካባቢ ለ&lt;b&gt;%s&lt;/b&gt; ይጋራ?</string>
     <string name="request_media_key_system_access">&lt;b&gt;%s&lt;/b&gt; በDRM የሚቆጣጠረውን ይዘት እንዲያጫውት ይፈቀድለት?</string>
     <string name="request_media_key_system_access_subtitle">ማስታወሻ፣ በDRM የተጠበቁ ፋይሎች በFiredown ሊወርዱ አይችሉም</string>
     <string name="request_storage">ለ&lt;b&gt;%s&lt;/b&gt; የመሣሪያ ማከማቻ መዳረሻ ይፈቀድ?</string>

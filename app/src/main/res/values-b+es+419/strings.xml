@@ -121,7 +121,6 @@
   <string name="popup_toggle">Cambiar vista</string>
   <string name="rename">Renombrar</string>
   <string name="rename_file">Renombrar archivo</string>
-  <string name="request_geolocation">¿Quieres compartir la ubicación de tu dispositivo con &lt;b&gt;%s&lt;/b&gt;?</string>
   <string name="request_media_key_system_access">¿Permitir que &lt;b&gt;%s&lt;/b&gt; reproduzca contenido controlado por DRM?</string>
   <string name="request_media_key_system_access_subtitle">Ten en cuenta que Firedown no puede descargar archivos protegidos por DRM.</string>
   <string name="request_storage">¿Permitir el acceso al almacenamiento del dispositivo para &lt;b&gt;%s&lt;/b&gt;?</string>

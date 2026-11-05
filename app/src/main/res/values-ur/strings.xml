@@ -148,7 +148,6 @@
     <string name="quick_settings_sheet_secure_connection_2">کنکشن محفوظ ہے۔</string>
     <string name="rename">نام تبدیل کریں۔</string>
     <string name="rename_file">فائل کا نام تبدیل کریں۔</string>
-    <string name="request_geolocation">&lt;b&gt; %s &lt;/b&gt; کے ساتھ اپنے آلے کے مقام کا اشتراک کریں؟</string>
     <string name="request_media_key_system_access">&lt;b&gt; %s &lt;/b&gt; کو DRM کے زیر کنٹرول مواد چلانے کی اجازت دیں؟</string>
     <string name="request_media_key_system_access_subtitle">نوٹ کریں کہ DRM محفوظ فائلوں کو فائر ڈاؤن کے ذریعے ڈاؤن لوڈ نہیں کیا جا سکتا</string>
     <string name="request_storage">&lt;b&gt; %s &lt;/b&gt; کے لیے ڈیوائس اسٹوریج تک رسائی کی اجازت دیں؟</string>

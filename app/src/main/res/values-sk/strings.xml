@@ -162,7 +162,6 @@
     <string name="quit_application">Ukončuje sa aplikácia a aplikujú sa zmeny…</string>
     <string name="rename">Premenovať</string>
     <string name="rename_file">Premenovať súbor</string>
-    <string name="request_geolocation">Chcete zdieľať polohu svojho zariadenia s používateľom &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Povoliť aplikácii &lt;b&gt;%s&lt;/b&gt; prehrávať obsah riadený DRM?</string>
     <string name="request_media_key_system_access_subtitle">Upozorňujeme, že pomocou Firedown nie je možné sťahovať súbory chránené DRM</string>
     <string name="request_storage">Chcete povoliť aplikácii &lt;b&gt;%s&lt;/b&gt; prístup k úložisku zariadenia?</string>

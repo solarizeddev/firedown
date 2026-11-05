@@ -121,7 +121,6 @@
     <string name="popup_toggle">Basculer la vue</string>
     <string name="rename">Renommer</string>
     <string name="rename_file">Renommer le fichier</string>
-    <string name="request_geolocation">Partager la position de votre appareil avec &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Autoriser &lt;b&gt;%s&lt;/b&gt; à lire du contenu contrôlé par DRM?</string>
     <string name="request_media_key_system_access_subtitle">Notez que les fichiers protégés par DRM ne peuvent pas être téléchargés par Firedown</string>
     <string name="request_storage">Autoriser l’accès au stockage de l’appareil pour &lt;b&gt;%s&lt;/b&gt;?</string>

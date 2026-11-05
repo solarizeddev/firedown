@@ -772,7 +772,6 @@
     <string name="player_subtitles_unsupported">Berkas ini bukan subtitel yang dapat ditampilkan pemutar</string>
     <string name="popup_group_this_page">Halaman ini</string>
     <string name="quality_section_title">Kualitas</string>
-    <string name="request_geolocation">Bagikan lokasi perangkat Anda dengan &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Izinkan &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt; memutar konten yang dikendalikan DRM?</string>
     <string name="request_media_key_system_access_subtitle">Berkas yang dilindungi DRM tidak dapat diunduh</string>
     <string name="request_storage">Izinkan akses ke penyimpanan perangkat untuk &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
@@ -836,8 +835,6 @@
     <string name="settings_autofill_service_title">Kata sandi &amp; isi otomatis</string>
     <string name="settings_block_app_redirects_summary">Memblokir situs yang mengalihkan Anda untuk membuka atau memasang aplikasinya</string>
     <string name="settings_block_app_redirects_title">Blokir pengalihan aplikasi</string>
-    <string name="settings_block_location_summary">Cegah situs web meminta lokasi Anda</string>
-    <string name="settings_block_location_title">Blokir permintaan lokasi</string>
     <string name="settings_clear_browsing_error">Gagal menghapus data untuk %s</string>
     <string name="settings_clear_browsing_success">Data dihapus untuk %s</string>
     <string name="settings_cloud_backup_active">Transfer sedang berjalan…</string>

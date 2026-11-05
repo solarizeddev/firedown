@@ -334,7 +334,6 @@
     <string name="quit_application">Приложението се затваря за прилагане на промени…</string>
     <string name="rename">Промяна на името</string>
     <string name="rename_file">Промяна на името на файла</string>
-    <string name="request_geolocation">Да се сподели ли местоположението на устройството ви с &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Да се разреши ли на &lt;b&gt;%s&lt;/b&gt; да пусне съдържание, контролирано от DRM?</string>
     <string name="request_media_key_system_access_subtitle">Обърнете внимание, че защитените с DRM файлове не могат да бъдат изтеглени от Firedown</string>
     <string name="request_storage">Разрешаване на достъп до паметта на устройството за &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -1139,8 +1138,6 @@
     <string name="settings_autofill_service_title">Пароли и автоматично попълване</string>
     <string name="settings_block_app_redirects_summary">Блокира сайтове, които ви пренасочват да отворите или инсталирате приложението им</string>
     <string name="settings_block_app_redirects_title">Блокиране на пренасочвания към приложения</string>
-    <string name="settings_block_location_summary">Забранява на сайтовете да искат местоположението ви</string>
-    <string name="settings_block_location_title">Блокиране на заявки за местоположение</string>
     <string name="settings_clear_browsing_error">Неуспешно изчистване на данните за %s</string>
     <string name="settings_clear_browsing_success">Данните за %s са изчистени</string>
     <string name="settings_disk_cache_disabled">Деактивиране на дисковия кеш</string>

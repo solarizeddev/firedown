@@ -321,7 +321,6 @@
     <string name="quick_settings_sheet_secure_connection_2">Turvaline ühendus</string>
     <string name="rename">Nimeta ümber</string>
     <string name="rename_file">Nimeta fail ümber</string>
-    <string name="request_geolocation">Kas jagada oma seadme asukohta kasutajaga &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Kas lubada rakendusel &lt;b&gt;%s&lt;/b&gt; esitada DRM-iga juhitud sisu?</string>
     <string name="request_media_key_system_access_subtitle">Pange tähele, et Firedown ei saa DRM-iga kaitstud faile alla laadida</string>
     <string name="request_storage">Kas lubada seadmele &lt;b&gt;%s&lt;/b&gt; juurdepääs seadme salvestusruumile?</string>
@@ -1126,8 +1125,6 @@
     <string name="settings_autofill_service_title">Paroolid ja automaattäide</string>
     <string name="settings_block_app_redirects_summary">Blokeerib saidid, mis suunavad sind oma rakendust avama või paigaldama</string>
     <string name="settings_block_app_redirects_title">Blokeeri rakendustesse suunamine</string>
-    <string name="settings_block_location_summary">Takista veebisaitidel sinu asukohta küsimast</string>
-    <string name="settings_block_location_title">Blokeeri asukohapäringud</string>
     <string name="settings_clear_browsing_error">Saidi %s andmete kustutamine ebaõnnestus</string>
     <string name="settings_clear_browsing_success">Saidi %s andmed kustutati</string>
     <string name="settings_delete_browsing_data_browsing_history_title">Sirvimisajalugu</string>

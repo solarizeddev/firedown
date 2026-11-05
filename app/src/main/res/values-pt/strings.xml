@@ -319,7 +319,6 @@
     <string name="settings_wasm_disabled_summary">Impede que os sites executem módulos WASM compilados. Reduz a superfície de ataque, mas quebra alguns aplicativos</string>
     <string name="rename">Renomear</string>
     <string name="rename_file">Renomear arquivo</string>
-    <string name="request_geolocation">Compartilhar a localização do seu dispositivo com &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Permitir que &lt;b&gt;%s&lt;/b&gt; reproduza conteúdo controlado por DRM?</string>
     <string name="request_media_key_system_access_subtitle">Observe que os arquivos protegidos por DRM não podem ser baixados pelo Firedown</string>
     <string name="request_storage">Permitir acesso ao armazenamento do dispositivo para &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -1193,8 +1192,6 @@
     <string name="settings_autofill_service_title">Senhas e preenchimento automático</string>
     <string name="settings_block_app_redirects_summary">Bloqueia sites que redirecionam você para abrir ou instalar o app deles</string>
     <string name="settings_block_app_redirects_title">Bloquear redirecionamentos para apps</string>
-    <string name="settings_block_location_summary">Impede que os sites peçam sua localização</string>
-    <string name="settings_block_location_title">Bloquear pedidos de localização</string>
     <string name="settings_clear_browsing_error">Não foi possível limpar os dados de %s</string>
     <string name="settings_clear_browsing_success">Dados de %s limpos</string>
     <string name="settings_doh_server_working">Está funcionando!</string>

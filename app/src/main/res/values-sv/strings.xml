@@ -136,7 +136,6 @@
     <string name="popup_toggle">Växla visa</string>
     <string name="rename">Döp om</string>
     <string name="rename_file">Döp om fil</string>
-    <string name="request_geolocation">Vill du dela enhetens plats med &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Vill du tillåta &lt;b&gt;%s&lt;/b&gt; att spela upp DRM-kontrollerat innehåll?</string>
     <string name="request_media_key_system_access_subtitle">Observera att DRM-skyddade filer inte kan laddas ner av Firedown</string>
     <string name="request_storage">Vill du tillåta åtkomst till enhetslagring för &lt;b&gt;%s&lt;/b&gt;?</string>

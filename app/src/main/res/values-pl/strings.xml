@@ -370,7 +370,6 @@
     <string name="quit_application">Wyłączanie aplikacji, aby zastosować zmiany…</string>
     <string name="rename">Przemianować</string>
     <string name="rename_file">Zmień nazwę pliku</string>
-    <string name="request_geolocation">Udostępnić lokalizację swojego urządzenia&lt;b&gt;%s&lt;/b&gt; ?</string>
     <string name="request_media_key_system_access">Umożliwić&lt;b&gt;%s&lt;/b&gt; odtwarzanie treści chronionych DRM?</string>
     <string name="request_media_key_system_access_subtitle">Należy pamiętać, że pliki chronione DRM nie mogą być pobierane przez Firedown</string>
     <string name="request_storage">Zezwolić na dostęp do pamięci urządzenia dla&lt;b&gt;%s&lt;/b&gt; ?</string>
@@ -1216,8 +1215,6 @@
     <string name="settings_autofill_service_title">Hasła i autouzupełnianie</string>
     <string name="settings_block_app_redirects_summary">Blokuje witryny, które przekierowują Cię do otwarcia lub instalacji swojej aplikacji</string>
     <string name="settings_block_app_redirects_title">Blokuj przekierowania do aplikacji</string>
-    <string name="settings_block_location_summary">Nie pozwalaj witrynom pytać o Twoją lokalizację</string>
-    <string name="settings_block_location_title">Blokuj prośby o lokalizację</string>
     <string name="settings_clear_browsing_error">Nie udało się wyczyścić danych witryny %s</string>
     <string name="settings_clear_browsing_success">Wyczyszczono dane witryny %s</string>
     <string name="settings_doh_server_working">Działa!</string>

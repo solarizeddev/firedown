@@ -307,7 +307,6 @@
     <string name="settings_jit_disabled_summary">JIT जावास्क्रिप्ट-भारी साइटों को तेज़ करता है लेकिन हमले की सतह बढ़ाता है। यह डिफ़ॉल्ट रूप से चालू है; ब्राउज़र को कुछ प्रदर्शन की कीमत पर सुरक्षित करने के लिए इसे चालू करें। यह परिवर्तन आपके ब्राउज़र को पुनः आरंभ करेगा</string>
     <string name="rename">नाम बदलें</string>
     <string name="rename_file">फ़ाइल का नाम बदलें</string>
-    <string name="request_geolocation">अपने डिवाइस का स्थान &lt;b&gt;%s&lt;/b&gt; के साथ साझा करें?</string>
     <string name="request_media_key_system_access">&lt;b&gt;%s&lt;/b&gt; को DRM-नियंत्रित सामग्री चलाने की अनुमति दें?</string>
     <string name="request_media_key_system_access_subtitle">ध्यान दें, DRM संरक्षित फ़ाइलें Firedown द्वारा डाउनलोड नहीं की जा सकतीं</string>
     <string name="request_storage">&lt;b&gt;%s&lt;/b&gt; के लिए डिवाइस संग्रहण तक पहुंच की अनुमति दें?</string>
@@ -1135,8 +1134,6 @@
     <string name="settings_autofill_service_title">पासवर्ड और ऑटोफ़िल</string>
     <string name="settings_block_app_redirects_summary">उन साइटों को ब्लॉक करता है जो आपको अपना ऐप खोलने या इंस्टॉल करने के लिए रीडायरेक्ट करती हैं</string>
     <string name="settings_block_app_redirects_title">ऐप रीडायरेक्ट ब्लॉक करें</string>
-    <string name="settings_block_location_summary">वेबसाइटों को आपका स्थान माँगने से रोकें</string>
-    <string name="settings_block_location_title">स्थान अनुरोध ब्लॉक करें</string>
     <string name="settings_clear_browsing_error">%s का डेटा साफ़ नहीं हो सका</string>
     <string name="settings_clear_browsing_success">%s का डेटा साफ़ किया गया</string>
     <string name="settings_delete_browsing_data_browsing_history_title">ब्राउज़िंग इतिहास</string>

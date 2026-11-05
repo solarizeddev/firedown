@@ -393,7 +393,6 @@
     <string name="quit_application">変更を適用するためアプリケーションを終了します...</string>
     <string name="rename">名前の変更</string>
     <string name="rename_file">ファイルの名前を変更</string>
-    <string name="request_geolocation">デバイスの位置情報を共有する&lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">許可する&lt;b&gt;%s&lt;/b&gt;DRM 制御コンテンツを再生するには?</string>
     <string name="request_media_key_system_access_subtitle">DRM で保護されたファイルは Firedown ではダウンロードできないことに注意してください。</string>
     <string name="request_storage">デバイスのストレージへのアクセスを許可する&lt;b&gt;%s&lt;/b&gt;?</string>
@@ -418,8 +417,6 @@
     <string name="settings_autofill_service_title">パスワードと自動入力</string>
     <string name="settings_block_javascript_summary">ページの読み込みは速くなりますが、予期しない動作をする場合もあります</string>
     <string name="settings_block_javascript_title">JavaScript をブロック</string>
-    <string name="settings_block_location_summary">Webサイトが位置情報を要求するのを防ぎます</string>
-    <string name="settings_block_location_title">位置情報リクエストをブロック</string>
     <string name="block_redirect_snackbar">Play ストアへのリダイレクトをブロックしました</string>
     <string name="settings_clear_browsing">閲覧履歴データを消去</string>
     <string name="settings_clear_browsing_dialog">サイト &lt;b&gt;%s&lt;/b&gt; の Cookie とデータをすべて削除してもよろしいですか?</string>

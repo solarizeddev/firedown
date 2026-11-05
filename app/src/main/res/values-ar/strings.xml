@@ -165,7 +165,6 @@
     <string name="quit_application">يُغلَق التطبيق الآن لتطبيق التغييرات…</string>
     <string name="rename">إعادة تسمية</string>
     <string name="rename_file">إعادة تسمية الملف</string>
-    <string name="request_geolocation">شارك موقع جهازك مع&lt;b&gt;%s&lt;/b&gt; ؟</string>
     <string name="request_media_key_system_access">يسمح&lt;b&gt;%s&lt;/b&gt; تشغيل المحتوى الخاضع لسيطرة DRM؟</string>
     <string name="request_media_key_system_access_subtitle">لاحظ أنه لا يمكن تنزيل الملفات المحمية بنظام DRM بواسطة Firedown</string>
     <string name="request_storage">السماح بالوصول إلى مساحة تخزين الجهاز لـ&lt;b&gt;%s&lt;/b&gt; ؟</string>

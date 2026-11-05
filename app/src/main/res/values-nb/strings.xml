@@ -136,7 +136,6 @@
     <string name="popup_toggle">Slå på visning</string>
     <string name="rename">Gi nytt navn</string>
     <string name="rename_file">Endre navn på filen</string>
-    <string name="request_geolocation">Vil du dele enhetens posisjon med &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Vil du la &lt;b&gt;%s&lt;/b&gt; spille av DRM-kontrollert innhold?</string>
     <string name="request_media_key_system_access_subtitle">Merk at DRM-beskyttede filer ikke kan lastes ned av Firedown</string>
     <string name="request_storage">Vil du gi tilgang til enhetslagring for &lt;b&gt;%s&lt;/b&gt;?</string>

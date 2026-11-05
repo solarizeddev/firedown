@@ -299,7 +299,6 @@
     <string name="quit_application">Đang thoát ứng dụng để áp dụng các thay đổi…</string>
     <string name="rename">Đổi tên</string>
     <string name="rename_file">Đổi tên tập tin</string>
-    <string name="request_geolocation">Chia sẻ vị trí thiết bị của bạn với &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Cho phép &lt;b&gt;%s&lt;/b&gt; phát nội dung được kiểm soát bởi DRM?</string>
     <string name="request_media_key_system_access_subtitle">Lưu ý rằng các tệp được bảo vệ bằng DRM không thể được tải xuống bằng Firedown</string>
     <string name="request_storage">Cho phép truy cập vào bộ nhớ thiết bị cho &lt;b&gt;%s&lt;/b&gt;?</string>
@@ -871,8 +870,6 @@
     <string name="settings_autofill_service_title">Mật khẩu &amp; tự động điền</string>
     <string name="settings_block_app_redirects_summary">Chặn trang web chuyển hướng bạn để mở hoặc cài đặt ứng dụng của họ</string>
     <string name="settings_block_app_redirects_title">Chặn chuyển hướng sang ứng dụng</string>
-    <string name="settings_block_location_summary">Ngăn trang web yêu cầu vị trí của bạn</string>
-    <string name="settings_block_location_title">Chặn yêu cầu vị trí</string>
     <string name="settings_clear_browsing_error">Không thể xóa dữ liệu của %s</string>
     <string name="settings_clear_browsing_success">Đã xóa dữ liệu của %s</string>
     <string name="settings_cloud_backup_active">Đang truyền…</string>

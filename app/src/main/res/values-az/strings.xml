@@ -139,7 +139,6 @@
     <string name="popup_toggle">Görünüşü dəyişdirin</string>
     <string name="rename">Adını dəyişdirin</string>
     <string name="rename_file">Faylın adını dəyişdirin</string>
-    <string name="request_geolocation">Cihazınızın məkanı &lt;b&gt; %s &lt;/b&gt; ilə paylaşılsın?</string>
     <string name="request_media_key_system_access">&lt;b&gt; %s &lt;/b&gt;-a DRM ilə idarə olunan məzmunu oxutmağa icazə verilsin?</string>
     <string name="request_media_key_system_access_subtitle">Qeyd edək ki, DRM ilə qorunan fayllar Firedown tərəfindən endirilə bilməz</string>
     <string name="request_storage">&lt;b&gt; %s &lt;/b&gt; üçün cihaz yaddaşına giriş icazəsi verilsin?</string>

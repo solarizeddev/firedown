@@ -668,7 +668,6 @@
     <string name="quit_application">Quitting the application to apply changes…</string>
     <string name="rename">Rename</string>
     <string name="rename_file">Rename file</string>
-    <string name="request_geolocation">Share your device location with &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
     <string name="request_media_key_system_access">Allow &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt; to play DRM-controlled content?</string>
     <string name="request_media_key_system_access_subtitle">DRM-protected files can\'t be downloaded</string>
     <string name="request_storage">Allow access to device storage for &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
@@ -738,8 +737,6 @@
     <string name="settings_autofill_service_title">Passwords &amp; autofill</string>
     <string name="settings_block_javascript_summary">Pages may load faster, but may also behave unexpectedly</string>
     <string name="settings_block_javascript_title">Block JavaScript</string>
-    <string name="settings_block_location_summary">Prevent websites from asking for your location</string>
-    <string name="settings_block_location_title">Block location requests</string>
     <string name="settings_block_app_redirects_summary">Blocks sites that redirect you to open or install their app</string>
     <string name="settings_block_app_redirects_title">Block app redirects</string>
     <string name="block_redirect_snackbar">App redirect blocked</string>
