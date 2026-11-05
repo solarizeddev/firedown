@@ -4966,9 +4966,18 @@ tasks, not hand edits:
   deploy to leave `/updates/` alone**: its rsync runs with `--delete`, so
   without `--exclude='/updates/'` beside `/fdroid/` in `deploy.yml` every
   website push deletes the mirror, and the script refuses to mirror until it
-  is there. Verify with `bash scripts/publish-release/selftest.sh` (a
-  simulated GitHub, server, `publish.sh`, ssh and rsync, real git remotes; 67
-  checks, and five planted faults that must each be caught).
+  is there. **The ssh key's passphrase is asked ONCE per run**: the git
+  fetches and pushes, `publish.sh`'s ssh and rsync and the mirror each open
+  a connection, and with an encrypted key and no agent each asked (eight
+  prompts in the 1.2.6 run). An agent that holds a key is used as it is,
+  otherwise the script starts one, runs `ssh-add` (the DEFAULT key files
+  only; a key named by `IdentityFile` alone still asks per connection) and
+  stops it on exit; the mirror's own calls share one ssh control socket.
+  Never BatchMode for the login check: it cannot prompt, and a passphrase
+  key read as "cannot log in". Verify with
+  `bash scripts/publish-release/selftest.sh` (a simulated GitHub, server,
+  `publish.sh`, ssh, ssh-agent and rsync, real git remotes; 75 checks, and
+  six planted faults that must each be caught).
 
 ### CHANGELOG entries — short, important changes only (HARD RULE)
 

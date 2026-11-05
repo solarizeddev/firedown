@@ -239,6 +239,42 @@ ok "${#F_SHA[@]} update file(s) match status.json"
 for tool in git curl python3; do
     command -v "$tool" >/dev/null 2>&1 || die "$tool is not installed"
 done
+
+# Everything closed on exit: an ssh agent this script started, the mirror's
+# ssh connection. One trap, since a second `trap … EXIT` replaces the first.
+STARTED_AGENT=
+SSH_CTL_DIR=
+cleanup() {
+    if [ -n "$SSH_CTL_DIR" ]; then
+        [ -S "$SSH_CTL_DIR/ctl" ] && ssh -O exit -o ControlPath="$SSH_CTL_DIR/ctl" "$REMOTE" >/dev/null 2>&1
+        rm -rf "$SSH_CTL_DIR"
+    fi
+    [ -n "$STARTED_AGENT" ] && ssh-agent -k >/dev/null 2>&1
+    return 0
+}
+trap cleanup EXIT
+
+# The key's passphrase, once. The git fetches and pushes, publish.sh's own
+# ssh and rsync, and the mirror each open a connection, and without an agent
+# each asked for it (eight times in one run). An agent that already holds a
+# key is used as it is; otherwise one is started for this run, given the
+# default keys and stopped on exit. A key that won't load is not fatal: ssh
+# then asks per connection, as before.
+if runs fdroid || runs mirror || runs manifest; then
+    agent_state=0
+    ssh-add -l >/dev/null 2>&1 || agent_state=$?
+    if [ "$agent_state" = 2 ] && command -v ssh-agent >/dev/null 2>&1; then
+        eval "$(ssh-agent -s)" >/dev/null && STARTED_AGENT=1 && agent_state=1
+    fi
+    if [ "$agent_state" = 1 ]; then
+        say "ssh key passphrase (asked once for this run):"
+        if ssh-add; then
+            ok "ssh key loaded"
+        else
+            note "no key loaded: ssh will ask for each connection"
+        fi
+    fi
+fi
 if runs github; then
     command -v gh >/dev/null 2>&1 || die "gh is not installed (https://cli.github.com)"
     gh auth status >/dev/null 2>&1 || die "gh is not signed in: gh auth login"
@@ -272,7 +308,6 @@ if runs mirror && [ "$MIRROR_NEEDED" = 1 ]; then
     # asks: a key with a passphrase and no agent read as "cannot log in".
     SSH_CTL_DIR=$(mktemp -d) || die "mktemp failed"
     SSH_OPTS="-o ControlMaster=auto -o ControlPath=$SSH_CTL_DIR/ctl -o ControlPersist=3600"
-    trap '[ -S "$SSH_CTL_DIR/ctl" ] && ssh -O exit -o ControlPath="$SSH_CTL_DIR/ctl" "$REMOTE" >/dev/null 2>&1; rm -rf "$SSH_CTL_DIR"' EXIT
     # shellcheck disable=SC2086 # SSH_OPTS is a list of words
     ssh $SSH_OPTS "$REMOTE" true </dev/null || die "cannot log in to $REMOTE with ssh (REMOTE_USER, REMOTE_HOST)"
     ok "ssh $REMOTE"

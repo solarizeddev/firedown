@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Stand-in for ssh-agent in the publish-release self-test.
+if [ "${1:-}" = -k ]; then
+    printf 'ssh-agent stop\n' >> "$FAKE_WORLD/events"
+    rm -f "$FAKE_WORLD/agent"
+    exit 0
+fi
+printf 'ssh-agent start\n' >> "$FAKE_WORLD/events"
+: > "$FAKE_WORLD/agent"
+echo 'SSH_AUTH_SOCK=/nonexistent; export SSH_AUTH_SOCK;'
