@@ -1,5 +1,12 @@
 [
     {
+        "versionCode": 1206,
+        "versionName": "1.2.6",
+        "apkUrl": "https://github.com/solarizeddev/firedown/releases/download/v1.2.6/app-release.apk",
+        "sha256": "fb65f986c96ee6e0a68164d14900855a2bca010f853d67a291f421c602b62a4b",
+        "size": 212892587
+    },
+    {
         "versionCode": 1205,
         "versionName": "1.2.5",
         "apkUrl": "https://github.com/solarizeddev/firedown/releases/download/v1.2.5/app-release.apk",
