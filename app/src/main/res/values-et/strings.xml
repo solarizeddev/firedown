@@ -1139,7 +1139,7 @@
     <string name="settings_doh_server_working">See töötab!</string>
     <string name="settings_drm_enabled">Luba DRM-esitus</string>
     <string name="settings_drm_enabled_summary">Lubab Widevine\'i saitidel, mis nõuavad DRM-i. Firedown ei saa DRM-sisu ikkagi alla laadida.</string>
-    <string name="drm_disabled_notice">See leht vajab DRM-i, mis on välja lülitatud</string>
+    <string name="drm_disabled_notice">See leht vajab DRM-i, mis on välja lülitatud. DRM-videoid ei saa alla laadida</string>
     <string name="settings_enhanced_tracking_protection_custom">Kohandatud</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Standardne kaitse ja lisaks jälitavate päringuparameetrite eemaldamine URL-idest.</string>
     <string name="settings_gecko_version">GeckoView</string>

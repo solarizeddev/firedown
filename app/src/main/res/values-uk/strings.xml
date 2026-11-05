@@ -1179,7 +1179,7 @@
     <string name="settings_doh_server_working">Працює!</string>
     <string name="settings_drm_enabled">Увімкнути відтворення DRM</string>
     <string name="settings_drm_enabled_summary">Дозволяє Widevine на сайтах, що вимагають DRM. Firedown однаково не може завантажувати вміст із DRM.</string>
-    <string name="drm_disabled_notice">Цій сторінці потрібен DRM, але його вимкнено</string>
+    <string name="drm_disabled_notice">Цій сторінці потрібен DRM, але його вимкнено. Відео з DRM не можна завантажити</string>
     <string name="settings_enhanced_tracking_protection_custom">Власний</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Стандартний захист, а також видалення параметрів відстеження з URL-адрес.</string>
     <string name="settings_gecko_version">GeckoView</string>

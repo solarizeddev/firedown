@@ -352,7 +352,7 @@
     <string name="settings_webgl_disabled">Отключить WebGL</string>
     <string name="settings_drm_enabled">Включить воспроизведение DRM</string>
     <string name="settings_drm_enabled_summary">Разрешает Widevine на сайтах, требующих DRM (Netflix, Spotify, …). Firedown по-прежнему не может загружать контент, защищённый DRM.</string>
-    <string name="drm_disabled_notice">Этой странице нужен DRM, но он выключен</string>
+    <string name="drm_disabled_notice">Этой странице нужен DRM, но он выключен. Видео с DRM нельзя скачать</string>
     <string name="settings_wasm_disabled">Отключить WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Запрещает сайтам выполнять скомпилированные модули WASM. Уменьшает поверхность атаки, но нарушает работу некоторых приложений</string>
     <string name="protection_panel_etp_toggle_enabled_description_2">Если что-то не работает на этом сайте, попробуйте её отключить.</string>

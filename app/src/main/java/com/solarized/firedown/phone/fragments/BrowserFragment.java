@@ -1782,7 +1782,9 @@ public class BrowserFragment extends BaseBrowserFragment
     /**
      * The page on screen asked for DRM while the switch is off (Settings →
      * Privacy → Security). Gecko has already refused it, so the site's player
-     * just fails; this says why and offers the switch. Turn on writes the
+     * just fails; this says why, says that DRM videos can't be downloaded
+     * (the Allow dialog's own warning, which Turn on skips), and offers the
+     * switch. Turn on writes the
      * setting, applies it to Gecko (the Settings listeners are not registered
      * while the browser is in front) and reloads the tab once Gecko has the
      * new value; the tap counts as allowing this site in this tab, so the
@@ -1796,6 +1798,9 @@ public class BrowserFragment extends BaseBrowserFragment
         final String host = WebUtils.getDomainName(geckoState.getEntityUri());
         Snackbar snackbar = makeAnchoredSnackbar(R.string.drm_disabled_notice);
         snackbar.setDuration(DRM_NOTICE_DURATION_MS);
+        // Two sentences (needs DRM; DRM videos can't be downloaded): the
+        // default two lines cut the second one in longer locales.
+        snackbar.setTextMaxLines(4);
         snackbar.setAction(R.string.shield_turn_on, v -> {
             mSharedPreferences.edit().putBoolean(Preferences.SETTINGS_ENABLE_DRM, true).apply();
             geckoState.setDrmAllowedHost(host);

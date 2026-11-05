@@ -1159,7 +1159,7 @@
     <string name="settings_doh_server_working">Se toimii!</string>
     <string name="settings_drm_enabled">Ota DRM-toisto käyttöön</string>
     <string name="settings_drm_enabled_summary">Sallii Widevinen sivustoilla, jotka vaativat DRM:n. Firedown ei silti voi ladata DRM-sisältöä.</string>
-    <string name="drm_disabled_notice">Tämä sivu tarvitsee DRM:n, joka on poissa käytöstä</string>
+    <string name="drm_disabled_notice">Tämä sivu tarvitsee DRM:n, joka on poissa käytöstä. DRM-videoita ei voi ladata</string>
     <string name="settings_enhanced_tracking_protection_custom">Mukautettu</string>
     <string name="settings_enhanced_tracking_protection_custom_description_1">Vakiosuojaus sekä seurantaan käytettyjen kyselyparametrien poistaminen URL-osoitteista.</string>
     <string name="settings_gecko_version">GeckoView</string>

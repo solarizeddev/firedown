@@ -535,7 +535,7 @@
     <string name="settings_webgl_disabled_summary">Bloque le fingerprinting GPU, peut casser les contenus 3D</string>
     <string name="settings_drm_enabled">Activer la lecture DRM</string>
     <string name="settings_drm_enabled_summary">Autorise Widevine sur les sites nécessitant le DRM (Netflix, Spotify, …). Firedown ne peut toujours pas télécharger les contenus protégés par DRM.</string>
-    <string name="drm_disabled_notice">Cette page a besoin des DRM, qui sont désactivés</string>
+    <string name="drm_disabled_notice">Cette page a besoin des DRM, qui sont désactivés. Les vidéos avec DRM ne peuvent pas être téléchargées</string>
     <string name="settings_wasm_disabled">Désactiver WebAssembly</string>
     <string name="settings_wasm_disabled_summary">Empêche les sites d\'exécuter des modules WASM compilés. Réduit la surface d\'attaque mais casse certaines applis</string>
     <string name="settings_https_only_title">Mode HTTPS uniquement</string>

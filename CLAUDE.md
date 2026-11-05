@@ -11560,7 +11560,10 @@ for the current tab, once per page load (`GeckoState.claimDrmNotice`, reset on
 page start; a player in an iframe is a second window), it raises
 `onDrmDisabled`, and answers `VALUE_PROMPT` (GeckoView persists whatever is
 answered; PROMPT stores no decision). `BrowserFragment.onDrmDisabled` shows
-"This page needs DRM, which is turned off · Turn on" (8 s). Turn on writes the
+"This page needs DRM, which is turned off. DRM videos can't be downloaded ·
+Turn on" (8 s, up to four lines). The download sentence is load-bearing: Turn
+on skips the Allow dialog, whose subtitle was the only other place the user
+heard it before choosing. Turn on writes the
 setting, calls `setDRM(false)` (which now returns the pref write's result) and
 reloads the tab when Gecko has the values; the host is remembered on the tab
 (`setDrmAllowedHost`) so the reload's request is allowed without the
