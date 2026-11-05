@@ -246,7 +246,11 @@ public class IncognitoStateRepository {
             mGeckoStates.remove(geckoState);
 
             if (!mGeckoStates.isEmpty()) {
-                if (geckoState.isActive()) {
+                // The current tab, whether or not it is active: focusing the
+                // address bar deactivates it, and a page that closes itself
+                // then left the current id on a removed tab (the browser
+                // went home instead of to the next tab).
+                if (geckoState.isActive() || geckoState.getEntityId() == mCurrentId) {
                     int parentId = geckoState.getEntityParentId();
                     if (parentId != GeckoState.NULL_SESSION_ID && getGeckoState(parentId) != null) {
                         mCurrentId = parentId;

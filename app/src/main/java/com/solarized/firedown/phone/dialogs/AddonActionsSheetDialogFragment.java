@@ -166,8 +166,9 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
             sub = getString(R.string.addons_no_button);
         } else if (!usable) {
             sub = getString(R.string.addons_not_here);
-        } else if (onWebPage() && AddonPolicy.saysOffForSite(item.addon.id, action.title)) {
-            sub = getString(R.string.shield_blocker_off_site);
+        } else if (AddonPolicy.saysOffForSite(item.addon.id, action.title)) {
+            // uBlock also says "(off)" on pages it never filters: nothing to say there.
+            sub = onWebPage() ? getString(R.string.shield_blocker_off_site) : null;
         } else if (AddonPolicy.actionTitleSaysMore(action.title, name, action.badgeText)) {
             sub = action.title;
         }

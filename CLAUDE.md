@@ -8840,9 +8840,16 @@ install opt-in page, which closes itself after its button). Now the
 fragment releases a closed attached session on `CLOSE_SESSION` and runs
 `ensureSessionConnected` (the next current tab, or the home when none is
 left) — only while resumed; otherwise its own onResume does it, since going
-home would be a fragment commit after the state was saved. A background
-tab closing itself leaves the view alone (its session is not the attached
-one), and the other mode's tab is filtered like every observer.
+home would be a fragment commit after the state was saved. It acts only
+when the closed tab's session IS the attached one: a closed session can be
+attached for another reason (a tab left on "This page keeps crashing"),
+and a background tab closing itself must not reopen that. The other mode's
+tab is filtered like every observer. **`closeGeckoState` moves the current
+tab when the closed one is current, active or not** (both repositories):
+focusing the address bar deactivates the tab, so a page that closed itself
+while the user typed left the current id on a removed tab and the browser
+went home instead of to the next tab. Found by an independent review
+before a device run.
 
 **A download a page starts belongs to THAT page's tab, in its mode**
 (`GeckoComponents.onExternalResponse`). It was handed to whichever tab was
