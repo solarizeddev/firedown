@@ -2770,6 +2770,25 @@ public class BrowserFragment extends BaseBrowserFragment
     public void onClose(GeckoState geckoState) {
         super.onClose(geckoState);
         stopMedia(mGeckoMediaController, geckoState);
+        // The tab on screen closed itself (window.close(), an add-on's
+        // tabs.remove): the repository dropped it, moved the current tab and
+        // closed its session, but the view still held that closed session, so
+        // the page stayed on screen and every tap went nowhere until the app
+        // was left and resumed. Detach it and show the tab that is current now,
+        // or the home when none is left.
+        if (mGeckoView == null || geckoState.isIncognito() != mIsIncognitoThemed) {
+            return;
+        }
+        GeckoSession attached = mGeckoView.getSession();
+        if (attached == null || attached.isOpen()) {
+            return;
+        }
+        mGeckoView.releaseSession();
+        // Not on screen (Settings in front): onResume reconnects, and going
+        // home now would be a fragment commit after the state was saved.
+        if (isResumed()) {
+            ensureSessionConnected();
+        }
     }
 
     @Override
