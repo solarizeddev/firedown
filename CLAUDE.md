@@ -11556,21 +11556,29 @@ firedown-geckoview patch **0010** (`FIREDOWN-EME-DISABLED-NOTICE`) makes the
 pref-off branch also start an app-approval request, once per window, whose
 answer is ignored: the page is refused exactly as before. With the switch
 off, `GeckoComponents.PermissionDelegate` treats that request as the notice:
-for the current tab, once per page load (`GeckoState.claimDrmNotice`, reset on
-page start; a player in an iframe is a second window), it raises
-`onDrmDisabled`, and answers `VALUE_PROMPT` (GeckoView persists whatever is
-answered; PROMPT stores no decision). `BrowserFragment.onDrmDisabled` shows
+once per page load (`GeckoState.claimDrmNotice`, reset on page start; a player
+in an iframe is a second window) it raises `onDrmDisabled` for the current
+tab, and answers `VALUE_PROMPT` (GeckoView stores every answer; a PROMPT row
+is one nothing reads, Gecko asks the app every time). **Gecko never repeats
+the notice for a document**, so one for a tab that is not on screen, or one
+that lands while Settings/Downloads covers the browser, waits on the tab
+(`setDrmNoticePending`) and shows from `applyOpenUriUi` / `onResume`
+(`showPendingDrmNotice`, the `showPendingDownload` shape); dropping it lost
+the message for good. `BrowserFragment.onDrmDisabled` shows
 "This page needs DRM, which is turned off. DRM videos can't be downloaded ·
 Turn on" (8 s, up to four lines). The download sentence is load-bearing: Turn
 on skips the Allow dialog, whose subtitle was the only other place the user
 heard it before choosing. Turn on writes the
 setting, calls `setDRM(false)` (which now returns the pref write's result) and
-reloads the tab when Gecko has the values; the host is remembered on the tab
-(`setDrmAllowedHost`) so the reload's request is allowed without the
-"Allow … to play DRM-controlled content?" dialog. Private tabs refuse every
+reloads the tab when Gecko has the values. The host is read AT THE TAP and
+allowed only if the tab is still on the page the notice was about
+(`allowDrmForReload`), and only for the document the reload brings: the next
+page start after it clears the host, so a shortcut can't outlive its tap. Private tabs refuse every
 content permission before this branch, so they never show the notice (DRM
 could not play there anyway). On an engine without 0010 nothing changes: the
-notice simply never arrives. On-device unverified at write time.
+notice simply never arrives. Reviewed by a second model against the 159.0.1
+sources (lifetime, page-visible effects, threading, host matching); on-device
+unverified at write time.
 
 ### UTC timezone spoofing toggle (FPP target, not a code patch)
 

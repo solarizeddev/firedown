@@ -409,6 +409,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // Settings is another Activity, so a toggle there lands here on the
         // way back — no navigation event would otherwise repaint the bar.
         applyAddressBarDisplayPref();
+        showPendingDrmNotice(peekCurrentGeckoState());
     }
 
     /** Host-only address bar at rest — see {@link Preferences#SETTINGS_ADDRESS_BAR_HOST_ONLY}. */
@@ -1784,18 +1785,46 @@ public class BrowserFragment extends BaseBrowserFragment
      * Privacy → Security). Gecko has already refused it, so the site's player
      * just fails; this says why, says that DRM videos can't be downloaded
      * (the Allow dialog's own warning, which Turn on skips), and offers the
-     * switch. Turn on writes the
-     * setting, applies it to Gecko (the Settings listeners are not registered
-     * while the browser is in front) and reloads the tab once Gecko has the
-     * new value; the tap counts as allowing this site in this tab, so the
-     * reload does not ask a second time. A private tab never gets here (all
-     * content permissions are refused there).
+     * switch. A private tab never gets here (all content permissions are
+     * refused there). Gecko sends the notice once per document, so one that
+     * lands while the browser is not in front (Settings over it) waits on the
+     * tab and shows on the way back, like a background tab's
+     * ({@link #showPendingDrmNotice}).
      */
     @Override
     public void onDrmDisabled(GeckoState geckoState) {
         if (geckoState.isIncognito() != mIsIncognitoThemed) return;
-        if (getView() == null) return;
-        final String host = WebUtils.getDomainName(geckoState.getEntityUri());
+        if (getView() == null || !isResumed()) {
+            geckoState.setDrmNoticePending(true);
+            return;
+        }
+        showDrmNotice(geckoState);
+    }
+
+    /** A notice that waited for this tab (see {@link #onDrmDisabled}). Posted:
+     *  this runs inside a tab switch or a resume. */
+    private void showPendingDrmNotice(@Nullable GeckoState geckoState) {
+        if (geckoState == null || mGeckoView == null) return;
+        if (geckoState.isIncognito() != mIsIncognitoThemed) return;
+        if (!geckoState.takeDrmNoticePending()) return;
+        mGeckoView.post(() -> {
+            if (!isAdded() || getView() == null || peekCurrentGeckoState() != geckoState) {
+                return;
+            }
+            showDrmNotice(geckoState);
+        });
+    }
+
+    /**
+     * Turn on writes the setting, applies it to Gecko (the Settings listeners
+     * are not registered while the browser is in front) and reloads the tab
+     * once Gecko has the new value. The host is read at the TAP, not when the
+     * snackbar was built (the tab may have moved on in those 8 s): the tap
+     * allows the page it reloads, for that one document, and only when that
+     * page is still the one the notice was about.
+     */
+    private void showDrmNotice(@NonNull GeckoState geckoState) {
+        final String noticeHost = WebUtils.getDomainName(geckoState.getEntityUri());
         Snackbar snackbar = makeAnchoredSnackbar(R.string.drm_disabled_notice);
         snackbar.setDuration(DRM_NOTICE_DURATION_MS);
         // Two sentences (needs DRM; DRM videos can't be downloaded): the
@@ -1803,7 +1832,10 @@ public class BrowserFragment extends BaseBrowserFragment
         snackbar.setTextMaxLines(4);
         snackbar.setAction(R.string.shield_turn_on, v -> {
             mSharedPreferences.edit().putBoolean(Preferences.SETTINGS_ENABLE_DRM, true).apply();
-            geckoState.setDrmAllowedHost(host);
+            String host = WebUtils.getDomainName(geckoState.getEntityUri());
+            if (host != null && host.equals(noticeHost)) {
+                geckoState.allowDrmForReload(host);
+            }
             mGeckoRuntimeHelper.setDRM(false).accept(ignored -> geckoState.reload());
         });
         snackbar.show();
@@ -3172,6 +3204,7 @@ public class BrowserFragment extends BaseBrowserFragment
         refreshTranslateGlyph(geckoState);
         hideTranslateOffer();
         showPendingDownload(geckoState);
+        showPendingDrmNotice(geckoState);
         refreshShield();
     }
 

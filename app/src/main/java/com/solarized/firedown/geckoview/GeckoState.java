@@ -263,12 +263,23 @@ public class GeckoState {
     private boolean mDrmNoticeShown;
 
     /**
+     * The notice arrived while this tab was not on screen (a background tab,
+     * or Settings over the browser). Gecko sends it once per document, so it
+     * waits here and shows when the tab is opened. Cleared on page start.
+     */
+    private boolean mDrmNoticePending;
+
+    /**
      * The host the user turned DRM on for from the notice. That tap was the
-     * consent, so the reload's DRM request for this host in this tab is
-     * granted without asking again. Not persisted.
+     * consent, so the reload's DRM requests for this host are granted without
+     * asking again — for that ONE document: the next page start after the
+     * reload's own clears it ({@link #mDrmAllowArmed}). Not persisted.
      */
     @Nullable
     private String mDrmAllowedHost;
+
+    /** Set by the tap; the reload's page start spends it and keeps the host. */
+    private boolean mDrmAllowArmed;
 
     /**
      * The latest state Gecko's built-in translator reported for this tab's
@@ -718,13 +729,36 @@ public class GeckoState {
         return true;
     }
 
-    /** A new document: its DRM request gets its own notice. */
+    /**
+     * A new document (top-level page start): its DRM request gets its own
+     * notice, and a host allowed from the notice lasts only through the
+     * document the tap reloaded.
+     */
     public void resetDrmNotice() {
         mDrmNoticeShown = false;
+        mDrmNoticePending = false;
+        if (mDrmAllowArmed) {
+            mDrmAllowArmed = false;
+        } else {
+            mDrmAllowedHost = null;
+        }
     }
 
-    public void setDrmAllowedHost(@Nullable String host) {
+    public void setDrmNoticePending(boolean pending) {
+        mDrmNoticePending = pending;
+    }
+
+    /** True once if a notice waited for this tab; clears it. */
+    public boolean takeDrmNoticePending() {
+        boolean pending = mDrmNoticePending;
+        mDrmNoticePending = false;
+        return pending;
+    }
+
+    /** The user turned DRM on for {@code host}; the reload that follows is allowed. */
+    public void allowDrmForReload(@Nullable String host) {
         mDrmAllowedHost = host;
+        mDrmAllowArmed = host != null;
     }
 
     /** True when the user turned DRM on from this tab's notice for {@code host}. */

@@ -1578,20 +1578,25 @@ public class GeckoComponents {
                     // Gecko refuses the page's request itself; this callback
                     // then comes only from the engine's notice (firedown-
                     // geckoview patch 0010), once per window, and the answer
-                    // changes nothing for the page. Say so to the user and
-                    // answer PROMPT, which stores no decision for the site
-                    // (GeckoView persists whatever is answered here).
+                    // changes nothing for the page. Say so to the user, once
+                    // per page load, and answer PROMPT (GeckoView stores every
+                    // answer; a PROMPT row is one nothing reads). Gecko never
+                    // repeats the notice for that document, so a tab that is
+                    // not on screen keeps it until it is opened.
                     if (!Preferences.getDRMEnabled(mSharedPreferences)) {
-                        if (findGeckoState != null
-                                && isCurrentGeckoState(findGeckoState)
-                                && findGeckoState.claimDrmNotice()) {
-                            mGeckoObserverRegistry.notifyObservers(
-                                    GeckoObserverInvoker.DRM_DISABLED, findGeckoState);
+                        if (findGeckoState != null && findGeckoState.claimDrmNotice()) {
+                            if (isCurrentGeckoState(findGeckoState)) {
+                                mGeckoObserverRegistry.notifyObservers(
+                                        GeckoObserverInvoker.DRM_DISABLED, findGeckoState);
+                            } else {
+                                findGeckoState.setDrmNoticePending(true);
+                            }
                         }
                         return GeckoResult.fromValue(ContentPermission.VALUE_PROMPT);
                     }
                     // The user turned DRM on from the notice for this site in
-                    // this tab: that tap was the consent, don't ask again.
+                    // this tab: that tap was the consent, don't ask again on
+                    // the page it reloaded.
                     if (findGeckoState != null
                             && findGeckoState.isDrmAllowedHost(WebUtils.getDomainName(perm.uri))) {
                         return GeckoResult.fromValue(ContentPermission.VALUE_ALLOW);
