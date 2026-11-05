@@ -245,7 +245,8 @@ if runs github; then
     [ -x "$GRADLEW" ] || die "no $GRADLEW"
 fi
 if runs fdroid; then
-    [ -x "$FDROID_DIR/publish.sh" ] || die "no publish.sh in $FDROID_DIR (set FDROID_DIR)"
+    # -f, not -x: a checkout can lose the executable bit (it is run with bash).
+    [ -f "$FDROID_DIR/publish.sh" ] || die "no publish.sh in $FDROID_DIR (set FDROID_DIR)"
 fi
 
 if [ -z "${REMOTE_USER:-}" ] || [ -z "${REMOTE_HOST:-}" ]; then
@@ -317,7 +318,7 @@ fi
 
 if runs fdroid; then
     step "F-Droid repo"
-    (cd "$FDROID_DIR" && ./publish.sh "$APK") || die "publish.sh failed; after fixing it run: $0 --from fdroid"
+    (cd "$FDROID_DIR" && bash ./publish.sh "$APK") || die "publish.sh failed; after fixing it run: $0 --from fdroid"
     for url in $APK_FALLBACKS; do
         need_url "$url" "$APK_SIZE" 6
     done
