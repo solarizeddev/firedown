@@ -5,6 +5,8 @@
       identity header  — favicon tile + title + host (the site anchor; stays
                          above the scroller as the drag zone)
       group 1          — Connection is secure / not secure  › (cert details)
+                         "DRM is off   [Turn on]" when the page on screen
+                         asked for DRM while it is off (shield's dot)
       group 2          — N requests blocked on this page   › (the hosts)
                          one row per ad blocker (add-on)   › (its popup),
                          each with a status line and no count of its own
@@ -26,8 +28,9 @@
     blocker refused (and Gecko's own tracker blocking).
 
     Ids the fragment binds (host_image, host, host_url, host_secure,
-    host_secure_text, ads_stat_card, security_total_count, blockers_group,
-    blockers_hint, host_clear) — keep them if the rows move again.
+    host_secure_text, connection_group, drm_row, drm_row_turn_on,
+    ads_stat_card, security_total_count, blockers_group, blockers_hint,
+    host_clear) — keep them if the rows move again.
 
     Outer LinearLayout is left unpadded because
     BaseBottomSheetDialogFragment's window-insets listener applies
@@ -109,7 +112,13 @@
             android:paddingTop="8dp"
             android:paddingBottom="8dp">
 
-            <!-- ── Group 1: connection + blocked count ────────────────── -->
+            <!-- ── Group 1: connection, and DRM when the page asked ───── -->
+
+            <LinearLayout
+                android:id="@+id/connection_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
             <!-- Connection — drill-down to the cert details. Icon and
                  label flip between secure / insecure in the fragment
@@ -153,6 +162,74 @@
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- "DRM is off": the page on screen asked for DRM while it is
+                 off (the dot on the address bar's shield). Shown only then;
+                 Turn on answers like the DRM sheet's button
+                 (DrmSheetDialogFragment.RESULT_KEY). Not a drill-down: the
+                 button is the action, the card itself does nothing. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/drm_row"
+                style="@style/Firedown.Widget.SheetRowCard"
+                android:clickable="false"
+                android:focusable="false"
+                android:visibility="gone"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="72dp"
+                    android:orientation="horizontal"
+                    android:paddingVertical="12dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="12dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:importantForAccessibility="no"
+                        app:srcCompat="@drawable/drm_video_off_24"
+                        app:tint="?attr/brandInk" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginEnd="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/TextAppearance.Material3.TitleMedium"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/drm_row_title"
+                            android:textColor="?attr/colorOnSurface" />
+
+                        <TextView
+                            style="@style/TextAppearance.Material3.BodySmall"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/drm_row_summary"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/drm_row_turn_on"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/shield_turn_on" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
 
             <!-- ── Group 2: what is blocked here, and by whom ────────── -->
 

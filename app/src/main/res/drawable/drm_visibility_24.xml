@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Eye: 'sites can tell which DRM your phone supports'. Stroke-drawn so the DRM sheet's glyphs share one weight; tinted by the layout. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="#00000000"
+      android:strokeColor="@android:color/white"
+      android:strokeWidth="2"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round"
+      android:pathData="M2,12C2,12 5.5,5 12,5C18.5,5 22,12 22,12C22,12 18.5,19 12,19C5.5,19 2,12 2,12ZM12,9A3,3 0,1 1,12 15A3,3 0,1 1,12 9Z"/>
+</vector>

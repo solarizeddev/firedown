@@ -11564,10 +11564,36 @@ the notice for a document**, so one for a tab that is not on screen, or one
 that lands while Settings/Downloads covers the browser, waits on the tab
 (`setDrmNoticePending`) and shows from `applyOpenUriUi` / `onResume`
 (`showPendingDrmNotice`, the `showPendingDownload` shape); dropping it lost
-the message for good. `BrowserFragment.onDrmDisabled` shows
-"This page needs DRM, which is turned off. DRM videos can't be downloaded ·
-Turn on" (8 s, up to four lines). The download sentence is load-bearing: Turn
-on skips the Allow dialog, whose subtitle was the only other place the user
+the message for good. **What the user sees** (canvas "DRM notice
+alternatives", boards C–E, picked over a snackbar that was too easy to miss):
+- **Once per site, the "This video needs DRM" sheet**
+  (`DrmSheetDialogFragment`, `fragment_dialog_drm_notice`; the older
+  `fragment_dialog_drm` is the Allow dialog's view, a different thing): the
+  lock, "<site> · DRM is turned off", three facts in grouped cards — turning
+  it on lets the page play the video, DRM videos can't be downloaded even
+  with it on, sites can tell which DRM the phone supports (the privacy cost,
+  kept on purpose: it is why DRM is off by default) — then Not now / Turn on
+  DRM. A site is marked when the sheet OPENS (`DrmNoticeSites`, truncated
+  SHA-256 of the host, 200 at most, in `backup_local.xml`: a hash so the list
+  is not a readable record of visited sites), whatever the answer; another
+  dialog owning the screen leaves the sheet for the site's next page.
+- **Every time, a coral dot on the address bar's shield**
+  (`GeckoToolbar.setDrmAttention`, set in `refreshShield` from
+  `GeckoState.isDrmRefusedHere()` while DRM is off): on top of whatever the
+  shield shows, so it replaces neither protection state. A lock glyph of its
+  own in the bar was sketched and dropped (maintainer: the shield is where
+  people already look at a site's settings).
+- **Tapping the shield**: the security sheet gains "DRM is off · This page
+  needs it to play video. DRM videos can't be downloaded. [Turn on]" in the
+  connection group (`drm_row`, `bindDrmRow`, corners via `applyCorners`).
+- **Once ever, after the first Not now**: a tip under the shield, "DRM is off
+  for this page · Tap the shield to turn it on" (`popup_drm_shield_tip`,
+  6 s, a tap or a touch outside dismisses it).
+- The sheet and the row answer through ONE fragment result
+  (`DrmSheetDialogFragment.RESULT_KEY`), handled by
+  `BrowserFragment.onDrmResult`, so turning DRM on has one implementation.
+The download sentence is load-bearing on both surfaces: Turn on skips the
+Allow dialog, whose subtitle was the only other place the user
 heard it before choosing. Turn on writes the
 setting, calls `setDRM(false)` (which now returns the pref write's result) and
 reloads the tab when Gecko has the values. The host is read AT THE TAP and

@@ -744,6 +744,15 @@ public class GeckoState {
         }
     }
 
+    /**
+     * True while the page on screen asked for DRM and was refused (the notice
+     * arrived for this document). Drives the dot on the address bar's shield
+     * and the "DRM is off" row of the security sheet; a page start clears it.
+     */
+    public boolean isDrmRefusedHere() {
+        return mDrmNoticeShown;
+    }
+
     public void setDrmNoticePending(boolean pending) {
         mDrmNoticePending = pending;
     }
