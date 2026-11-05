@@ -258,6 +258,7 @@ if [ -z "${REMOTE_USER:-}" ] || [ -z "${REMOTE_HOST:-}" ]; then
     fi
 fi
 REMOTE=
+SSH_OPTS=
 if [ -n "${REMOTE_USER:-}" ] && [ -n "${REMOTE_HOST:-}" ]; then
     REMOTE="$REMOTE_USER@$REMOTE_HOST"
 fi
@@ -265,7 +266,15 @@ fi
 if runs mirror && [ "$MIRROR_NEEDED" = 1 ]; then
     [ -n "$REMOTE" ] || die "no server login: set REMOTE_USER and REMOTE_HOST in $FDROID_DIR/.env (publish.sh's login) or in the environment"
     command -v rsync >/dev/null 2>&1 || die "rsync is not installed"
-    ssh -o BatchMode=yes "$REMOTE" true </dev/null || die "cannot log in to $REMOTE with ssh (REMOTE_USER, REMOTE_HOST)"
+    # ONE login, asked here (a key's passphrase or the account's password,
+    # as publish.sh's own ssh would ask), then shared by every later ssh and
+    # rsync through a control socket. It used to be BatchMode, which never
+    # asks: a key with a passphrase and no agent read as "cannot log in".
+    SSH_CTL_DIR=$(mktemp -d) || die "mktemp failed"
+    SSH_OPTS="-o ControlMaster=auto -o ControlPath=$SSH_CTL_DIR/ctl -o ControlPersist=3600"
+    trap '[ -S "$SSH_CTL_DIR/ctl" ] && ssh -O exit -o ControlPath="$SSH_CTL_DIR/ctl" "$REMOTE" >/dev/null 2>&1; rm -rf "$SSH_CTL_DIR"' EXIT
+    # shellcheck disable=SC2086 # SSH_OPTS is a list of words
+    ssh $SSH_OPTS "$REMOTE" true </dev/null || die "cannot log in to $REMOTE with ssh (REMOTE_USER, REMOTE_HOST)"
     ok "ssh $REMOTE"
 fi
 
@@ -333,8 +342,9 @@ if runs mirror; then
     else
         dest=$SITE_PATH/updates
         # shellcheck disable=SC2029 # the path is meant to expand here
-        ssh "$REMOTE" "mkdir -p '$dest'" </dev/null || die "could not make $dest on $REMOTE"
-        rsync -rtpv --chmod=D755,F644 --delete \
+        # shellcheck disable=SC2086
+        ssh $SSH_OPTS "$REMOTE" "mkdir -p '$dest'" </dev/null || die "could not make $dest on $REMOTE"
+        rsync -e "ssh $SSH_OPTS" -rtpv --chmod=D755,F644 --delete \
             --include='*.xz' --include='*.fdpatch' --exclude='*' \
             "$UPD/" "$REMOTE:$dest/" </dev/null || die "rsync to $REMOTE:$dest failed"
         names=''
@@ -344,7 +354,8 @@ if runs mirror; then
             i=$((i + 1))
         done
         # shellcheck disable=SC2029 # the path is meant to expand here
-        sums=$(ssh "$REMOTE" "cd '$dest' && sha256sum$names" </dev/null) || die "could not read the mirror's checksums on $REMOTE"
+        # shellcheck disable=SC2086
+        sums=$(ssh $SSH_OPTS "$REMOTE" "cd '$dest' && sha256sum$names" </dev/null) || die "could not read the mirror's checksums on $REMOTE"
         i=0
         while [ "$i" -lt "${#F_SHA[@]}" ]; do
             file=${F_GITHUB[$i]##*/}

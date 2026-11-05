@@ -364,7 +364,7 @@ say "planted faults"
 mutant "no deploy check" case_no_exclude 'if ! grep -qF -- "$DEPLOY_EXCLUDE" "$deploy"; then' 'if false; then'
 mutant "no last look before status.json" case_manifest_on_draft '    say "Every file status.json lists, once more:"' '    need_url() { :; }'
 mutant "no checksum on the server" case_corrupt_mirror '[ "$got" = "${F_SHA[$i]}" ] ||' 'true ||'
-mutant "rsync without --delete" case_clean 'rsync -rtpv --chmod=D755,F644 --delete' 'rsync -rtpv --chmod=D755,F644'
+mutant "rsync without --delete" case_clean 'rsync -e "ssh $SSH_OPTS" -rtpv --chmod=D755,F644 --delete' 'rsync -e "ssh $SSH_OPTS" -rtpv --chmod=D755,F644'
 mutant "a login made up when none is set" case_no_login '[ -n "$REMOTE" ] || die "no server login' 'REMOTE=deploy@firedown.app; true || die "no server login'
 
 say ""

@@ -4,7 +4,7 @@
 host=''
 while [ $# -gt 0 ]; do
     case $1 in
-        -o) shift 2 ;;
+        -o|-O) shift 2 ;;
         -*) shift ;;
         *) host=$1; shift; break ;;
     esac
