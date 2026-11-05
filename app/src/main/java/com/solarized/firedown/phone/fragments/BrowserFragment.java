@@ -423,19 +423,22 @@ public class BrowserFragment extends BaseBrowserFragment
         // way back — no navigation event would otherwise repaint the bar.
         applyAddressBarDisplayPref();
         // The DRM switch may have changed in Settings: repaint the shield's
-        // dot so it never outlives the row, and reload a page that asked for
-        // DRM and was refused (Gecko reads the switch when a page loads, so
-        // the page on screen keeps the old answer until it reloads).
+        // dot so it never outlives the row, and reload a page whose DRM
+        // answer the switch just changed, either way (Gecko reads the switch
+        // when a page loads, so the page on screen keeps the old answer
+        // until it reloads).
         refreshShield();
         GeckoState current = peekCurrentGeckoState();
-        if (current != null && current.isIncognito() == mIsIncognitoThemed
-                && current.isDrmRefusedHere()
-                && Preferences.getDRMEnabled(mSharedPreferences)) {
-            current.resetDrmNotice();
-            refreshShield();
-            // Through setDRM, so the reload never races the Settings
-            // screen's own write of the value (idempotent).
-            mGeckoRuntimeHelper.setDRM(false).accept(ignored -> current.reload());
+        if (current != null && current.isIncognito() == mIsIncognitoThemed) {
+            boolean drmOn = Preferences.getDRMEnabled(mSharedPreferences);
+            boolean stale = drmOn ? current.isDrmRefusedHere() : current.isDrmGrantedHere();
+            if (stale) {
+                current.resetDrmNotice();
+                refreshShield();
+                // Through setDRM, so the reload never races the Settings
+                // screen's own write of the value (idempotent).
+                mGeckoRuntimeHelper.setDRM(!drmOn).accept(ignored -> current.reload());
+            }
         }
         showPendingDrmNotice(current);
     }
@@ -1884,14 +1887,15 @@ public class BrowserFragment extends BaseBrowserFragment
         refreshShield();
         String host = WebUtils.getDomainName(geckoState.getEntityUri());
         if (host == null || host.isEmpty()) return;
-        if (DrmNoticeSites.wasShown(mActivity, host)) return;
+        boolean privateTab = geckoState.isIncognito();
+        if (DrmNoticeSites.wasShown(mActivity, host, privateTab)) return;
         NavDestination current = mNavController.getCurrentDestination();
         if (current == null || current.getId() != R.id.browser) return;
         NavigationUtils.navigateSafe(mNavController, R.id.dialog_drm, R.id.browser,
                 DrmSheetDialogFragment.args(host, mIsIncognitoThemed));
         NavDestination shown = mNavController.getCurrentDestination();
         if (shown != null && shown.getId() == R.id.dialog_drm) {
-            DrmNoticeSites.markShown(mActivity, host);
+            DrmNoticeSites.markShown(mActivity, host, privateTab);
         }
     }
 

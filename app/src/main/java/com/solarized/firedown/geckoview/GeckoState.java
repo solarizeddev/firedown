@@ -277,6 +277,13 @@ public class GeckoState {
     private boolean mDrmNoticePending;
 
     /**
+     * This document was granted DRM (the switch was on). Turning the switch
+     * off in Settings reloads such a page so it stops playing under the old
+     * answer. Cleared on page start. Not persisted.
+     */
+    private boolean mDrmGranted;
+
+    /**
      * The latest state Gecko's built-in translator reported for this tab's
      * CURRENT document (detected languages on load; requested pair, engine
      * readiness and any error after a translate request). Stored ungated on
@@ -755,6 +762,16 @@ public class GeckoState {
     public void resetDrmNotice() {
         mDrmNoticeShown = false;
         mDrmNoticePending = false;
+        mDrmGranted = false;
+    }
+
+    public void markDrmGranted() {
+        mDrmGranted = true;
+    }
+
+    /** True when this document was granted DRM; see {@link #mDrmGranted}. */
+    public boolean isDrmGrantedHere() {
+        return mDrmGranted;
     }
 
     /**
