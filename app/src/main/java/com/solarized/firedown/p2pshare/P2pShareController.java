@@ -626,12 +626,6 @@ public class P2pShareController {
             postError("file", "file unreadable");
             return;
         }
-        long size = RestoredFileAccess.length(mContext, path);
-        if (size <= 0) {
-            publish();
-            postError("file", "file unreadable");
-            return;
-        }
         // Derive the mime from the file's OWN extension, not the entity's
         // stored label — that label is Firedown's internal/UI value (an
         // HLS capture muxed to .mp4 can carry a manifest mime) and would
@@ -639,10 +633,33 @@ public class P2pShareController {
         String fileName = new File(path).getName();
         String mime = FileUriHelper.getMimeTypeFromFile(fileName);
         mState.fileName = fileName;
-        mState.fileSize = size;
         mState.mime = mime;
         publish();
 
+        // The size is read off the main thread: for a download restored after
+        // a reinstall (foreign-owned) it is a SAF open through the system's
+        // file provider, a binder call that can stall.
+        mDiskExecutor.execute(() -> {
+            long size = RestoredFileAccess.length(mContext, path);
+            mMainHandler.post(() -> {
+                if (!isCurrent(gen) || !isSend()) {
+                    return; // cancelled or replaced while the size was read
+                }
+                if (size <= 0) {
+                    postError("file", "file unreadable");
+                    return;
+                }
+                mState.fileSize = size;
+                publish();
+                continueSend(entity, path, mime, size, gen);
+            });
+        });
+    }
+
+    /** The rest of {@link #startSend}, once the file's size is known. */
+    @UiThread
+    private void continueSend(@NonNull DownloadEntity entity, @NonNull String path,
+                              @Nullable String mime, long size, int gen) {
         if (!startLoopback()) {
             postError(ShareState.ERROR_ENGINE, "loopback start failed");
             return;

@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -125,7 +126,48 @@ public class P2pScreensDeviceTest {
         try (FileOutputStream out = new FileOutputStream(mFile)) {
             out.write(bytes);
         }
-        mScenario = ActivityScenario.launch(DownloadsActivity.class);
+        try {
+            mScenario = ActivityScenario.launch(DownloadsActivity.class);
+        } catch (AssertionError notResumed) {
+            // Something stayed on top of Downloads: name it, so the failure
+            // says what to fix instead of only "never RESUMED".
+            throw new AssertionError(notResumed.getMessage() + "\nOn top: " + whatIsOnTop(), notResumed);
+        }
+    }
+
+    /** The resumed activity and the focused window, from the system's own dumps. */
+    private static String whatIsOnTop() {
+        StringBuilder top = new StringBuilder();
+        for (String line : shellOut("dumpsys activity activities").split("\n")) {
+            String t = line.trim();
+            if (t.startsWith("mResumedActivity") || t.startsWith("topResumedActivity")
+                    || t.startsWith("ResumedActivity")) {
+                top.append(t).append("; ");
+            }
+        }
+        for (String line : shellOut("dumpsys window windows").split("\n")) {
+            String t = line.trim();
+            if (t.startsWith("mCurrentFocus") || t.startsWith("mFocusedApp")) {
+                top.append(t).append("; ");
+            }
+        }
+        return top.length() == 0 ? "(nothing reported)" : top.toString();
+    }
+
+    private static String shellOut(String command) {
+        ParcelFileDescriptor pfd = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().executeShellCommand(command);
+        StringBuilder out = new StringBuilder();
+        try (InputStream in = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
+            byte[] buffer = new byte[8192];
+            int n = in.read(buffer);
+            while (n != -1) {
+                out.append(new String(buffer, 0, n, StandardCharsets.UTF_8));
+                n = in.read(buffer);
+            }
+        } catch (IOException ignored) {
+        }
+        return out.toString();
     }
 
     @After

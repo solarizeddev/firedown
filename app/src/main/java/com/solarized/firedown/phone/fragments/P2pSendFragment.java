@@ -38,7 +38,6 @@ import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.StoragePaths;
-import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.p2pshare.P2pNearbyDiscovery;
 import com.solarized.firedown.p2pshare.P2pSendRows;
@@ -83,7 +82,10 @@ public class P2pSendFragment extends P2pShareBaseFragment {
 
     private DownloadEntity mDownloadEntity;
     private View mView;
-    private String mFileTag;
+    /** "Video", "Audio"…, for the file card's second line. */
+    private String mMimeWord;
+    /** The size the Downloads row stored, until the session measures it. */
+    private long mStoredSize;
     /** Swallows a touch nothing inside the unfolded body took (see bindRow). */
     @SuppressLint("ClickableViewAccessibility")
     private static final View.OnTouchListener SWALLOW_TOUCH = (v, event) -> true;
@@ -182,13 +184,12 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         ShapeableImageView thumb = mView.findViewById(R.id.p2p_thumb);
         GlideHelper.load(mDownloadEntity, new RequestOptions(), thumb);
         ((TextView) mView.findViewById(R.id.p2p_file_name)).setText(file.getName());
-        String size = StoragePaths.convertToStringRepresentation(
-                RestoredFileAccess.length(requireContext(), mDownloadEntity.getFilePath()));
-        String mimeWord = FileUriHelper.getLongMimeText(requireContext(), mime);
-        mFileTag = mimeWord != null
-                ? String.format(Locale.ROOT, "%s · %s", mimeWord, size)
-                : size;
-        ((TextView) mView.findViewById(R.id.p2p_file_tag)).setText(mFileTag);
+        // The size the Downloads row stored: no file access on the main thread
+        // (a restored, foreign-owned file is a binder call to measure). The
+        // session's own measurement, read on the disk thread, replaces it.
+        mMimeWord = FileUriHelper.getLongMimeText(requireContext(), mime);
+        mStoredSize = mDownloadEntity.getFileSize();
+        ((TextView) mView.findViewById(R.id.p2p_file_tag)).setText(fileTag(mStoredSize));
 
         mToolbar.inflateMenu(R.menu.menu_p2p_send);
         mToolbar.setOnMenuItemClickListener(item -> {
@@ -750,10 +751,20 @@ public class P2pSendFragment extends P2pShareBaseFragment {
                     Formatter.formatShortFileSize(requireContext(), state.bytes)));
             tag.setTextColor(ContextCompat.getColor(tag.getContext(), R.color.p2p_status_active));
         } else {
-            tag.setText(mFileTag);
+            tag.setText(fileTag(state != null && state.fileSize > 0 ? state.fileSize : mStoredSize));
             tag.setTextColor(MaterialColors.getColor(tag,
                     com.google.android.material.R.attr.colorOnSurfaceVariant));
         }
+    }
+
+    /** "Video · 11.1 MB"; the type alone while no size is known. */
+    @NonNull
+    private String fileTag(long size) {
+        if (size <= 0) {
+            return mMimeWord == null ? "" : mMimeWord;
+        }
+        String sized = StoragePaths.convertToStringRepresentation(size);
+        return mMimeWord != null ? String.format(Locale.ROOT, "%s · %s", mMimeWord, sized) : sized;
     }
 
     /** The reply fallbacks belong to the waiting offer only. */
