@@ -8,7 +8,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * The Send screen's one "Send to" list: nearby phones, a link, a QR. Every
+ * The Send screen's one "Send to" list: "Share a link" (anywhere) and
+ * "Someone next to you" (a phone on this Wi-Fi, or a QR code it scans). Every
  * way out is a row, and what happened after a tap is that row's second line.
  * Pure Java (primitives in, rows out) so {@code scripts/p2p-harness} checks
  * the rules on a plain JVM; {@code P2pSendFragment} only maps each row to
@@ -19,12 +20,18 @@ import java.util.List;
  *   <li>Rows exist only while the offer waits ({@code READY}) or connects.
  *       Before the offer is minted the screen shows its preparing state; once
  *       bytes move the progress belongs to the file card, not to a list.</li>
- *   <li>Nothing spins at rest. Nearby discovery never ends, so with nobody
- *       found the list holds just the link and the QR; how a phone gets
- *       listed is one line under the list's label, not a row. The one spinner
- *       is on the connecting row, bounded by the connect timeout.</li>
+ *   <li>Nearby phones and the QR are ONE destination: the person is next to
+ *       you, and the user cannot tell in advance whether their phone will show
+ *       up on this Wi-Fi (guest Wi-Fi and hotspots often hide it) or must
+ *       scan. Unfolded, the row lists the phones found, then the QR as the
+ *       way that always works, so there is never an empty slot.</li>
+ *   <li>Folded, the row says what is there: the phones found (so a phone is
+ *       never hidden behind the fold), the phone asked, or how it works.</li>
+ *   <li>Nothing spins at rest. The one spinner is on the connecting row,
+ *       bounded by the connect timeout.</li>
  *   <li>While connecting the list collapses to the one peer: the nearby phone
- *       the offer went to, else the link if one went out, else the QR.</li>
+ *       the offer went to, else the link if one went out, else the in-person
+ *       row (the QR was scanned).</li>
  *   <li>A phone the offer went to keeps its waiting row until it answers,
  *       even when it drops out of discovery.</li>
  *   <li>The link row counts the offer's remaining lifetime down in whole
@@ -37,12 +44,13 @@ public final class P2pSendRows {
     }
 
     public enum Kind {
-        /** A phone with Receive open on this Wi-Fi. */
+        /** A phone with Receive open on this Wi-Fi (inside the unfolded
+         *  in-person row, or alone while connecting to it). */
         DEVICE,
         /** Share the offer as a link through any app. */
         LINK,
-        /** Show the offer as a QR code (expands in place). */
-        QR
+        /** Someone next to you: the phones found and the QR (unfolds in place). */
+        NEARBY
     }
 
     /** A row's second line. */
@@ -57,17 +65,22 @@ public final class P2pSendRows {
         LINK_PREPARING,
         /** A link went out; {@link Row#minutesLeft} is the countdown. */
         LINK_SHARED,
-        /** The QR row, folded. */
-        QR_IDLE,
-        /** The QR row, unfolded: how to scan it. */
-        QR_OPEN,
+        /** In-person row folded, nothing found: how it works. */
+        NEARBY_IDLE,
+        /** In-person row folded, phones found: {@link Row#names} lists them. */
+        NEARBY_FOUND,
+        /** In-person row folded, a phone was asked: {@link Row#name}. */
+        NEARBY_WAITING,
+        /** In-person row unfolded: {@link Row#children} and the QR below. */
+        NEARBY_OPEN,
         /** They accepted; the connection is being set up. */
         CONNECTING
     }
 
     public static final class Row {
         @NonNull public final Kind kind;
-        /** The device name for {@link Kind#DEVICE}, else null. */
+        /** The device name for {@link Kind#DEVICE} and {@link Sub#NEARBY_WAITING},
+         *  else null. */
         @Nullable public final String name;
         @NonNull public final Sub sub;
         /** A tap does something. */
@@ -80,9 +93,20 @@ public final class P2pSendRows {
          *  the offer's expiry is unknown (the row then says "Shared" with no
          *  countdown). */
         public final int minutesLeft;
+        /** {@link Sub#NEARBY_FOUND}: the phones found, in discovery order. */
+        @NonNull public final List<String> names;
+        /** {@link Sub#NEARBY_OPEN}: the phone rows inside the unfolded card. */
+        @NonNull public final List<Row> children;
 
         Row(@NonNull Kind kind, @Nullable String name, @NonNull Sub sub, boolean tappable,
             boolean active, boolean spinner, int minutesLeft) {
+            this(kind, name, sub, tappable, active, spinner, minutesLeft,
+                    Collections.emptyList(), Collections.emptyList());
+        }
+
+        Row(@NonNull Kind kind, @Nullable String name, @NonNull Sub sub, boolean tappable,
+            boolean active, boolean spinner, int minutesLeft,
+            @NonNull List<String> names, @NonNull List<Row> children) {
             this.kind = kind;
             this.name = name;
             this.sub = sub;
@@ -90,6 +114,8 @@ public final class P2pSendRows {
             this.active = active;
             this.spinner = spinner;
             this.minutesLeft = minutesLeft;
+            this.names = names;
+            this.children = children;
         }
 
         @NonNull
@@ -97,7 +123,9 @@ public final class P2pSendRows {
         public String toString() {
             return kind + (name == null ? "" : "(" + name + ")") + ":" + sub
                     + (tappable ? "" : " untappable") + (active ? " active" : "")
-                    + (spinner ? " spin" : "") + (minutesLeft > 0 ? " " + minutesLeft + "min" : "");
+                    + (spinner ? " spin" : "") + (minutesLeft > 0 ? " " + minutesLeft + "min" : "")
+                    + (names.isEmpty() ? "" : " " + names)
+                    + (children.isEmpty() ? "" : " " + children);
         }
     }
 
@@ -117,7 +145,7 @@ public final class P2pSendRows {
      * @param pendingPeer  the nearby phone the offer was handed to, or null
      * @param linkShared   a link went out through the share sheet
      * @param linkPreparing the short link is being brokered right now
-     * @param qrOpen       the QR row is unfolded
+     * @param nearbyOpen   the in-person row is unfolded
      * @param expiresAt    end of the offer's lifetime on the elapsed-realtime
      *                     clock, 0 = unknown
      * @param now          the same clock now
@@ -128,25 +156,53 @@ public final class P2pSendRows {
                                   @Nullable String pendingPeer,
                                   boolean linkShared,
                                   boolean linkPreparing,
-                                  boolean qrOpen,
+                                  boolean nearbyOpen,
                                   long expiresAt,
                                   long now) {
         if (phase == Phase.NONE) {
             return Collections.emptyList();
         }
         List<Row> rows = new ArrayList<>();
+        boolean asked = pendingPeer != null && !pendingPeer.isEmpty();
         if (phase == Phase.CONNECTING) {
-            if (pendingPeer != null && !pendingPeer.isEmpty()) {
+            if (asked) {
                 rows.add(new Row(Kind.DEVICE, pendingPeer, Sub.CONNECTING, false, true, true, 0));
             } else if (linkShared) {
                 rows.add(new Row(Kind.LINK, null, Sub.CONNECTING, false, true, true, 0));
             } else {
                 // No phone was asked and no link went out: the QR was scanned
                 // (or a reply pasted) — never "Share a link · Connecting…".
-                rows.add(new Row(Kind.QR, null, Sub.CONNECTING, false, true, true, 0));
+                rows.add(new Row(Kind.NEARBY, null, Sub.CONNECTING, false, true, true, 0));
             }
             return rows;
         }
+        if (linkPreparing) {
+            rows.add(new Row(Kind.LINK, null, Sub.LINK_PREPARING, false, true, false, 0));
+        } else if (linkShared) {
+            rows.add(new Row(Kind.LINK, null, Sub.LINK_SHARED, true, true, false,
+                    minutesLeft(expiresAt, now)));
+        } else {
+            rows.add(new Row(Kind.LINK, null, Sub.LINK_IDLE, true, false, false, 0));
+        }
+        List<Row> phones = phoneRows(devices, pendingPeer);
+        if (nearbyOpen) {
+            rows.add(new Row(Kind.NEARBY, null, Sub.NEARBY_OPEN, true, true, false, 0,
+                    Collections.emptyList(), phones));
+        } else if (asked) {
+            rows.add(new Row(Kind.NEARBY, pendingPeer, Sub.NEARBY_WAITING, true, true, false, 0));
+        } else if (!devices.isEmpty()) {
+            rows.add(new Row(Kind.NEARBY, null, Sub.NEARBY_FOUND, true, true, false, 0,
+                    Collections.unmodifiableList(new ArrayList<>(devices)), Collections.emptyList()));
+        } else {
+            rows.add(new Row(Kind.NEARBY, null, Sub.NEARBY_IDLE, true, false, false, 0));
+        }
+        return rows;
+    }
+
+    /** The phone rows inside the unfolded in-person card. */
+    @NonNull
+    private static List<Row> phoneRows(@NonNull List<String> devices, @Nullable String pendingPeer) {
+        List<Row> rows = new ArrayList<>();
         // The phone the offer went to keeps its waiting row even when it drops
         // out of discovery (its screen went off): the request is still out.
         boolean pendingListed = pendingPeer == null || pendingPeer.isEmpty()
@@ -162,16 +218,7 @@ public final class P2pSendRows {
                     waiting ? Sub.WAITING_ACCEPT : Sub.ON_WIFI,
                     !waiting, waiting, false, 0));
         }
-        if (linkPreparing) {
-            rows.add(new Row(Kind.LINK, null, Sub.LINK_PREPARING, false, true, false, 0));
-        } else if (linkShared) {
-            rows.add(new Row(Kind.LINK, null, Sub.LINK_SHARED, true, true, false,
-                    minutesLeft(expiresAt, now)));
-        } else {
-            rows.add(new Row(Kind.LINK, null, Sub.LINK_IDLE, true, false, false, 0));
-        }
-        rows.add(new Row(Kind.QR, null, qrOpen ? Sub.QR_OPEN : Sub.QR_IDLE, true, qrOpen, false, 0));
-        return rows;
+        return Collections.unmodifiableList(rows);
     }
 
     /**

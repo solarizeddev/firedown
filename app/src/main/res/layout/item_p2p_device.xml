@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- One card of the Send screen's "Send to" group (P2pSendFragment, rows
-     from P2pSendRows): a nearby phone, "Share a link" or "Show QR code".
+     from P2pSendRows): "Share a link", "Someone next to you", or a nearby
+     phone (inside the unfolded in-person card, or alone while connecting).
      A grouped SheetRowCard like every menu row in the app (corners from
      SheetGroups.applyCorners, so the press ripple stays inside the card);
      the card tone is the settings rule for a full page. The second line is
      the row's state; the end slot holds a chevron (tappable), the one
      bounded spinner (connecting), or nothing. p2p_device_extra receives the
-     QR when the QR card is unfolded. Rows are bound in place, never
+     phones found and the QR when "Someone next to you" is unfolded. Rows are bound in place, never
      rebuilt while their kinds are unchanged. -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"

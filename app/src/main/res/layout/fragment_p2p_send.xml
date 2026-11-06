@@ -210,8 +210,8 @@
                 </LinearLayout>
 
                 <!-- READY / CONNECTING: the "Send to" list. Cards are inflated
-                     from item_p2p_device.xml; the QR unfolds inside the QR
-                     card. -->
+                     from item_p2p_device.xml; "Someone next to you" unfolds
+                     in place (p2p_nearby_body moved into its card). -->
                 <LinearLayout
                     android:id="@+id/p2p_ready_group"
                     android:layout_width="match_parent"
@@ -225,23 +225,9 @@
                         android:layout_height="wrap_content"
                         android:paddingHorizontal="16dp"
                         android:paddingTop="20dp"
+                        android:paddingBottom="8dp"
                         android:text="@string/p2p_send_to"
                         android:textAppearance="?attr/textAppearanceLabelLarge"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
-
-                    <!-- How the other phone joins, said once for the whole list
-                         (AirDrop's / PairDrop's shape): open Receive a file; on
-                         this Wi-Fi it then appears here. Same edge as the label;
-                         the QR card's line only adds the scan step. -->
-                    <TextView
-                        android:id="@+id/p2p_send_to_hint"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingHorizontal="16dp"
-                        android:paddingTop="2dp"
-                        android:paddingBottom="10dp"
-                        android:text="@string/p2p_send_to_hint"
-                        android:textAppearance="?attr/textAppearanceBodySmall"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 
                     <!-- The group of grouped cards (item_p2p_device), corners
@@ -253,10 +239,12 @@
                         android:layout_marginHorizontal="16dp"
                         android:orientation="vertical" />
 
-                    <!-- The QR, moved into the QR card's p2p_device_extra by the
-                         fragment while that card is unfolded. -->
+                    <!-- The unfolded "Someone next to you": the phones found on
+                         this Wi-Fi (or why none is listed), then the QR, the way
+                         that works on any network. Moved into that card's
+                         p2p_device_extra by the fragment while it is open. -->
                     <LinearLayout
-                        android:id="@+id/p2p_qr_group"
+                        android:id="@+id/p2p_nearby_body"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_horizontal"
@@ -264,6 +252,37 @@
                         android:paddingBottom="16dp"
                         android:visibility="gone"
                         tools:visibility="visible">
+
+                        <!-- Nobody found: why, and that the code works instead. -->
+                        <TextView
+                            android:id="@+id/p2p_nearby_none"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingHorizontal="16dp"
+                            android:paddingBottom="12dp"
+                            android:text="@string/p2p_nearby_none"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                        <!-- The phones found: item_p2p_device cards on the
+                             tile's tone, a group of their own. -->
+                        <LinearLayout
+                            android:id="@+id/p2p_nearby_devices"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="16dp"
+                            android:orientation="vertical" />
+
+                        <TextView
+                            android:id="@+id/p2p_nearby_or_scan"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingHorizontal="16dp"
+                            android:paddingTop="16dp"
+                            android:paddingBottom="8dp"
+                            android:text="@string/p2p_nearby_or_scan"
+                            android:textAppearance="?attr/textAppearanceLabelLarge"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
 
                         <!-- The QR on its own tile, one step off the card's
                              tone in both themes, so the white code has an edge.
@@ -290,11 +309,12 @@
                                 app:layout_constraintEnd_toEndOf="parent"
                                 app:layout_constraintStart_toStartOf="parent"
                                 app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintWidth_max="232dp" />
+                                app:layout_constraintWidth_max="@dimen/p2p_qr_size" />
 
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
-                        <!-- Where the other person taps: one line, no steps. -->
+                        <!-- Where the other person taps: the full path, written
+                             once on the screen. -->
                         <TextView
                             android:id="@+id/p2p_qr_scan_line"
                             android:layout_width="match_parent"

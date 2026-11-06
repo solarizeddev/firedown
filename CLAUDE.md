@@ -5655,29 +5655,38 @@ and the in-person path was a QR to aim across a table. Now:
   a second card with its own spinner, two paragraphs, Paste reply and Send
   link again — and was reported as confusing. Now: **Send = the file card
   + ONE "Send to" list** (`P2pSendRows`, pure Java, pinned by
-  `scripts/p2p-harness` with mutants and `P2pSendRowsTest`): nearby phones
-  ("On this Wi‑Fi"), then "Share a link", then "Show QR code" (unfolds
-  inside its own card: the code on a pale rounded tile, `bg_p2p_qr_tile`,
-  one tone off the card in both themes, and ONE line under it saying where
-  the other person taps, `p2p_qr_scan_line`; the row drops its second line
-  while open. Signal's and Telegram's tile, NOT their full page of numbered
-  steps: there scanning is the only way, here the QR is the third of three
-  options and the person is next to you), each a grouped `SheetRowCard`
+  `scripts/p2p-harness` with mutants and `P2pSendRowsTest`) of TWO
+  destinations: "Share a link" (anywhere) and **"Someone next to you"**
+  (`p2p_nearby_title`, `ic_people_24`), each a grouped `SheetRowCard`
   (`item_p2p_device`, corners from `SheetGroups.applyCorners`, so a press
-  stays inside the card). How the other phone joins is ONE line under the
-  "Send to" label, on its edge (`p2p_send_to_hint`: "They open Downloads → ⋮
-  → Receive a file. On this Wi‑Fi, their phone appears here."), shown while
-  the offer waits and gone once the list collapses to the peer; the QR
-  card's line adds only the scan step ("They tap Scan code, or scan with any
-  camera app."). AirDrop's and PairDrop's shape: the receiver's door named
-  once, where peers appear. With nobody found the list is just the link and
-  the QR — no placeholder row. Three earlier homes were rejected on-device:
-  a card in the list (every card can be tapped; it shipped as a card with a
-  real destination's disc, the heaviest row on the screen), a glyph line
-  above the group (its icon and text sat on neither the label's edge nor
-  the cards' disc column), and a footnote under the group (a stray caption
-  among the bottom captions, explaining a row at the top from the bottom,
-  and the menu path a second time under the QR). What happened
+  stays inside the card). **Nearby phones and the QR are ONE destination**
+  (canvas board H, Claude and Fable agreeing): the user's intent is the
+  same ("the person next to me"), the mechanics differ in a way they can't
+  see — nearby needs the same Wi‑Fi without client isolation (guest, hotel,
+  café Wi‑Fi and hotspots often hide phones) AND their Receive screen open,
+  the QR needs neither — so two rows asked them to pick a transport they
+  can't judge. Folded, the row says what is there: "Their phone on this
+  Wi‑Fi, or a code they scan." with nobody found, "On this Wi‑Fi: Ana's
+  Pixel 8, …" (coral, at most three names) once phones are found — a phone
+  is never hidden behind the fold, and the first one found is announced to
+  TalkBack — and "Sent to <phone> · waiting…" once one was asked. Unfolded
+  (`p2p_nearby_body`, moved into the card's `p2p_device_extra`): the phones
+  found as their own card group on the QR tile's tone (`bindPhones`, bound
+  in place), or with none the line "No phone on this Wi‑Fi has Receive a
+  file open yet. They can scan instead:", then the QR on its pale tile
+  (`bg_p2p_qr_tile`; `p2p_qr_size` 232dp, `p2p_qr_size_fallback` 180dp
+  under "Or they scan" when phones are listed) and the ONE line with the
+  full path (`p2p_qr_scan_line`: "On their phone: Downloads → ⋮ → Receive
+  a file → Scan code. Their camera app works too."). The QR fills the empty
+  state, so there is no placeholder slot, no hint line, no help sheet: the
+  receiving steps are written once on the screen, inside the open row.
+  Signal's and Telegram's QR tile, NOT their full page of numbered steps.
+  Homes for the "how a phone gets listed" text that were rejected on the
+  way here: a placeholder card in the list (every card can be tapped), a
+  glyph line above the group, a footnote under the group (a stray caption,
+  and the path twice), a line under the label (the footnote moved up), an
+  ⓘ or ⋮ help sheet, and an always-present disabled nearby row (38% reads
+  as a feature turned off). What happened
   after a tap is THAT ROW'S second line, never another card: a tapped
   phone reads "Sent · waiting for them to accept" (untappable, and it
   keeps its row even if it drops out of discovery), the link reads
@@ -5690,8 +5699,9 @@ and the in-person path was a QR to aim across a table. Now:
   text); the coral disc marks it in both. Cards are BOUND IN PLACE while
   the rows' kinds and names are unchanged (the countdown and discovery
   repaint often; a rebuild lost TalkBack's place and cut off a press), and
-  the QR card announces expand / collapse. Connecting collapses the list to the
-  one peer (the phone, else the link row) with the ONLY spinner, bounded
+  the in-person card announces expand / collapse. Connecting collapses the
+  list to the one peer (the phone, else the link row, else the in-person row
+  after a QR scan) with the ONLY spinner, bounded
   by the connect timeout. Transferring and done are painted on the file
   card (bar + numbers under the name; the check and "Sent · size"). No
   Cancel at rest (nothing is out; Back is enough), Cancel once a phone was
@@ -5716,8 +5726,8 @@ and the in-person path was a QR to aim across a table. Now:
   (formatted with a marker, then swapped in), never found by searching
   the sentence. An instruction that walks the menus names each step in
   the UI's own words and includes the ⋮ ("Receive a file" is in the
-  Downloads overflow). The QR on its tile is square and at most 232dp, so
-  it shrinks on a 320dp phone. (A bottom sheet over the
+  Downloads overflow). The QR on its tile is square and at most
+  `p2p_qr_size`, so it shrinks on a 320dp phone. (A bottom sheet over the
   waiting screen, Quick Share's shape, was sketched and not taken: a
   swipe-away reads as an ambiguous decline); the
   human-relayed reply only when both push paths failed

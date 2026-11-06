@@ -18,6 +18,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewCompat;
@@ -26,6 +27,7 @@ import androidx.preference.PreferenceManager;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
@@ -81,11 +83,15 @@ public class P2pSendFragment extends P2pShareBaseFragment {
     private DownloadEntity mDownloadEntity;
     private View mView;
     private String mFileTag;
-    private boolean mQrShown;
-    /** The QR block, moved into the QR card while it is unfolded. */
-    private ViewGroup mQrGroup;
+    /** "Someone next to you" is unfolded. */
+    private boolean mNearbyOpen;
+    /** The unfolded body (phones found, then the QR), moved into the
+     *  in-person card while it is open. */
+    private ViewGroup mNearbyBody;
     /** What the cards in p2p_dest_list show (kind:name), to bind in place. */
     private List<String> mRowKeys = Collections.emptyList();
+    /** The same for the phone cards inside the unfolded body. */
+    private List<String> mPhoneKeys = Collections.emptyList();
     private boolean mLinkPreparing;
     private String mRenderedQrCode;
     private String mLastClipTried;
@@ -161,8 +167,9 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         }
 
         mView = inflater.inflate(R.layout.fragment_p2p_send, container, false);
-        mQrGroup = mView.findViewById(R.id.p2p_qr_group);
+        mNearbyBody = mView.findViewById(R.id.p2p_nearby_body);
         mRowKeys = Collections.emptyList();
+        mPhoneKeys = Collections.emptyList();
         mToolbar = mView.findViewById(R.id.toolbar);
 
         File file = new File(mDownloadEntity.getFilePath());
@@ -237,7 +244,7 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         // A rebuilt view starts with an empty QR image: draw it again.
         mRenderedQrCode = null;
         mView = null;
-        mQrGroup = null;
+        mNearbyBody = null;
         super.onDestroyView();
     }
 
@@ -256,7 +263,7 @@ public class P2pSendFragment extends P2pShareBaseFragment {
             makeSnack(R.string.p2p_busy_other_transfer); // startSend would refuse silently
             return;
         }
-        mQrShown = false;
+        mNearbyOpen = false;
         mLinkPreparing = false;
         mRenderedQrCode = null;
         mLastClipTried = null;
@@ -346,8 +353,35 @@ public class P2pSendFragment extends P2pShareBaseFragment {
     /* ── the "Send to" list ─────────────────────────────────────────────── */
 
     private void onDevicesChanged(@NonNull List<P2pNearbyDiscovery.Device> devices) {
+        boolean firstFound = mDevices.isEmpty() && !devices.isEmpty();
         mDevices = devices;
         renderRows();
+        if (firstFound && !mNearbyOpen && mView != null
+                && phase() == P2pSendRows.Phase.READY) {
+            // The folded row now names the phone; a screen reader hears it too.
+            mView.findViewById(R.id.p2p_dest_list).announceForAccessibility(
+                    foundText(devicesNames()));
+        }
+    }
+
+    @NonNull
+    private List<String> devicesNames() {
+        List<String> names = new ArrayList<>(mDevices.size());
+        for (P2pNearbyDiscovery.Device device : mDevices) {
+            names.add(device.name);
+        }
+        return names;
+    }
+
+    /** "On this Wi-Fi: Ana's Pixel 8, Galaxy A52" — at most three names. */
+    @NonNull
+    private String foundText(@NonNull List<String> names) {
+        int shown = Math.min(3, names.size());
+        String joined = String.join(", ", names.subList(0, shown));
+        if (names.size() > shown) {
+            joined = joined + ", …";
+        }
+        return getString(R.string.p2p_nearby_found, joined);
     }
 
     @NonNull
@@ -377,10 +411,9 @@ public class P2pSendFragment extends P2pShareBaseFragment {
      * rule; this only maps a row to its glyph, words and colours. While the
      * rows' kinds and names are unchanged the cards are BOUND IN PLACE, not
      * rebuilt: the countdown ticks every minute and discovery reports often,
-     * and a rebuild loses TalkBack's place and cuts off a press. How the
-     * other phone gets listed is not a card (every card can be tapped): it
-     * is the line under "Send to", shown while the offer waits and gone once
-     * the list collapses to the peer being connected.
+     * and a rebuild loses TalkBack's place and cuts off a press. "Someone
+     * next to you" unfolds in place: the phones found (or why none is
+     * listed), then the QR.
      */
     private void renderRows() {
         mTickHandler.removeCallbacks(mTick);
@@ -389,44 +422,38 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         }
         LinearLayout list = mView.findViewById(R.id.p2p_dest_list);
         P2pSendRows.Phase phase = phase();
-        List<String> names = new ArrayList<>(mDevices.size());
-        for (P2pNearbyDiscovery.Device device : mDevices) {
-            names.add(device.name);
-        }
         long now = SystemClock.elapsedRealtime();
         long expiresAt = mLast == null ? 0 : mLast.offerExpiresAt;
         boolean linkShared = mLast != null && mLast.linkShared;
         String peer = mLast == null ? null : mLast.peerDevice;
-        List<P2pSendRows.Row> rows = P2pSendRows.build(phase, names, peer, linkShared,
-                mLinkPreparing, mQrShown, expiresAt, now);
+        List<P2pSendRows.Row> rows = P2pSendRows.build(phase, devicesNames(), peer, linkShared,
+                mLinkPreparing, mNearbyOpen, expiresAt, now);
 
-        mView.findViewById(R.id.p2p_send_to_hint).setVisibility(
-                phase == P2pSendRows.Phase.READY ? View.VISIBLE : View.GONE);
-        List<P2pSendRows.Row> cards = new ArrayList<>(rows);
         List<String> keys = new ArrayList<>(rows.size());
         for (P2pSendRows.Row row : rows) {
             keys.add(row.kind + ":" + row.name);
         }
-
         if (!keys.equals(mRowKeys)) {
-            parkQr();
+            parkNearbyBody();
             list.removeAllViews();
             LayoutInflater inflater = LayoutInflater.from(requireContext());
-            for (int i = 0; i < cards.size(); i++) {
+            for (int i = 0; i < rows.size(); i++) {
                 list.addView(inflater.inflate(R.layout.item_p2p_device, list, false));
             }
             mRowKeys = keys;
         }
-        View qrCard = null;
-        for (int i = 0; i < cards.size(); i++) {
+        View nearbyCard = null;
+        P2pSendRows.Row nearbyRow = null;
+        for (int i = 0; i < rows.size(); i++) {
             View card = list.getChildAt(i);
-            bindRow(card, cards.get(i));
-            if (cards.get(i).kind == P2pSendRows.Kind.QR) {
-                qrCard = card;
+            bindRow(card, rows.get(i));
+            if (rows.get(i).sub == P2pSendRows.Sub.NEARBY_OPEN) {
+                nearbyCard = card;
+                nearbyRow = rows.get(i);
             }
         }
         SheetGroups.applyCorners(list);
-        updateQr(qrCard != null && mQrShown ? qrCard : null);
+        updateNearbyBody(nearbyCard, nearbyRow);
         mView.findViewById(R.id.p2p_waiting_note).setVisibility(
                 phase == P2pSendRows.Phase.READY && P2pSendRows.somethingOut(phase, peer, linkShared)
                         ? View.VISIBLE : View.GONE);
@@ -453,14 +480,14 @@ public class P2pSendFragment extends P2pShareBaseFragment {
                 icon.setImageResource(R.drawable.ic_share_24);
                 name.setText(R.string.p2p_share_link);
             }
-            case QR -> {
-                icon.setImageResource(R.drawable.qr_code_24);
-                name.setText(mQrShown && row.sub != P2pSendRows.Sub.CONNECTING
-                    ? R.string.p2p_hide_qr_code : R.string.p2p_show_qr_code);
+            case NEARBY -> {
+                icon.setImageResource(R.drawable.ic_people_24);
+                name.setText(R.string.p2p_nearby_title);
             }
         }
-        status.setText(statusText(row));
-        status.setVisibility(row.sub == P2pSendRows.Sub.QR_OPEN ? View.GONE : View.VISIBLE);
+        CharSequence statusText = statusText(row);
+        status.setText(statusText);
+        status.setVisibility(statusText.length() == 0 ? View.GONE : View.VISIBLE);
 
         int onSurface = MaterialColors.getColor(view, com.google.android.material.R.attr.colorOnSurface);
         int onSurfaceVariant = MaterialColors.getColor(view, com.google.android.material.R.attr.colorOnSurfaceVariant);
@@ -479,8 +506,9 @@ public class P2pSendFragment extends P2pShareBaseFragment {
 
         spinner.setVisibility(row.spinner ? View.VISIBLE : View.GONE);
         chevron.setVisibility(row.tappable ? View.VISIBLE : View.GONE);
+        boolean foldable = row.kind == P2pSendRows.Kind.NEARBY && row.tappable;
         float rotation = 0f;
-        if (row.kind == P2pSendRows.Kind.QR && mQrShown) {
+        if (foldable && mNearbyOpen) {
             // The chevron is auto-mirrored: in RTL it points left, so "down"
             // is the opposite turn.
             boolean rtl = view.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
@@ -494,11 +522,11 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         view.setFocusable(true);
         ViewCompat.removeAccessibilityAction(view, AccessibilityActionCompat.ACTION_EXPAND.getId());
         ViewCompat.removeAccessibilityAction(view, AccessibilityActionCompat.ACTION_COLLAPSE.getId());
-        if (row.kind == P2pSendRows.Kind.QR && row.tappable) {
+        if (foldable) {
             // Announced as an expand / collapse control in the screen
             // reader's own words: the platform actions carry their labels.
             ViewCompat.replaceAccessibilityAction(view,
-                    mQrShown ? AccessibilityActionCompat.ACTION_COLLAPSE
+                    mNearbyOpen ? AccessibilityActionCompat.ACTION_COLLAPSE
                             : AccessibilityActionCompat.ACTION_EXPAND,
                     null, (v, arguments) -> {
                         onRowTapped(row);
@@ -518,10 +546,12 @@ public class P2pSendFragment extends P2pShareBaseFragment {
                     ? getResources().getQuantityString(R.plurals.p2p_link_open_for,
                             row.minutesLeft, row.minutesLeft)
                     : getString(R.string.p2p_link_shared);
-            case QR_IDLE -> getString(R.string.p2p_show_qr_code_hint);
-            // Open: no second line; "Hide QR code" says it, and where the
-            // other person taps is the line under the code's tile.
-            case QR_OPEN -> "";
+            case NEARBY_IDLE -> getString(R.string.p2p_nearby_hint);
+            case NEARBY_FOUND -> foundText(row.names);
+            case NEARBY_WAITING -> getString(R.string.p2p_nearby_waiting,
+                    row.name == null ? "" : row.name);
+            // Open: no second line; what is inside says it.
+            case NEARBY_OPEN -> "";
             case CONNECTING -> getString(mLast != null && mLast.stage == ShareState.Stage.CONNECTED
                     ? R.string.p2p_state_connected : R.string.p2p_state_connecting);
         };
@@ -536,58 +566,102 @@ public class P2pSendFragment extends P2pShareBaseFragment {
                 }
             }
             case LINK -> shareLink();
-            case QR -> {
-                mQrShown = !mQrShown;
+            case NEARBY -> {
+                mNearbyOpen = !mNearbyOpen;
                 renderRows();
             }
         }
     }
 
-    /** Take the QR out of whatever card holds it, back under the group
-     *  (hidden), before the cards are rebuilt. */
-    private void parkQr() {
-        if (mQrGroup == null || mView == null) {
+    /** Take the unfolded body out of whatever card holds it, back under the
+     *  group (hidden), before the cards are rebuilt. */
+    private void parkNearbyBody() {
+        if (mNearbyBody == null || mView == null) {
             return;
         }
         ViewGroup home = mView.findViewById(R.id.p2p_ready_group);
-        if (mQrGroup.getParent() != home) {
-            if (mQrGroup.getParent() instanceof ViewGroup parent) {
-                parent.removeView(mQrGroup);
+        if (mNearbyBody.getParent() != home) {
+            if (mNearbyBody.getParent() instanceof ViewGroup parent) {
+                parent.removeView(mNearbyBody);
             }
-            home.addView(mQrGroup, home.indexOfChild(mView.findViewById(R.id.p2p_dest_list)) + 1);
+            home.addView(mNearbyBody, home.indexOfChild(mView.findViewById(R.id.p2p_dest_list)) + 1);
         }
-        mQrGroup.setVisibility(View.GONE);
+        mNearbyBody.setVisibility(View.GONE);
     }
 
-    /** The QR, unfolded inside its card ({@code qrCard}, null = folded):
-     *  rendered lazily, once per offer code. */
-    private void updateQr(@Nullable View qrCard) {
+    /**
+     * The unfolded "Someone next to you" inside its card ({@code card}, null =
+     * folded): the phones found, else the line saying none is listed, then
+     * the QR, rendered lazily once per offer code.
+     */
+    private void updateNearbyBody(@Nullable View card, @Nullable P2pSendRows.Row row) {
         String code = mLast == null ? null : mLast.offerCode;
-        if (qrCard == null || code == null) {
-            mQrGroup.setVisibility(View.GONE);
+        if (card == null || row == null || code == null) {
+            mNearbyBody.setVisibility(View.GONE);
             return;
         }
-        ViewGroup holder = qrCard.findViewById(R.id.p2p_device_extra);
-        if (mQrGroup.getParent() != holder) {
-            if (mQrGroup.getParent() instanceof ViewGroup parent) {
-                parent.removeView(mQrGroup);
+        ViewGroup holder = card.findViewById(R.id.p2p_device_extra);
+        if (mNearbyBody.getParent() != holder) {
+            if (mNearbyBody.getParent() instanceof ViewGroup parent) {
+                parent.removeView(mNearbyBody);
             }
-            holder.addView(mQrGroup);
+            holder.addView(mNearbyBody);
         }
-        mQrGroup.setVisibility(View.VISIBLE);
+        mNearbyBody.setVisibility(View.VISIBLE);
+
+        boolean anyPhone = !row.children.isEmpty();
+        mNearbyBody.findViewById(R.id.p2p_nearby_none).setVisibility(anyPhone ? View.GONE : View.VISIBLE);
+        mNearbyBody.findViewById(R.id.p2p_nearby_or_scan).setVisibility(anyPhone ? View.VISIBLE : View.GONE);
+        bindPhones(mNearbyBody.findViewById(R.id.p2p_nearby_devices), row.children);
+
+        // With a phone listed the code is the fallback: a smaller tile.
+        ImageView qr = mNearbyBody.findViewById(R.id.p2p_qr);
+        ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) qr.getLayoutParams();
+        int maxWidth = getResources().getDimensionPixelSize(anyPhone
+                ? R.dimen.p2p_qr_size_fallback : R.dimen.p2p_qr_size);
+        if (params.matchConstraintMaxWidth != maxWidth) {
+            params.matchConstraintMaxWidth = maxWidth;
+            qr.setLayoutParams(params);
+        }
+
         if (code.equals(mRenderedQrCode)) {
             return;
         }
         mRenderedQrCode = code;
         // Encode the deep link (not the bare code) so a scan with the phone's
         // own camera offers "open in Firedown"; the in-app scanner unwraps it.
-        ImageView qr = mQrGroup.findViewById(R.id.p2p_qr);
         boolean rendered = setQr(qr, P2pShareController.toDeepLink(code));
         // A code too large for a QR leaves no blank white box: say so and
         // point at the link card above.
-        mQrGroup.findViewById(R.id.p2p_qr_tile).setVisibility(rendered ? View.VISIBLE : View.GONE);
-        mQrGroup.findViewById(R.id.p2p_qr_scan_line).setVisibility(rendered ? View.VISIBLE : View.GONE);
-        mQrGroup.findViewById(R.id.p2p_qr_too_big).setVisibility(rendered ? View.GONE : View.VISIBLE);
+        mNearbyBody.findViewById(R.id.p2p_qr_tile).setVisibility(rendered ? View.VISIBLE : View.GONE);
+        mNearbyBody.findViewById(R.id.p2p_qr_scan_line).setVisibility(rendered ? View.VISIBLE : View.GONE);
+        mNearbyBody.findViewById(R.id.p2p_qr_too_big).setVisibility(rendered ? View.GONE : View.VISIBLE);
+    }
+
+    /** The phone cards inside the unfolded body: a group of their own on the
+     *  QR tile's tone, bound in place while the names are unchanged. */
+    private void bindPhones(@NonNull LinearLayout group, @NonNull List<P2pSendRows.Row> phones) {
+        List<String> keys = new ArrayList<>(phones.size());
+        for (P2pSendRows.Row phone : phones) {
+            keys.add(phone.name);
+        }
+        if (!keys.equals(mPhoneKeys) || group.getChildCount() != phones.size()) {
+            group.removeAllViews();
+            LayoutInflater inflater = LayoutInflater.from(requireContext());
+            int tone = MaterialColors.getColor(group,
+                    com.google.android.material.R.attr.colorSurfaceContainerHighest);
+            for (int i = 0; i < phones.size(); i++) {
+                MaterialCardView phoneCard = (MaterialCardView) inflater.inflate(
+                        R.layout.item_p2p_device, group, false);
+                phoneCard.setCardBackgroundColor(tone);
+                group.addView(phoneCard);
+            }
+            mPhoneKeys = keys;
+        }
+        for (int i = 0; i < phones.size(); i++) {
+            bindRow(group.getChildAt(i), phones.get(i));
+        }
+        SheetGroups.applyCorners(group);
     }
 
     /* ── rendering ──────────────────────────────────────────────────────── */

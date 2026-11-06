@@ -31,7 +31,8 @@ public class P2pSendRowsTest {
                 false, false, false, EXPIRES, NOW);
         assertEquals(2, rows.size());
         assertEquals(Kind.LINK, rows.get(0).kind);
-        assertEquals(Kind.QR, rows.get(1).kind);
+        assertEquals(Kind.NEARBY, rows.get(1).kind);
+        assertEquals(Sub.NEARBY_IDLE, rows.get(1).sub);
         for (Row row : rows) {
             assertFalse(row.toString(), row.spinner);
         }
@@ -41,11 +42,16 @@ public class P2pSendRowsTest {
     @Test
     public void askedPhoneWaitsAndOthersStayLive() {
         List<Row> rows = P2pSendRows.build(Phase.READY, Arrays.asList("A", "B"), "A",
+                false, false, true, EXPIRES, NOW);
+        List<Row> phones = rows.get(1).children;
+        assertEquals(Sub.WAITING_ACCEPT, phones.get(0).sub);
+        assertFalse(phones.get(0).tappable);
+        assertTrue(phones.get(1).tappable);
+        assertTrue(rows.get(0).tappable);
+        rows = P2pSendRows.build(Phase.READY, Arrays.asList("A", "B"), "A",
                 false, false, false, EXPIRES, NOW);
-        assertEquals(Sub.WAITING_ACCEPT, rows.get(0).sub);
-        assertFalse(rows.get(0).tappable);
-        assertTrue(rows.get(1).tappable);
-        assertTrue(rows.get(2).tappable);
+        assertEquals(Sub.NEARBY_WAITING, rows.get(1).sub);
+        assertEquals("A", rows.get(1).name);
     }
 
     @Test
@@ -56,6 +62,15 @@ public class P2pSendRowsTest {
         assertEquals(14, rows.get(0).minutesLeft);
         assertEquals(1, P2pSendRows.minutesLeft(NOW + 10_000L, NOW));
         assertTrue(P2pSendRows.somethingOut(Phase.READY, null, true));
+    }
+
+    @Test
+    public void foundPhonesAreNamedWhileFolded() {
+        List<Row> rows = P2pSendRows.build(Phase.READY, Arrays.asList("A", "B"), null,
+                false, false, false, EXPIRES, NOW);
+        assertEquals(Sub.NEARBY_FOUND, rows.get(1).sub);
+        assertEquals(Arrays.asList("A", "B"), rows.get(1).names);
+        assertTrue(rows.get(1).children.isEmpty());
     }
 
     @Test
