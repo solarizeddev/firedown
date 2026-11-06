@@ -84,6 +84,7 @@
     <string name="addon_perm_user_scripts">Zezwalanie niezweryfikowanym skryptom firm trzecich na dostęp do danych</string>
     <string name="addon_perm_web_navigation">Dostęp do aktywności przeglądarki podczas nawigacji</string>
     <string name="addon_permissions">Uprawnienia</string>
+    <string name="addon_data_collection">Zbieranie danych</string>
     <string name="addon_permissions_none">Brak specjalnych uprawnień</string>
     <string name="addon_private">Uruchamiaj w kartach prywatnych</string>
     <string name="addon_private_not_allowed">Ten dodatek nie działa w kartach prywatnych</string>
@@ -128,6 +129,14 @@
     <string name="addons_install_from_file_summary">Podpisany dodatek do Firefoksa (.xpi)</string>
     <string name="addons_installed">Zainstalowane</string>
     <string name="addons_installing">Instalowanie…</string>
+    <string name="addons_add">Dodaj</string>
+    <string name="addons_add_description">Dodaj %1$s</string>
+    <plurals name="addons_users">
+        <item quantity="one">%1$s użytkownik</item>
+        <item quantity="few">%1$s użytkownicy</item>
+        <item quantity="many">%1$s użytkowników</item>
+        <item quantity="other">%1$s użytkownika</item>
+    </plurals>
     <string name="addons_manage">Zarządzaj dodatkami</string>
     <string name="addons_more">Więcej</string>
     <string name="addons_no_button">Działa samodzielnie</string>

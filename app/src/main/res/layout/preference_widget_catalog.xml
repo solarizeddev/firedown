@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The trailing slot of a CatalogPreference row (an add-on in Mozilla's
+  list): an "Add" button, the shield sheet's tonal "Turn on" shape, which
+  the BusyPreference spinner replaces while the add-on installs.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/preference_action"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:minWidth="0dp"
+        android:minHeight="36dp"
+        android:paddingHorizontal="16dp"
+        android:text="@string/addons_add" />
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/preference_busy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="?attr/brandInk"
+        app:indicatorSize="24dp"
+        app:trackThickness="3dp" />
+
+</FrameLayout>

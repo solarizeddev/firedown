@@ -2,6 +2,7 @@ package com.solarized.firedown.addons;
 
 import android.content.Context;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
@@ -18,18 +19,83 @@ public final class AddonPermissionText {
 
     private AddonPermissionText() {}
 
+    /** One permission line of an add-on's page: its words and its glyph. */
+    public static final class Row {
+        @NonNull public final String text;
+        @DrawableRes public final int icon;
+
+        Row(@NonNull String text, @DrawableRes int icon) {
+            this.text = text;
+            this.icon = icon;
+        }
+    }
+
     @NonNull
     public static List<String> lines(@NonNull Context context,
                                      @Nullable Collection<String> permissions,
                                      @Nullable Collection<String> origins) {
         List<String> out = new ArrayList<>();
+        for (Row row : rows(context, permissions, origins)) {
+            out.add(row.text);
+        }
+        return out;
+    }
+
+    /** {@link #lines}, each with the glyph the add-on page draws beside it. */
+    @NonNull
+    public static List<Row> rows(@NonNull Context context,
+                                 @Nullable Collection<String> permissions,
+                                 @Nullable Collection<String> origins) {
+        List<Row> out = new ArrayList<>();
         for (AddonPermissions.Line line : AddonPermissions.describe(permissions, origins)) {
             String text = text(context, line);
             if (text != null) {
-                out.add(text);
+                out.add(new Row(text, icon(line)));
             }
         }
         return out;
+    }
+
+    /**
+     * A glyph per kind of access: the globe for sites, the thing reached
+     * for an API permission. Several permissions share one (history and
+     * sessions, the two clipboard ones), as Firefox's words group them.
+     */
+    @DrawableRes
+    static int icon(@NonNull AddonPermissions.Line line) {
+        if (line.kind != AddonPermissions.API) {
+            return R.drawable.ic_globe_24;
+        }
+        String permission = line.arg == null ? "" : line.arg;
+        switch (permission) {
+            case "bookmarks": return R.drawable.ic_bookmark_24;
+            case "browserSettings": return R.drawable.ic_settings_24;
+            case "browsingData": return R.drawable.ic_clear_all_24;
+            case "clipboardRead":
+            case "clipboardWrite": return R.drawable.ic_content_copy;
+            case "declarativeNetRequest":
+            case "declarativeNetRequestFeedback": return R.drawable.ad_off_24;
+            case "devtools": return R.drawable.developer_board_24;
+            case "downloads":
+            case "downloads.open": return R.drawable.download_24;
+            case "find": return R.drawable.ic_search_24;
+            case "geolocation": return R.drawable.location_on_24;
+            case "history":
+            case "sessions":
+            case "topSites": return R.drawable.ic_history_24;
+            case "management": return R.drawable.extension_24;
+            case "nativeMessaging": return R.drawable.ic_computer_24;
+            case "notifications": return R.drawable.notifications_24;
+            case "pkcs11": return R.drawable.ic_key_24;
+            case "privacy": return R.drawable.ic_shield_privacy_tip_24;
+            case "proxy": return R.drawable.dns_24;
+            case "tabHide":
+            case "tabs": return R.drawable.ic_tabs_24;
+            case "trialML": return R.drawable.memory_alt_24;
+            case "userScripts": return R.drawable.javascript_24;
+            case "webNavigation": return R.drawable.ic_travel_explore_24;
+            default: return R.drawable.extension_24;
+        }
     }
 
     /** One optional API permission, or null when Firefox shows no words for it. */

@@ -77,6 +77,7 @@
     <string name="addon_perm_user_scripts">Kontrollimata kolmanda osapoole skriptidele sinu andmetele ligipääsu lubamine</string>
     <string name="addon_perm_web_navigation">Ligipääs brauseri tegevusele navigeerimise ajal</string>
     <string name="addon_permissions">Õigused</string>
+    <string name="addon_data_collection">Andmete kogumine</string>
     <string name="addon_permissions_none">Erilisi õigusi pole</string>
     <string name="addon_private">Käivita privaatsetes vahelehtedes</string>
     <string name="addon_private_not_allowed">See lisa ei tööta privaatsetes vahelehtedes</string>
@@ -121,6 +122,12 @@
     <string name="addons_install_from_file_summary">Allkirjastatud Firefoxi lisa (.xpi)</string>
     <string name="addons_installed">Paigaldatud</string>
     <string name="addons_installing">Paigaldamine…</string>
+    <string name="addons_add">Lisa</string>
+    <string name="addons_add_description">Lisa %1$s</string>
+    <plurals name="addons_users">
+        <item quantity="one">%1$s kasutaja</item>
+        <item quantity="other">%1$s kasutajat</item>
+    </plurals>
     <string name="addons_manage">Halda lisasid</string>
     <string name="addons_more">Rohkem</string>
     <string name="addons_no_button">Töötab iseseisvalt</string>

@@ -77,6 +77,7 @@
     <string name="addon_perm_user_scripts">Sallia tarkistamattomien kolmannen osapuolen skriptien käyttää tietojasi</string>
     <string name="addon_perm_web_navigation">Käyttää selaimen toimintaa siirtymisen aikana</string>
     <string name="addon_permissions">Käyttöoikeudet</string>
+    <string name="addon_data_collection">Tietojen keruu</string>
     <string name="addon_permissions_none">Ei erityisiä käyttöoikeuksia</string>
     <string name="addon_private">Suorita yksityisissä välilehdissä</string>
     <string name="addon_private_not_allowed">Tämä lisäosa ei toimi yksityisissä välilehdissä</string>
@@ -121,6 +122,12 @@
     <string name="addons_install_from_file_summary">Allekirjoitettu Firefox-lisäosa (.xpi)</string>
     <string name="addons_installed">Asennettu</string>
     <string name="addons_installing">Asennetaan…</string>
+    <string name="addons_add">Lisää</string>
+    <string name="addons_add_description">Lisää %1$s</string>
+    <plurals name="addons_users">
+        <item quantity="one">%1$s käyttäjä</item>
+        <item quantity="other">%1$s käyttäjää</item>
+    </plurals>
     <string name="addons_manage">Hallitse lisäosia</string>
     <string name="addons_more">Lisää</string>
     <string name="addons_no_button">Toimii itsestään</string>

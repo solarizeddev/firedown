@@ -80,6 +80,7 @@
     <string name="addon_perm_user_scripts">Doğrulanmamış üçüncü taraf betiklerin verilerinize erişmesine izin verme</string>
     <string name="addon_perm_web_navigation">Gezinti sırasında tarayıcı etkinliğine erişme</string>
     <string name="addon_permissions">İzinler</string>
+    <string name="addon_data_collection">Veri toplama</string>
     <string name="addon_permissions_none">Özel izin yok</string>
     <string name="addon_private">Gizli sekmelerde çalıştır</string>
     <string name="addon_private_not_allowed">Bu eklenti gizli sekmelerde çalışmaz</string>
@@ -124,6 +125,12 @@
     <string name="addons_install_from_file_summary">İmzalı bir Firefox eklentisi (.xpi)</string>
     <string name="addons_installed">Yüklü</string>
     <string name="addons_installing">Yükleniyor…</string>
+    <string name="addons_add">Ekle</string>
+    <string name="addons_add_description">%1$s ekle</string>
+    <plurals name="addons_users">
+        <item quantity="one">%1$s kullanıcı</item>
+        <item quantity="other">%1$s kullanıcı</item>
+    </plurals>
     <string name="addons_manage">Eklentileri yönet</string>
     <string name="addons_more">Diğer</string>
     <string name="addons_no_button">Kendi başına çalışır</string>

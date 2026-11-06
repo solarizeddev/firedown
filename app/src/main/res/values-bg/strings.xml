@@ -77,6 +77,7 @@
     <string name="addon_perm_user_scripts">Разрешаване на непроверени скриптове от трети страни да имат достъп до вашите данни</string>
     <string name="addon_perm_web_navigation">Достъп до активността на браузъра по време на навигация</string>
     <string name="addon_permissions">Права</string>
+    <string name="addon_data_collection">Събиране на данни</string>
     <string name="addon_permissions_none">Няма специални права</string>
     <string name="addon_private">Работи в поверителни раздели</string>
     <string name="addon_private_not_allowed">Тази добавка не работи в поверителни раздели</string>
@@ -121,6 +122,12 @@
     <string name="addons_install_from_file_summary">Подписана добавка за Firefox (.xpi)</string>
     <string name="addons_installed">Инсталирани</string>
     <string name="addons_installing">Инсталиране…</string>
+    <string name="addons_add">Добави</string>
+    <string name="addons_add_description">Добави %1$s</string>
+    <plurals name="addons_users">
+        <item quantity="one">%1$s потребител</item>
+        <item quantity="other">%1$s потребители</item>
+    </plurals>
     <string name="addons_manage">Управление на добавките</string>
     <string name="addons_more">Още</string>
     <string name="addons_no_button">Работи самостоятелно</string>

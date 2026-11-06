@@ -79,6 +79,7 @@
     <string name="addon_perm_user_scripts">Nicht überprüften Skripten von Drittanbietern den Zugriff auf deine Daten erlauben</string>
     <string name="addon_perm_web_navigation">Während der Navigation auf Browseraktivität zugreifen</string>
     <string name="addon_permissions">Berechtigungen</string>
+    <string name="addon_data_collection">Datenerfassung</string>
     <string name="addon_permissions_none">Keine besonderen Berechtigungen</string>
     <string name="addon_private">In privaten Tabs ausführen</string>
     <string name="addon_private_not_allowed">Dieses Add-on läuft nicht in privaten Tabs</string>
@@ -123,6 +124,12 @@
     <string name="addons_install_from_file_summary">Ein signiertes Firefox-Add-on (.xpi)</string>
     <string name="addons_installed">Installiert</string>
     <string name="addons_installing">Wird installiert…</string>
+    <string name="addons_add">Hinzufügen</string>
+    <string name="addons_add_description">%1$s hinzufügen</string>
+    <plurals name="addons_users">
+        <item quantity="one">%1$s Nutzer</item>
+        <item quantity="other">%1$s Nutzer</item>
+    </plurals>
     <string name="addons_manage">Add-ons verwalten</string>
     <string name="addons_more">Mehr</string>
     <string name="addons_no_button">Funktioniert von selbst</string>

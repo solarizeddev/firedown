@@ -4385,18 +4385,26 @@ before changing a flow. The rules, each easy to undo:
   download and new-tab snackbars, and falls back to the content frame
   (Settings).
 - **The add-on screens' shape** (reviewed against Firefox for Android and
-  Chrome, 2026-11): a catalog row's description is the start of Mozilla's
-  summary, three lines with "…" (`BusyPreference.setSummaryMaxLines`;
-  summaries ran to five lines and stranded the icon beside the third), with
-  hard line breaks collapsed in `AmoCatalog`. An add-on's page opens with a
-  FLAT header (`AddonHeaderPreference`: 48dp icon at 32dp, where the card
-  rows start their text; name; author and version on their own lines;
-  description at full width), not a card row, which put its text 37dp right
-  of every row under it. Permissions are a bulleted list (`ui/BulletList`:
-  a `BulletSpan` per item so a wrapped line hangs under its text, 6dp
-  between items), the data-collection sentence after them unbulleted (it is
-  not a permission), shown whole (`LongTextPreference`, the stock row cuts at
-  ten lines). The install question's lines use the same `BulletList`.
+  Chrome, 2026-11; canvas "Add-on screens", page B and list C): a catalog
+  row (`CatalogPreference`) reads "★ 4.6 · 1.2M users" (Mozilla's rating
+  and user count, a 12sp line, either half left out when the list doesn't
+  say) over the first TWO lines of Mozilla's summary with "…" (summaries
+  ran to five lines and stranded the icon beside the third; hard line
+  breaks are collapsed in `AmoCatalog`), and a tonal "Add" button in the
+  trailing slot (the shield sheet's "Turn on" shape) so the row says what
+  a tap does; the spinner takes the button's place while it installs, and
+  a tap anywhere on the row does the same. Installed rows carry no
+  chevron: no settings door does. An add-on's page opens with a FLAT
+  header (`AddonHeaderPreference`: 48dp icon at 32dp, where the card rows
+  start their text; name; author and version on their own lines;
+  description at full width), not a card row, which put its text 37dp
+  right of every row under it. What it may do is ONE CARD ROW PER LINE,
+  each with a glyph for the kind of access (`AddonPermissionText.rows` /
+  `icon`: the globe for sites, the thing reached for an API permission),
+  and what the developer says it collects is its own "Data collection"
+  group (it is not a permission; hidden for an add-on that predates the
+  declaration). The install question keeps bulleted lines (`ui/BulletList`:
+  a `BulletSpan` per item so a wrapped line hangs under its text).
 - **Not built, on purpose or for now**: `downloads.download` and
   `browsingData` for add-ons (Firefox for Android registers no
   `DownloadDelegate`/`BrowsingDataDelegate` either); an options page with

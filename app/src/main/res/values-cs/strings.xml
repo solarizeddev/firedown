@@ -81,6 +81,7 @@
     <string name="addon_perm_user_scripts">Povolit neověřeným skriptům třetích stran přístup k vašim datům</string>
     <string name="addon_perm_web_navigation">Přistupovat k aktivitě prohlížeče během navigace</string>
     <string name="addon_permissions">Oprávnění</string>
+    <string name="addon_data_collection">Sběr dat</string>
     <string name="addon_permissions_none">Žádná zvláštní oprávnění</string>
     <string name="addon_private">Spouštět v anonymních kartách</string>
     <string name="addon_private_not_allowed">Tento doplněk v anonymních kartách neběží</string>
@@ -125,6 +126,14 @@
     <string name="addons_install_from_file_summary">Podepsaný doplněk pro Firefox (.xpi)</string>
     <string name="addons_installed">Nainstalované</string>
     <string name="addons_installing">Instalace…</string>
+    <string name="addons_add">Přidat</string>
+    <string name="addons_add_description">Přidat %1$s</string>
+    <plurals name="addons_users">
+        <item quantity="one">%1$s uživatel</item>
+        <item quantity="few">%1$s uživatelé</item>
+        <item quantity="many">%1$s uživatele</item>
+        <item quantity="other">%1$s uživatelů</item>
+    </plurals>
     <string name="addons_manage">Spravovat doplňky</string>
     <string name="addons_more">Další</string>
     <string name="addons_no_button">Funguje samostatně</string>

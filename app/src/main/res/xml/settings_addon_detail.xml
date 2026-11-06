@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- One installed add-on (AddonDetailFragment): the header (icon, name,
      author and version), on/off and private tabs, its own settings page,
-     an update waiting for the user, what it may do, its page on
-     addons.mozilla.org, and Remove. Rows that don't apply are hidden by
+     an update waiting for the user, its page on addons.mozilla.org,
+     what it may do, what it collects, and Remove. Rows that don't apply are hidden by
      the fragment. -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
@@ -66,15 +66,25 @@
 
     </PreferenceCategory>
 
+    <!-- One row per thing it may do, each with its glyph, filled by the
+         fragment ("No special permissions" when it lists none). -->
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.addon.permissions.category"
         android:title="@string/addon_permissions"
+        app:iconSpaceReserved="false" />
+
+    <!-- What the developer says the add-on collects. Not a permission, so
+         its own group; hidden for an add-on that predates the declaration. -->
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.addon.data.category"
+        android:title="@string/addon_data_collection"
         app:iconSpaceReserved="false">
 
-        <com.solarized.firedown.settings.ui.LongTextPreference
-            android:key="com.solarized.firedown.preferences.addon.permissions"
+        <Preference
+            android:key="com.solarized.firedown.preferences.addon.data"
             android:selectable="false"
-            app:iconSpaceReserved="false" />
+            android:icon="@drawable/database_24"
+            app:singleLineTitle="false" />
 
     </PreferenceCategory>
 

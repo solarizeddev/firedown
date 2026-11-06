@@ -66,6 +66,7 @@
     <string name="addon_perm_user_scripts">Cho phép tập lệnh bên thứ ba chưa được xác minh truy cập dữ liệu của bạn</string>
     <string name="addon_perm_web_navigation">Truy cập hoạt động của trình duyệt trong khi điều hướng</string>
     <string name="addon_permissions">Quyền</string>
+    <string name="addon_data_collection">Thu thập dữ liệu</string>
     <string name="addon_permissions_none">Không có quyền đặc biệt</string>
     <string name="addon_private">Chạy trong thẻ riêng tư</string>
     <string name="addon_private_not_allowed">Tiện ích này không chạy trong thẻ riêng tư</string>
@@ -110,6 +111,11 @@
     <string name="addons_install_from_file_summary">Tiện ích Firefox đã ký (.xpi)</string>
     <string name="addons_installed">Đã cài đặt</string>
     <string name="addons_installing">Đang cài đặt…</string>
+    <string name="addons_add">Thêm</string>
+    <string name="addons_add_description">Thêm %1$s</string>
+    <plurals name="addons_users">
+        <item quantity="other">%1$s người dùng</item>
+    </plurals>
     <string name="addons_manage">Quản lý tiện ích</string>
     <string name="addons_more">Thêm</string>
     <string name="addons_no_button">Tự hoạt động</string>

@@ -84,6 +84,7 @@
     <string name="addon_perm_user_scripts">Разрешать непроверенным сторонним скриптам доступ к вашим данным</string>
     <string name="addon_perm_web_navigation">Получать доступ к активности браузера во время навигации</string>
     <string name="addon_permissions">Разрешения</string>
+    <string name="addon_data_collection">Сбор данных</string>
     <string name="addon_permissions_none">Особых разрешений нет</string>
     <string name="addon_private">Работать в приватных вкладках</string>
     <string name="addon_private_not_allowed">Это дополнение не работает в приватных вкладках</string>
@@ -128,6 +129,14 @@
     <string name="addons_install_from_file_summary">Подписанное дополнение Firefox (.xpi)</string>
     <string name="addons_installed">Установленные</string>
     <string name="addons_installing">Установка…</string>
+    <string name="addons_add">Добавить</string>
+    <string name="addons_add_description">Добавить %1$s</string>
+    <plurals name="addons_users">
+        <item quantity="one">%1$s пользователь</item>
+        <item quantity="few">%1$s пользователя</item>
+        <item quantity="many">%1$s пользователей</item>
+        <item quantity="other">%1$s пользователя</item>
+    </plurals>
     <string name="addons_manage">Управление дополнениями</string>
     <string name="addons_more">Ещё</string>
     <string name="addons_no_button">Работает самостоятельно</string>

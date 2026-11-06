@@ -1,8 +1,13 @@
 package com.solarized.firedown.settings;
 
 import android.content.ActivityNotFoundException;
+import android.icu.text.CompactDecimalFormat;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.TextUtils;
+import android.text.style.RelativeSizeSpan;
 import android.view.View;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -22,10 +27,12 @@ import com.solarized.firedown.addons.AmoCatalog;
 import com.solarized.firedown.addons.AmoCatalogClient;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.settings.ui.BusyPreference;
+import com.solarized.firedown.settings.ui.CatalogPreference;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import org.mozilla.geckoview.WebExtension;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,7 +57,10 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public class AddonsFragment extends BasePreferenceFragment {
 
-    private static final int CATALOG_SUMMARY_LINES = 3;
+    /** The start of the description: Mozilla's summaries run to five lines. */
+    private static final int CATALOG_DESCRIPTION_LINES = 2;
+    /** The rating · users line above it, a little smaller than the description. */
+    private static final float CATALOG_META_SCALE = 12f / 14f;
 
     private static final String KEY_INSTALLED_CATEGORY = "com.solarized.firedown.preferences.addons.installed.category";
     private static final String KEY_INSTALLED_EMPTY = "com.solarized.firedown.preferences.addons.installed.empty";
@@ -84,7 +94,7 @@ public class AddonsFragment extends BasePreferenceFragment {
     private BusyPreference mReinstallUblock;
     /** The rows on screen, by add-on id, so a repaint updates them in place (no icon flicker). */
     private final Map<String, Preference> mInstalledRows = new LinkedHashMap<>();
-    private final Map<String, BusyPreference> mCatalogRows = new LinkedHashMap<>();
+    private final Map<String, CatalogPreference> mCatalogRows = new LinkedHashMap<>();
     private final Map<String, AmoCatalog.Entry> mCatalogEntries = new HashMap<>();
     private PreferenceCategory mCatalogCategory;
     private Preference mCatalogStatus;
@@ -288,23 +298,24 @@ public class AddonsFragment extends BasePreferenceFragment {
             mCatalogEntries.clear();
             int order = 100;
             for (AmoCatalog.Entry entry : shown) {
-                BusyPreference p = new BusyPreference(requireContext());
+                CatalogPreference p = new CatalogPreference(requireContext());
                 p.setKey(KEY_CATALOG_PREFIX + entry.id);
                 p.setPersistent(false);
                 p.setTitle(entry.name);
                 p.setSingleLineTitle(false);
                 p.setIconSpaceReserved(true);
-                // The start of the description; Mozilla's summaries run to
-                // five lines and put the icon beside the third.
-                p.setSummaryMaxLines(CATALOG_SUMMARY_LINES);
                 p.setOrder(order++);
                 if (AddonPolicy.isBuiltInId(entry.id)) {
                     p.setSummary(R.string.addons_built_in);
                     p.setSelectable(false);
                 } else {
-                    p.setSummary(entry.summary);
+                    CharSequence summary = catalogSummary(entry);
+                    p.setSummary(summary);
+                    p.setSummaryMaxLines(catalogSummaryLines(entry));
+                    p.setActionDescription(getString(R.string.addons_add_description, entry.name));
                     p.setOnPreferenceClickListener(pref -> {
-                        // One tap starts it; the row says so until Gecko is done.
+                        // The row and its Add button both start it; the
+                        // spinner replaces the button until Gecko is done.
                         if (!p.isBusy()) {
                             mAddonManager.installFromCatalog(entry);
                         }
@@ -337,16 +348,18 @@ public class AddonsFragment extends BasePreferenceFragment {
             return;
         }
         Set<String> busy = installing == null ? Collections.emptySet() : installing;
-        for (Map.Entry<String, BusyPreference> row : mCatalogRows.entrySet()) {
+        for (Map.Entry<String, CatalogPreference> row : mCatalogRows.entrySet()) {
             AmoCatalog.Entry entry = mCatalogEntries.get(row.getKey());
             if (entry == null || AddonPolicy.isBuiltInId(entry.id)) {
                 continue;
             }
             boolean on = busy.contains(entry.id);
-            BusyPreference p = row.getValue();
+            CatalogPreference p = row.getValue();
             if (p.isBusy() != on) {
+                CharSequence summary = on ? getString(R.string.addons_installing) : catalogSummary(entry);
+                p.setSummaryMaxLines(on ? 1 : catalogSummaryLines(entry));
+                p.setSummary(summary);
                 p.setBusy(on);
-                p.setSummary(on ? getString(R.string.addons_installing) : entry.summary);
             }
         }
         if (mReinstallUblock != null) {
@@ -363,6 +376,50 @@ public class AddonsFragment extends BasePreferenceFragment {
                 mFile.setSummary(on ? R.string.addons_installing : R.string.addons_install_from_file_summary);
             }
         }
+    }
+
+    /**
+     * "★ 4.6 · 1.2M users" over the start of the description: what people
+     * think of it and how many use it, the two facts a list of strangers'
+     * add-ons is picked by (Firefox shows them too). Either half is left
+     * out when Mozilla's list doesn't say.
+     */
+    @NonNull
+    private CharSequence catalogSummary(@NonNull AmoCatalog.Entry entry) {
+        String meta = catalogMeta(entry);
+        if (meta == null) {
+            return entry.summary;
+        }
+        SpannableStringBuilder out = new SpannableStringBuilder(meta);
+        out.setSpan(new RelativeSizeSpan(CATALOG_META_SCALE), 0, meta.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (!entry.summary.isEmpty()) {
+            out.append('\n').append(entry.summary);
+        }
+        return out;
+    }
+
+    /** The meta line takes one of the clamp's lines; the description keeps two. */
+    private int catalogSummaryLines(@NonNull AmoCatalog.Entry entry) {
+        return CATALOG_DESCRIPTION_LINES + (catalogMeta(entry) != null ? 1 : 0);
+    }
+
+    @Nullable
+    private String catalogMeta(@NonNull AmoCatalog.Entry entry) {
+        Locale locale = getResources().getConfiguration().getLocales().get(0);
+        List<String> parts = new ArrayList<>();
+        if (entry.rating > 0) {
+            NumberFormat rating = NumberFormat.getInstance(locale);
+            rating.setMinimumFractionDigits(1);
+            rating.setMaximumFractionDigits(1);
+            parts.add(getString(R.string.addons_rating, rating.format(entry.rating)));
+        }
+        if (entry.users > 0) {
+            String users = CompactDecimalFormat.getInstance(locale, CompactDecimalFormat.CompactStyle.SHORT)
+                    .format(entry.users);
+            parts.add(getResources().getQuantityString(R.plurals.addons_users, entry.users, users));
+        }
+        return parts.isEmpty() ? null : TextUtils.join(" · ", parts);
     }
 
     private void openDetail(@NonNull String id) {

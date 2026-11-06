@@ -66,6 +66,7 @@
     <string name="addon_perm_user_scripts">Mengizinkan skrip pihak ketiga yang tidak terverifikasi mengakses data Anda</string>
     <string name="addon_perm_web_navigation">Mengakses aktivitas peramban selama navigasi</string>
     <string name="addon_permissions">Izin</string>
+    <string name="addon_data_collection">Pengumpulan data</string>
     <string name="addon_permissions_none">Tidak ada izin khusus</string>
     <string name="addon_private">Jalankan di tab pribadi</string>
     <string name="addon_private_not_allowed">Pengaya ini tidak berjalan di tab pribadi</string>
@@ -110,6 +111,11 @@
     <string name="addons_install_from_file_summary">Pengaya Firefox bertanda tangan (.xpi)</string>
     <string name="addons_installed">Terpasang</string>
     <string name="addons_installing">Memasang…</string>
+    <string name="addons_add">Tambah</string>
+    <string name="addons_add_description">Tambah %1$s</string>
+    <plurals name="addons_users">
+        <item quantity="other">%1$s pengguna</item>
+    </plurals>
     <string name="addons_manage">Kelola pengaya</string>
     <string name="addons_more">Lainnya</string>
     <string name="addons_no_button">Bekerja dengan sendirinya</string>

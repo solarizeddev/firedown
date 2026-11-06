@@ -77,6 +77,7 @@
     <string name="addon_perm_user_scripts">允许未经验证的第三方脚本访问你的数据</string>
     <string name="addon_perm_web_navigation">在导航时访问浏览器活动</string>
     <string name="addon_permissions">权限</string>
+    <string name="addon_data_collection">数据收集</string>
     <string name="addon_permissions_none">没有特殊权限</string>
     <string name="addon_private">在隐私标签页中运行</string>
     <string name="addon_private_not_allowed">此附加组件不在隐私标签页中运行</string>
@@ -121,6 +122,11 @@
     <string name="addons_install_from_file_summary">已签名的 Firefox 附加组件（.xpi）</string>
     <string name="addons_installed">已安装</string>
     <string name="addons_installing">正在安装…</string>
+    <string name="addons_add">添加</string>
+    <string name="addons_add_description">添加 %1$s</string>
+    <plurals name="addons_users">
+        <item quantity="other">%1$s 位用户</item>
+    </plurals>
     <string name="addons_manage">管理附加组件</string>
     <string name="addons_more">更多</string>
     <string name="addons_no_button">自动运行</string>

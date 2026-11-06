@@ -80,6 +80,7 @@
     <string name="addon_perm_user_scripts">Niet-geverifieerde scripts van derden toegang geven tot je gegevens</string>
     <string name="addon_perm_web_navigation">Browseractiviteit tijdens navigatie benaderen</string>
     <string name="addon_permissions">Toestemmingen</string>
+    <string name="addon_data_collection">Gegevensverzameling</string>
     <string name="addon_permissions_none">Geen speciale toestemmingen</string>
     <string name="addon_private">Uitvoeren in privétabbladen</string>
     <string name="addon_private_not_allowed">Deze add-on werkt niet in privétabbladen</string>
@@ -124,6 +125,12 @@
     <string name="addons_install_from_file_summary">Een ondertekende Firefox-add-on (.xpi)</string>
     <string name="addons_installed">Geïnstalleerd</string>
     <string name="addons_installing">Installeren…</string>
+    <string name="addons_add">Toevoegen</string>
+    <string name="addons_add_description">%1$s toevoegen</string>
+    <plurals name="addons_users">
+        <item quantity="one">%1$s gebruiker</item>
+        <item quantity="other">%1$s gebruikers</item>
+    </plurals>
     <string name="addons_manage">Add-ons beheren</string>
     <string name="addons_more">Meer</string>
     <string name="addons_no_button">Werkt vanzelf</string>

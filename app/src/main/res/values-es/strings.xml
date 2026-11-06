@@ -81,6 +81,7 @@
     <string name="addon_perm_user_scripts">Permitir que scripts de terceros no verificados accedan a tus datos</string>
     <string name="addon_perm_web_navigation">Acceder a la actividad del navegador durante la navegación</string>
     <string name="addon_permissions">Permisos</string>
+    <string name="addon_data_collection">Recopilación de datos</string>
     <string name="addon_permissions_none">Sin permisos especiales</string>
     <string name="addon_private">Ejecutar en pestañas privadas</string>
     <string name="addon_private_not_allowed">Este complemento no funciona en pestañas privadas</string>
@@ -125,6 +126,13 @@
     <string name="addons_install_from_file_summary">Un complemento de Firefox firmado (.xpi)</string>
     <string name="addons_installed">Instalados</string>
     <string name="addons_installing">Instalando…</string>
+    <string name="addons_add">Añadir</string>
+    <string name="addons_add_description">Añadir %1$s</string>
+    <plurals name="addons_users">
+        <item quantity="one">%1$s usuario</item>
+        <item quantity="many">%1$s usuarios</item>
+        <item quantity="other">%1$s usuarios</item>
+    </plurals>
     <string name="addons_manage">Administrar complementos</string>
     <string name="addons_more">Más</string>
     <string name="addons_no_button">Funciona por sí solo</string>
