@@ -4926,7 +4926,12 @@ is **~75 MB**, the APK 205 MB.
   where the script's taps are `Inject motion`), about 2.3 s after the shade
   opened, i.e. someone reacting to "Tap to update" on screen. The script
   now says up front to keep hands off the phone, and names such a touch
-  when the phone logs one. Every
+  when the phone logs one. The update SHEET has the same exposure: a touch
+  outside it closes it as "Not now" (the 1.2.8 run's sheet was drawn and a
+  finger closed it 1.1 s later, which read as "the sheet did not appear").
+  `open_sheet` reads the case log after drawing (`sheet_seen`: never drawn,
+  drawn, or the time of the first `Btn_touch` after it), names the touch
+  and tries once more; a second touch fails with that reason. Every
   phone setting it touches (animations, stay-on, rotation, font size,
   appops, the notification grant) is put back. It runs on
   macOS (bash 3.2, BSD awk: the screen parsers split a dump into nodes in

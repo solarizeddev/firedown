@@ -42,6 +42,10 @@ COPY_S = float(os.environ.get("FAKE_COPY_S", "3"))
 SDK = int(os.environ.get("FAKE_SDK", "34"))
 DIALOG = os.environ.get("FAKE_DIALOG", "") == "1" or SDK < 31
 SHADE = os.environ.get("FAKE_SHADE", "")
+# FAKE_SHEET=touched: a finger lands outside the first sheet the script
+# reads and closes it, as "Not now" does; =touched-twice does it to the next
+# one too.
+SHEET = os.environ.get("FAKE_SHEET", "")
 NOTIF_GRANTED = os.environ.get("FAKE_NOTIF_GRANTED", "1") == "1"
 ANSWER_S = 0.5
 APK_PATH = "/storage/emulated/0/Android/data/%s/files/firedown.apk" % PKG
@@ -404,6 +408,14 @@ def shell(st, cmd):
         # As on a Samsung: a plain dump reads the window Android counts as
         # active, which stays the one under the shade; --windows reads them
         # all (Android 11+).
+        touches = {"touched": 1, "touched-twice": 2}.get(SHEET, 0)
+        if (st["focus"] == "app" and st["sheet"] and st["footer"] == "button"
+                and st.get("sheet_touches", 0) < touches):
+            # A finger lands outside the sheet: it closes, snoozed.
+            st["sheet_touches"] = st.get("sheet_touches", 0) + 1
+            log(st, "InputReader", "Btn_touch(14): value=1 when=1.0")
+            st["sheet"] = False
+            st["snoozed"] = True
         if st["shade"] and SHADE == "touched" and not st.get("touched"):
             # A finger lands on the shade while it is being read: it closes.
             st["touched"] = True
