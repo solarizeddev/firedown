@@ -15,9 +15,10 @@ import com.solarized.firedown.geckoview.GeckoComponents;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import com.solarized.firedown.geckoview.GeckoUblockHelper;
 import com.solarized.firedown.geckoview.media.GeckoMediaController;
+import com.solarized.firedown.p2pshare.P2pShareController;
 
-import dagger.hilt.InstallIn;
 import dagger.hilt.EntryPoint;
+import dagger.hilt.InstallIn;
 import dagger.hilt.components.SingletonComponent;
 
 @EntryPoint
@@ -67,4 +68,8 @@ public interface RepositoryEntryPoint {
     AddonManager getAddonManager();
 
     AmoCatalogClient getAmoCatalogClient();
+
+    // Exposed for P2pScreensDeviceTest (androidTest) — the share session the
+    // Send and Receive screens render, so the test can wait on its stage.
+    P2pShareController getP2pShareController();
 }

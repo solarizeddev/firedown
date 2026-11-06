@@ -1,6 +1,13 @@
 ## [1.2.7] - 2026-11-06
 
-- Send directly: one simple list of where to send, with private links in Settings
+- Send directly: send by link or to someone next to you, by Wi‑Fi or QR code
+- Turning DRM on lets protected videos play, in private tabs too, with no per-site prompt
+- Pop-up windows such as sign-in and payment pop-ups now open and work
+- A tab that closes itself now shows the next tab instead of a frozen page
+- Websites can no longer ask for your location
+- Websites asking for the camera or microphone are refused, with a notice saying so
+- Pages can use Android's share sheet and lock the screen rotation
+- The shield no longer counts other add-ons as ad blockers
 
 ## [1.2.6] - 2026-11-05
 

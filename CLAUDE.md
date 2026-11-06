@@ -5732,7 +5732,14 @@ and the in-person path was a QR to aim across a table. Now:
   swipe-away reads as an ambiguous decline); the
   human-relayed reply only when both push paths failed
   (`ShareState.answerCode`). Don't bring back a second card for a state,
-  a spinner at rest, or a per-share privacy choice.
+  a spinner at rest, or a per-share privacy choice. **Device check:
+  `phone/P2pScreensDeviceTest`** (androidTest, Espresso, one phone): the
+  real Downloads activity and share session; the Send screen lists the two
+  destinations, "Someone next to you" unfolds to the QR on its tile and the
+  receiving path and folds again; then the Send screen's own offer is handed
+  to the Receive screen, which shows it as the request hero (the type tile
+  labelled, never "BIN File") and Decline returns to "Visible as". Written
+  for 1.2.7; not run on a device at write time.
 
 **Transport: Gecko's own WebRTC DataChannel — deliberately NO libwebrtc
 dependency** (~10 MB/ABI to duplicate what GeckoView ships).
@@ -9028,6 +9035,16 @@ missing callback does now, and what stays off on purpose:
   frame-redirect prompts (Gecko blocks them, no "Allow" yet), app links
   inside iframes (`onSubframeLoadRequest` allows; nothing happens).
   `onSlowScript` stays default (Gecko stops the script, as in Firefox).
+- **Device check: `geckoview/BrowserCallbacksDeviceTest`** (androidTest, no
+  network): a loopback page's tap-opened `window.open` gets a real window
+  that is listed as the opener's child tab, becomes the tab on screen, and
+  whose `window.opener.postMessage` reaches the opener (the test process
+  surviving is part of the check: a session opened twice crashes); and
+  Widevine requested with the DRM switch off is refused with the tab's
+  `isDrmRefusedHere()` set, and with it on is granted with no dialog, in a
+  regular and a private tab (skipped without Widevine). Tabs are built with
+  `GeckoComponents.connectSession` on a `SiteAuditActivity` view, no
+  browser fragment. Written for 1.2.7; not run on a device at write time.
 
 #### Long-press context menu — glyphs are index-paired arrays, image rows get a thumbnail
 
