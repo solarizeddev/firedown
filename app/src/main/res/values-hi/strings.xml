@@ -790,14 +790,14 @@
     <string name="p2p_reply_no_session">यह जवाब ऐसे शेयर का है जो अब खुला नहीं है।</string>
     <string name="p2p_send_to">कहाँ भेजें</string>
     <string name="p2p_on_this_wifi">इस Wi‑Fi पर</string>
-    <string name="p2p_nearby_footnote">इस वाई‑फ़ाई पर कोई फ़ोन डाउनलोड → फ़ाइल प्राप्त करें खोलते ही यहाँ दिखेगा।</string>
+    <string name="p2p_nearby_footnote">इस वाई‑फ़ाई पर कोई फ़ोन डाउनलोड → ⋮ → फ़ाइल प्राप्त करें खोलते ही यहाँ दिखेगा।</string>
     <string name="p2p_share_link">लिंक शेयर करें</string>
     <string name="p2p_share_link_hint">किसी भी ऐप से। हर जगह काम करता है।</string>
     <string name="p2p_preparing_link">लिंक तैयार हो रहा है…</string>
     <string name="p2p_link_shared">शेयर किया गया</string>
     <string name="p2p_show_qr_code">QR कोड दिखाएँ</string>
     <string name="p2p_show_qr_code_hint">यहीं मौजूद फ़ोन के लिए, बिना Wi‑Fi के।</string>
-    <string name="p2p_qr_scan_line">उनके फ़ोन पर: डाउनलोड → फ़ाइल प्राप्त करें → कोड स्कैन करें। कैमरा ऐप भी काम करता है।</string>
+    <string name="p2p_qr_scan_line">उनके फ़ोन पर: डाउनलोड → ⋮ → फ़ाइल प्राप्त करें → कोड स्कैन करें। कैमरा ऐप भी काम करता है।</string>
     <string name="p2p_hide_qr_code">QR कोड छिपाएँ</string>
     <string name="p2p_qr_too_big">यह शेयर QR कोड के लिए बहुत बड़ा है। इसके बजाय लिंक शेयर करें।</string>
     <string name="p2p_waiting_note">उनके स्वीकार करते ही ट्रांसफ़र शुरू हो जाता है, भले ही आप यह स्क्रीन छोड़ दें।</string>

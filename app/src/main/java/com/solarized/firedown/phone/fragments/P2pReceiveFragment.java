@@ -2,7 +2,7 @@ package com.solarized.firedown.phone.fragments;
 
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.format.Formatter;
 import android.text.style.ForegroundColorSpan;
@@ -57,6 +57,9 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
      */
     public static final String ARG_SIGNALING_BASE = "p2p.sig.base";
     public static final String ARG_SIGNALING_ID = "p2p.sig.id";
+
+    /** Stands in for the sender's name while the sentence is formatted. */
+    private static final String NAME_MARK = "\uE000";
 
     private View mView;
     private String mRenderedReplyCode;
@@ -215,6 +218,8 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
             }
             // CONNECTING / TRANSFERRING keep running: the service carries them.
         }
+        // A rebuilt view starts with an empty reply QR: draw it again.
+        mRenderedReplyCode = null;
         mView = null;
         super.onDestroyView();
     }
@@ -326,10 +331,14 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
         if (device.isEmpty()) {
             from = getString(R.string.p2p_wants_to_send_unknown);
         } else {
-            String text = getString(R.string.p2p_wants_to_send, device);
-            SpannableString styled = new SpannableString(text);
-            int at = text.indexOf(device);
+            // The name is placed where the translation puts %1$s: format with a
+            // marker, then swap the name in, so the bold run is the argument
+            // even when the sentence contains the same word.
+            String text = getString(R.string.p2p_wants_to_send, NAME_MARK);
+            SpannableStringBuilder styled = new SpannableStringBuilder(text);
+            int at = text.indexOf(NAME_MARK);
             if (at >= 0) {
+                styled.replace(at, at + NAME_MARK.length(), device);
                 styled.setSpan(new StyleSpan(Typeface.BOLD), at, at + device.length(),
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 styled.setSpan(new ForegroundColorSpan(MaterialColors.getColor(mView,
@@ -343,8 +352,11 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
                 state.fileName == null ? "" : state.fileName);
         ((TextView) mView.findViewById(R.id.p2p_preview_tag)).setText(
                 Formatter.formatShortFileSize(requireContext(), state.fileSize));
-        ((ImageView) mView.findViewById(R.id.p2p_preview_icon)).setImageResource(
-                FileUriHelper.getMimeTypeIcon(state.mime == null ? "" : state.mime));
+        String mime = state.mime == null ? "" : state.mime;
+        ImageView icon = mView.findViewById(R.id.p2p_preview_icon);
+        icon.setImageResource(FileUriHelper.getMimeTypeIcon(mime));
+        // The tile is the only visual statement of the file's type.
+        icon.setContentDescription(FileUriHelper.getLongMimeText(requireContext(), mime).trim());
     }
 
     /**

@@ -951,14 +951,14 @@
     <string name="p2p_reply_no_session">この返信は、すでに閉じられた共有のものです。</string>
     <string name="p2p_send_to">送信先</string>
     <string name="p2p_on_this_wifi">この Wi‑Fi 上</string>
-    <string name="p2p_nearby_footnote">この Wi‑Fi の端末は「ダウンロード」→「ファイルを受信」を開くとここに表示されます。</string>
+    <string name="p2p_nearby_footnote">この Wi‑Fi の端末は「ダウンロード」→ ⋮ →「ファイルを受信」を開くとここに表示されます。</string>
     <string name="p2p_share_link">リンクを共有</string>
     <string name="p2p_share_link_hint">どのアプリからでも。どこでも使えます。</string>
     <string name="p2p_preparing_link">リンクを準備中…</string>
     <string name="p2p_link_shared">共有済み</string>
     <string name="p2p_show_qr_code">QR コードを表示</string>
     <string name="p2p_show_qr_code_hint">すぐそばの端末向け。Wi‑Fi は不要です。</string>
-    <string name="p2p_qr_scan_line">相手の端末で「ダウンロード」→「ファイルを受信」→「コードをスキャン」。カメラアプリでも読み取れます。</string>
+    <string name="p2p_qr_scan_line">相手の端末で「ダウンロード」→ ⋮ →「ファイルを受信」→「コードをスキャン」。カメラアプリでも読み取れます。</string>
     <string name="p2p_hide_qr_code">QR コードを隠す</string>
     <string name="p2p_qr_too_big">この共有は QR コードには大きすぎます。代わりにリンクを共有してください。</string>
     <string name="p2p_waiting_note">相手が承認すると転送が始まります。この画面を離れても大丈夫です。</string>

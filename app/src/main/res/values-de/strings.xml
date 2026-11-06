@@ -956,14 +956,14 @@
     <string name="p2p_reply_no_session">Diese Antwort gehört zu einer Freigabe, die nicht mehr offen ist.</string>
     <string name="p2p_send_to">Senden an</string>
     <string name="p2p_on_this_wifi">In diesem WLAN</string>
-    <string name="p2p_nearby_footnote">Ein Telefon in diesem WLAN erscheint hier, sobald es Downloads → Datei empfangen öffnet.</string>
+    <string name="p2p_nearby_footnote">Ein Telefon in diesem WLAN erscheint hier, sobald es Downloads → ⋮ → Datei empfangen öffnet.</string>
     <string name="p2p_share_link">Link teilen</string>
     <string name="p2p_share_link_hint">Über jede App. Funktioniert überall.</string>
     <string name="p2p_preparing_link">Link wird vorbereitet…</string>
     <string name="p2p_link_shared">Geteilt</string>
     <string name="p2p_show_qr_code">QR-Code anzeigen</string>
     <string name="p2p_show_qr_code_hint">Für ein Telefon direkt hier, ohne WLAN.</string>
-    <string name="p2p_qr_scan_line">Auf dem anderen Telefon: Downloads → Datei empfangen → Code scannen. Die Kamera-App geht auch.</string>
+    <string name="p2p_qr_scan_line">Auf dem anderen Telefon: Downloads → ⋮ → Datei empfangen → Code scannen. Die Kamera-App geht auch.</string>
     <string name="p2p_hide_qr_code">QR-Code ausblenden</string>
     <string name="p2p_qr_too_big">Diese Freigabe ist zu groß für einen QR-Code. Teile stattdessen einen Link.</string>
     <string name="p2p_waiting_note">Die Übertragung startet, sobald sie annehmen, auch wenn du diesen Bildschirm verlässt.</string>

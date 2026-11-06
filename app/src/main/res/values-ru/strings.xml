@@ -872,14 +872,14 @@
     <string name="p2p_reply_no_session">Этот ответ относится к передаче, которая уже закрыта.</string>
     <string name="p2p_send_to">Куда отправить</string>
     <string name="p2p_on_this_wifi">В этой сети Wi‑Fi</string>
-    <string name="p2p_nearby_footnote">Телефон в этой сети Wi‑Fi появится здесь, когда откроет Загрузки → Получить файл.</string>
+    <string name="p2p_nearby_footnote">Телефон в этой сети Wi‑Fi появится здесь, когда откроет Загрузки → ⋮ → Получить файл.</string>
     <string name="p2p_share_link">Поделиться ссылкой</string>
     <string name="p2p_share_link_hint">Через любое приложение. Работает где угодно.</string>
     <string name="p2p_preparing_link">Подготовка ссылки…</string>
     <string name="p2p_link_shared">Отправлено</string>
     <string name="p2p_show_qr_code">Показать QR-код</string>
     <string name="p2p_show_qr_code_hint">Для телефона прямо здесь, без Wi‑Fi.</string>
-    <string name="p2p_qr_scan_line">На их телефоне: Загрузки → Получить файл → Сканировать код. Подойдёт и приложение камеры.</string>
+    <string name="p2p_qr_scan_line">На их телефоне: Загрузки → ⋮ → Получить файл → Сканировать код. Подойдёт и приложение камеры.</string>
     <string name="p2p_hide_qr_code">Скрыть QR-код</string>
     <string name="p2p_qr_too_big">Эта передача слишком велика для QR-кода. Поделитесь ссылкой.</string>
     <string name="p2p_waiting_note">Передача начнётся, когда они примут, даже если вы покинете этот экран.</string>

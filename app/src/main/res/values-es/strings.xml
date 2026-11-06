@@ -959,14 +959,14 @@
     <string name="p2p_reply_no_session">Esta respuesta pertenece a un envío que ya no está abierto.</string>
     <string name="p2p_send_to">Enviar a</string>
     <string name="p2p_on_this_wifi">En esta red Wi‑Fi</string>
-    <string name="p2p_nearby_footnote">Un teléfono de esta Wi‑Fi aparece aquí cuando abre Descargas → Recibir un archivo.</string>
+    <string name="p2p_nearby_footnote">Un teléfono de esta Wi‑Fi aparece aquí cuando abre Descargas → ⋮ → Recibir un archivo.</string>
     <string name="p2p_share_link">Compartir un enlace</string>
     <string name="p2p_share_link_hint">Desde cualquier app. Funciona en cualquier lugar.</string>
     <string name="p2p_preparing_link">Preparando el enlace…</string>
     <string name="p2p_link_shared">Compartido</string>
     <string name="p2p_show_qr_code">Mostrar un código QR</string>
     <string name="p2p_show_qr_code_hint">Para un teléfono que está aquí, sin Wi‑Fi.</string>
-    <string name="p2p_qr_scan_line">En su teléfono: Descargas → Recibir un archivo → Escanear código. También sirve la app de cámara.</string>
+    <string name="p2p_qr_scan_line">En su teléfono: Descargas → ⋮ → Recibir un archivo → Escanear código. También sirve la app de cámara.</string>
     <string name="p2p_hide_qr_code">Ocultar el código QR</string>
     <string name="p2p_qr_too_big">Este envío es demasiado grande para un código QR. Comparte un enlace en su lugar.</string>
     <string name="p2p_waiting_note">La transferencia empieza cuando acepten, aunque salgas de esta pantalla.</string>

@@ -831,14 +831,14 @@
     <string name="p2p_reply_no_session">Tato odpověď patří ke sdílení, které už není otevřené.</string>
     <string name="p2p_send_to">Poslat do</string>
     <string name="p2p_on_this_wifi">V této síti Wi‑Fi</string>
-    <string name="p2p_nearby_footnote">Telefon na této Wi‑Fi se tu zobrazí, jakmile otevře Stahování → Přijmout soubor.</string>
+    <string name="p2p_nearby_footnote">Telefon na této Wi‑Fi se tu zobrazí, jakmile otevře Stahování → ⋮ → Přijmout soubor.</string>
     <string name="p2p_share_link">Sdílet odkaz</string>
     <string name="p2p_share_link_hint">Přes jakoukoli aplikaci. Funguje kdekoli.</string>
     <string name="p2p_preparing_link">Připravuje se odkaz…</string>
     <string name="p2p_link_shared">Sdíleno</string>
     <string name="p2p_show_qr_code">Zobrazit QR kód</string>
     <string name="p2p_show_qr_code_hint">Pro telefon přímo tady, bez Wi‑Fi.</string>
-    <string name="p2p_qr_scan_line">Na druhém telefonu: Stahování → Přijmout soubor → Naskenovat kód. Funguje i aplikace fotoaparátu.</string>
+    <string name="p2p_qr_scan_line">Na druhém telefonu: Stahování → ⋮ → Přijmout soubor → Naskenovat kód. Funguje i aplikace fotoaparátu.</string>
     <string name="p2p_hide_qr_code">Skrýt QR kód</string>
     <string name="p2p_qr_too_big">Toto sdílení je na QR kód příliš velké. Sdílejte místo toho odkaz.</string>
     <string name="p2p_waiting_note">Přenos začne, jakmile přijmou, i když tuto obrazovku opustíte.</string>

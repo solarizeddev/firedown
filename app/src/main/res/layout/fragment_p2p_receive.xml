@@ -170,7 +170,7 @@
                         android:layout_marginTop="16dp"
                         android:ellipsize="middle"
                         android:gravity="center"
-                        android:maxLines="2"
+                        android:maxLines="1"
                         android:textAppearance="?attr/textAppearanceTitleMedium"
                         android:textColor="?attr/colorOnSurface"
                         tools:text="Robot head buddy.mp4" />

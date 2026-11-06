@@ -233,6 +233,8 @@ public class P2pSendFragment extends P2pShareBaseFragment {
             mP2pController.dismissFinished();
         }
         mLinkPreparing = false;
+        // A rebuilt view starts with an empty QR image: draw it again.
+        mRenderedQrCode = null;
         mView = null;
         mQrGroup = null;
         super.onDestroyView();

@@ -748,14 +748,14 @@
     <string name="p2p_nearby_busy">%1$s đang bận với một lượt truyền khác.</string>
     <string name="p2p_send_to">Gửi tới</string>
     <string name="p2p_on_this_wifi">Trên Wi‑Fi này</string>
-    <string name="p2p_nearby_footnote">Điện thoại trên Wi‑Fi này sẽ xuất hiện ở đây khi mở Tải xuống → Nhận tệp.</string>
+    <string name="p2p_nearby_footnote">Điện thoại trên Wi‑Fi này sẽ xuất hiện ở đây khi mở Tải xuống → ⋮ → Nhận tệp.</string>
     <string name="p2p_share_link">Chia sẻ liên kết</string>
     <string name="p2p_share_link_hint">Qua bất kỳ ứng dụng nào. Dùng được ở mọi nơi.</string>
     <string name="p2p_preparing_link">Đang chuẩn bị liên kết…</string>
     <string name="p2p_link_shared">Đã chia sẻ</string>
     <string name="p2p_show_qr_code">Hiện mã QR</string>
     <string name="p2p_show_qr_code_hint">Cho điện thoại ngay bên cạnh, không cần Wi‑Fi.</string>
-    <string name="p2p_qr_scan_line">Trên điện thoại của họ: Tải xuống → Nhận tệp → Quét mã. Ứng dụng máy ảnh cũng được.</string>
+    <string name="p2p_qr_scan_line">Trên điện thoại của họ: Tải xuống → ⋮ → Nhận tệp → Quét mã. Ứng dụng máy ảnh cũng được.</string>
     <string name="p2p_hide_qr_code">Ẩn mã QR</string>
     <string name="p2p_qr_too_big">Lượt chia sẻ này quá lớn để tạo mã QR. Hãy chia sẻ liên kết thay thế.</string>
     <string name="p2p_waiting_note">Quá trình truyền bắt đầu khi họ chấp nhận, kể cả khi bạn rời màn hình này.</string>

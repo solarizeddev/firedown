@@ -820,14 +820,14 @@
     <string name="p2p_reply_no_session">Tämä vastaus kuuluu jakoon, joka ei ole enää auki.</string>
     <string name="p2p_send_to">Lähetä kohteeseen</string>
     <string name="p2p_on_this_wifi">Tässä Wi‑Fi-verkossa</string>
-    <string name="p2p_nearby_footnote">Tämän Wi‑Fin puhelin näkyy tässä, kun se avaa Lataukset → Vastaanota tiedosto.</string>
+    <string name="p2p_nearby_footnote">Tämän Wi‑Fin puhelin näkyy tässä, kun se avaa Lataukset → ⋮ → Vastaanota tiedosto.</string>
     <string name="p2p_share_link">Jaa linkki</string>
     <string name="p2p_share_link_hint">Minkä tahansa sovelluksen kautta. Toimii kaikkialla.</string>
     <string name="p2p_preparing_link">Valmistellaan linkkiä…</string>
     <string name="p2p_link_shared">Jaettu</string>
     <string name="p2p_show_qr_code">Näytä QR-koodi</string>
     <string name="p2p_show_qr_code_hint">Tässä lähellä olevalle puhelimelle, ilman Wi‑Fi-yhteyttä.</string>
-    <string name="p2p_qr_scan_line">Toisessa puhelimessa: Lataukset → Vastaanota tiedosto → Skannaa koodi. Myös kamerasovellus käy.</string>
+    <string name="p2p_qr_scan_line">Toisessa puhelimessa: Lataukset → ⋮ → Vastaanota tiedosto → Skannaa koodi. Myös kamerasovellus käy.</string>
     <string name="p2p_hide_qr_code">Piilota QR-koodi</string>
     <string name="p2p_qr_too_big">Tämä jako on liian suuri QR-koodiksi. Jaa linkki sen sijaan.</string>
     <string name="p2p_waiting_note">Siirto alkaa, kun he hyväksyvät, vaikka poistuisit tältä näytöltä.</string>

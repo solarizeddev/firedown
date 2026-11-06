@@ -708,14 +708,14 @@
     <string name="p2p_nearby_busy">%1$s sedang sibuk dengan transfer lain.</string>
     <string name="p2p_send_to">Kirim ke</string>
     <string name="p2p_on_this_wifi">Di Wi‑Fi ini</string>
-    <string name="p2p_nearby_footnote">Ponsel di Wi‑Fi ini muncul di sini setelah membuka Unduhan → Terima berkas.</string>
+    <string name="p2p_nearby_footnote">Ponsel di Wi‑Fi ini muncul di sini setelah membuka Unduhan → ⋮ → Terima berkas.</string>
     <string name="p2p_share_link">Bagikan tautan</string>
     <string name="p2p_share_link_hint">Lewat aplikasi apa pun. Berfungsi di mana saja.</string>
     <string name="p2p_preparing_link">Menyiapkan tautan…</string>
     <string name="p2p_link_shared">Dibagikan</string>
     <string name="p2p_show_qr_code">Tampilkan kode QR</string>
     <string name="p2p_show_qr_code_hint">Untuk ponsel di dekat Anda, tanpa Wi‑Fi.</string>
-    <string name="p2p_qr_scan_line">Di ponsel mereka: Unduhan → Terima berkas → Pindai kode. Aplikasi kamera juga bisa.</string>
+    <string name="p2p_qr_scan_line">Di ponsel mereka: Unduhan → ⋮ → Terima berkas → Pindai kode. Aplikasi kamera juga bisa.</string>
     <string name="p2p_hide_qr_code">Sembunyikan kode QR</string>
     <string name="p2p_qr_too_big">Berbagi ini terlalu besar untuk kode QR. Bagikan tautan saja.</string>
     <string name="p2p_waiting_note">Transfer dimulai saat mereka menerima, meski Anda meninggalkan layar ini.</string>

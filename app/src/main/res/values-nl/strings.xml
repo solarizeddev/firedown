@@ -862,14 +862,14 @@
     <string name="p2p_reply_no_session">Dit antwoord hoort bij een deelactie die niet meer open is.</string>
     <string name="p2p_send_to">Versturen naar</string>
     <string name="p2p_on_this_wifi">Op deze wifi</string>
-    <string name="p2p_nearby_footnote">Een telefoon op deze wifi verschijnt hier zodra die Downloads → Een bestand ontvangen opent.</string>
+    <string name="p2p_nearby_footnote">Een telefoon op deze wifi verschijnt hier zodra die Downloads → ⋮ → Een bestand ontvangen opent.</string>
     <string name="p2p_share_link">Een link delen</string>
     <string name="p2p_share_link_hint">Via elke app. Werkt overal.</string>
     <string name="p2p_preparing_link">Link voorbereiden…</string>
     <string name="p2p_link_shared">Gedeeld</string>
     <string name="p2p_show_qr_code">Een QR-code tonen</string>
     <string name="p2p_show_qr_code_hint">Voor een telefoon hier vlakbij, zonder wifi.</string>
-    <string name="p2p_qr_scan_line">Op hun telefoon: Downloads → Een bestand ontvangen → Code scannen. De camera-app werkt ook.</string>
+    <string name="p2p_qr_scan_line">Op hun telefoon: Downloads → ⋮ → Een bestand ontvangen → Code scannen. De camera-app werkt ook.</string>
     <string name="p2p_hide_qr_code">QR-code verbergen</string>
     <string name="p2p_qr_too_big">Deze deelactie is te groot voor een QR-code. Deel in plaats daarvan een link.</string>
     <string name="p2p_waiting_note">De overdracht start zodra ze accepteren, ook als je dit scherm verlaat.</string>

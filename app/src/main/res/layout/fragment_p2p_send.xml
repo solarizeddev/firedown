@@ -252,8 +252,11 @@
                         tools:visibility="visible">
 
                         <!-- The QR on its own tile, one step off the card's
-                             tone in both themes, so the white code has an edge. -->
-                        <FrameLayout
+                             tone in both themes, so the white code has an edge.
+                             The code is square and at most 232dp: it shrinks
+                             with the tile on a narrow phone instead of running
+                             into the tile's padding. -->
+                        <androidx.constraintlayout.widget.ConstraintLayout
                             android:id="@+id/p2p_qr_tile"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -263,14 +266,19 @@
 
                             <ImageView
                                 android:id="@+id/p2p_qr"
-                                android:layout_width="232dp"
-                                android:layout_height="232dp"
-                                android:layout_gravity="center_horizontal"
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
                                 android:background="@drawable/bg_p2p_qr"
                                 android:contentDescription="@string/p2p_qr_content_desc"
-                                android:padding="12dp" />
+                                android:padding="12dp"
+                                android:scaleType="fitCenter"
+                                app:layout_constraintDimensionRatio="1:1"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintWidth_max="232dp" />
 
-                        </FrameLayout>
+                        </androidx.constraintlayout.widget.ConstraintLayout>
 
                         <!-- Where the other person taps: one line, no steps. -->
                         <TextView

@@ -5666,7 +5666,7 @@ and the in-person path was a QR to aim across a table. Now:
   (`item_p2p_device`, corners from `SheetGroups.applyCorners`, so a press
   stays inside the card). With nobody found, a FOOTNOTE under the group
   says how a phone gets listed ("A phone on this Wi‑Fi appears here once
-  it opens Downloads → Receive a file."): plain BodySmall on the cards'
+  it opens Downloads → ⋮ → Receive a file."): plain BodySmall on the cards'
   16dp edge, no glyph, gone once a phone is listed. Not a card (every
   card can be tapped; it shipped for one build as a card with a real
   destination's disc, the heaviest row on the screen) and not a glyph
@@ -5702,8 +5702,16 @@ and the in-person path was a QR to aim across a table. Now:
   request REPLACES that stage and is laid out as the decision, AirDrop's
   shape: "<device> wants to send you" first (the name in the title's
   weight, `p2p_wants_to_send`; "Someone…" when none), the file type's
-  glyph on a 112dp tile, name and size, full-width Decline / Accept, and
-  "Nothing is received until you accept." (a bottom sheet over the
+  glyph on a 112dp tile (the type is its TalkBack label), the name on ONE
+  line with "…" in the middle so the extension survives (Android ellipsizes
+  the middle only on one line; at two it just cuts the end), the size,
+  full-width Decline / Accept, and "Nothing is received until you
+  accept." The name is bolded where the translation puts `%1$s`
+  (formatted with a marker, then swapped in), never found by searching
+  the sentence. An instruction that walks the menus names each step in
+  the UI's own words and includes the ⋮ ("Receive a file" is in the
+  Downloads overflow). The QR on its tile is square and at most 232dp, so
+  it shrinks on a 320dp phone. (A bottom sheet over the
   waiting screen, Quick Share's shape, was sketched and not taken: a
   swipe-away reads as an ambiguous decline); the
   human-relayed reply only when both push paths failed
