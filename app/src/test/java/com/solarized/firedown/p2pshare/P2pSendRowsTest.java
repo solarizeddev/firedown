@@ -29,9 +29,9 @@ public class P2pSendRowsTest {
     public void restWithNobodyNearbyHasNoSpinner() {
         List<Row> rows = P2pSendRows.build(Phase.READY, Collections.emptyList(), null,
                 false, false, false, EXPIRES, NOW);
-        assertEquals(3, rows.size());
-        assertEquals(Kind.EMPTY, rows.get(0).kind);
-        assertFalse(rows.get(0).tappable);
+        assertEquals(2, rows.size());
+        assertEquals(Kind.LINK, rows.get(0).kind);
+        assertEquals(Kind.QR, rows.get(1).kind);
         for (Row row : rows) {
             assertFalse(row.toString(), row.spinner);
         }
@@ -52,8 +52,8 @@ public class P2pSendRowsTest {
     public void sharedLinkCountsDown() {
         List<Row> rows = P2pSendRows.build(Phase.READY, Collections.emptyList(), null,
                 true, false, false, NOW + 13 * 60_000L + 1_000L, NOW);
-        assertEquals(Sub.LINK_SHARED, rows.get(1).sub);
-        assertEquals(14, rows.get(1).minutesLeft);
+        assertEquals(Sub.LINK_SHARED, rows.get(0).sub);
+        assertEquals(14, rows.get(0).minutesLeft);
         assertEquals(1, P2pSendRows.minutesLeft(NOW + 10_000L, NOW));
         assertTrue(P2pSendRows.somethingOut(Phase.READY, null, true));
     }

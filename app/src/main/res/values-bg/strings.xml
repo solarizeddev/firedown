@@ -779,14 +779,14 @@
     <string name="p2p_reply_no_session">Този отговор е за споделяне, което вече не е отворено.</string>
     <string name="p2p_send_to">Изпращане до</string>
     <string name="p2p_on_this_wifi">В тази Wi‑Fi мрежа</string>
-    <string name="p2p_nearby_footnote">Телефон в тази Wi‑Fi мрежа се появява тук, щом отвори Изтегляния → ⋮ → Получаване на файл.</string>
     <string name="p2p_share_link">Споделете линк</string>
     <string name="p2p_share_link_hint">Чрез всяко приложение. Работи навсякъде.</string>
     <string name="p2p_preparing_link">Подготовка на линка…</string>
     <string name="p2p_link_shared">Споделено</string>
     <string name="p2p_show_qr_code">Покажи QR код</string>
     <string name="p2p_show_qr_code_hint">За телефон точно тук, без Wi‑Fi.</string>
-    <string name="p2p_qr_scan_line">На другия телефон: Изтегляния → ⋮ → Получаване на файл → Сканирай кода. Работи и приложението за камера.</string>
+    <string name="p2p_qr_scan_line">Те докосват Сканирай кода или сканират с което и да е приложение за камера.</string>
+    <string name="p2p_send_to_hint">Те отварят Изтегляния → ⋮ → Получаване на файл. В тази Wi‑Fi мрежа телефонът им се появява тук.</string>
     <string name="p2p_hide_qr_code">Скрий QR кода</string>
     <string name="p2p_qr_too_big">Това споделяне е твърде голямо за QR код. Вместо това споделете линк.</string>
     <string name="p2p_waiting_note">Трансферът започва, щом приемат, дори ако излезете от този екран.</string>

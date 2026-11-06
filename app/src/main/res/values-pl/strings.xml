@@ -870,14 +870,14 @@
     <string name="p2p_reply_no_session">Ta odpowiedź należy do udostępniania, które nie jest już otwarte.</string>
     <string name="p2p_send_to">Wyślij do</string>
     <string name="p2p_on_this_wifi">W tej sieci Wi‑Fi</string>
-    <string name="p2p_nearby_footnote">Telefon w tej sieci Wi‑Fi pojawi się tutaj, gdy otworzy Pliki do pobrania → ⋮ → Odbierz plik.</string>
     <string name="p2p_share_link">Udostępnij link</string>
     <string name="p2p_share_link_hint">Przez dowolną aplikację. Działa wszędzie.</string>
     <string name="p2p_preparing_link">Przygotowywanie linku…</string>
     <string name="p2p_link_shared">Udostępniono</string>
     <string name="p2p_show_qr_code">Pokaż kod QR</string>
     <string name="p2p_show_qr_code_hint">Dla telefonu tuż obok, bez Wi‑Fi.</string>
-    <string name="p2p_qr_scan_line">Na ich telefonie: Pliki do pobrania → ⋮ → Odbierz plik → Skanuj kod. Aplikacja aparatu też zadziała.</string>
+    <string name="p2p_qr_scan_line">Potem Skanuj kod albo dowolna aplikacja aparatu.</string>
+    <string name="p2p_send_to_hint">Na ich telefonie: Pliki do pobrania → ⋮ → Odbierz plik. W tej sieci Wi‑Fi telefon pojawi się tutaj.</string>
     <string name="p2p_hide_qr_code">Ukryj kod QR</string>
     <string name="p2p_qr_too_big">To udostępnienie jest za duże na kod QR. Udostępnij zamiast tego link.</string>
     <string name="p2p_waiting_note">Przesyłanie zacznie się, gdy zaakceptują, nawet jeśli opuścisz ten ekran.</string>

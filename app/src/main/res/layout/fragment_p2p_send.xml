@@ -225,9 +225,23 @@
                         android:layout_height="wrap_content"
                         android:paddingHorizontal="16dp"
                         android:paddingTop="20dp"
-                        android:paddingBottom="8dp"
                         android:text="@string/p2p_send_to"
                         android:textAppearance="?attr/textAppearanceLabelLarge"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <!-- How the other phone joins, said once for the whole list
+                         (AirDrop's / PairDrop's shape): open Receive a file; on
+                         this Wi-Fi it then appears here. Same edge as the label;
+                         the QR card's line only adds the scan step. -->
+                    <TextView
+                        android:id="@+id/p2p_send_to_hint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingHorizontal="16dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="10dp"
+                        android:text="@string/p2p_send_to_hint"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 
                     <!-- The group of grouped cards (item_p2p_device), corners
@@ -304,20 +318,6 @@
                             android:visibility="gone" />
 
                     </LinearLayout>
-
-                    <!-- Nobody found yet: a footnote under the group, no glyph,
-                         on the cards' 16dp edge. Hidden once a phone is listed. -->
-                    <TextView
-                        android:id="@+id/p2p_nearby_hint"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="16dp"
-                        android:paddingTop="10dp"
-                        android:text="@string/p2p_nearby_footnote"
-                        android:textAppearance="?attr/textAppearanceBodySmall"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:visibility="gone"
-                        tools:visibility="visible" />
 
                     <!-- Something went out and waits for an accept. -->
                     <TextView

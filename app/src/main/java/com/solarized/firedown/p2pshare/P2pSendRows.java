@@ -20,8 +20,9 @@ import java.util.List;
  *       Before the offer is minted the screen shows its preparing state; once
  *       bytes move the progress belongs to the file card, not to a list.</li>
  *   <li>Nothing spins at rest. Nearby discovery never ends, so with nobody
- *       found the list shows a still, untappable hint row. The one spinner is
- *       on the connecting row, bounded by the connect timeout.</li>
+ *       found the list holds just the link and the QR; how a phone gets
+ *       listed is one line under the list's label, not a row. The one spinner
+ *       is on the connecting row, bounded by the connect timeout.</li>
  *   <li>While connecting the list collapses to the one peer: the nearby phone
  *       the offer went to, else the link if one went out, else the QR.</li>
  *   <li>A phone the offer went to keeps its waiting row until it answers,
@@ -38,8 +39,6 @@ public final class P2pSendRows {
     public enum Kind {
         /** A phone with Receive open on this Wi-Fi. */
         DEVICE,
-        /** Nobody found yet: the hint row, not tappable. */
-        EMPTY,
         /** Share the offer as a link through any app. */
         LINK,
         /** Show the offer as a QR code (expands in place). */
@@ -52,8 +51,6 @@ public final class P2pSendRows {
         ON_WIFI,
         /** The offer went to this phone; its answer is awaited. */
         WAITING_ACCEPT,
-        /** The empty row's instruction. */
-        NEARBY_HINT,
         /** The link row before anything went out. */
         LINK_IDLE,
         /** The short link is being brokered (bounded by the controller). */
@@ -156,9 +153,6 @@ public final class P2pSendRows {
                 || devices.contains(pendingPeer);
         if (!pendingListed) {
             rows.add(new Row(Kind.DEVICE, pendingPeer, Sub.WAITING_ACCEPT, false, true, false, 0));
-        }
-        if (devices.isEmpty() && pendingListed) {
-            rows.add(new Row(Kind.EMPTY, null, Sub.NEARBY_HINT, false, false, false, 0));
         }
         for (String device : devices) {
             boolean waiting = device.equals(pendingPeer);

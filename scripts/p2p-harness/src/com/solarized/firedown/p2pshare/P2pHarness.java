@@ -426,20 +426,19 @@ public final class P2pHarness {
         P2pSendRows.Phase READY = P2pSendRows.Phase.READY;
         List<P2pSendRows.Row> r;
 
-        // Rest, nobody nearby: a still hint row, the link, the QR. Nothing spins.
+        // Rest, nobody nearby: just the link and the QR (how a phone gets
+        // listed is a line under the label, not a row). Nothing spins.
         r = P2pSendRows.build(READY, none, null, false, false, false, fifteen, now);
-        check("rows: nobody nearby → hint, link, QR",
-                r.size() == 3 && r.get(0).kind == P2pSendRows.Kind.EMPTY
-                        && r.get(1).kind == P2pSendRows.Kind.LINK && r.get(2).kind == P2pSendRows.Kind.QR, rows(r));
-        check("rows: the hint row is not tappable and never spins",
-                !r.get(0).tappable && !r.get(0).spinner && r.get(0).sub == P2pSendRows.Sub.NEARBY_HINT, rows(r));
+        check("rows: nobody nearby → link, QR, no placeholder row",
+                r.size() == 2 && r.get(0).kind == P2pSendRows.Kind.LINK
+                        && r.get(1).kind == P2pSendRows.Kind.QR, rows(r));
         check("rows: nothing spins at rest", spinners(r) == 0, rows(r));
-        check("rows: nothing is active at rest", !r.get(1).active && !r.get(2).active, rows(r));
+        check("rows: nothing is active at rest", !r.get(0).active && !r.get(1).active, rows(r));
         check("rows: no Cancel at rest", !P2pSendRows.somethingOut(READY, null, false));
 
-        // Phones found: they lead, in discovery order; the hint row goes.
+        // Phones found: they lead, in discovery order.
         r = P2pSendRows.build(READY, two, null, false, false, false, fifteen, now);
-        check("rows: found phones lead, hint row gone",
+        check("rows: found phones lead",
                 r.size() == 4 && "Ana's Pixel 8".equals(r.get(0).name) && "Galaxy A52".equals(r.get(1).name)
                         && r.get(0).sub == P2pSendRows.Sub.ON_WIFI && r.get(0).tappable, rows(r));
 
@@ -459,17 +458,17 @@ public final class P2pHarness {
                         && r.get(0).sub == P2pSendRows.Sub.WAITING_ACCEPT
                         && r.get(1).sub == P2pSendRows.Sub.ON_WIFI, rows(r));
         r = P2pSendRows.build(READY, none, "Ana's Pixel 8", false, false, false, fifteen, now);
-        check("rows: ... and with nobody else found, no hint row beside it",
+        check("rows: ... and with nobody else found, just it, the link and the QR",
                 r.size() == 3 && r.get(0).sub == P2pSendRows.Sub.WAITING_ACCEPT, rows(r));
 
         // The link: preparing, then shared with a countdown.
         r = P2pSendRows.build(READY, none, null, false, true, false, fifteen, now);
         check("rows: preparing the link is untappable (no double share sheet)",
-                r.get(1).sub == P2pSendRows.Sub.LINK_PREPARING && !r.get(1).tappable && spinners(r) == 0, rows(r));
+                r.get(0).sub == P2pSendRows.Sub.LINK_PREPARING && !r.get(0).tappable && spinners(r) == 0, rows(r));
         r = P2pSendRows.build(READY, none, null, true, false, false, fifteen, now);
         check("rows: shared link counts down from 15 and stays tappable (share again)",
-                r.get(1).sub == P2pSendRows.Sub.LINK_SHARED && r.get(1).minutesLeft == 15
-                        && r.get(1).tappable && r.get(1).active, rows(r));
+                r.get(0).sub == P2pSendRows.Sub.LINK_SHARED && r.get(0).minutesLeft == 15
+                        && r.get(0).tappable && r.get(0).active, rows(r));
         check("rows: Cancel once a link went out", P2pSendRows.somethingOut(READY, null, true));
         r = P2pSendRows.build(READY, two, null, true, false, false, fifteen, now);
         check("rows: a shared link leaves the nearby phones tappable",
@@ -483,7 +482,7 @@ public final class P2pHarness {
         check("countdown: unknown expiry invents nothing", P2pSendRows.minutesLeft(0, now) == 0);
         check("countdown: unknown expiry → a shared row with no count",
                 P2pSendRows.build(P2pSendRows.Phase.READY, Collections.emptyList(), null,
-                        true, false, false, 0, now).get(1).minutesLeft == 0);
+                        true, false, false, 0, now).get(0).minutesLeft == 0);
         check("tick: next change lands on the minute boundary",
                 P2pSendRows.nextTickMs(now + 13 * 60_000 + 1_000, now) == 1_000
                         && P2pSendRows.nextTickMs(now + 14 * 60_000, now) == 60_000);
@@ -491,7 +490,7 @@ public final class P2pHarness {
         // QR expands in place.
         r = P2pSendRows.build(READY, none, null, false, false, true, fifteen, now);
         check("rows: the open QR row says how to scan it",
-                r.get(2).sub == P2pSendRows.Sub.QR_OPEN && r.get(2).tappable, rows(r));
+                r.get(1).sub == P2pSendRows.Sub.QR_OPEN && r.get(1).tappable, rows(r));
 
         // Connecting collapses to the one peer, with the one spinner.
         r = P2pSendRows.build(P2pSendRows.Phase.CONNECTING, two, "Galaxy A52", true, false, true, fifteen, now);

@@ -5664,14 +5664,20 @@ and the in-person path was a QR to aim across a table. Now:
   steps: there scanning is the only way, here the QR is the third of three
   options and the person is next to you), each a grouped `SheetRowCard`
   (`item_p2p_device`, corners from `SheetGroups.applyCorners`, so a press
-  stays inside the card). With nobody found, a FOOTNOTE under the group
-  says how a phone gets listed ("A phone on this Wi‑Fi appears here once
-  it opens Downloads → ⋮ → Receive a file."): plain BodySmall on the cards'
-  16dp edge, no glyph, gone once a phone is listed. Not a card (every
-  card can be tapped; it shipped for one build as a card with a real
-  destination's disc, the heaviest row on the screen) and not a glyph
-  line above the group (the next build: its icon and text sat on neither
-  the label's edge nor the cards' disc column, and it read out of place). What happened
+  stays inside the card). How the other phone joins is ONE line under the
+  "Send to" label, on its edge (`p2p_send_to_hint`: "They open Downloads → ⋮
+  → Receive a file. On this Wi‑Fi, their phone appears here."), shown while
+  the offer waits and gone once the list collapses to the peer; the QR
+  card's line adds only the scan step ("They tap Scan code, or scan with any
+  camera app."). AirDrop's and PairDrop's shape: the receiver's door named
+  once, where peers appear. With nobody found the list is just the link and
+  the QR — no placeholder row. Three earlier homes were rejected on-device:
+  a card in the list (every card can be tapped; it shipped as a card with a
+  real destination's disc, the heaviest row on the screen), a glyph line
+  above the group (its icon and text sat on neither the label's edge nor
+  the cards' disc column), and a footnote under the group (a stray caption
+  among the bottom captions, explaining a row at the top from the bottom,
+  and the menu path a second time under the QR). What happened
   after a tap is THAT ROW'S second line, never another card: a tapped
   phone reads "Sent · waiting for them to accept" (untappable, and it
   keeps its row even if it drops out of discovery), the link reads
@@ -5684,7 +5690,7 @@ and the in-person path was a QR to aim across a table. Now:
   text); the coral disc marks it in both. Cards are BOUND IN PLACE while
   the rows' kinds and names are unchanged (the countdown and discovery
   repaint often; a rebuild lost TalkBack's place and cut off a press), and
-  the QR card announces expand / collapse. The footnote has no band. Connecting collapses the list to the
+  the QR card announces expand / collapse. Connecting collapses the list to the
   one peer (the phone, else the link row) with the ONLY spinner, bounded
   by the connect timeout. Transferring and done are painted on the file
   card (bar + numbers under the name; the check and "Sent · size"). No

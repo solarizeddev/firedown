@@ -757,14 +757,14 @@
     <string name="p2p_reply_no_session">See vastus kuulub jagamisele, mis pole enam avatud.</string>
     <string name="p2p_send_to">Kuhu saata</string>
     <string name="p2p_on_this_wifi">Selles Wi‑Fi võrgus</string>
-    <string name="p2p_nearby_footnote">Selle Wi‑Fi telefon ilmub siia, kui see avab Allalaadimised → ⋮ → Võta fail vastu.</string>
     <string name="p2p_share_link">Jaga linki</string>
     <string name="p2p_share_link_hint">Mis tahes rakenduse kaudu. Töötab kõikjal.</string>
     <string name="p2p_preparing_link">Lingi ettevalmistamine…</string>
     <string name="p2p_link_shared">Jagatud</string>
     <string name="p2p_show_qr_code">Näita QR-koodi</string>
     <string name="p2p_show_qr_code_hint">Siinsamas olevale telefonile, ilma Wi‑Fi-ta.</string>
-    <string name="p2p_qr_scan_line">Teises telefonis: Allalaadimised → ⋮ → Võta fail vastu → Skanni kood. Ka kaamerarakendus sobib.</string>
+    <string name="p2p_qr_scan_line">Nad puudutavad Skanni kood või skannivad mis tahes kaamerarakendusega.</string>
+    <string name="p2p_send_to_hint">Nad avavad Allalaadimised → ⋮ → Võta fail vastu. Selles Wi‑Fis ilmub nende telefon siia.</string>
     <string name="p2p_hide_qr_code">Peida QR-kood</string>
     <string name="p2p_qr_too_big">See jagamine on QR-koodi jaoks liiga suur. Jaga selle asemel linki.</string>
     <string name="p2p_waiting_note">Ülekanne algab, kui nad vastu võtavad, isegi kui sellelt ekraanilt lahkud.</string>

@@ -62,7 +62,7 @@ PY
     echo "mutant killed: $name ($(grep -c '^FAIL' "$M/log") checks)"
     rm -rf "$M"
   }
-  run_mutant "hint row spins" "Sub.NEARBY_HINT, false, false, false, 0" "Sub.NEARBY_HINT, false, false, true, 0"
+  run_mutant "asked phone that left discovery dropped" "if (!pendingListed) {" "if (false) {"
   run_mutant "connecting does not collapse" "if (phase == Phase.CONNECTING) {" "if (phase == Phase.CONNECTING && devices.isEmpty()) {"
   run_mutant "countdown rounds down" "(left + 59_999) / 60_000" "left / 60_000"
   run_mutant "asked phone tappable again" "!waiting, waiting, false, 0" "true, waiting, false, 0"

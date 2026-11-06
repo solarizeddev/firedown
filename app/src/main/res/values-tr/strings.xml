@@ -862,14 +862,14 @@
     <string name="p2p_reply_no_session">Bu yanıt artık açık olmayan bir paylaşıma ait.</string>
     <string name="p2p_send_to">Gönderilecek yer</string>
     <string name="p2p_on_this_wifi">Bu Wi‑Fi ağında</string>
-    <string name="p2p_nearby_footnote">Bu Wi‑Fi\'daki bir telefon, İndirilenler → ⋮ → Dosya al bölümünü açtığında burada görünür.</string>
     <string name="p2p_share_link">Bağlantı paylaş</string>
     <string name="p2p_share_link_hint">Herhangi bir uygulamayla. Her yerde çalışır.</string>
     <string name="p2p_preparing_link">Bağlantı hazırlanıyor…</string>
     <string name="p2p_link_shared">Paylaşıldı</string>
     <string name="p2p_show_qr_code">QR kodu göster</string>
     <string name="p2p_show_qr_code_hint">Hemen yanınızdaki bir telefon için, Wi‑Fi olmadan.</string>
-    <string name="p2p_qr_scan_line">Onların telefonunda: İndirilenler → ⋮ → Dosya al → Kodu tara. Kamera uygulaması da olur.</string>
+    <string name="p2p_qr_scan_line">Kodu tara\'ya dokunurlar ya da herhangi bir kamera uygulamasıyla tararlar.</string>
+    <string name="p2p_send_to_hint">Onlar İndirilenler → ⋮ → Dosya al bölümünü açar. Bu Wi‑Fi\'da telefonları burada görünür.</string>
     <string name="p2p_hide_qr_code">QR kodu gizle</string>
     <string name="p2p_qr_too_big">Bu paylaşım bir QR kodu için çok büyük. Bunun yerine bir bağlantı paylaşın.</string>
     <string name="p2p_waiting_note">Aktarım, kabul ettiklerinde başlar; bu ekrandan çıksanız bile.</string>

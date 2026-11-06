@@ -67,7 +67,8 @@ import dagger.hilt.android.AndroidEntryPoint;
  * <p>What happened after a tap is that row's second line ({@link
  * P2pSendRows}), never another card: "Waiting for them to accept", the link's
  * countdown, "Connecting…". Nothing spins at rest — nearby discovery never
- * ends, so an empty list is a still hint row. Once bytes move the file card
+ * ends, so an empty list is just the link and the QR, and how a phone gets
+ * listed is one line under "Send to". Once bytes move the file card
  * carries the bar, and the outcome.
  *
  * <p>Rendered from the controller's {@link ShareState}; the session outlives
@@ -376,9 +377,10 @@ public class P2pSendFragment extends P2pShareBaseFragment {
      * rule; this only maps a row to its glyph, words and colours. While the
      * rows' kinds and names are unchanged the cards are BOUND IN PLACE, not
      * rebuilt: the countdown ticks every minute and discovery reports often,
-     * and a rebuild loses TalkBack's place and cuts off a press. The empty
-     * hint is not a card (every card can be tapped); it is the still line
-     * above the group.
+     * and a rebuild loses TalkBack's place and cuts off a press. How the
+     * other phone gets listed is not a card (every card can be tapped): it
+     * is the line under "Send to", shown while the offer waits and gone once
+     * the list collapses to the peer being connected.
      */
     private void renderRows() {
         mTickHandler.removeCallbacks(mTick);
@@ -398,18 +400,13 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         List<P2pSendRows.Row> rows = P2pSendRows.build(phase, names, peer, linkShared,
                 mLinkPreparing, mQrShown, expiresAt, now);
 
-        boolean hint = false;
-        List<P2pSendRows.Row> cards = new ArrayList<>(rows.size());
+        mView.findViewById(R.id.p2p_send_to_hint).setVisibility(
+                phase == P2pSendRows.Phase.READY ? View.VISIBLE : View.GONE);
+        List<P2pSendRows.Row> cards = new ArrayList<>(rows);
         List<String> keys = new ArrayList<>(rows.size());
         for (P2pSendRows.Row row : rows) {
-            if (row.kind == P2pSendRows.Kind.EMPTY) {
-                hint = true;
-            } else {
-                cards.add(row);
-                keys.add(row.kind + ":" + row.name);
-            }
+            keys.add(row.kind + ":" + row.name);
         }
-        mView.findViewById(R.id.p2p_nearby_hint).setVisibility(hint ? View.VISIBLE : View.GONE);
 
         if (!keys.equals(mRowKeys)) {
             parkQr();
@@ -460,8 +457,6 @@ public class P2pSendFragment extends P2pShareBaseFragment {
                 icon.setImageResource(R.drawable.qr_code_24);
                 name.setText(mQrShown && row.sub != P2pSendRows.Sub.CONNECTING
                     ? R.string.p2p_hide_qr_code : R.string.p2p_show_qr_code);
-            }
-            case EMPTY -> {
             }
         }
         status.setText(statusText(row));
@@ -517,7 +512,6 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         return switch (row.sub) {
             case ON_WIFI -> getString(R.string.p2p_on_this_wifi);
             case WAITING_ACCEPT -> getString(R.string.p2p_nearby_sent);
-            case NEARBY_HINT -> getString(R.string.p2p_nearby_footnote);
             case LINK_IDLE -> getString(R.string.p2p_share_link_hint);
             case LINK_PREPARING -> getString(R.string.p2p_preparing_link);
             case LINK_SHARED -> row.minutesLeft > 0
@@ -545,8 +539,6 @@ public class P2pSendFragment extends P2pShareBaseFragment {
             case QR -> {
                 mQrShown = !mQrShown;
                 renderRows();
-            }
-            case EMPTY -> {
             }
         }
     }

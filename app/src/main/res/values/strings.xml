@@ -1132,14 +1132,14 @@
          state. -->
     <string name="p2p_send_to">Send to</string>
     <string name="p2p_on_this_wifi">On this Wi‑Fi</string>
-    <string name="p2p_nearby_footnote">A phone on this Wi‑Fi appears here once it opens Downloads → ⋮ → Receive a file.</string>
     <string name="p2p_share_link">Share a link</string>
     <string name="p2p_share_link_hint">Through any app. Works anywhere.</string>
     <string name="p2p_preparing_link">Preparing link…</string>
     <string name="p2p_link_shared">Shared</string>
     <string name="p2p_show_qr_code">Show QR code</string>
     <string name="p2p_show_qr_code_hint">For a phone right here, without Wi‑Fi.</string>
-    <string name="p2p_qr_scan_line">On their phone: Downloads → ⋮ → Receive a file → Scan code. Their camera app works too.</string>
+    <string name="p2p_qr_scan_line">They tap Scan code, or scan with any camera app.</string>
+    <string name="p2p_send_to_hint">They open Downloads → ⋮ → Receive a file. On this Wi‑Fi, their phone appears here.</string>
     <string name="p2p_hide_qr_code">Hide QR code</string>
     <string name="p2p_qr_too_big">This share is too big for a QR code. Share a link instead.</string>
     <string name="p2p_waiting_note">The transfer starts when they accept, even if you leave this screen.</string>

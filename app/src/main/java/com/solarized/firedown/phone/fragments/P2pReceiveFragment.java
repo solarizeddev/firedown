@@ -356,7 +356,10 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
         ImageView icon = mView.findViewById(R.id.p2p_preview_icon);
         icon.setImageResource(FileUriHelper.getMimeTypeIcon(mime));
         // The tile is the only visual statement of the file's type.
-        icon.setContentDescription(FileUriHelper.getLongMimeText(requireContext(), mime).trim());
+        // An unknown type is just "File", never "BIN File".
+        boolean unknown = mime.isEmpty() || "application/octet-stream".equalsIgnoreCase(mime);
+        icon.setContentDescription(unknown ? getString(R.string.media_type_file)
+                : FileUriHelper.getLongMimeText(requireContext(), mime));
     }
 
     /**
