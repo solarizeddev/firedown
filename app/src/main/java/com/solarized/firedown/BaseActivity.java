@@ -487,6 +487,10 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
         // this, BrowserMainActivity.onResume fires the dialog and Home
         // commits over the top, hiding the sheet until the user
         // navigates to a Browser tab.
+        // The first screen since the app started: the user has just opened
+        // the app and is not reading anything yet (UpdatePromptPolicy).
+        boolean firstScreen = !sScreenResumed;
+        sScreenResumed = true;
         getWindow().getDecorView().post(() -> {
             // mPaused covers the common case (user navigated away
             // before the post ran). The other two catch the rarer
@@ -496,11 +500,36 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
             if (mPaused || isFinishing() || isDestroyed()) return;
             CrashReportSheet.showIfPending(
                     this, getSupportFragmentManager(), mDiskExecutor);
-            // In-app fallback for a ready update when notifications are denied;
-            // self-bails if the crash sheet above claimed the slot.
+            // A ready update, where and when UpdatePromptPolicy allows; also
+            // the fallback when notifications are denied. Self-bails if the
+            // crash sheet above claimed the slot.
             UpdateAvailableSheet.showIfReady(
-                    this, getSupportFragmentManager());
+                    this, getSupportFragmentManager(), updatePromptPlace(), firstScreen);
         });
+    }
+
+    /** Set by the first screen of the process that resumes. */
+    private static boolean sScreenResumed;
+
+    /**
+     * Where the user is, for the update sheet ({@link UpdatePromptPolicy}).
+     * NEVER by default: the lock screen, the Safe Folder and the page viewer
+     * never show it. Downloads, Settings and the browser say otherwise.
+     */
+    @NonNull
+    protected UpdatePromptPolicy.Place updatePromptPlace() {
+        return UpdatePromptPolicy.Place.NEVER;
+    }
+
+    /**
+     * Offers a ready update now, for a screen that becomes the home screen
+     * without a resume (the browser going back to its home page).
+     */
+    public void offerUpdateHere() {
+        if (mPaused || isFinishing() || isDestroyed()) {
+            return;
+        }
+        UpdateAvailableSheet.showIfReady(this, getSupportFragmentManager(), updatePromptPlace(), false);
     }
 
     @Override

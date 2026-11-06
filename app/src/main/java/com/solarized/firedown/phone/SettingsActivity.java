@@ -19,6 +19,7 @@ import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
+import com.solarized.firedown.UpdatePromptPolicy;
 
 public class SettingsActivity extends BaseActivity {
 
@@ -82,6 +83,13 @@ public class SettingsActivity extends BaseActivity {
             activity.startActivity(openIntent);
         }
         activity.finish();
+    }
+
+    /* One of the app's own screens: the update sheet may open here. */
+    @NonNull
+    @Override
+    protected UpdatePromptPolicy.Place updatePromptPlace() {
+        return UpdatePromptPolicy.Place.SCREEN;
     }
 
     /* Opened from a notification or a link with no browser behind it,

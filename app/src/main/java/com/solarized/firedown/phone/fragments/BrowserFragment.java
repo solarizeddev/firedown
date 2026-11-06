@@ -46,6 +46,7 @@ import androidx.navigation.NavDestination;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
 
+import com.solarized.firedown.UpdateReadyLiveData;
 import com.solarized.firedown.addons.AddonPolicy;
 import com.solarized.firedown.App;
 import com.solarized.firedown.IntentActions;
@@ -691,6 +692,9 @@ public class BrowserFragment extends BaseBrowserFragment
         // its badge in the regular BrowserFragment chrome and vice
         // versa — the bottom bar is a single instance shared across
         // both modes.
+        // The ⋮ dot while an update is ready (its "Update ready" row).
+        new UpdateReadyLiveData(requireContext()).observe(getViewLifecycleOwner(),
+                ready -> mBottomNavigationBar.setUpdateReady(Boolean.TRUE.equals(ready)));
         mTaskViewModel.getRegularCount().observe(getViewLifecycleOwner(), count -> {
             if (!mIsIncognitoThemed) mBottomNavigationBar.onBadgeCount(count);
         });

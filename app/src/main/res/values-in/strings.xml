@@ -1163,7 +1163,12 @@
     <string name="update_auto_update_success_title">Firedown diperbarui</string>
     <string name="update_available_sheet_current">Versi saat ini %1$s</string>
     <string name="update_available_sheet_install">Pasang</string>
-    <string name="update_available_sheet_title">Pembaruan tersedia</string>
+    <string name="update_ready_title">Pembaruan siap</string>
+    <string name="update_sheet_closes_note">Firedown tertutup selama pembaruan dipasang.</string>
+    <string name="update_busy_download">Ada unduhan yang berjalan. Unduhan berhenti saat Firedown tertutup.</string>
+    <string name="update_busy_task">Sebuah file sedang dikonversi atau dipindahkan. Proses itu berhenti saat Firedown tertutup.</string>
+    <string name="update_busy_share">Berbagi file sedang terbuka. Berbagi berakhir saat Firedown tertutup.</string>
+    <string name="update_busy_playback">Pemutaran berhenti saat Firedown tertutup.</string>
     <string name="update_available_sheet_whats_new">Yang baru</string>
     <string name="update_check_failed">Tidak dapat memeriksa pembaruan. Coba lagi nanti.</string>
     <string name="update_check_found">Pembaruan %1$s ditemukan. Anda akan diberi tahu saat siap</string>

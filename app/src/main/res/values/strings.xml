@@ -971,13 +971,17 @@
     <string name="update_prompt_install_title">Firedown update</string>
     <!-- In-app update-available bottom sheet (UpdateAvailableSheet). %1$s is the
          new version name, e.g. "Firedown 1.1.81". -->
-    <string name="update_available_sheet_title">Update available</string>
+    <string name="update_ready_title">Update ready</string>
+    <string name="update_sheet_closes_note">Firedown closes while the update installs.</string>
+    <string name="update_busy_download">A download is running. It stops when Firedown closes.</string>
+    <string name="update_busy_task">A file is being converted or moved. That stops when Firedown closes.</string>
+    <string name="update_busy_share">A file share is open. It ends when Firedown closes.</string>
+    <string name="update_busy_playback">Playback stops when Firedown closes.</string>
     <!-- %1$s is the currently-installed version name. -->
     <string name="update_available_sheet_current">Current version %1$s</string>
     <!-- New version + the size of the APK waiting to be installed; %1$s is the
          version name, %2$s the size. Punctuation-only join, so it carries no
          translatable words. -->
-    <string name="update_available_sheet_version_size" translatable="false">%1$s · %2$s</string>
     <string name="update_available_sheet_whats_new">What\'s new</string>
     <string name="update_available_sheet_install">Install</string>
     <!-- The install tap, while Firedown copies the APK into Android's

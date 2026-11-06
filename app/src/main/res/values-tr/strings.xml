@@ -486,7 +486,12 @@
     <string name="update_install_preparing">Güncelleme hazırlanıyor…</string>
     <string name="update_install_installing">Yükleniyor…</string>
     <string name="update_install_failed">Yükleme başlatılamadı. Tekrar deneyin.</string>
-    <string name="update_available_sheet_title">Güncelleme mevcut</string>
+    <string name="update_ready_title">Güncelleme hazır</string>
+    <string name="update_sheet_closes_note">Güncelleme yüklenirken Firedown kapanır.</string>
+    <string name="update_busy_download">Bir indirme sürüyor. Firedown kapanınca durur.</string>
+    <string name="update_busy_task">Bir dosya dönüştürülüyor veya taşınıyor. Firedown kapanınca bu işlem durur.</string>
+    <string name="update_busy_share">Bir dosya paylaşımı açık. Firedown kapanınca sona erer.</string>
+    <string name="update_busy_playback">Oynatma, Firedown kapanınca durur.</string>
     <string name="update_available_sheet_whats_new">Yenilikler</string>
     <string name="update_failed_general_body">Daha sonra tekrar deneyeceğiz.</string>
     <string name="update_failed_general_title">Güncelleme başarısız</string>

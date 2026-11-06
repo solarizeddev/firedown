@@ -5,7 +5,9 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.text.format.Formatter;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.LeadingMarginSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.ColorUtils;
@@ -22,16 +25,28 @@ import androidx.preference.PreferenceManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.solarized.firedown.UpdatePromptPolicy.Busy;
+import com.solarized.firedown.UpdatePromptPolicy.Place;
+import com.solarized.firedown.data.di.RepositoryEntryPoint;
+import com.solarized.firedown.geckoview.media.GeckoMediaPlaybackService;
+import com.solarized.firedown.manager.RunnableManager;
 import com.solarized.firedown.phone.dialogs.BaseBottomSheetDialogFragment;
+import com.solarized.firedown.phone.player.PlaybackHub;
 
-import java.io.File;
 import java.text.NumberFormat;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import dagger.hilt.android.EntryPointAccessors;
 
 /**
- * In-app "update available" bottom sheet, shown on resume when a SHA+signature
- * verified update APK is downloaded and ready to install.
+ * In-app "Update ready" bottom sheet: a SHA+signature verified update APK is
+ * downloaded and ready to install.
+ *
+ * <p>It opens by itself only where {@link UpdatePromptPolicy} allows (the
+ * home screen, Downloads, Settings, or the first screen after the app starts;
+ * never over a page being read, never on the lock screen) and only while
+ * nothing runs that installing would stop. The ⋮ menu's "Update ready" row
+ * opens it on purpose ({@link #openOnPurpose}); then it says what would stop.
  *
  * Why this exists (the notifications-denied gap): the install prompt is a
  * notification, and on Android 13+ a user who denied POST_NOTIFICATIONS never
@@ -44,8 +59,9 @@ import dagger.hilt.android.AndroidEntryPoint;
  * priority.
  *
  * <p>A dismissal SNOOZES rather than suppresses — see {@link #onDismiss}. At
- * most {@link #MAX_PROMPTS} appearances per version, {@link #SNOOZE_INTERVAL_MS}
- * apart, then quiet for good.
+ * most {@link UpdatePromptPolicy#MAX_PROMPTS} appearances by itself per
+ * version, a day apart; after that the ⋮ row, About and the notification
+ * carry the update.
  */
 @AndroidEntryPoint
 public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
@@ -55,27 +71,11 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     // from BaseActivity.onResume and takes priority over this one.
     private static final String CRASH_SHEET_TAG = "CrashReportSheet";
     private static final String ARG_PREVIEW = "preview";
+    /** Opened by the user (the ⋮ row): no snooze is written on dismissal. */
+    private static final String ARG_ON_PURPOSE = "on_purpose";
     private static final String STATE_SEEN_INSTALL = "seen_install";
     /** Debug builds: one line per footer render, read by scripts/update-install-test.sh. */
     private static final String TRACE_TAG = "UpdateSheetTrace";
-
-    /**
-     * How long a dismissal holds the sheet back. "Later" has to MEAN later, or
-     * the button is a lie — and for the user this sheet exists for (the one who
-     * denied notifications, and so has no other surface), a permanent
-     * suppression from one tap re-opens the very gap the sheet was built to
-     * close: the update sits verified on disk, and nothing ever offers it
-     * again.
-     */
-    private static final long SNOOZE_INTERVAL_MS = 24L * 60 * 60 * 1000;
-
-    /**
-     * Total times the sheet may appear for ONE version, after which a dismissal
-     * is permanent. A reminder that never stops is nagging, and this sheet is
-     * modal — so it gets the initial showing plus two reminders, then goes
-     * quiet and leaves the notification (and Settings) to carry the update.
-     */
-    private static final int MAX_PROMPTS = 3;
 
     private int mReadyVersionCode;
 
@@ -87,7 +87,9 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
      */
     private long mSeenInstall = -1;
 
+    private View mActions;
     private MaterialButton mInstall;
+    private TextView mBusy;
     private TextView mError;
     private View mProgress;
     private TextView mProgressLabel;
@@ -95,32 +97,87 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     private LinearProgressIndicator mProgressBar;
 
     /**
-     * Shows the sheet if a verified update strictly newer than the installed
-     * version is ready and the user hasn't already dismissed it for that
-     * version. Safe to call from every activity's {@code onResume} — idempotent
-     * via the tag check and self-bailing when nothing is ready.
+     * Opens the sheet by itself if {@link UpdatePromptPolicy} allows it here
+     * and now. Safe to call from every activity's {@code onResume}:
+     * idempotent via the tag check, and self-bailing when nothing is ready.
+     *
+     * @param firstScreen the first screen resumed since the app started
      */
-    public static void showIfReady(@NonNull Context context, @NonNull FragmentManager fm) {
+    @MainThread
+    public static void showIfReady(@NonNull Context context, @NonNull FragmentManager fm,
+                                   @NonNull Place place, boolean firstScreen) {
         if (fm.isStateSaved()) return;
         if (fm.findFragmentByTag(TAG) != null) return;
         if (fm.findFragmentByTag(CRASH_SHEET_TAG) != null) return;
+        if (place == Place.NEVER) return;
 
         // isVerifiedReady(installed + 1) ⇒ readyVersion >= installed+1 ⇒ strictly
         // newer than installed, with a file actually on disk.
-        if (!UpdateDownloader.isVerifiedReady(context, App.getVersionCode() + 1)) {
+        boolean ready = UpdateDownloader.isVerifiedReady(context, App.getVersionCode() + 1);
+        if (!ready) {
             return;
         }
-        int readyVc = UpdateDownloader.readyVersionCode(context);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        // Snoozed for THIS version and the snooze hasn't elapsed. A different
-        // stored version means a newer update arrived — show it regardless of
-        // how the previous one was dismissed.
-        if (prefs.getInt(Keys.UPDATE_PROMPT_SNOOZE_VERSION, -1) == readyVc
-                && System.currentTimeMillis()
-                        < prefs.getLong(Keys.UPDATE_PROMPT_SNOOZE_UNTIL, 0L)) {
-            return;
+        boolean snoozed = UpdatePromptPolicy.snoozed(
+                UpdateDownloader.readyVersionCode(context),
+                prefs.getInt(Keys.UPDATE_PROMPT_SNOOZE_VERSION, -1),
+                prefs.getLong(Keys.UPDATE_PROMPT_SNOOZE_UNTIL, 0L),
+                System.currentTimeMillis());
+        if (UpdatePromptPolicy.autoShow(true, snoozed, place, firstScreen, busyNow(context))) {
+            // showNow, not show: a second caller in the same frame (the
+            // activity's resume and the home screen's) must find this one by
+            // its tag, and show() only commits later.
+            new UpdateAvailableSheet().showNow(fm, TAG);
         }
-        new UpdateAvailableSheet().show(fm, TAG);
+    }
+
+    /**
+     * Opens the sheet because the user asked (the ⋮ menu's "Update ready"
+     * row): no place, busy or snooze rule applies, and closing it writes no
+     * snooze. It still needs a ready update.
+     */
+    @MainThread
+    public static void openOnPurpose(@NonNull Context context, @NonNull FragmentManager fm) {
+        if (fm.isStateSaved() || fm.findFragmentByTag(TAG) != null) return;
+        if (!UpdateDownloader.isVerifiedReady(context, App.getVersionCode() + 1)) return;
+        UpdateAvailableSheet sheet = new UpdateAvailableSheet();
+        Bundle args = new Bundle();
+        args.putBoolean(ARG_ON_PURPOSE, true);
+        sheet.setArguments(args);
+        sheet.showNow(fm, TAG);
+    }
+
+    /**
+     * What installing would stop right now. Installing closes the app (on
+     * Android 12 and newer at once): a running download, a GIF, audio or
+     * Safe Folder task, an open file share, background or web playback.
+     */
+    @MainThread
+    @NonNull
+    public static Busy busyNow(@NonNull Context context) {
+        RepositoryEntryPoint ep = EntryPointAccessors.fromApplication(
+                context.getApplicationContext(), RepositoryEntryPoint.class);
+        return UpdatePromptPolicy.busy(
+                RunnableManager.isRunning(),
+                ep.getTaskRepository().isTaskInFlight(),
+                ep.getP2pShareController().hasLiveSession(),
+                PlaybackHub.isBackgroundActive() || GeckoMediaPlaybackService.isRunning());
+    }
+
+    /** The line that says what installing would stop, or 0. */
+    private static int busyLine(@NonNull Busy busy) {
+        switch (busy) {
+            case DOWNLOAD:
+                return R.string.update_busy_download;
+            case TASK:
+                return R.string.update_busy_task;
+            case SHARE:
+                return R.string.update_busy_share;
+            case PLAYBACK:
+                return R.string.update_busy_playback;
+            default:
+                return 0;
+        }
     }
 
     /**
@@ -196,20 +253,12 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         String shown = (name == null || name.isEmpty())
                 ? getString(R.string.app_name) : name;
 
-        // The version being installed — prominent, and carrying the DOWNLOAD
-        // SIZE. The size used to hang off the line below ("Current version
-        // 1.1.87 · 205 MB"), which reads as the size of what you already have;
-        // it is the size of the APK waiting to be installed, so it belongs to
-        // the new version's line. (Skipped in preview — no real file there.)
+        // The version being installed, with no size: it is already
+        // downloaded, so a size reads as a cost still to pay, and the file on
+        // disk is the rebuilt APK (~200 MB), not what was downloaded (often a
+        // patch of a few MB).
         TextView version = view.findViewById(R.id.update_sheet_version);
-        File apk = Preferences.getUpdateApkFile(context);
-        long bytes = (apk != null && apk.exists()) ? apk.length() : 0L;
-        if (bytes > 0) {
-            version.setText(getString(R.string.update_available_sheet_version_size,
-                    shown, Formatter.formatShortFileSize(context, bytes)));
-        } else {
-            version.setText(shown);
-        }
+        version.setText(shown);
 
         // ...and the version it replaces.
         TextView current = view.findViewById(R.id.update_sheet_current);
@@ -227,7 +276,9 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         whatsNew.setVisibility(changelogVisibility);
         changelogContainer.setVisibility(changelogVisibility);
 
+        mActions = view.findViewById(R.id.update_sheet_actions);
         mInstall = view.findViewById(R.id.update_sheet_install);
+        mBusy = view.findViewById(R.id.update_sheet_busy);
         mError = view.findViewById(R.id.update_sheet_error);
         mProgress = view.findViewById(R.id.update_sheet_progress);
         mProgressLabel = view.findViewById(R.id.update_sheet_progress_label);
@@ -248,6 +299,9 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
             }
         });
 
+        // "Not now" does what a swipe does (see onDismiss), but says so.
+        view.findViewById(R.id.update_sheet_not_now).setOnClickListener(v -> dismiss());
+
         if (savedInstanceState != null) {
             mSeenInstall = savedInstanceState.getLong(STATE_SEEN_INSTALL, -1);
         }
@@ -255,9 +309,22 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
             UpdateInstaller.state().observe(getViewLifecycleOwner(), this::render);
         }
 
-        // No decline button on purpose — the drag handle, back and tap-outside
-        // dismiss, and onDismiss snoozes all of them identically. See the
-        // footer comment in fragment_dialog_update_available.xml.
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mBusy == null) {
+            return; // onViewCreated found nothing ready and dismissed
+        }
+        // Opened on purpose while something runs: say what installing stops.
+        // Read again on every resume (a download can start or end meanwhile).
+        int line = busyLine(busyNow(requireContext()));
+        if (line != 0) {
+            mBusy.setText(line);
+        }
+        mBusy.setVisibility(line != 0 && mActions.getVisibility() == View.VISIBLE
+                ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -324,12 +391,13 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
 
     private void showButton(boolean failed) {
         mProgress.setVisibility(View.GONE);
-        mInstall.setVisibility(View.VISIBLE);
+        mActions.setVisibility(View.VISIBLE);
         mError.setVisibility(failed ? View.VISIBLE : View.GONE);
     }
 
     private void showPreparing(int percent) {
-        mInstall.setVisibility(View.GONE);
+        mActions.setVisibility(View.GONE);
+        mBusy.setVisibility(View.GONE);
         mError.setVisibility(View.GONE);
         mProgress.setVisibility(View.VISIBLE);
         mProgressLabel.setText(R.string.update_install_preparing);
@@ -342,7 +410,8 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     }
 
     private void showInstalling() {
-        mInstall.setVisibility(View.GONE);
+        mActions.setVisibility(View.GONE);
+        mBusy.setVisibility(View.GONE);
         mError.setVisibility(View.GONE);
         mProgress.setVisibility(View.VISIBLE);
         mProgressLabel.setText(R.string.update_install_installing);
@@ -382,11 +451,12 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     }
 
     /**
-     * Populates the changelog container with one row per "• " bullet, separated
-     * by a real top margin. Spacing is a view margin (not line spacing) because
+     * Populates the changelog container with one row per bullet, separated by
+     * a real top margin. Spacing is a view margin (not line spacing) because
      * the Material3 textAppearance's lineHeight overrides lineSpacingExtra/
-     * Multiplier — so those have no effect, but margins always work. Each row
-     * also gets a hanging indent so a wrapped bullet aligns under its text.
+     * Multiplier. A wrapped line starts under the text, not under the bullet:
+     * the bullet status.json carries ("• ") is taken off and put back with a
+     * leading margin as wide as itself.
      */
     private void fillChangelog(LinearLayout container, String raw) {
         container.removeAllViews();
@@ -398,11 +468,17 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
             if (item.isEmpty()) {
                 continue;
             }
+            if (item.startsWith("•") || item.startsWith("-") || item.startsWith("*")) {
+                item = item.substring(1).trim();
+            }
             TextView row = (TextView) inflater.inflate(
                     R.layout.item_update_changelog_bullet, container, false);
-            // Flush-left bullets — wrapped lines return to the margin (no hanging
-            // indent), matching the Mercurygram changelog style.
-            row.setText(item);
+            String bullet = "\u2022  ";
+            int indent = Math.round(row.getPaint().measureText(bullet));
+            SpannableString text = new SpannableString(bullet + item);
+            text.setSpan(new LeadingMarginSpan.Standard(0, indent), 0, text.length(),
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            row.setText(text);
             if (!first) {
                 ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) row.getLayoutParams();
                 lp.topMargin = gap;
@@ -414,44 +490,33 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     }
 
     /**
-     * Any dismissal — Install, swipe-down, back, tap-outside — SNOOZES the
-     * sheet for this version so it can't re-pop on the next resume, and the
-     * {@link #MAX_PROMPTS}th one makes that permanent.
+     * Any dismissal — Not now, Install, swipe-down, back, tap-outside —
+     * SNOOZES the sheet for this version for a day, and the
+     * {@link UpdatePromptPolicy#MAX_PROMPTS}th makes that permanent (the ⋮
+     * row, About and the notification still offer the update). A sheet the
+     * user opened on purpose writes nothing: it was asked for.
      *
-     * <p>It used to suppress permanently on the FIRST dismissal. That is worst
-     * for the user the sheet exists for — POST_NOTIFICATIONS denied, so no
-     * notification either — who swipes it away meaning "not right now" and is
-     * never offered the update again, with the verified APK sitting on disk.
-     * Rescheduling is also what lets the sheet carry no decline button: a
-     * dismissal gesture now means the same "later" a button would have, so
-     * the button was only a second name for it (see the layout's footer
-     * comment for the misclick objection that finished it off).
-     *
-     * <p>Every exit path snoozes, INSTALL INCLUDED, and that is deliberate
-     * rather than sloppy: a successful install needs no suppression at all
-     * (the new versionCode fails {@code showIfReady}'s newer-than-installed
-     * check, so the sheet can never return for it), while an install the user
-     * cancels at Android's package-installer prompt is exactly a case that
-     * SHOULD be offered again tomorrow. The snooze also stops the sheet
-     * re-popping on the resume that follows the installer prompt.
+     * <p>Install snoozes too, deliberately: a successful install needs no
+     * suppression (the new versionCode fails {@code showIfReady}'s
+     * newer-than-installed check), while an install the user cancels at
+     * Android's prompt is exactly a case that SHOULD be offered again
+     * tomorrow, not on the resume that follows the prompt.
      */
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         Context context = getContext();
-        if (context != null && mReadyVersionCode > 0) {
+        boolean onPurpose = getArguments() != null && getArguments().getBoolean(ARG_ON_PURPOSE, false);
+        if (context != null && mReadyVersionCode > 0 && !onPurpose) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-            // A different stored version = the first dismissal of this update:
-            // start its count fresh rather than inheriting the previous one's.
-            int count = prefs.getInt(Keys.UPDATE_PROMPT_SNOOZE_VERSION, -1) == mReadyVersionCode
-                    ? prefs.getInt(Keys.UPDATE_PROMPT_SNOOZE_COUNT, 0) + 1
-                    : 1;
-            long until = count >= MAX_PROMPTS
-                    ? Long.MAX_VALUE
-                    : System.currentTimeMillis() + SNOOZE_INTERVAL_MS;
+            UpdatePromptPolicy.Snooze snooze = UpdatePromptPolicy.afterDismissal(
+                    mReadyVersionCode,
+                    prefs.getInt(Keys.UPDATE_PROMPT_SNOOZE_VERSION, -1),
+                    prefs.getInt(Keys.UPDATE_PROMPT_SNOOZE_COUNT, 0),
+                    System.currentTimeMillis());
             prefs.edit()
                     .putInt(Keys.UPDATE_PROMPT_SNOOZE_VERSION, mReadyVersionCode)
-                    .putInt(Keys.UPDATE_PROMPT_SNOOZE_COUNT, count)
-                    .putLong(Keys.UPDATE_PROMPT_SNOOZE_UNTIL, until)
+                    .putInt(Keys.UPDATE_PROMPT_SNOOZE_COUNT, snooze.count)
+                    .putLong(Keys.UPDATE_PROMPT_SNOOZE_UNTIL, snooze.until)
                     .apply();
         }
         super.onDismiss(dialog);

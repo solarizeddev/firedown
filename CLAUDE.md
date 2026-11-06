@@ -4809,6 +4809,42 @@ is **~75 MB**, the APK 205 MB.
   full for everyone (the installed versions don't read the blocks); F-Droid
   clients (Droid-ify, Neo Store, F-Droid) installing from the firedown.app
   repo always download the full APK — the F-Droid repo format has no patches.
+- **The "Update ready" sheet opens by itself only where and when it
+  interrupts nothing** (`UpdatePromptPolicy`, pure, in the update harness
+  with four mutants): on the browser's home screen, Downloads or Settings,
+  or as the first screen after the app starts; never over a page being
+  read, never on the lock screen, the Safe Folder or the page viewer
+  (`BaseActivity.updatePromptPlace`, NEVER by default; the home fragments
+  offer it again when the browser returns home without a resume); and
+  never while something installing would stop is running (a download, a
+  GIF/audio/Safe Folder task, an open file share, background or web
+  playback: `UpdateAvailableSheet.busyNow`). Installing closes Firedown (on
+  Android 12+ at once, with no question) and nothing reopens it, so the
+  button stays "Install" with the line "Firedown closes while the update
+  installs" — never "Install and restart". It opened on every resume of
+  every screen (over a video being watched, over the lock screen). While an
+  update waits, both ⋮ menus lead with an "Update ready" row
+  (`item_popup_update_ready`, `PopupUpdateRow`) and the bottom bar's ⋮ wears
+  a dot (`BottomNavigationBar.setUpdateReady`, fed by `UpdateReadyLiveData`,
+  a preference listener). The row opens the sheet on purpose
+  (`openOnPurpose`: no place, busy or snooze rule, and closing it writes no
+  snooze); the sheet then says what would stop (`update_busy_*`). The
+  sheet itself: no size (it is already downloaded, and the file on disk is
+  the rebuilt APK, not what was fetched), "Update ready", a 72dp picture
+  (132 took a third of the sheet), a fade at the notes' bottom edge,
+  wrapped bullets indented under their text, the version line in
+  `update_version_ink` (dark in light theme: coral is 2.2:1 there), and
+  Not now + Install. Not now does what a swipe does (snooze a day,
+  permanent after three); a full-width "Later" under Install was removed
+  once as a misclick trap with nowhere to come back to, and a text button
+  beside the filled one, with the ⋮ row as the way back, is neither. Both
+  paths open the sheet with `showNow`, so two callers in one frame find
+  one sheet by its tag.
+  Device check: `phone/UpdateSheetDeviceTest` (an update faked as the
+  debug UpdateTestReceiver does; on Downloads the sheet opens with no size
+  and Not now, Not now snoozes and the recreated screen stays quiet, a
+  queued task holds it back and the on-purpose open names the task and
+  writes no snooze). Written for 1.2.8; not run on a device at write time.
 - **The install tap shows its progress; the download and the rebuild don't**
   (`UpdateInstallProgress`, published through `UpdateInstaller.state()`).
   Download, rebuild and checks finish before the user hears of the update, so

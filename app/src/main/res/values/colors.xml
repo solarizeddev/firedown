@@ -308,6 +308,9 @@
          coral in dark (6.9:1). The coral disc carries the state in light. -->
     <color name="p2p_status_active">@color/md_theme_onSurface</color>
     <color name="blocked_stats_value">@color/md_theme_onSurface</color>
+    <!-- The update sheet's version line: onSurface in light: the brand coral is 2.2:1 on the sheet,
+         under 4.5:1. -->
+    <color name="update_version_ink">@color/md_theme_onSurface</color>
     <!-- Storage screen per-type bar (StorageBarView), in bar order: video,
          images, audio, documents, other. VALIDATED as a categorical set
          (dataviz validate_palette.js, adjacent pairs, surface #FBF9FB): all in

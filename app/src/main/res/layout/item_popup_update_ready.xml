@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The ⋮ menus' "Update ready" row (browser and home): a group of its own at
+  the top while a verified update is waiting, GONE otherwise. A tap opens the
+  update sheet on purpose (UpdateAvailableSheet.openOnPurpose). It is where a
+  dismissed or held-back update is found again, and the bottom bar's ⋮ wears
+  a dot while it shows. Two lines, the "Where to back up" sheet's card row.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/popup_update_group"
+    style="@style/Firedown.Widget.SheetGroup"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginTop="0dp"
+    android:layout_marginBottom="10dp"
+    android:visibility="gone"
+    tools:visibility="visible">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/popup_update"
+        style="@style/Firedown.Widget.SheetRowCard"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupSingle">
+
+        <LinearLayout style="@style/Firedown.Widget.SheetPlaceRow">
+
+            <ImageView
+                style="@style/Firedown.Widget.SheetPlaceIcon"
+                android:src="@drawable/ic_system_update_24"
+                app:tint="?attr/brandInk" />
+
+            <LinearLayout style="@style/Firedown.Widget.SheetPlaceText">
+
+                <TextView
+                    style="@style/Firedown.Widget.SheetPlaceTitle"
+                    android:text="@string/update_ready_title" />
+
+                <TextView
+                    android:id="@+id/popup_update_sub"
+                    style="@style/Firedown.Widget.SheetPlaceSub"
+                    tools:text="Firedown 1.2.8" />
+
+            </LinearLayout>
+
+            <ImageView style="@style/Firedown.Widget.SheetPlaceChevron" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>

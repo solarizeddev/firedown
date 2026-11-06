@@ -416,7 +416,12 @@
     <string name="update_install_preparing">Preparando a atualização…</string>
     <string name="update_install_installing">Instalando…</string>
     <string name="update_install_failed">Não foi possível iniciar a instalação. Tente novamente.</string>
-    <string name="update_available_sheet_title">Atualização disponível</string>
+    <string name="update_ready_title">Atualização pronta</string>
+    <string name="update_sheet_closes_note">O Firedown fecha enquanto a atualização é instalada.</string>
+    <string name="update_busy_download">Há um download em andamento. Ele para quando o Firedown fechar.</string>
+    <string name="update_busy_task">Um arquivo está sendo convertido ou movido. Isso para quando o Firedown fechar.</string>
+    <string name="update_busy_share">Um compartilhamento de arquivo está aberto. Ele termina quando o Firedown fechar.</string>
+    <string name="update_busy_playback">A reprodução para quando o Firedown fechar.</string>
     <string name="update_available_sheet_whats_new">Novidades</string>
     <string name="update_failed_general_body">Tentaremos novamente mais tarde.</string>
     <string name="update_failed_general_title">Falha na atualização</string>

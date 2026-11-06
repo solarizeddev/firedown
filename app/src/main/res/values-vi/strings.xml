@@ -1164,7 +1164,12 @@
     <string name="update_auto_update_success_title">Đã cập nhật Firedown</string>
     <string name="update_available_sheet_current">Phiên bản hiện tại %1$s</string>
     <string name="update_available_sheet_install">Cài đặt</string>
-    <string name="update_available_sheet_title">Có bản cập nhật</string>
+    <string name="update_ready_title">Bản cập nhật đã sẵn sàng</string>
+    <string name="update_sheet_closes_note">Firedown sẽ đóng trong khi cài đặt bản cập nhật.</string>
+    <string name="update_busy_download">Đang có một lượt tải xuống. Lượt tải sẽ dừng khi Firedown đóng.</string>
+    <string name="update_busy_task">Một tệp đang được chuyển đổi hoặc di chuyển. Việc này sẽ dừng khi Firedown đóng.</string>
+    <string name="update_busy_share">Đang mở một lượt chia sẻ tệp. Lượt chia sẻ sẽ kết thúc khi Firedown đóng.</string>
+    <string name="update_busy_playback">Việc phát sẽ dừng khi Firedown đóng.</string>
     <string name="update_available_sheet_whats_new">Có gì mới</string>
     <string name="update_check_failed">Không thể kiểm tra cập nhật. Hãy thử lại sau.</string>
     <string name="update_check_found">Đã tìm thấy bản cập nhật %1$s. Bạn sẽ được thông báo khi bản cập nhật sẵn sàng</string>

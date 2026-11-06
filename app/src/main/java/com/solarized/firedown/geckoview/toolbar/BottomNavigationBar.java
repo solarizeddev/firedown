@@ -39,6 +39,8 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     private TabsBrowserButton mTabsCountButton;
 
     private BadgeDrawable mBadge;
+    /** A dot on the ⋮ while an update is ready (its "Update ready" row). */
+    private BadgeDrawable mUpdateBadge;
 
     // Top hairline divider (Firefox-parity). The bar is painted the page
     // SURFACE tone (not a tonal surfaceContainer step), so it would dissolve
@@ -121,6 +123,21 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         mBadge.setBackgroundColor(IncognitoColors.getPrimary(context, false));
         mBadge.setVerticalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_vertical_offset));
         mBadge.setHorizontalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_horizontal_offset));
+
+        mUpdateBadge = BadgeDrawable.create(context);
+        mUpdateBadge.setVisible(false);
+        mUpdateBadge.setBackgroundColor(IncognitoColors.getPrimary(context, false));
+        mUpdateBadge.setVerticalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_vertical_offset));
+        mUpdateBadge.setHorizontalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_horizontal_offset));
+        View moreButton = findViewById(R.id.more_button);
+        moreButton.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+            @OptIn(markerClass = ExperimentalBadgeUtils.class)
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                moreButton.removeOnLayoutChangeListener(this);
+                BadgeUtils.attachBadgeDrawable(mUpdateBadge, moreButton);
+            }
+        });
 
         downloadButton.addOnLayoutChangeListener(new OnLayoutChangeListener() {
             @OptIn(markerClass = ExperimentalBadgeUtils.class)
@@ -210,6 +227,9 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         if (mBadge != null) {
             mBadge.setBackgroundColor(IncognitoColors.getPrimary(context, incognito));
         }
+        if (mUpdateBadge != null) {
+            mUpdateBadge.setBackgroundColor(IncognitoColors.getPrimary(context, incognito));
+        }
 
         // Top hairline — a soft line (outlineVariant read too prominent).
         // Any dark surface (system-dark OR incognito) gets a translucent-WHITE
@@ -239,6 +259,13 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
 
     public void onBadgeCount(int count){
         mBadge.setVisible(count > 0);
+    }
+
+    /** Shows the ⋮ dot while an update is ready to install. */
+    public void setUpdateReady(boolean ready) {
+        if (mUpdateBadge != null) {
+            mUpdateBadge.setVisible(ready);
+        }
     }
 
     public void onTabsCount(int count) {

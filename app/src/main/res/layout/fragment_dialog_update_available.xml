@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  In-app "update available" sheet (UpdateAvailableSheet). Shown on resume when a
-  SHA+signature verified update APK is ready to install — also the surface for
-  when POST_NOTIFICATIONS is denied. Centred header (illustration + "Update
-  available" + the NEW version, prominent + the current version), then a left-
-  aligned "What's new" + changelog block (hidden when status.json has no
-  changelog), then a single centred Install. Dismiss = swipe / back / outside.
+  In-app "Update ready" sheet (UpdateAvailableSheet): a SHA+signature verified
+  update APK is ready to install — also the surface for when
+  POST_NOTIFICATIONS is denied. Centred header (a small illustration, "Update
+  ready", the new version, the current one), then "What's new" and the notes
+  (hidden when status.json has none), then the pinned footer: what installing
+  would stop (only when opened on purpose while something runs), that
+  Firedown closes while it installs, and Not now + Install.
 
   INSTALL IS PINNED, ONLY THE CHANGELOG SCROLLS — do not move the button back
   inside the NestedScrollView. It used to live at the bottom of the scrolled
@@ -37,10 +38,14 @@
 
     <include layout="@layout/dialog_drag_handle" />
 
+    <!-- The fade at the bottom edge says the notes go on: the scrollbar
+         is hidden at rest, and a line cut in half was the only other sign. -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:fadingEdgeLength="32dp"
+        android:requiresFadingEdge="vertical"
         android:scrollbars="vertical">
 
         <LinearLayout
@@ -48,12 +53,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- 72dp: at 132 the picture took a third of the sheet and
+                 pushed the notes under the fold. -->
             <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="132dp"
-                android:layout_height="132dp"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="4dp"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="8dp"
                 android:importantForAccessibility="no"
                 app:srcCompat="@drawable/ill_small_install" />
 
@@ -62,11 +69,12 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="24dp"
                 android:gravity="center"
-                android:text="@string/update_available_sheet_title"
+                android:text="@string/update_ready_title"
                 android:textAppearance="?attr/textAppearanceHeadlineSmall"
                 android:textColor="?attr/colorOnSurface" />
 
-            <!-- The version being installed — prominent. -->
+            <!-- The version being installed. Dark ink in light theme (the
+                 brand coral is 2.2:1 on this sheet), coral in dark. -->
             <TextView
                 android:id="@+id/update_sheet_version"
                 android:layout_width="match_parent"
@@ -75,7 +83,7 @@
                 android:layout_marginTop="6dp"
                 android:gravity="center"
                 android:textAppearance="?attr/textAppearanceTitleMedium"
-                android:textColor="?attr/colorPrimary"
+                android:textColor="@color/update_version_ink"
                 tools:text="Firedown 1.1.90" />
 
             <TextView
@@ -122,36 +130,22 @@
     </androidx.core.widget.NestedScrollView>
 
     <!--
-      Pinned footer: outside the scroll view on purpose (see the header), and
-      exactly ONE action.
+      Pinned footer: outside the scroll view on purpose (see the header).
 
-      A "Later" text button under Install was tried and REMOVED — don't
-      re-add it. Two objections, either one sufficient. (1) It carried no
-      behaviour: the drag handle, back and tap-outside already dismiss, and
-      since UpdateAvailableSheet.onDismiss snoozes on EVERY exit path, all
-      four routes are now identical — the button was a second name for a
-      thing the sheet already did. (2) A full-width secondary directly under
-      the primary is a misclick trap, and on a bottom sheet it is the worse
-      way round: the lower button sits closer to the thumb, so the decline
-      was easier to hit than the action the sheet exists for.
+      Not now + Install, the shape the donation and notification sheets
+      have. A full-width "Later" under Install was removed once (a misclick
+      trap, and it only repeated what a swipe does); a TEXT button beside a
+      filled one is the normal Material pair and is not that trap. It does
+      what a swipe does — onDismiss snoozes for a day — and says so, and a
+      dismissed update now has somewhere to be found again: the ⋮ menu's
+      "Update ready" row.
 
-      It was borrowed from Mercurygram's updater, which does land on a
-      two-cell shape (filled "Download Now" over borderless "Remind me
-      later") — but their "later" points AT something: MainTabsActivity
-      keeps a persistent updateLayout widget on the main screen, fed by
-      appUpdateAvailable, so a deferred update has a standing home to go
-      back to. Firedown has no such surface, so the same button here
-      promised a place to return to that does not exist. If a persistent
-      "update ready" affordance is ever added to home, revisit this — the
-      button becomes meaningful again at that point, and not before.
-    -->
-    <!--
-      After Install the footer shows the install instead of the button
+      After Install the footer shows the install instead of the buttons
       (UpdateAvailableSheet.render): "Preparing update… 42%" over a bar while
       the APK is copied into Android's installer, then "Installing…" with an
       indeterminate bar until Android answers, and the sheet closes. The
-      progress block keeps the button's 48dp so the sheet doesn't jump. A
-      failure brings the button back with the error line above it.
+      progress block keeps the buttons' 48dp so the sheet doesn't jump. A
+      failure brings the buttons back with the error line above them.
     -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -159,7 +153,7 @@
         android:gravity="center"
         android:orientation="vertical"
         android:paddingHorizontal="24dp"
-        android:paddingTop="16dp"
+        android:paddingTop="12dp"
         android:paddingBottom="16dp">
 
         <TextView
@@ -174,11 +168,62 @@
             android:visibility="gone"
             tools:visibility="visible" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/update_sheet_install"
+        <!-- What installing would stop. Only when the sheet was opened on
+             purpose while something runs; it never opens by itself then. -->
+        <TextView
+            android:id="@+id/update_sheet_busy"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/update_available_sheet_install" />
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurface"
+            android:visibility="gone"
+            tools:text="@string/update_busy_download"
+            tools:visibility="visible" />
+
+        <LinearLayout
+            android:id="@+id/update_sheet_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Installing closes Firedown: on Android 12 and newer at once,
+                 with no question from Android. Firedown does not reopen by
+                 itself; a "Firedown updated" notification follows. -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:gravity="center"
+                android:text="@string/update_sheet_closes_note"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/update_sheet_not_now"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/translate_not_now" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/update_sheet_install"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/update_available_sheet_install" />
+
+            </LinearLayout>
+
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/update_sheet_progress"

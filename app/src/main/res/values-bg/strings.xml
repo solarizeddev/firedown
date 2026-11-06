@@ -440,7 +440,12 @@
     <string name="update_install_preparing">Подготвяне на актуализацията…</string>
     <string name="update_install_installing">Инсталиране…</string>
     <string name="update_install_failed">Инсталирането не можа да започне. Опитайте отново.</string>
-    <string name="update_available_sheet_title">Налично обновяване</string>
+    <string name="update_ready_title">Обновяването е готово</string>
+    <string name="update_sheet_closes_note">Firedown се затваря, докато обновяването се инсталира.</string>
+    <string name="update_busy_download">Изтегля се файл. Изтеглянето спира, когато Firedown се затвори.</string>
+    <string name="update_busy_task">Файл се преобразува или премества. Това спира, когато Firedown се затвори.</string>
+    <string name="update_busy_share">Отворено е споделяне на файл. То приключва, когато Firedown се затвори.</string>
+    <string name="update_busy_playback">Възпроизвеждането спира, когато Firedown се затвори.</string>
     <string name="update_available_sheet_whats_new">Какво ново</string>
     <string name="update_failed_general_body">Ще опитаме отново по-късно.</string>
     <string name="update_failed_general_title">Обновяването е неуспешно</string>

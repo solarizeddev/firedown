@@ -4,7 +4,9 @@
   real view margin set in code (UpdateAvailableSheet.fillChangelog), NOT line
   spacing — the Material3 textAppearance imposes a fixed lineHeight via
   MaterialTextView that overrides lineSpacingExtra/Multiplier, so a row + margin
-  is the only reliable way to space the items.
+  is the only reliable way to space the items. The bullet and its hanging
+  indent are set in code (fillChangelog: a LeadingMarginSpan as wide as the
+  bullet), so a wrapped line starts under the text.
 -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -13,4 +15,4 @@
     android:gravity="start"
     android:textAppearance="?attr/textAppearanceBodyMedium"
     android:textColor="?attr/colorOnSurfaceVariant"
-    tools:text="• YouTube downloads now finish ready to play." />
+    tools:text="•  YouTube downloads now finish ready to play." />

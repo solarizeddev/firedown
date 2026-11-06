@@ -590,7 +590,12 @@
     <string name="update_install_preparing">正在准备更新…</string>
     <string name="update_install_installing">正在安装…</string>
     <string name="update_install_failed">无法开始安装。请重试。</string>
-    <string name="update_available_sheet_title">有可用更新</string>
+    <string name="update_ready_title">更新已就绪</string>
+    <string name="update_sheet_closes_note">安装更新时 Firedown 会关闭。</string>
+    <string name="update_busy_download">有下载正在进行。Firedown 关闭时下载会停止。</string>
+    <string name="update_busy_task">有文件正在转换或移动。Firedown 关闭时会停止。</string>
+    <string name="update_busy_share">文件分享正在进行。Firedown 关闭时会结束。</string>
+    <string name="update_busy_playback">Firedown 关闭时播放会停止。</string>
     <string name="update_available_sheet_whats_new">更新内容</string>
     <string name="update_failed_general_body">我们稍后会再试一次。</string>
     <string name="update_failed_general_title">Firedown 更新失败</string>

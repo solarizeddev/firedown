@@ -486,7 +486,12 @@
     <string name="update_install_preparing">Update voorbereiden…</string>
     <string name="update_install_installing">Installeren…</string>
     <string name="update_install_failed">Kan de installatie niet starten. Probeer het opnieuw.</string>
-    <string name="update_available_sheet_title">Update beschikbaar</string>
+    <string name="update_ready_title">Update klaar</string>
+    <string name="update_sheet_closes_note">Firedown sluit terwijl de update wordt geïnstalleerd.</string>
+    <string name="update_busy_download">Er loopt een download. Die stopt als Firedown sluit.</string>
+    <string name="update_busy_task">Er wordt een bestand omgezet of verplaatst. Dat stopt als Firedown sluit.</string>
+    <string name="update_busy_share">Er staat een bestand delen open. Dat stopt als Firedown sluit.</string>
+    <string name="update_busy_playback">Het afspelen stopt als Firedown sluit.</string>
     <string name="update_available_sheet_whats_new">Wat is er nieuw</string>
     <string name="update_failed_general_body">We proberen het later opnieuw.</string>
     <string name="update_failed_general_title">Bijwerken mislukt</string>

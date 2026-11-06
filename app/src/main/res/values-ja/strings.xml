@@ -590,7 +590,12 @@
     <string name="update_install_preparing">アップデートを準備しています…</string>
     <string name="update_install_installing">インストールしています…</string>
     <string name="update_install_failed">インストールを開始できませんでした。もう一度お試しください。</string>
-    <string name="update_available_sheet_title">更新があります</string>
+    <string name="update_ready_title">アップデートの準備ができました</string>
+    <string name="update_sheet_closes_note">アップデートのインストール中は Firedown が閉じます。</string>
+    <string name="update_busy_download">ダウンロード中のファイルがあります。Firedown が閉じると停止します。</string>
+    <string name="update_busy_task">ファイルを変換または移動しています。Firedown が閉じると停止します。</string>
+    <string name="update_busy_share">ファイルの共有が開いています。Firedown が閉じると終了します。</string>
+    <string name="update_busy_playback">Firedown が閉じると再生は停止します。</string>
     <string name="update_available_sheet_whats_new">新機能</string>
     <string name="update_failed_general_body">後でもう一度試します。</string>
     <string name="update_failed_general_title">Firedownの更新に失敗しました</string>

@@ -464,7 +464,12 @@
     <string name="update_install_preparing">Připravuje se aktualizace…</string>
     <string name="update_install_installing">Instaluje se…</string>
     <string name="update_install_failed">Instalaci se nepodařilo spustit. Zkuste to znovu.</string>
-    <string name="update_available_sheet_title">Dostupná aktualizace</string>
+    <string name="update_ready_title">Aktualizace je připravena</string>
+    <string name="update_sheet_closes_note">Během instalace aktualizace se Firedown zavře.</string>
+    <string name="update_busy_download">Probíhá stahování. Zastaví se, když se Firedown zavře.</string>
+    <string name="update_busy_task">Soubor se převádí nebo přesouvá. To se zastaví, když se Firedown zavře.</string>
+    <string name="update_busy_share">Je otevřené sdílení souboru. Skončí, když se Firedown zavře.</string>
+    <string name="update_busy_playback">Přehrávání se zastaví, když se Firedown zavře.</string>
     <string name="update_available_sheet_whats_new">Novinky</string>
     <string name="update_failed_general_body">Zkusíme to znovu později.</string>
     <string name="update_failed_general_title">Aktualizace se nezdařila</string>

@@ -447,7 +447,12 @@
     <string name="update_install_preparing">Підготовка оновлення…</string>
     <string name="update_install_installing">Встановлення…</string>
     <string name="update_install_failed">Не вдалося почати встановлення. Спробуйте ще раз.</string>
-    <string name="update_available_sheet_title">Доступне оновлення</string>
+    <string name="update_ready_title">Оновлення готове</string>
+    <string name="update_sheet_closes_note">Під час встановлення оновлення Firedown закриється.</string>
+    <string name="update_busy_download">Триває завантаження. Воно зупиниться, коли Firedown закриється.</string>
+    <string name="update_busy_task">Файл перетворюється або переміщується. Це зупиниться, коли Firedown закриється.</string>
+    <string name="update_busy_share">Відкрито передавання файлу. Воно завершиться, коли Firedown закриється.</string>
+    <string name="update_busy_playback">Відтворення зупиниться, коли Firedown закриється.</string>
     <string name="update_available_sheet_whats_new">Що нового</string>
     <string name="update_failed_general_body">Спробуємо пізніше.</string>
     <string name="update_failed_general_title">Не вдалося оновити</string>

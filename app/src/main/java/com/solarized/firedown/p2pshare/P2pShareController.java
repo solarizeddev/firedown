@@ -551,6 +551,16 @@ public class P2pShareController {
                 mState.isLive(), mState.isInTransfer());
     }
 
+    /**
+     * True while any share is open: an offer waiting for an accept, a request
+     * waiting for an answer, or a transfer. Installing an update closes the
+     * app and ends it, so the update sheet waits while this is true.
+     */
+    @UiThread
+    public boolean hasLiveSession() {
+        return mState != null && mState.isLive();
+    }
+
     /* ── port lifecycle (called from GeckoRuntimeHelper) ────────────────── */
 
     @UiThread

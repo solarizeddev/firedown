@@ -2,10 +2,15 @@ package com.solarized.firedown.phone;
 
 import android.os.Bundle;
 import android.os.Process;
+
+import androidx.annotation.NonNull;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.navigation.NavController;
+import androidx.navigation.NavDestination;
 
 import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.R;
+import com.solarized.firedown.UpdatePromptPolicy;
 
 import org.mozilla.geckoview.GeckoRuntime;
 
@@ -47,6 +52,23 @@ public class BrowserMainActivity extends BaseActivity {
     }
 
 
+
+    /**
+     * The home screen (regular or private) is where the update sheet may
+     * open; over a web page it waits (UpdatePromptPolicy), except as the
+     * first screen after the app starts.
+     */
+    @NonNull
+    @Override
+    protected UpdatePromptPolicy.Place updatePromptPlace() {
+        NavController nav = getNavController();
+        NavDestination destination = nav != null ? nav.getCurrentDestination() : null;
+        if (destination != null && (destination.getId() == R.id.home
+                || destination.getId() == R.id.home_incognito)) {
+            return UpdatePromptPolicy.Place.HOME;
+        }
+        return UpdatePromptPolicy.Place.PAGE;
+    }
 
     @Override
     protected void onDestroy() {

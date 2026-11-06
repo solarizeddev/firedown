@@ -425,7 +425,12 @@
     <string name="update_install_preparing">Uuenduse ettevalmistamine…</string>
     <string name="update_install_installing">Paigaldamine…</string>
     <string name="update_install_failed">Paigaldamist ei õnnestunud alustada. Proovi uuesti.</string>
-    <string name="update_available_sheet_title">Uuendus saadaval</string>
+    <string name="update_ready_title">Uuendus on valmis</string>
+    <string name="update_sheet_closes_note">Firedown sulgub, kuni uuendus paigaldatakse.</string>
+    <string name="update_busy_download">Allalaadimine käib. See peatub, kui Firedown sulgub.</string>
+    <string name="update_busy_task">Faili teisendatakse või teisaldatakse. See peatub, kui Firedown sulgub.</string>
+    <string name="update_busy_share">Failijagamine on avatud. See lõpeb, kui Firedown sulgub.</string>
+    <string name="update_busy_playback">Taasesitus peatub, kui Firedown sulgub.</string>
     <string name="update_available_sheet_whats_new">Mis on uut</string>
     <string name="update_failed_general_body">Proovime hiljem uuesti.</string>
     <string name="update_failed_general_title">Uuendamine ebaõnnestus</string>

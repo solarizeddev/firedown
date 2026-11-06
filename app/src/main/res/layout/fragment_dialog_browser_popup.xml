@@ -188,6 +188,8 @@
             android:paddingBottom="8dp">
 
 
+            <include layout="@layout/item_popup_update_ready" />
+
             <!-- Row 1: transient chrome controls (Back · Forward ·
                  Bookmark★ · Refresh). -->
             <!-- The two icon rows sit in ONE non-clickable card, the same
