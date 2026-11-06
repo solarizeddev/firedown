@@ -39,4 +39,7 @@
     <plurals name="incognito_notification_title">
         <item quantity="other">プライベートタブを %d 個開いています</item>
     </plurals>
+    <plurals name="p2p_link_open_for">
+        <item quantity="other">共有済み · あと %d 分有効。タップしてもう一度共有。</item>
+    </plurals>
 </resources>

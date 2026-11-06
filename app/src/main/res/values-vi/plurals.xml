@@ -42,4 +42,7 @@
     <plurals name="incognito_notification_title">
         <item quantity="other">%d thẻ riêng tư đang mở</item>
     </plurals>
+    <plurals name="p2p_link_open_for">
+        <item quantity="other">Đã chia sẻ · còn mở %d phút nữa. Nhấn để chia sẻ lại.</item>
+    </plurals>
 </resources>

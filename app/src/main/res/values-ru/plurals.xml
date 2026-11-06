@@ -63,4 +63,10 @@
         <item quantity="many">%d приватных вкладок открыто</item>
         <item quantity="other">%d приватной вкладки открыто</item>
     </plurals>
+    <plurals name="p2p_link_open_for">
+        <item quantity="one">Отправлено · открыто ещё %d минуту. Нажмите, чтобы поделиться снова.</item>
+        <item quantity="few">Отправлено · открыто ещё %d минуты. Нажмите, чтобы поделиться снова.</item>
+        <item quantity="many">Отправлено · открыто ещё %d минут. Нажмите, чтобы поделиться снова.</item>
+        <item quantity="other">Отправлено · открыто ещё %d минуты. Нажмите, чтобы поделиться снова.</item>
+    </plurals>
 </resources>

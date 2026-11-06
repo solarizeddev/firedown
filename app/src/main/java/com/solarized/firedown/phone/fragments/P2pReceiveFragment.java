@@ -3,6 +3,7 @@ package com.solarized.firedown.phone.fragments;
 import android.os.Bundle;
 import android.text.format.Formatter;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -30,7 +31,7 @@ import dagger.hilt.android.AndroidEntryPoint;
  * as a normal FINISHED entry in Downloads — the session then outlives this
  * screen (the service carries it).
  *
- * <p>Screen walk: IDLE (visible card + the code/link fold) → PREVIEW
+ * <p>Screen walk: IDLE (visible card + Scan; Paste code in the overflow) → PREVIEW
  * (accept/decline) → CONNECTING (with the human-relayed reply only when both
  * push paths failed) → TRANSFER → DONE (Open) / ERROR (Try again). Rendered
  * from the controller's {@link ShareState}.
@@ -55,7 +56,6 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
     public static final String ARG_SIGNALING_ID = "p2p.sig.id";
 
     private View mView;
-    private boolean mCodeExpanded;
     private String mRenderedReplyCode;
     private String mVisibleAs;
     private ShareState mLast;
@@ -69,18 +69,21 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
         mView = inflater.inflate(R.layout.fragment_p2p_receive, container, false);
         mToolbar = mView.findViewById(R.id.toolbar);
 
-        mView.findViewById(R.id.p2p_code_toggle).setOnClickListener(v -> {
-            mCodeExpanded = !mCodeExpanded;
-            updateCodeFold();
-        });
         mView.findViewById(R.id.p2p_scan_code).setOnClickListener(v ->
                 navigateToScanner(P2pShareController.OFFER_PREFIX, false));
-        mView.findViewById(R.id.p2p_paste_code).setOnClickListener(v -> {
-            String code = readCodeFromClipboard(P2pShareController.OFFER_PREFIX);
-            if (code != null && !refuseWhileBusy()) {
-                // Pasted from a messenger = phones apart.
-                mP2pController.startReceive(code, true);
+        // Paste a bare code: rare (a link tapped in a chat opens this screen
+        // by itself), so it lives in the overflow, shown while idle.
+        mToolbar.inflateMenu(R.menu.menu_p2p_receive);
+        mToolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_paste_code) {
+                String code = readCodeFromClipboard(P2pShareController.OFFER_PREFIX);
+                if (code != null && !refuseWhileBusy()) {
+                    // Pasted from a messenger = phones apart.
+                    mP2pController.startReceive(code, true);
+                }
+                return true;
             }
+            return false;
         });
         mView.findViewById(R.id.p2p_accept).setOnClickListener(v -> {
             mP2pController.acceptOffer();
@@ -257,12 +260,13 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
             mLast = null;
             showStage(R.id.p2p_idle_group);
             renderVisible();
-            updateCodeFold();
+            setMenuVisible(true);
             mView.findViewById(R.id.p2p_stop).setVisibility(View.GONE);
             bindFooter(mView, null);
             return;
         }
         mLast = state;
+        setMenuVisible(false);
         MaterialButton stop = mView.findViewById(R.id.p2p_stop);
         TextView status = mView.findViewById(R.id.p2p_status);
         switch (state.stage) {
@@ -345,8 +349,8 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
         mRenderedReplyCode = state.answerCode;
         boolean rendered = setQr(mView.findViewById(R.id.p2p_reply_qr), state.answerCode);
         mView.findViewById(R.id.p2p_reply_qr_card).setVisibility(rendered ? View.VISIBLE : View.GONE);
-        ((TextView) mView.findViewById(R.id.p2p_reply_hint)).setText(
-                rendered ? R.string.p2p_code_hint_reply : R.string.p2p_qr_too_large);
+        // Too big for a QR: the "Send reply" button above is the way back.
+        mView.findViewById(R.id.p2p_reply_hint).setVisibility(rendered ? View.VISIBLE : View.GONE);
     }
 
     /** The idle card: "Visible as <name>" with the live dot, or not visible. */
@@ -359,20 +363,24 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
         View dot = mView.findViewById(R.id.p2p_visible_dot);
         if (mVisibleAs != null && !mVisibleAs.isEmpty()) {
             text.setText(getString(R.string.p2p_visible_as, mVisibleAs));
-            hint.setText(R.string.p2p_visible_hint);
+            hint.setText(R.string.p2p_visible_hint_link);
             dot.setVisibility(View.VISIBLE);
         } else {
             text.setText(R.string.p2p_not_visible);
-            hint.setText(R.string.p2p_visible_hint);
+            hint.setText(R.string.p2p_visible_hint_link);
             dot.setVisibility(View.GONE);
         }
     }
 
-    private void updateCodeFold() {
-        mView.findViewById(R.id.p2p_code_group)
-                .setVisibility(mCodeExpanded ? View.VISIBLE : View.GONE);
-        ((ImageView) mView.findViewById(R.id.p2p_code_chevron))
-                .setRotation(mCodeExpanded ? 180f : 0f);
+    /** Paste code belongs to the idle screen only. */
+    private void setMenuVisible(boolean visible) {
+        if (mToolbar == null) {
+            return;
+        }
+        Menu menu = mToolbar.getMenu();
+        for (int i = 0; i < menu.size(); i++) {
+            menu.getItem(i).setVisible(visible);
+        }
     }
 
     private void showStage(int visibleId) {

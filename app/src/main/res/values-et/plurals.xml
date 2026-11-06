@@ -45,4 +45,8 @@
         <item quantity="one">%d privaatne vaheleht avatud</item>
         <item quantity="other">%d privaatset vahelehte avatud</item>
     </plurals>
+    <plurals name="p2p_link_open_for">
+        <item quantity="one">Jagatud · avatud veel %d minut. Puuduta, et uuesti jagada.</item>
+        <item quantity="other">Jagatud · avatud veel %d minutit. Puuduta, et uuesti jagada.</item>
+    </plurals>
 </resources>

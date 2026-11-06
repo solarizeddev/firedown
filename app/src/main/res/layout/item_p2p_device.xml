@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One phone in the sender's "Nearby" list (P2pSendFragment): a Receive
-     screen open on this Wi-Fi. Tap = hand it the offer. The second line is
-     the row's state ("Tap to send" / "Sent · waiting for them to accept"). -->
+<!-- One row of the Send screen's "Send to" list (P2pSendFragment, rows from
+     P2pSendRows): a nearby phone, the "No phones nearby yet" hint, "Share a
+     link" or "Show a QR code". The second line is the row's state; the end
+     slot holds a chevron (tappable), the one bounded spinner (connecting),
+     or nothing. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -9,18 +11,20 @@
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
     android:gravity="center_vertical"
-    android:minHeight="56dp"
+    android:minHeight="64dp"
     android:orientation="horizontal"
     android:paddingHorizontal="16dp"
-    android:paddingVertical="8dp">
+    android:paddingVertical="10dp">
 
     <ImageView
         android:id="@+id/p2p_device_icon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/bg_p2p_row_icon"
         android:contentDescription="@null"
+        android:padding="9dp"
         android:src="@drawable/ic_p2p_24"
-        app:tint="?attr/brandInk" />
+        app:tint="?attr/colorOnSurface" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -35,7 +39,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
             android:textColor="?attr/colorOnSurface"
             tools:text="Ana's Pixel 8" />
 
@@ -43,11 +47,30 @@
             android:id="@+id/p2p_device_status"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:maxLines="1"
-            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:layout_marginTop="2dp"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
             android:textColor="?attr/colorOnSurfaceVariant"
-            tools:text="@string/p2p_nearby_tap" />
+            tools:text="@string/p2p_on_this_wifi" />
 
     </LinearLayout>
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/p2p_device_spinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorSize="20dp"
+        app:trackThickness="2dp" />
+
+    <ImageView
+        android:id="@+id/p2p_device_chevron"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="12dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_chevron_right_24"
+        app:tint="?attr/colorOnSurfaceVariant" />
 
 </LinearLayout>

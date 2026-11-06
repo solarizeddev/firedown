@@ -1087,9 +1087,6 @@
     <string name="p2p_send">Send</string>
     <string name="p2p_send_title">Send directly</string>
     <string name="p2p_receive_title">Receive a file</string>
-    <string name="p2p_send_lead">Sends straight to another device running Firedown. Encrypted, no server in between.</string>
-    <string name="p2p_receive_lead">Receive a file from another device running Firedown.</string>
-    <string name="p2p_code_hint_send">Scan this with the other device, from Downloads → Receive a file or its camera. If a reply code appears, scan it back.</string>
     <string name="p2p_code_hint_reply">Show this reply to the sender, or send it back the way their code arrived.</string>
     <string name="p2p_share_code">Send code another way</string>
     <string name="p2p_share_reply">Send reply another way</string>
@@ -1117,7 +1114,6 @@
     <string name="p2p_error_generic">The transfer failed.</string>
     <string name="p2p_error_bad_code">That code isn\'t valid. Try again.</string>
     <string name="p2p_clipboard_empty">No code in the clipboard.</string>
-    <string name="p2p_qr_too_large">This code is too big to show as a QR. Use “Send code another way”.</string>
     <string name="p2p_qr_content_desc">Your share code, as a QR</string>
     <string name="p2p_footer">Encrypted device-to-device transfer. The file never touches a server.</string>
     <string name="p2p_footer_relayed">Encrypted end-to-end. Relayed through firedown.app, which can\'t read it.</string>
@@ -1125,13 +1121,6 @@
     <string name="p2p_hint_vpn">Excluding Firedown from your VPN lets it connect directly.</string>
     <string name="p2p_scan_hint">Point the camera at the sender\'s code</string>
     <string name="p2p_camera_denied">Camera access is needed to scan. You can paste the code instead.</string>
-    <string name="p2p_send_link">Send link</string>
-    <string name="p2p_send_private">Private link</string>
-    <string name="p2p_send_link_again">Send link again</string>
-    <string name="p2p_send_link_hint">Send it through any app. The transfer starts when they accept, even if you leave this screen.</string>
-    <string name="p2p_link_sent">Link sent</string>
-    <string name="p2p_link_sent_body">Waiting for them to accept. The transfer then starts on its own.</string>
-    <string name="p2p_clipboard_note">A copied reply is picked up automatically.</string>
     <string name="p2p_reply_detected">Reply found. Connecting…</string>
     <string name="p2p_reconnecting">Reconnecting…</string>
     <string name="p2p_send_reply">Send reply</string>
@@ -1139,21 +1128,32 @@
     <string name="p2p_reply_no_session">This reply belongs to a share that\'s no longer open.</string>
     <!-- Send: the nearby list (phones with Receive open on this Wi-Fi, found
          over NSD) above the link; the QR folded under "Show QR". -->
-    <string name="p2p_nearby_label">Nearby · on this Wi‑Fi</string>
-    <string name="p2p_nearby_empty">No one yet. On the other phone, open Downloads → Receive a file.</string>
-    <string name="p2p_nearby_tap">Tap to send</string>
+    <!-- Send: ONE "Send to" list. Nearby phones (Receive open on this
+         Wi-Fi), then a link, then a QR; each row's second line is its
+         state. -->
+    <string name="p2p_send_to">Send to</string>
+    <string name="p2p_on_this_wifi">On this Wi‑Fi</string>
+    <string name="p2p_nearby_none">No phones nearby yet</string>
+    <string name="p2p_nearby_none_hint">On the other phone, open Downloads → Receive a file.</string>
+    <string name="p2p_share_link">Share a link</string>
+    <string name="p2p_share_link_hint">Through any app. Works anywhere.</string>
+    <string name="p2p_preparing_link">Preparing link…</string>
+    <string name="p2p_show_qr_code">Show a QR code</string>
+    <string name="p2p_show_qr_code_hint">For a phone right here, without Wi‑Fi.</string>
+    <string name="p2p_hide_qr_code">Hide QR code</string>
+    <string name="p2p_qr_open_hint">Scan it from Downloads → Receive a file, or with the camera.</string>
+    <string name="p2p_qr_too_big">This share is too big for a QR code. Share a link instead.</string>
+    <string name="p2p_waiting_note">The transfer starts when they accept, even if you leave this screen.</string>
+    <!-- Receive -->
+    <string name="p2p_visible_hint_link">Phones on this Wi‑Fi can send to you while this screen is open. A link someone sent you opens here when you tap it.</string>
+    <string name="p2p_accept_first">Nothing is received until you accept.</string>
     <string name="p2p_nearby_sent">Sent · waiting for them to accept</string>
     <string name="p2p_nearby_busy">%1$s is busy with another transfer.</string>
     <string name="p2p_nearby_unreachable">Couldn\'t reach %1$s.</string>
     <string name="p2p_declined">They declined.</string>
-    <string name="p2p_anywhere_label">Anywhere</string>
-    <string name="p2p_show_qr">Show QR</string>
-    <string name="p2p_hide_qr">Hide QR</string>
     <!-- Receive: visible to nearby senders while the screen is open. -->
     <string name="p2p_visible_as">Visible as %1$s</string>
-    <string name="p2p_visible_hint">Phones on this Wi‑Fi can send to you while this screen is open.</string>
     <string name="p2p_not_visible">Not visible nearby. Connect to Wi‑Fi, or use a code or link.</string>
-    <string name="p2p_got_code">Got a code or link?</string>
     <!-- The transfer runs in a foreground service once it starts. -->
     <string name="p2p_background_note">You can leave this screen. The transfer continues in the background.</string>
     <string name="p2p_error_timeout">No one accepted the file in time.</string>
@@ -1179,6 +1179,8 @@
     <string name="settings_p2p_turn_cred_hint">Password</string>
     <string name="settings_p2p_turn_clear">Clear</string>
     <string name="settings_p2p_turn_invalid">Enter a valid relay, e.g. turn:host:3478</string>
+    <string name="settings_p2p_private_links">Private links</string>
+    <string name="settings_p2p_private_links_summary">Put the whole share in the link instead of a short one. Longer links, but the file\'s name and size are never stored on firedown.app.</string>
 
     <plurals name="cloud_restore_started_many">
         <item quantity="one">Restoring %d file…</item>

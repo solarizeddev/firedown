@@ -45,4 +45,9 @@
         <item quantity="many">%d onglets privés ouverts</item>
         <item quantity="other">%d onglets privés ouverts</item>
     </plurals>
+    <plurals name="p2p_link_open_for">
+        <item quantity="one">Partagé · ouvert encore %d minute. Appuyez pour partager à nouveau.</item>
+        <item quantity="many">Partagé · ouvert encore %d minutes. Appuyez pour partager à nouveau.</item>
+        <item quantity="other">Partagé · ouvert encore %d minutes. Appuyez pour partager à nouveau.</item>
+    </plurals>
 </resources>

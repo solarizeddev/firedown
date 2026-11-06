@@ -5647,17 +5647,42 @@ and the in-person path was a QR to aim across a table. Now:
   is closed at once, the token compare is `MessageDigest.isEqual`, and the
   handler decides atomically (`mNearbyBusy`/`mAnswerTaken` are
   `AtomicBoolean`s, several workers can ask at once).
-- **Screens:** Send = the file card, NEARBY (the device rows, inflated
-  from `item_p2p_device.xml`, with the empty line "No one yet. On the other
-  phone, open Downloads → Receive a file"), then ANYWHERE (Send link,
-  Private link, and the QR folded under "Show QR" with the scan/paste
-  reply fallbacks). Receive = the "Visible as <name>" card and a "Got a
-  code or link?" fold (Scan · Paste); the request card (Accept/Decline);
-  the human-relayed reply only when both push paths failed
-  (`ShareState.answerCode`). Both carry "You can leave this screen. The
-  transfer continues in the background." on the progress card. The old
-  "Nearby? Show the QR" fold, the scan/paste entry card and the reply
-  stage's "One step left" copy are retired (base + every `values-*`).
+- **Screens (the 2026-11 simplification, canvas "Send directly redesign",
+  direction B with two tweaks).** The previous Send screen showed every
+  mechanism at once — a NEARBY card whose spinner never ended (discovery
+  has no end, and nobody appears on the common cross-network path), an
+  ANYWHERE card with Send link / Private link / Show QR, and after a share
+  a second card with its own spinner, two paragraphs, Paste reply and Send
+  link again — and was reported as confusing. Now: **Send = the file card
+  + ONE "Send to" list** (`P2pSendRows`, pure Java, pinned by
+  `scripts/p2p-harness` with mutants and `P2pSendRowsTest`): nearby phones
+  ("On this Wi‑Fi"), else a still "No phones nearby yet" hint row, then
+  "Share a link", then "Show a QR code" (unfolds in place inside the
+  card). What happened after a tap is THAT ROW'S second line, never
+  another card: a tapped phone reads "Sent · waiting for them to accept"
+  (untappable, and it keeps its row even if it drops out of discovery),
+  the link reads "Preparing link…" for the bounded broker wait, then
+  "Shared · open for N more minutes. Tap to share again" (the offer's
+  15-minute lifetime, `ShareState.offerExpiresAt`, rounded UP, never 0,
+  repainted on the minute boundary). Connecting collapses the list to the
+  one peer (the phone, else the link row) with the ONLY spinner, bounded
+  by the connect timeout. Transferring and done are painted on the file
+  card (bar + numbers under the name; the check and "Sent · size"). No
+  Cancel at rest (nothing is out; Back is enough), Cancel once a phone was
+  asked or a link went out. The reply fallbacks (Paste reply, Scan reply)
+  live in the toolbar overflow, shown only while the offer waits. **There
+  is no per-share private/short choice**: Settings → Direct share →
+  "Private links" (`SETTINGS_P2P_PRIVATE_LINKS`, default off) makes "Share
+  a link" send the full `FDS1.` code (no offer stored on the server); off,
+  it is the short link with the full one as the automatic fallback. The
+  lead sentence ("no server in between", untrue for a short or relayed
+  share) and the meaningless live dot are gone. **Receive** = the "Visible
+  as <name>" card (its hint now also says a tapped link opens here) and
+  one "Scan code" button; Paste code is in the overflow (idle only); the
+  request card adds "Nothing is received until you accept."; the
+  human-relayed reply only when both push paths failed
+  (`ShareState.answerCode`). Don't bring back a second card for a state,
+  a spinner at rest, or a per-share privacy choice.
 
 **Transport: Gecko's own WebRTC DataChannel — deliberately NO libwebrtc
 dependency** (~10 MB/ABI to duplicate what GeckoView ships).
@@ -5710,19 +5735,19 @@ through a messenger — with two wrapper forms for each code:**
   the firedown:// form.
 - **QR / in-person form: `firedown://p2p/<code>`** (`toDeepLink`) — what the
   QR encodes, so any scanner (system camera included) offers "open in
-  Firedown". The QR is folded under "Show QR" in the sender's ANYWHERE card
-  — the in-person path that needs NO network at all; two phones on one
+  Firedown". The QR unfolds under the "Show a QR code" row of the sender's
+  "Send to" list — the in-person path that needs NO network at all; two phones on one
   Wi-Fi use the nearby list instead (the redo note above).
 `handleP2pDeepLink` routes both forms by prefix: an **FDS1 offer** →
 `p2p_receive` (`ARG_OFFER_CODE`); an **FDR1 reply** → the LIVE send session
 (`provideExternalAnswer`; no session → an honest "share no longer open"
 snackbar). So the remote round trip is share link → Accept → send reply →
 sender TAPS the reply in the chat — no scanning, no pasting. The sender's
-screen shows a WAITING card after sharing (`ShareState.linkShared`, kept on
+link row shows its countdown after sharing (`ShareState.linkShared`, kept on
 the state so a sender who leaves and returns still sees it), auto-picks an
 FDR1 reply off the CLIPBOARD on window focus (each clip value tried once, so
 a soft bad-code can't loop; Android's paste toast keeps the read visible),
-and keeps Paste as the manual fallback. The receiver shows a reply ONLY
+and keeps Paste reply in the overflow as the manual fallback. The receiver shows a reply ONLY
 when both push paths (LAN return, mailbox) failed (`ShareState.answerCode`):
 "Send reply" for a sender reached by link plus the QR for one standing
 there; `arrivedRemote` still shapes the no-path error copy. `P2pShareController.stripDeepLink` unwraps both forms and bare codes
@@ -5927,8 +5952,8 @@ fails on the VPN, relay↔relay wins) automatically, once the answer is timely.
 The self-contained offer (`FDS1.` = whole SDP + candidates + file meta, ~1–2 KB
 base64) makes a ~1166-char link/QR. So the sender ALSO uploads the full offer to
 the rendezvous **offer mailbox** (`/v1/p2p/o/<id>`, same id as its `/a/<id>`
-answer poll; `P2pSignalingClient.uploadOffer`) and the "Send link" action shares
-a short reference `https://firedown.app/s#FDO1.<id>` (`OFFER_REF_PREFIX`,
+answer poll; `P2pSignalingClient.uploadOffer`) and "Share a link" (unless
+Settings → Direct share → Private links is on) shares a short reference `https://firedown.app/s#FDO1.<id>` (`OFFER_REF_PREFIX`,
 `getShareContent` flips to it only AFTER the upload lands — a tap before then
 falls back to the full self-contained link, no regression). The receiver's
 `DownloadsActivity.routeCode` recognizes `FDO1.` → `ARG_OFFER_REF` →

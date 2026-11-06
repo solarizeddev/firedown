@@ -390,6 +390,16 @@ public class Preferences {
     }
 
     /**
+     * Direct share: share the whole offer in the link ({@code FDS1.}, ~1.2 K
+     * characters) instead of the short {@code FDO1.} link whose offer (file
+     * name, size, device name) is held for 15 minutes by the rendezvous
+     * mailbox. Off by default: a privacy preference set once, never a
+     * question asked at every share.
+     */
+    public static final String SETTINGS_P2P_PRIVATE_LINKS = "com.solarized.firedown.preferences.p2p.private.links";
+    public static final boolean DEFAULT_P2P_PRIVATE_LINKS = false;
+
+    /**
      * OPTIONAL TURN relay for the P2P share — the ONLY way two peers that
      * can't reach each other directly (both on mobile data / CGNAT, or one
      * behind a full-tunnel VPN) can connect: the relay forwards the (still

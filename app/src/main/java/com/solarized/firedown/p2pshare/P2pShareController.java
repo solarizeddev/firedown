@@ -1085,11 +1085,12 @@ public class P2pShareController {
         // ignores a later duplicate.
         if (mRendezvous != null && mRendezvousId != null) {
             startRendezvousPoll(gen);
-            // NB: the offer is NOT brokered here — that's LAZY, done only when the
-            // user picks the SHORT link (resolveShortLink). Brokering eagerly would
-            // upload the offer (which carries the file's name/size) to the server
-            // for every share, making the "Private link" choice meaningless. So a
-            // private share uploads nothing. (The answer still returns via `rvz`
+            // NB: the offer is NOT brokered here — that's LAZY, done only when a
+            // link is shared without the "Private links" setting
+            // (resolveShortLink). Brokering eagerly would upload the offer
+            // (which carries the file's name/size) for every share, nearby and
+            // QR ones included, and the setting would mean nothing. So a
+            // private share uploads no offer. (The answer still returns via `rvz`
             // for both — that's the receiver's candidates, not the shared file.)
         }
         if (mSignaling != null && mSignalingId != null && !mSignalingBase.isEmpty()) {
@@ -1114,6 +1115,7 @@ public class P2pShareController {
         mMainHandler.postDelayed(mOfferTimeout, OFFER_LIFETIME_MS);
         if (mState != null) {
             mState.offerCode = code;
+            mState.offerExpiresAt = System.currentTimeMillis() + OFFER_LIFETIME_MS;
             mState.stage = ShareState.Stage.READY;
             publish();
         }
@@ -1129,10 +1131,10 @@ public class P2pShareController {
     /**
      * Resolve the SHORT share link, brokering the offer LAZILY on first use: the
      * offer is uploaded to the rendezvous offer mailbox now (not eagerly at
-     * mint), so the "Private link" path can genuinely upload nothing. Hands
+     * mint), so a share under the "Private links" setting uploads no offer. Hands
      * {@code cb} (main thread) the short {@code FDO1.<id>} https link once the
      * upload lands, or the FULL self-contained link if brokering is unavailable
-     * or fails — so "Short link" is never a dead action, it just isn't shorter
+     * or fails — so sharing a link is never a dead action, it just isn't shorter
      * offline. Cached (`mShareLink`) so a re-share is instant.
      */
     @UiThread
@@ -1188,15 +1190,13 @@ public class P2pShareController {
 
     /**
      * Sender: a link went out through the share sheet. Recorded on the state
-     * (not the screen) so a sender who leaves and comes back sees the waiting
-     * card, not the share buttons again. {@code privateMode} is what "Send
-     * link again" re-shares.
+     * (not the screen) so a sender who leaves and comes back sees the link
+     * row's countdown, not the list as it was before.
      */
     @UiThread
-    public void markLinkShared(boolean privateMode) {
-        if (isSend()) {
+    public void markLinkShared() {
+        if (isSend() && !mState.linkShared) {
             mState.linkShared = true;
-            mState.linkPrivate = privateMode;
             publish();
         }
     }

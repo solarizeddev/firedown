@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Direct share (WebRTC P2P) networking sub-screen. Deliberately just TWO
-     rows — the defaults work everywhere (STUN + the built-in Firedown relay
+<!-- Direct share (WebRTC P2P) sub-screen: the link privacy switch, then
+     the networking overrides. The defaults work everywhere (STUN + the built-in Firedown relay
      fetched per share), so this screen only carries the overrides. Moved off
      the root Settings list behind one door: expert set-once config whose STUN
      summary is a raw stun: URL didn't belong on the root. No niche extras: a
@@ -9,6 +9,18 @@
      config-flip away in Preferences). Dialogs live in DirectShareFragment. -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Private links: share the whole offer in the link instead of the short
+         link whose offer the firedown.app mailbox holds for 15 minutes. A
+         preference set once — the Send screen never asks it per share. Read
+         at share time (P2pSendFragment); nothing to apply to Gecko. -->
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="com.solarized.firedown.preferences.p2p.private.links"
+        android:summary="@string/settings_p2p_private_links_summary"
+        android:title="@string/settings_p2p_private_links"
+        app:singleLineTitle="false"
+        app:icon="@drawable/ic_shield_privacy_tip_24" />
 
     <!-- Address-discovery helper (STUN). A click-row (not a ListPreference)
          so "Custom…" stays re-editable — a ListPreference fires no change

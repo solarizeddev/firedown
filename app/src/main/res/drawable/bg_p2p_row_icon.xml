@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The 40dp disc behind a "Send to" row's glyph (item_p2p_device). The
+     active row (the one the session waits on) tints it with the brand wash
+     in code. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <solid android:color="?attr/colorSurfaceContainerHighest" />
+</shape>

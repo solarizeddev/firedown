@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Receive screen overflow: paste a bare code (a link tapped in a chat
+     opens the screen by itself; a QR is the screen's button). Idle only. -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_paste_code"
+        android:title="@string/p2p_paste_code"
+        app:showAsAction="never" />
+</menu>

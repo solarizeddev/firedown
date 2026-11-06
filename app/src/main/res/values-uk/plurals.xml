@@ -63,4 +63,10 @@
         <item quantity="many">%d приватних вкладок відкрито</item>
         <item quantity="other">%d приватної вкладки відкрито</item>
     </plurals>
+    <plurals name="p2p_link_open_for">
+        <item quantity="one">Надіслано · відкрито ще %d хвилину. Торкніться, щоб поділитися знову.</item>
+        <item quantity="few">Надіслано · відкрито ще %d хвилини. Торкніться, щоб поділитися знову.</item>
+        <item quantity="many">Надіслано · відкрито ще %d хвилин. Торкніться, щоб поділитися знову.</item>
+        <item quantity="other">Надіслано · відкрито ще %d хвилини. Торкніться, щоб поділитися знову.</item>
+    </plurals>
 </resources>

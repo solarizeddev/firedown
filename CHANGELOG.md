@@ -1,3 +1,7 @@
+## [1.2.7] - 2026-11-06
+
+- Send directly: one simple list of where to send, with private links in Settings
+
 ## [1.2.6] - 2026-11-05
 
 - Updated the GeckoView browser engine to 159.0.20261105170000
