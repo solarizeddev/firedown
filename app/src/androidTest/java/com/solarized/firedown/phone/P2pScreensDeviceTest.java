@@ -13,9 +13,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.KeyguardManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.view.View;
 import android.widget.ImageView;
@@ -28,6 +31,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.di.RepositoryEntryPoint;
@@ -44,6 +48,7 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -85,6 +90,8 @@ public class P2pScreensDeviceTest {
     private P2pShareController mController;
     private File mFile;
     private ActivityScenario<DownloadsActivity> mScenario;
+    private SharedPreferences mPrefs;
+    private boolean mAppLockWas;
 
     @Before
     public void setUp() throws IOException {
@@ -96,6 +103,22 @@ public class P2pScreensDeviceTest {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .grantRuntimePermission(mApp.getPackageName(), "android.permission.POST_NOTIFICATIONS");
         }
+        // A screen lock or the user's app lock puts an activity over
+        // Downloads, which then never resumes (the first run failed so).
+        shell("input keyevent KEYCODE_WAKEUP");
+        shell("wm dismiss-keyguard");
+        KeyguardManager keyguard = mApp.getSystemService(KeyguardManager.class);
+        long unlockBy = SystemClock.elapsedRealtime() + 3_000;
+        while (keyguard.isKeyguardLocked() && SystemClock.elapsedRealtime() < unlockBy) {
+            SystemClock.sleep(POLL_MS);
+        }
+        assertFalse("the phone is locked: unlock it before running this test",
+                keyguard.isKeyguardLocked());
+        onMain(() -> mPrefs = EntryPointAccessors.fromApplication(mApp, RepositoryEntryPoint.class)
+                .getSharedPreferences());
+        mAppLockWas = mPrefs.getBoolean(Preferences.SETTINGS_APP_LOCK, false);
+        mPrefs.edit().putBoolean(Preferences.SETTINGS_APP_LOCK, false).commit();
+
         mFile = new File(mApp.getFilesDir(), FILE_NAME);
         byte[] bytes = new byte[256 * 1024];
         new Random(7).nextBytes(bytes);
@@ -119,6 +142,21 @@ public class P2pScreensDeviceTest {
         if (mFile != null) {
             //noinspection ResultOfMethodCallIgnored
             mFile.delete();
+        }
+        if (mPrefs != null) {
+            mPrefs.edit().putBoolean(Preferences.SETTINGS_APP_LOCK, mAppLockWas).commit();
+        }
+    }
+
+    private static void shell(String command) {
+        ParcelFileDescriptor pfd = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().executeShellCommand(command);
+        try (InputStream in = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
+            byte[] buffer = new byte[1024];
+            while (in.read(buffer) != -1) {
+                // drain, so the command has finished when this returns
+            }
+        } catch (IOException ignored) {
         }
     }
 

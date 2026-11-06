@@ -1,5 +1,6 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.annotation.SuppressLint;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.os.Handler;
@@ -83,6 +84,9 @@ public class P2pSendFragment extends P2pShareBaseFragment {
     private DownloadEntity mDownloadEntity;
     private View mView;
     private String mFileTag;
+    /** Swallows a touch nothing inside the unfolded body took (see bindRow). */
+    @SuppressLint("ClickableViewAccessibility")
+    private static final View.OnTouchListener SWALLOW_TOUCH = (v, event) -> true;
     /** "Someone next to you" is unfolded. */
     private boolean mNearbyOpen;
     /** The unfolded body (phones found, then the QR), moved into the
@@ -357,7 +361,8 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         mDevices = devices;
         renderRows();
         if (firstFound && !mNearbyOpen && mView != null
-                && phase() == P2pSendRows.Phase.READY) {
+                && phase() == P2pSendRows.Phase.READY
+                && (mLast == null || mLast.peerDevice == null)) {
             // The folded row now names the phone; a screen reader hears it too.
             mView.findViewById(R.id.p2p_dest_list).announceForAccessibility(
                     foundText(devicesNames()));
@@ -518,6 +523,10 @@ public class P2pSendFragment extends P2pShareBaseFragment {
 
         view.setOnClickListener(row.tappable ? v -> onRowTapped(row) : null);
         view.setClickable(row.tappable);
+        // The unfolded body (the QR, its lines) lives inside the card: a tap
+        // there must not fold the card. Children that act (the phone cards)
+        // take their touch first; what reaches the holder is swallowed.
+        view.findViewById(R.id.p2p_device_extra).setOnTouchListener(SWALLOW_TOUCH);
         // Still reachable by a screen reader, which reads its status.
         view.setFocusable(true);
         ViewCompat.removeAccessibilityAction(view, AccessibilityActionCompat.ACTION_EXPAND.getId());

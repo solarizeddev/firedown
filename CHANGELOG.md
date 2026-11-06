@@ -2,8 +2,8 @@
 
 - Send directly: send by link or to someone next to you, by Wi‑Fi or QR code
 - Turning DRM on lets protected videos play, in private tabs too, with no per-site prompt
-- Pop-up windows such as sign-in and payment pop-ups now open and work
-- A tab that closes itself now shows the next tab instead of a frozen page
+- Pop-up windows opened by a page now open and work
+- A tab that closes itself now shows the next tab
 - Websites can no longer ask for your location
 - Websites asking for the camera or microphone are refused, with a notice saying so
 - Pages can use Android's share sheet and lock the screen rotation
