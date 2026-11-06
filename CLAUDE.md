@@ -4889,7 +4889,10 @@ is **~75 MB**, the APK 205 MB.
   and fakes "an update is ready" through the debug-only `UpdateTestReceiver`
   (`app/src/debug`, exported but gated on `android.permission.DUMP`, which
   the adb shell holds and no installed app can: WHERE / MARK_READY / CLEAR /
-  POST_PROMPT / TAP_PROMPT / STATE, answered as `am broadcast` result data).
+  POST_PROMPT / TAP_PROMPT / STATE, answered as `am broadcast` result data;
+  the script's MARK_READY carries `--ez notes true`, which also stores test
+  release notes — nine bullets, one that wraps and one starting "-5%" — so
+  the sheet's notes, fade and hanging indent show in its screenshots).
   Cases: the sheet (the footer counting up, then Android's answer), a large
   file that is not an APK (rotation mid-copy, a sheet REBUILT mid-copy by a
   font size change — the browser handles rotation itself, so rotating never

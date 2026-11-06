@@ -10,6 +10,10 @@
 # with `am broadcast`; the install itself is the real code, on the phone.
 #
 # Cases, run in this order (--only picks some):
+# Every case marks the update ready with test release notes (nine bullets,
+# one that wraps, one starting "-5%"), so the screenshots show the sheet's
+# notes as a real update would.
+#
 #   sheet         Install from the sheet: the footer counts the copy up, then
 #                 Android answers. On Android 12+ it installs the update
 #                 without asking (Firedown requests that); otherwise its
@@ -655,12 +659,12 @@ prepare_ready() {
         *) die "the app's test receiver did not answer ($ans). Is this checkout's debug build installed?" ;;
     esac
     put_file "$kind" "$mb"
-    ans=$(rx MARK_READY --ei code "$NEWER_CODE" --es name "$(q "$TEST_NAME")")
+    ans=$(rx MARK_READY --ei code "$NEWER_CODE" --es name "$(q "$TEST_NAME")" --ez notes true)
     if [ "$(kv readable "$ans")" != true ] && [ -z "$PUT_MODE" ]; then
         # The app could not read what the shell wrote: write it as the app.
         PUT_MODE=runas
         put_file "$kind" "$mb"
-        ans=$(rx MARK_READY --ei code "$NEWER_CODE" --es name "$(q "$TEST_NAME")")
+        ans=$(rx MARK_READY --ei code "$NEWER_CODE" --es name "$(q "$TEST_NAME")" --ez notes true)
     fi
     if [ "$(kv readable "$ans")" != true ]; then
         die "Firedown cannot read the file at $APK_PATH ($ans)."
