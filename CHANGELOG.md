@@ -8,6 +8,7 @@
 - Websites asking for the camera or microphone are refused, with a notice saying so
 - Pages can use Android's share sheet and lock the screen rotation
 - The shield no longer counts other add-ons as ad blockers
+- Fixed a crash when showing some restored or imported downloads
 
 ## [1.2.6] - 2026-11-05
 
