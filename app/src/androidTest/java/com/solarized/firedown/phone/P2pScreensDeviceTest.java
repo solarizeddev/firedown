@@ -15,6 +15,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.KeyguardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -127,7 +128,11 @@ public class P2pScreensDeviceTest {
             out.write(bytes);
         }
         try {
-            mScenario = ActivityScenario.launch(DownloadsActivity.class);
+            // A plain intent, never launch(Class): that one is ACTION_MAIN,
+            // which IntentHandler clears (setAction("")) in onResume, and
+            // ActivityScenario finds its activity by intent equality, so it
+            // never saw RESUMED and timed out at STARTED.
+            mScenario = ActivityScenario.launch(new Intent(mApp, DownloadsActivity.class));
         } catch (AssertionError notResumed) {
             // Something stayed on top of Downloads: name it, so the failure
             // says what to fix instead of only "never RESUMED".
