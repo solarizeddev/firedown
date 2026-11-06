@@ -194,7 +194,8 @@ public final class AmoCatalog {
         if (name.isEmpty()) {
             name = id;
         }
-        String summary = translated(addon, "summary", language);
+        // Some summaries carry hard line breaks; a row wraps its own text.
+        String summary = translated(addon, "summary", language).trim().replaceAll("\\s+", " ");
         String author = "";
         JSONArray authors = addon.optJSONArray("authors");
         if (authors != null) {

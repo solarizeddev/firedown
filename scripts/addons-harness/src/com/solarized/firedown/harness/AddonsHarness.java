@@ -162,6 +162,14 @@ public final class AddonsHarness {
         AmoCatalog.Page noLang = AmoCatalog.parse(body, null);
         check("catalog: no language → default locale", noLang.entries.get(1).name.equals("Beta"));
 
+        String broken = "{\"next\":null,\"results\":["
+                + addon("w@x", "extension", "\"W\"", "\" One line.\\nTwo  lines.\\r\\n\"",
+                        "https://w.example/w.xpi", "")
+                + "]}";
+        AmoCatalog.Page lines = AmoCatalog.parse(broken, "en");
+        check("catalog: summary line breaks collapsed", lines.entries.size() == 1
+                && lines.entries.get(0).summary.equals("One line. Two lines."));
+
         AmoCatalog.Page last = AmoCatalog.parse("{\"next\":null,\"results\":[]}", "en");
         check("catalog: null next is no next page", last.next == null && last.entries.isEmpty());
 

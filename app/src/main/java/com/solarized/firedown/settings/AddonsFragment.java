@@ -50,6 +50,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public class AddonsFragment extends BasePreferenceFragment {
 
+    private static final int CATALOG_SUMMARY_LINES = 3;
+
     private static final String KEY_INSTALLED_CATEGORY = "com.solarized.firedown.preferences.addons.installed.category";
     private static final String KEY_INSTALLED_EMPTY = "com.solarized.firedown.preferences.addons.installed.empty";
     private static final String KEY_CATALOG_CATEGORY = "com.solarized.firedown.preferences.addons.catalog.category";
@@ -292,6 +294,9 @@ public class AddonsFragment extends BasePreferenceFragment {
                 p.setTitle(entry.name);
                 p.setSingleLineTitle(false);
                 p.setIconSpaceReserved(true);
+                // The start of the description; Mozilla's summaries run to
+                // five lines and put the icon beside the third.
+                p.setSummaryMaxLines(CATALOG_SUMMARY_LINES);
                 p.setOrder(order++);
                 if (AddonPolicy.isBuiltInId(entry.id)) {
                     p.setSummary(R.string.addons_built_in);

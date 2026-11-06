@@ -11,6 +11,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.SwitchPreferenceCompat;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
@@ -19,6 +20,7 @@ import com.solarized.firedown.addons.AddonInfo;
 import com.solarized.firedown.addons.AddonManager;
 import com.solarized.firedown.addons.AddonPermissionText;
 import com.solarized.firedown.phone.SettingsActivity;
+import com.solarized.firedown.ui.BulletList;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.ArrayList;
@@ -54,7 +56,7 @@ public class AddonDetailFragment extends BasePreferenceFragment {
     AddonManager mAddonManager;
 
     private String mId;
-    private Preference mHeader;
+    private AddonHeaderPreference mHeader;
     private SwitchPreferenceCompat mEnabled;
     private SwitchPreferenceCompat mPrivate;
     private SwitchPreferenceCompat mShield;
@@ -165,23 +167,18 @@ public class AddonDetailFragment extends BasePreferenceFragment {
         }
         mBinding = true;
         if (mHeader != null) {
-            mHeader.setTitle(info.name);
             List<String> facts = new ArrayList<>();
             if (!TextUtils.isEmpty(info.creator)) {
                 facts.add(getString(R.string.addon_by, info.creator));
             }
             facts.add(getString(R.string.addon_version, info.version));
-            String summary = TextUtils.join(" · ", facts);
-            if (!info.description.isEmpty()) {
-                summary = info.description + "\n" + summary;
-            }
-            mHeader.setSummary(summary);
+            mHeader.set(info.name, TextUtils.join("\n", facts), info.description);
             if (!mIconLoaded) {
                 mIconLoaded = true;
-                int px = getResources().getDimensionPixelSize(R.dimen.addon_icon_size);
+                int px = getResources().getDimensionPixelSize(R.dimen.addon_prompt_icon_size);
                 AddonIcons.load(requireContext(), info.icon, px, icon -> {
                     if (isAdded() && mHeader != null) {
-                        mHeader.setIcon(icon);
+                        mHeader.setAddonIcon(icon);
                     }
                 });
             }
@@ -224,12 +221,17 @@ public class AddonDetailFragment extends BasePreferenceFragment {
             List<String> lines = AddonPermissionText.lines(requireContext(),
                     info.requiredPermissions, info.requiredOrigins);
             String data = AddonPermissionText.dataCollection(requireContext(), info.requiredDataCollection);
-            if (data != null) {
-                lines.add(data);
+            if (lines.isEmpty()) {
+                // Nothing to list: the sentence says so, unbulleted.
+                String none = getString(R.string.addon_permissions_none);
+                mPermissions.setSummary(data == null ? none : none + "\n" + data);
+            } else {
+                // The data-collection sentence is not a permission: it closes
+                // the list without a bullet.
+                int ink = MaterialColors.getColor(requireView(),
+                        com.google.android.material.R.attr.colorOnSurfaceVariant);
+                mPermissions.setSummary(BulletList.build(requireContext(), lines, data, ink));
             }
-            mPermissions.setSummary(lines.isEmpty()
-                    ? getString(R.string.addon_permissions_none)
-                    : TextUtils.join("\n", lines));
         }
         bindOptional(info);
         mBinding = false;

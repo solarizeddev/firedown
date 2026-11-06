@@ -7,10 +7,8 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <Preference
-        android:key="com.solarized.firedown.preferences.addon.header"
-        android:selectable="false"
-        app:singleLineTitle="false" />
+    <com.solarized.firedown.settings.AddonHeaderPreference
+        android:key="com.solarized.firedown.preferences.addon.header" />
 
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.addon.state.category"
@@ -73,7 +71,7 @@
         android:title="@string/addon_permissions"
         app:iconSpaceReserved="false">
 
-        <Preference
+        <com.solarized.firedown.settings.ui.LongTextPreference
             android:key="com.solarized.firedown.preferences.addon.permissions"
             android:selectable="false"
             app:iconSpaceReserved="false" />

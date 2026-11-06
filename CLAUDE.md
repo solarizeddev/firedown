@@ -4384,6 +4384,19 @@ before changing a flow. The rules, each easy to undo:
   `makeAnchoredSnackbar`, the homes' bottom bar), the same placement as the
   download and new-tab snackbars, and falls back to the content frame
   (Settings).
+- **The add-on screens' shape** (reviewed against Firefox for Android and
+  Chrome, 2026-11): a catalog row's description is the start of Mozilla's
+  summary, three lines with "…" (`BusyPreference.setSummaryMaxLines`;
+  summaries ran to five lines and stranded the icon beside the third), with
+  hard line breaks collapsed in `AmoCatalog`. An add-on's page opens with a
+  FLAT header (`AddonHeaderPreference`: 48dp icon at 32dp, where the card
+  rows start their text; name; author and version on their own lines;
+  description at full width), not a card row, which put its text 37dp right
+  of every row under it. Permissions are a bulleted list (`ui/BulletList`:
+  a `BulletSpan` per item so a wrapped line hangs under its text, 6dp
+  between items), the data-collection sentence after them unbulleted (it is
+  not a permission), shown whole (`LongTextPreference`, the stock row cuts at
+  ten lines). The install question's lines use the same `BulletList`.
 - **Not built, on purpose or for now**: `downloads.download` and
   `browsingData` for add-ons (Firefox for Android registers no
   `DownloadDelegate`/`BrowsingDataDelegate` either); an options page with
