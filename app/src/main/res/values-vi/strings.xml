@@ -748,8 +748,7 @@
     <string name="p2p_nearby_busy">%1$s đang bận với một lượt truyền khác.</string>
     <string name="p2p_send_to">Gửi tới</string>
     <string name="p2p_on_this_wifi">Trên Wi‑Fi này</string>
-    <string name="p2p_nearby_none">Chưa có điện thoại nào ở gần</string>
-    <string name="p2p_nearby_none_hint">Trên điện thoại kia, mở Tải xuống → Nhận tệp.</string>
+    <string name="p2p_nearby_footnote">Điện thoại trên Wi‑Fi này sẽ xuất hiện ở đây khi mở Tải xuống → Nhận tệp.</string>
     <string name="p2p_share_link">Chia sẻ liên kết</string>
     <string name="p2p_share_link_hint">Qua bất kỳ ứng dụng nào. Dùng được ở mọi nơi.</string>
     <string name="p2p_preparing_link">Đang chuẩn bị liên kết…</string>

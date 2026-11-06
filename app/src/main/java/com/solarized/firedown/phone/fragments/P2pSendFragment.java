@@ -514,7 +514,7 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         return switch (row.sub) {
             case ON_WIFI -> getString(R.string.p2p_on_this_wifi);
             case WAITING_ACCEPT -> getString(R.string.p2p_nearby_sent);
-            case NEARBY_HINT -> getString(R.string.p2p_nearby_none_hint);
+            case NEARBY_HINT -> getString(R.string.p2p_nearby_footnote);
             case LINK_IDLE -> getString(R.string.p2p_share_link_hint);
             case LINK_PREPARING -> getString(R.string.p2p_preparing_link);
             case LINK_SHARED -> row.minutesLeft > 0

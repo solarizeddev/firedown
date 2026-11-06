@@ -873,8 +873,7 @@
     <string name="p2p_reply_no_session">Этот ответ относится к передаче, которая уже закрыта.</string>
     <string name="p2p_send_to">Куда отправить</string>
     <string name="p2p_on_this_wifi">В этой сети Wi‑Fi</string>
-    <string name="p2p_nearby_none">Рядом пока нет телефонов</string>
-    <string name="p2p_nearby_none_hint">На другом телефоне откройте Загрузки → Получить файл.</string>
+    <string name="p2p_nearby_footnote">Телефон в этой сети Wi‑Fi появится здесь, когда откроет Загрузки → Получить файл.</string>
     <string name="p2p_share_link">Поделиться ссылкой</string>
     <string name="p2p_share_link_hint">Через любое приложение. Работает где угодно.</string>
     <string name="p2p_preparing_link">Подготовка ссылки…</string>

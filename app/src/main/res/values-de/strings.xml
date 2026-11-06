@@ -957,8 +957,7 @@
     <string name="p2p_reply_no_session">Diese Antwort gehört zu einer Freigabe, die nicht mehr offen ist.</string>
     <string name="p2p_send_to">Senden an</string>
     <string name="p2p_on_this_wifi">In diesem WLAN</string>
-    <string name="p2p_nearby_none">Noch keine Telefone in der Nähe</string>
-    <string name="p2p_nearby_none_hint">Öffne auf dem anderen Telefon Downloads → Datei empfangen.</string>
+    <string name="p2p_nearby_footnote">Ein Telefon in diesem WLAN erscheint hier, sobald es Downloads → Datei empfangen öffnet.</string>
     <string name="p2p_share_link">Link teilen</string>
     <string name="p2p_share_link_hint">Über jede App. Funktioniert überall.</string>
     <string name="p2p_preparing_link">Link wird vorbereitet…</string>

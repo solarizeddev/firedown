@@ -952,8 +952,7 @@
     <string name="p2p_reply_no_session">这个回复所属的分享已不再打开。</string>
     <string name="p2p_send_to">发送到</string>
     <string name="p2p_on_this_wifi">在此 Wi‑Fi 上</string>
-    <string name="p2p_nearby_none">附近还没有手机</string>
-    <string name="p2p_nearby_none_hint">请在另一台手机上打开“下载 → 接收文件”。</string>
+    <string name="p2p_nearby_footnote">同一 Wi‑Fi 下的手机打开“下载 → 接收文件”后，会显示在这里。</string>
     <string name="p2p_share_link">分享链接</string>
     <string name="p2p_share_link_hint">可通过任何应用。随处可用。</string>
     <string name="p2p_preparing_link">正在准备链接…</string>

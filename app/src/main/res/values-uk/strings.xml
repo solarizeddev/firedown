@@ -800,8 +800,7 @@
     <string name="p2p_reply_no_session">Ця відповідь стосується передачі, яку вже закрито.</string>
     <string name="p2p_send_to">Куди надіслати</string>
     <string name="p2p_on_this_wifi">У цій мережі Wi‑Fi</string>
-    <string name="p2p_nearby_none">Поруч поки немає телефонів</string>
-    <string name="p2p_nearby_none_hint">На іншому телефоні відкрийте Завантаження → Отримати файл.</string>
+    <string name="p2p_nearby_footnote">Телефон у цій мережі Wi‑Fi з’явиться тут, щойно відкриє Завантаження → Отримати файл.</string>
     <string name="p2p_share_link">Поділитися посиланням</string>
     <string name="p2p_share_link_hint">Через будь-який застосунок. Працює будь-де.</string>
     <string name="p2p_preparing_link">Підготовка посилання…</string>

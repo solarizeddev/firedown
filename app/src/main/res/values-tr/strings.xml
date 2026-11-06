@@ -863,8 +863,7 @@
     <string name="p2p_reply_no_session">Bu yanıt artık açık olmayan bir paylaşıma ait.</string>
     <string name="p2p_send_to">Gönderilecek yer</string>
     <string name="p2p_on_this_wifi">Bu Wi‑Fi ağında</string>
-    <string name="p2p_nearby_none">Yakında henüz telefon yok</string>
-    <string name="p2p_nearby_none_hint">Diğer telefonda İndirilenler → Dosya al bölümünü açın.</string>
+    <string name="p2p_nearby_footnote">Bu Wi‑Fi\'daki bir telefon, İndirilenler → Dosya al bölümünü açtığında burada görünür.</string>
     <string name="p2p_share_link">Bağlantı paylaş</string>
     <string name="p2p_share_link_hint">Herhangi bir uygulamayla. Her yerde çalışır.</string>
     <string name="p2p_preparing_link">Bağlantı hazırlanıyor…</string>

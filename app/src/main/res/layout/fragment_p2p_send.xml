@@ -230,51 +230,6 @@
                         android:textAppearance="?attr/textAppearanceLabelLarge"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 
-                    <!-- Nobody found yet: a still line, not a card. Every card
-                         in the group below can be tapped. -->
-                    <LinearLayout
-                        android:id="@+id/p2p_nearby_hint"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="20dp"
-                        android:layout_marginBottom="8dp"
-                        android:orientation="horizontal"
-                        android:visibility="gone"
-                        tools:visibility="visible">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_marginTop="1dp"
-                            android:contentDescription="@null"
-                            android:src="@drawable/ic_search_24"
-                            app:tint="?attr/colorOnSurfaceVariant" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/p2p_nearby_none"
-                                android:textAppearance="?attr/textAppearanceBodyMedium"
-                                android:textColor="?attr/colorOnSurfaceVariant" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/p2p_nearby_none_hint"
-                                android:textAppearance="?attr/textAppearanceBodySmall"
-                                android:textColor="?attr/colorOnSurfaceVariant" />
-
-                        </LinearLayout>
-
-                    </LinearLayout>
-
                     <!-- The group of grouped cards (item_p2p_device), corners
                          from SheetGroups.applyCorners. -->
                     <LinearLayout
@@ -316,6 +271,20 @@
                             android:visibility="gone" />
 
                     </LinearLayout>
+
+                    <!-- Nobody found yet: a footnote under the group, no glyph,
+                         on the cards' 16dp edge. Hidden once a phone is listed. -->
+                    <TextView
+                        android:id="@+id/p2p_nearby_hint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:paddingTop="10dp"
+                        android:text="@string/p2p_nearby_footnote"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
 
                     <!-- Something went out and waits for an accept. -->
                     <TextView

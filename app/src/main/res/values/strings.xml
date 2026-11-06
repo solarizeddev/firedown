@@ -1133,8 +1133,7 @@
          state. -->
     <string name="p2p_send_to">Send to</string>
     <string name="p2p_on_this_wifi">On this Wi‑Fi</string>
-    <string name="p2p_nearby_none">No phones nearby yet</string>
-    <string name="p2p_nearby_none_hint">On the other phone, open Downloads → Receive a file.</string>
+    <string name="p2p_nearby_footnote">A phone on this Wi‑Fi appears here once it opens Downloads → Receive a file.</string>
     <string name="p2p_share_link">Share a link</string>
     <string name="p2p_share_link_hint">Through any app. Works anywhere.</string>
     <string name="p2p_preparing_link">Preparing link…</string>

@@ -708,8 +708,7 @@
     <string name="p2p_nearby_busy">%1$s sedang sibuk dengan transfer lain.</string>
     <string name="p2p_send_to">Kirim ke</string>
     <string name="p2p_on_this_wifi">Di Wi‑Fi ini</string>
-    <string name="p2p_nearby_none">Belum ada ponsel di sekitar</string>
-    <string name="p2p_nearby_none_hint">Di ponsel lain, buka Unduhan → Terima berkas.</string>
+    <string name="p2p_nearby_footnote">Ponsel di Wi‑Fi ini muncul di sini setelah membuka Unduhan → Terima berkas.</string>
     <string name="p2p_share_link">Bagikan tautan</string>
     <string name="p2p_share_link_hint">Lewat aplikasi apa pun. Berfungsi di mana saja.</string>
     <string name="p2p_preparing_link">Menyiapkan tautan…</string>

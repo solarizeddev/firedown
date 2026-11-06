@@ -960,8 +960,7 @@
     <string name="p2p_reply_no_session">Cette réponse appartient à un partage qui n\'est plus ouvert.</string>
     <string name="p2p_send_to">Envoyer à</string>
     <string name="p2p_on_this_wifi">Sur ce Wi‑Fi</string>
-    <string name="p2p_nearby_none">Aucun téléphone à proximité pour l\'instant</string>
-    <string name="p2p_nearby_none_hint">Sur l\'autre téléphone, ouvrez Téléchargements → Recevoir un fichier.</string>
+    <string name="p2p_nearby_footnote">Un téléphone sur ce Wi‑Fi apparaît ici dès qu\'il ouvre Téléchargements → Recevoir un fichier.</string>
     <string name="p2p_share_link">Partager un lien</string>
     <string name="p2p_share_link_hint">Via n\'importe quelle app. Fonctionne partout.</string>
     <string name="p2p_preparing_link">Préparation du lien…</string>

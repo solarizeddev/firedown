@@ -780,8 +780,7 @@
     <string name="p2p_reply_no_session">Този отговор е за споделяне, което вече не е отворено.</string>
     <string name="p2p_send_to">Изпращане до</string>
     <string name="p2p_on_this_wifi">В тази Wi‑Fi мрежа</string>
-    <string name="p2p_nearby_none">Още няма телефони наблизо</string>
-    <string name="p2p_nearby_none_hint">На другия телефон отворете Изтегляния → Получаване на файл.</string>
+    <string name="p2p_nearby_footnote">Телефон в тази Wi‑Fi мрежа се появява тук, щом отвори Изтегляния → Получаване на файл.</string>
     <string name="p2p_share_link">Споделете линк</string>
     <string name="p2p_share_link_hint">Чрез всяко приложение. Работи навсякъде.</string>
     <string name="p2p_preparing_link">Подготовка на линка…</string>

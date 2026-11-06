@@ -821,8 +821,7 @@
     <string name="p2p_reply_no_session">Tämä vastaus kuuluu jakoon, joka ei ole enää auki.</string>
     <string name="p2p_send_to">Lähetä kohteeseen</string>
     <string name="p2p_on_this_wifi">Tässä Wi‑Fi-verkossa</string>
-    <string name="p2p_nearby_none">Lähellä ei ole vielä puhelimia</string>
-    <string name="p2p_nearby_none_hint">Avaa toisessa puhelimessa Lataukset → Vastaanota tiedosto.</string>
+    <string name="p2p_nearby_footnote">Tämän Wi‑Fin puhelin näkyy tässä, kun se avaa Lataukset → Vastaanota tiedosto.</string>
     <string name="p2p_share_link">Jaa linkki</string>
     <string name="p2p_share_link_hint">Minkä tahansa sovelluksen kautta. Toimii kaikkialla.</string>
     <string name="p2p_preparing_link">Valmistellaan linkkiä…</string>

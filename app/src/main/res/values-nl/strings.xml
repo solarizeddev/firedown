@@ -863,8 +863,7 @@
     <string name="p2p_reply_no_session">Dit antwoord hoort bij een deelactie die niet meer open is.</string>
     <string name="p2p_send_to">Versturen naar</string>
     <string name="p2p_on_this_wifi">Op deze wifi</string>
-    <string name="p2p_nearby_none">Nog geen telefoons in de buurt</string>
-    <string name="p2p_nearby_none_hint">Open op de andere telefoon Downloads → Een bestand ontvangen.</string>
+    <string name="p2p_nearby_footnote">Een telefoon op deze wifi verschijnt hier zodra die Downloads → Een bestand ontvangen opent.</string>
     <string name="p2p_share_link">Een link delen</string>
     <string name="p2p_share_link_hint">Via elke app. Werkt overal.</string>
     <string name="p2p_preparing_link">Link voorbereiden…</string>

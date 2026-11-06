@@ -5659,10 +5659,14 @@ and the in-person path was a QR to aim across a table. Now:
   ("On this Wi‑Fi"), then "Share a link", then "Show QR code" (unfolds
   inside its own card), each a grouped `SheetRowCard`
   (`item_p2p_device`, corners from `SheetGroups.applyCorners`, so a press
-  stays inside the card). With nobody found, "No phones nearby yet" is a
-  still grey LINE above the group, not a card: every card can be tapped
-  (it shipped for one build as a card with the same disc as a real
-  destination, and was the heaviest row on the screen). What happened
+  stays inside the card). With nobody found, a FOOTNOTE under the group
+  says how a phone gets listed ("A phone on this Wi‑Fi appears here once
+  it opens Downloads → Receive a file."): plain BodySmall on the cards'
+  16dp edge, no glyph, gone once a phone is listed. Not a card (every
+  card can be tapped; it shipped for one build as a card with a real
+  destination's disc, the heaviest row on the screen) and not a glyph
+  line above the group (the next build: its icon and text sat on neither
+  the label's edge nor the cards' disc column, and it read out of place). What happened
   after a tap is THAT ROW'S second line, never another card: a tapped
   phone reads "Sent · waiting for them to accept" (untappable, and it
   keeps its row even if it drops out of discovery), the link reads

@@ -871,8 +871,7 @@
     <string name="p2p_reply_no_session">Ta odpowiedź należy do udostępniania, które nie jest już otwarte.</string>
     <string name="p2p_send_to">Wyślij do</string>
     <string name="p2p_on_this_wifi">W tej sieci Wi‑Fi</string>
-    <string name="p2p_nearby_none">Jeszcze brak telefonów w pobliżu</string>
-    <string name="p2p_nearby_none_hint">Na drugim telefonie otwórz Pliki do pobrania → Odbierz plik.</string>
+    <string name="p2p_nearby_footnote">Telefon w tej sieci Wi‑Fi pojawi się tutaj, gdy otworzy Pliki do pobrania → Odbierz plik.</string>
     <string name="p2p_share_link">Udostępnij link</string>
     <string name="p2p_share_link_hint">Przez dowolną aplikację. Działa wszędzie.</string>
     <string name="p2p_preparing_link">Przygotowywanie linku…</string>
