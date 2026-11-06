@@ -313,7 +313,7 @@ public class AddonsFragment extends BasePreferenceFragment {
                 } else {
                     CharSequence summary = catalogSummary(entry);
                     p.setSummary(summary);
-                    p.setSummaryMaxLines(catalogSummaryLines(entry));
+                    p.setSummaryMaxLines(CATALOG_DESCRIPTION_LINES, catalogMetaLength(entry));
                     p.setActionDescription(getString(R.string.addons_add_description, entry.name));
                     p.setOnPreferenceClickListener(pref -> {
                         // The row and its Add button both start it; the
@@ -359,7 +359,11 @@ public class AddonsFragment extends BasePreferenceFragment {
             CatalogPreference p = row.getValue();
             if (p.isBusy() != on) {
                 CharSequence summary = on ? getString(R.string.addons_installing) : catalogSummary(entry);
-                p.setSummaryMaxLines(on ? 1 : catalogSummaryLines(entry));
+                if (on) {
+                    p.setSummaryMaxLines(1);
+                } else {
+                    p.setSummaryMaxLines(CATALOG_DESCRIPTION_LINES, catalogMetaLength(entry));
+                }
                 p.setSummary(summary);
                 p.setBusy(on);
             }
@@ -401,9 +405,14 @@ public class AddonsFragment extends BasePreferenceFragment {
         return out;
     }
 
-    /** The meta line takes one of the clamp's lines; the description keeps two. */
-    private int catalogSummaryLines(@NonNull AmoCatalog.Entry entry) {
-        return CATALOG_DESCRIPTION_LINES + (catalogMeta(entry) != null ? 1 : 0);
+    /**
+     * The meta line's length, the lead the row's clamp lets wrap: it takes
+     * two lines on a 360dp phone in Russian, Ukrainian, Bulgarian and Dutch
+     * (their "Add" is twice as wide), and the description keeps its two.
+     */
+    private int catalogMetaLength(@NonNull AmoCatalog.Entry entry) {
+        String meta = catalogMeta(entry);
+        return meta == null ? 0 : meta.length();
     }
 
     @Nullable

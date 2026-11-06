@@ -4391,8 +4391,15 @@ before changing a flow. The rules, each easy to undo:
   say) over the first TWO lines of Mozilla's summary with "…" (summaries
   ran to five lines and stranded the icon beside the third; hard line
   breaks are collapsed in `AmoCatalog`), and a tonal "Add" button in the
-  trailing slot (the shield sheet's "Turn on" shape, 12dp padding so the
-  meta line keeps to one line beside it) so the row says what a tap does;
+  trailing slot (the shield sheet's "Turn on" shape, 12dp padding) so the
+  row says what a tap does. The meta line does NOT always fit one line:
+  measured at 360dp with ICU's compact counts and Roboto/Noto, Russian,
+  Ukrainian, Bulgarian and Dutch wrap it beside their wider "Add" (every
+  locale fits at 393dp), and a large font wraps English too. So the clamp
+  is not "2 + 1": the meta is the summary's LEAD
+  (`BusyPreference.setSummaryMaxLines(lines, leadLength)`), the limit is
+  set after layout to the lines the lead takes plus the description's two
+  (`LeadClamp`), and a wrapped meta never costs the description a line;
   the spinner takes the button's place while it installs, and a tap
   anywhere on the row does the same (TalkBack hears it once, on the row:
   "double-tap to add …", the button hidden from it). A rounded user count

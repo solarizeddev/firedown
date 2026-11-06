@@ -5,6 +5,7 @@
          this id; the tile is now the Downloads grid layout, whose ⋮ is
          item_download_action, so the id lives here. -->
     <item name="item_download_more" type="id" />
+    <item name="summary_lead_clamp" type="id" />
     <!-- RecyclerPadding: a list's padding as its two parts, the inset
          listener's base and the spacing decoration's extra, so neither
          erases the other. -->
