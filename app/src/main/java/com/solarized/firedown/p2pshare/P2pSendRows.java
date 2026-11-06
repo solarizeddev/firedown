@@ -23,7 +23,7 @@ import java.util.List;
  *       found the list shows a still, untappable hint row. The one spinner is
  *       on the connecting row, bounded by the connect timeout.</li>
  *   <li>While connecting the list collapses to the one peer: the nearby phone
- *       the offer went to, else the link (the answer came back through it).</li>
+ *       the offer went to, else the link if one went out, else the QR.</li>
  *   <li>A phone the offer went to keeps its waiting row until it answers,
  *       even when it drops out of discovery.</li>
  *   <li>The link row counts the offer's remaining lifetime down in whole
@@ -119,8 +119,9 @@ public final class P2pSendRows {
      * @param linkShared   a link went out through the share sheet
      * @param linkPreparing the short link is being brokered right now
      * @param qrOpen       the QR row is unfolded
-     * @param expiresAt    wall-clock end of the offer's lifetime, 0 = unknown
-     * @param now          wall-clock now
+     * @param expiresAt    end of the offer's lifetime on the elapsed-realtime
+     *                     clock, 0 = unknown
+     * @param now          the same clock now
      */
     @NonNull
     public static List<Row> build(@NonNull Phase phase,
@@ -138,8 +139,12 @@ public final class P2pSendRows {
         if (phase == Phase.CONNECTING) {
             if (pendingPeer != null && !pendingPeer.isEmpty()) {
                 rows.add(new Row(Kind.DEVICE, pendingPeer, Sub.CONNECTING, false, true, true, 0));
-            } else {
+            } else if (linkShared) {
                 rows.add(new Row(Kind.LINK, null, Sub.CONNECTING, false, true, true, 0));
+            } else {
+                // No phone was asked and no link went out: the QR was scanned
+                // (or a reply pasted) — never "Share a link · Connecting…".
+                rows.add(new Row(Kind.QR, null, Sub.CONNECTING, false, true, true, 0));
             }
             return rows;
         }

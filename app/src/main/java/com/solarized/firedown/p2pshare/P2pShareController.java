@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Base64;
 import android.util.Log;
@@ -1093,7 +1094,12 @@ public class P2pShareController {
             // private share uploads no offer. (The answer still returns via `rvz`
             // for both — that's the receiver's candidates, not the shared file.)
         }
-        if (mSignaling != null && mSignalingId != null && !mSignalingBase.isEmpty()) {
+        // The dormant signaling relay uploads the offer EAGERLY, so it must
+        // respect "Private links" too (that setting promises the file's name
+        // and size are never stored on a server). Its URL is "" today.
+        boolean privateLinks = mSharedPreferences.getBoolean(
+                Preferences.SETTINGS_P2P_PRIVATE_LINKS, Preferences.DEFAULT_P2P_PRIVATE_LINKS);
+        if (!privateLinks && mSignaling != null && mSignalingId != null && !mSignalingBase.isEmpty()) {
             final String base = mSignalingBase;
             final String id = mSignalingId;
             mSignaling.uploadOffer(base, id, code, ok -> mMainHandler.post(() -> {
@@ -1115,7 +1121,7 @@ public class P2pShareController {
         mMainHandler.postDelayed(mOfferTimeout, OFFER_LIFETIME_MS);
         if (mState != null) {
             mState.offerCode = code;
-            mState.offerExpiresAt = System.currentTimeMillis() + OFFER_LIFETIME_MS;
+            mState.offerExpiresAt = SystemClock.elapsedRealtime() + OFFER_LIFETIME_MS;
             mState.stage = ShareState.Stage.READY;
             publish();
         }

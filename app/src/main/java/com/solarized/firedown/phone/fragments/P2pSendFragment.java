@@ -4,6 +4,7 @@ import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.text.format.Formatter;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -374,7 +375,7 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         for (P2pNearbyDiscovery.Device device : mDevices) {
             names.add(device.name);
         }
-        long now = System.currentTimeMillis();
+        long now = SystemClock.elapsedRealtime();
         long expiresAt = mLast == null ? 0 : mLast.offerExpiresAt;
         boolean linkShared = mLast != null && mLast.linkShared;
         String peer = mLast == null ? null : mLast.peerDevice;
@@ -422,7 +423,8 @@ public class P2pSendFragment extends P2pShareBaseFragment {
             }
             case QR -> {
                 icon.setImageResource(R.drawable.qr_code_24);
-                name.setText(mQrShown ? R.string.p2p_hide_qr_code : R.string.p2p_show_qr_code);
+                name.setText(mQrShown && row.sub != P2pSendRows.Sub.CONNECTING
+                    ? R.string.p2p_hide_qr_code : R.string.p2p_show_qr_code);
             }
         }
         status.setText(statusText(row));
@@ -444,8 +446,11 @@ public class P2pSendFragment extends P2pShareBaseFragment {
 
         spinner.setVisibility(row.spinner ? View.VISIBLE : View.GONE);
         chevron.setVisibility(row.tappable ? View.VISIBLE : View.GONE);
-        if (row.kind == P2pSendRows.Kind.QR) {
-            chevron.setRotation(mQrShown ? 90f : 0f);
+        if (row.kind == P2pSendRows.Kind.QR && mQrShown) {
+            // The chevron is auto-mirrored: in RTL it points left, so "down"
+            // is the opposite turn.
+            boolean rtl = view.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
+            chevron.setRotation(rtl ? -90f : 90f);
         }
         if (row.tappable) {
             view.setOnClickListener(v -> onRowTapped(row));

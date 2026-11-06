@@ -364,11 +364,15 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
         if (mVisibleAs != null && !mVisibleAs.isEmpty()) {
             text.setText(getString(R.string.p2p_visible_as, mVisibleAs));
             hint.setText(R.string.p2p_visible_hint_link);
+            hint.setVisibility(View.VISIBLE);
             dot.setVisibility(View.VISIBLE);
         } else {
+            // Not advertised: the "phones on this Wi-Fi can send to you" hint
+            // would contradict the line above, which already says what to do.
             text.setText(R.string.p2p_not_visible);
-            hint.setText(R.string.p2p_visible_hint_link);
+            hint.setVisibility(View.GONE);
             dot.setVisibility(View.GONE);
+            return;
         }
     }
 

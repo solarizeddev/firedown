@@ -74,8 +74,9 @@ public final class ShareState {
     /** Sender: a link went out — the screen shows the waiting card. */
     public boolean linkShared;
     /**
-     * Sender: wall-clock end of the offer's lifetime (READY onward); the link
-     * row counts it down. 0 until the offer is minted.
+     * Sender: end of the offer's lifetime on {@code SystemClock.elapsedRealtime}
+     * (READY onward); the link row counts it down. Not wall-clock, so a clock
+     * change can't jump the countdown. 0 until the offer is minted.
      */
     public long offerExpiresAt;
 

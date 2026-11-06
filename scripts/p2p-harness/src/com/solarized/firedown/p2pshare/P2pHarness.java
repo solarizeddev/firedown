@@ -499,6 +499,9 @@ public final class P2pHarness {
         check("rows: connecting through the link → only the link row, spinning",
                 r.size() == 1 && r.get(0).kind == P2pSendRows.Kind.LINK && r.get(0).spinner, rows(r));
         check("rows: at most one spinner while connecting", spinners(r) == 1, rows(r));
+        r = P2pSendRows.build(P2pSendRows.Phase.CONNECTING, two, null, false, false, true, fifteen, now);
+        check("rows: connecting after a QR scan → the QR row, never \"Share a link\"",
+                r.size() == 1 && r.get(0).kind == P2pSendRows.Kind.QR && r.get(0).spinner, rows(r));
         check("rows: Cancel while connecting", P2pSendRows.somethingOut(P2pSendRows.Phase.CONNECTING, null, false));
 
         // No list before the offer exists, or once bytes move.
