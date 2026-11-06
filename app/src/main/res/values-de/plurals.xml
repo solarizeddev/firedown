@@ -46,7 +46,7 @@
         <item quantity="other">%d private Tabs geöffnet</item>
     </plurals>
     <plurals name="p2p_link_open_for">
-        <item quantity="one">Geteilt · noch %d Minute offen. Tippe, um erneut zu teilen.</item>
-        <item quantity="other">Geteilt · noch %d Minuten offen. Tippe, um erneut zu teilen.</item>
+        <item quantity="one">Geteilt · noch %d Minute offen.</item>
+        <item quantity="other">Geteilt · noch %d Minuten offen.</item>
     </plurals>
 </resources>

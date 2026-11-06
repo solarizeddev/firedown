@@ -753,6 +753,7 @@
     <string name="p2p_share_link">Chia sẻ liên kết</string>
     <string name="p2p_share_link_hint">Qua bất kỳ ứng dụng nào. Dùng được ở mọi nơi.</string>
     <string name="p2p_preparing_link">Đang chuẩn bị liên kết…</string>
+    <string name="p2p_link_shared">Đã chia sẻ</string>
     <string name="p2p_show_qr_code">Hiện mã QR</string>
     <string name="p2p_show_qr_code_hint">Cho điện thoại ngay bên cạnh, không cần Wi‑Fi.</string>
     <string name="p2p_hide_qr_code">Ẩn mã QR</string>

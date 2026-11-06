@@ -785,6 +785,7 @@
     <string name="p2p_share_link">Споделете линк</string>
     <string name="p2p_share_link_hint">Чрез всяко приложение. Работи навсякъде.</string>
     <string name="p2p_preparing_link">Подготовка на линка…</string>
+    <string name="p2p_link_shared">Споделено</string>
     <string name="p2p_show_qr_code">Покажи QR код</string>
     <string name="p2p_show_qr_code_hint">За телефон точно тук, без Wi‑Fi.</string>
     <string name="p2p_hide_qr_code">Скрий QR кода</string>

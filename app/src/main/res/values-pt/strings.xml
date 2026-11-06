@@ -871,6 +871,7 @@
     <string name="p2p_share_link">Compartilhar um link</string>
     <string name="p2p_share_link_hint">Por qualquer app. Funciona em qualquer lugar.</string>
     <string name="p2p_preparing_link">Preparando o link…</string>
+    <string name="p2p_link_shared">Compartilhado</string>
     <string name="p2p_show_qr_code">Mostrar um código QR</string>
     <string name="p2p_show_qr_code_hint">Para um celular aqui do lado, sem Wi‑Fi.</string>
     <string name="p2p_hide_qr_code">Ocultar código QR</string>

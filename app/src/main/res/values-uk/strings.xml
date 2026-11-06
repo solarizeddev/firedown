@@ -805,6 +805,7 @@
     <string name="p2p_share_link">Поділитися посиланням</string>
     <string name="p2p_share_link_hint">Через будь-який застосунок. Працює будь-де.</string>
     <string name="p2p_preparing_link">Підготовка посилання…</string>
+    <string name="p2p_link_shared">Надіслано</string>
     <string name="p2p_show_qr_code">Показати QR-код</string>
     <string name="p2p_show_qr_code_hint">Для телефона поруч, без Wi‑Fi.</string>
     <string name="p2p_hide_qr_code">Сховати QR-код</string>

@@ -303,6 +303,10 @@
          clears it reads brown (the brand_ink history above). The numbers
          are facts; the shield beside every count carries the brand. Dark
          keeps the coral (6.1:1 on its tile, values-night). -->
+    <!-- The Send screen's active-row status line and the "Sent" tag: TEXT,
+         so onSurface in light (the brand coral is ~2.3:1 there) and the
+         coral in dark (6.9:1). The coral disc carries the state in light. -->
+    <color name="p2p_status_active">@color/md_theme_onSurface</color>
     <color name="blocked_stats_value">@color/md_theme_onSurface</color>
     <!-- Storage screen per-type bar (StorageBarView), in bar order: video,
          images, audio, documents, other. VALIDATED as a categorical set

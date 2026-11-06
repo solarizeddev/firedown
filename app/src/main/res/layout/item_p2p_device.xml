@@ -1,76 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One row of the Send screen's "Send to" list (P2pSendFragment, rows from
-     P2pSendRows): a nearby phone, the "No phones nearby yet" hint, "Share a
-     link" or "Show a QR code". The second line is the row's state; the end
-     slot holds a chevron (tappable), the one bounded spinner (connecting),
-     or nothing. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- One card of the Send screen's "Send to" group (P2pSendFragment, rows
+     from P2pSendRows): a nearby phone, "Share a link" or "Show QR code".
+     A grouped SheetRowCard like every menu row in the app (corners from
+     SheetGroups.applyCorners, so the press ripple stays inside the card);
+     the card tone is the settings rule for a full page. The second line is
+     the row's state; the end slot holds a chevron (tappable), the one
+     bounded spinner (connecting), or nothing. p2p_device_extra receives the
+     QR when the QR card is unfolded. Rows are bound in place, never
+     rebuilt while their kinds are unchanged. -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:gravity="center_vertical"
-    android:minHeight="64dp"
-    android:orientation="horizontal"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="10dp">
-
-    <ImageView
-        android:id="@+id/p2p_device_icon"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="@drawable/bg_p2p_row_icon"
-        android:contentDescription="@null"
-        android:padding="9dp"
-        android:src="@drawable/ic_p2p_24"
-        app:tint="?attr/colorOnSurface" />
+    style="@style/Firedown.Widget.SheetRowCard"
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_weight="1"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/p2p_device_name"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
-            android:textColor="?attr/colorOnSurface"
-            tools:text="Ana's Pixel 8" />
+            android:gravity="center_vertical"
+            android:minHeight="64dp"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="12dp"
+            android:paddingVertical="10dp">
 
-        <TextView
-            android:id="@+id/p2p_device_status"
+            <ImageView
+                android:id="@+id/p2p_device_icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_p2p_row_icon"
+                android:contentDescription="@null"
+                android:padding="9dp"
+                android:src="@drawable/ic_p2p_24"
+                app:tint="?attr/colorOnSurface" />
+
+            <LinearLayout
+                style="@style/Firedown.Widget.SheetPlaceText">
+
+                <TextView
+                    android:id="@+id/p2p_device_name"
+                    style="@style/Firedown.Widget.SheetPlaceTitle"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    tools:text="Ana's Pixel 8" />
+
+                <TextView
+                    android:id="@+id/p2p_device_status"
+                    style="@style/Firedown.Widget.SheetPlaceSub"
+                    tools:text="@string/p2p_on_this_wifi" />
+
+            </LinearLayout>
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/p2p_device_spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:indeterminate="true"
+                android:visibility="gone"
+                app:indicatorSize="20dp"
+                app:trackThickness="2dp" />
+
+            <ImageView
+                android:id="@+id/p2p_device_chevron"
+                style="@style/Firedown.Widget.SheetPlaceChevron" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/p2p_device_extra"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            tools:text="@string/p2p_on_this_wifi" />
+            android:orientation="vertical" />
 
     </LinearLayout>
 
-    <com.google.android.material.progressindicator.CircularProgressIndicator
-        android:id="@+id/p2p_device_spinner"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:indeterminate="true"
-        android:visibility="gone"
-        app:indicatorSize="20dp"
-        app:trackThickness="2dp" />
-
-    <ImageView
-        android:id="@+id/p2p_device_chevron"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_marginStart="12dp"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_chevron_right_24"
-        app:tint="?attr/colorOnSurfaceVariant" />
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

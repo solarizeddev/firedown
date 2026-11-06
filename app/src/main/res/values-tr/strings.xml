@@ -868,6 +868,7 @@
     <string name="p2p_share_link">Bağlantı paylaş</string>
     <string name="p2p_share_link_hint">Herhangi bir uygulamayla. Her yerde çalışır.</string>
     <string name="p2p_preparing_link">Bağlantı hazırlanıyor…</string>
+    <string name="p2p_link_shared">Paylaşıldı</string>
     <string name="p2p_show_qr_code">QR kodu göster</string>
     <string name="p2p_show_qr_code_hint">Hemen yanınızdaki bir telefon için, Wi‑Fi olmadan.</string>
     <string name="p2p_hide_qr_code">QR kodu gizle</string>

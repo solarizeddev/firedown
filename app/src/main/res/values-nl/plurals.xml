@@ -46,7 +46,7 @@
         <item quantity="other">%d privétabbladen open</item>
     </plurals>
     <plurals name="p2p_link_open_for">
-        <item quantity="one">Gedeeld · nog %d minuut open. Tik om opnieuw te delen.</item>
-        <item quantity="other">Gedeeld · nog %d minuten open. Tik om opnieuw te delen.</item>
+        <item quantity="one">Gedeeld · nog %d minuut open.</item>
+        <item quantity="other">Gedeeld · nog %d minuten open.</item>
     </plurals>
 </resources>

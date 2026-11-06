@@ -150,6 +150,10 @@
     <!-- Settings → Trackers and ads blocked numbers: the coral clears
          4.5:1 on the dark tile (6.1:1), so dark keeps it. Light is
          onSurface — see values/colors.xml. -->
+    <!-- The Send screen's active-row status line and the "Sent" tag: TEXT,
+         so onSurface in light (the brand coral is ~2.3:1 there) and the
+         coral in dark (6.9:1). The coral disc carries the state in light. -->
+    <color name="p2p_status_active">@color/md_theme_primary</color>
     <color name="blocked_stats_value">@color/md_theme_primary</color>
     <!-- Storage bar — see values/colors.xml. Stepped for the #131315 surface
          and validated as a set there (lightness band 0.48–0.67, CVD ΔE ≥ 11.4,

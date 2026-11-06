@@ -5656,15 +5656,26 @@ and the in-person path was a QR to aim across a table. Now:
   link again — and was reported as confusing. Now: **Send = the file card
   + ONE "Send to" list** (`P2pSendRows`, pure Java, pinned by
   `scripts/p2p-harness` with mutants and `P2pSendRowsTest`): nearby phones
-  ("On this Wi‑Fi"), else a still "No phones nearby yet" hint row, then
-  "Share a link", then "Show a QR code" (unfolds in place inside the
-  card). What happened after a tap is THAT ROW'S second line, never
-  another card: a tapped phone reads "Sent · waiting for them to accept"
-  (untappable, and it keeps its row even if it drops out of discovery),
-  the link reads "Preparing link…" for the bounded broker wait, then
-  "Shared · open for N more minutes. Tap to share again" (the offer's
-  15-minute lifetime, `ShareState.offerExpiresAt`, rounded UP, never 0,
-  repainted on the minute boundary). Connecting collapses the list to the
+  ("On this Wi‑Fi"), then "Share a link", then "Show QR code" (unfolds
+  inside its own card), each a grouped `SheetRowCard`
+  (`item_p2p_device`, corners from `SheetGroups.applyCorners`, so a press
+  stays inside the card). With nobody found, "No phones nearby yet" is a
+  still grey LINE above the group, not a card: every card can be tapped
+  (it shipped for one build as a card with the same disc as a real
+  destination, and was the heaviest row on the screen). What happened
+  after a tap is THAT ROW'S second line, never another card: a tapped
+  phone reads "Sent · waiting for them to accept" (untappable, and it
+  keeps its row even if it drops out of discovery), the link reads
+  "Preparing link…" for the bounded broker wait, then "Shared · open for
+  N more minutes." (the offer's 15-minute lifetime,
+  `ShareState.offerExpiresAt`, rounded UP, never 0, repainted on the
+  minute boundary; an unknown expiry reads just "Shared", no countdown
+  invented). The active row's TEXT is `@color/p2p_status_active`
+  (onSurface in light, coral in dark: coral is ~2.3:1 as light-theme
+  text); the coral disc marks it in both. Cards are BOUND IN PLACE while
+  the rows' kinds and names are unchanged (the countdown and discovery
+  repaint often; a rebuild lost TalkBack's place and cut off a press), and
+  the QR card announces expand / collapse. The footnote has no band. Connecting collapses the list to the
   one peer (the phone, else the link row) with the ONLY spinner, bounded
   by the connect timeout. Transferring and done are painted on the file
   card (bar + numbers under the name; the check and "Sent · size"). No
@@ -6122,7 +6133,7 @@ bound on the loopback through its package-private `start(InetAddress)` door
 `declined` body, a busy receiver's 409, exact body bytes, a slow client, the
 connection deadline, the worker pool and the exact-bytes token compare —
 `RelayCredsPolicy`'s boundaries and network gate, `P2pFileNames`,
-`P2pSessionPolicy` and `reachableHost`; 116 checks, ~15 s). Known residual:
+`P2pSessionPolicy`, `reachableHost` and the Send list's `P2pSendRows`; 146 checks, ~15 s). Known residual:
 non-trickle ICE means a receiver that accepts a 10-minute-old link answers
 candidates minted 10 minutes ago; a NAT binding that expired meanwhile
 shows as `no-path` on an otherwise fine network — the relay candidate is

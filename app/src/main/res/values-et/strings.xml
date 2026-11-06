@@ -763,6 +763,7 @@
     <string name="p2p_share_link">Jaga linki</string>
     <string name="p2p_share_link_hint">Mis tahes rakenduse kaudu. Töötab kõikjal.</string>
     <string name="p2p_preparing_link">Lingi ettevalmistamine…</string>
+    <string name="p2p_link_shared">Jagatud</string>
     <string name="p2p_show_qr_code">Näita QR-koodi</string>
     <string name="p2p_show_qr_code_hint">Siinsamas olevale telefonile, ilma Wi‑Fi-ta.</string>
     <string name="p2p_hide_qr_code">Peida QR-kood</string>

@@ -713,6 +713,7 @@
     <string name="p2p_share_link">Bagikan tautan</string>
     <string name="p2p_share_link_hint">Lewat aplikasi apa pun. Berfungsi di mana saja.</string>
     <string name="p2p_preparing_link">Menyiapkan tautan…</string>
+    <string name="p2p_link_shared">Dibagikan</string>
     <string name="p2p_show_qr_code">Tampilkan kode QR</string>
     <string name="p2p_show_qr_code_hint">Untuk ponsel di dekat Anda, tanpa Wi‑Fi.</string>
     <string name="p2p_hide_qr_code">Sembunyikan kode QR</string>

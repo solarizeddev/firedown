@@ -480,7 +480,10 @@ public final class P2pHarness {
         check("countdown: exactly 14:00 reads 14", P2pSendRows.minutesLeft(now + 14 * 60_000, now) == 14);
         check("countdown: 10 s left reads 1, never 0", P2pSendRows.minutesLeft(now + 10_000, now) == 1);
         check("countdown: past the expiry still reads 1", P2pSendRows.minutesLeft(now - 5_000, now) == 1);
-        check("countdown: unknown expiry invents nothing", P2pSendRows.minutesLeft(0, now) == 1);
+        check("countdown: unknown expiry invents nothing", P2pSendRows.minutesLeft(0, now) == 0);
+        check("countdown: unknown expiry → a shared row with no count",
+                P2pSendRows.build(P2pSendRows.Phase.READY, Collections.emptyList(), null,
+                        true, false, false, 0, now).get(1).minutesLeft == 0);
         check("tick: next change lands on the minute boundary",
                 P2pSendRows.nextTickMs(now + 13 * 60_000 + 1_000, now) == 1_000
                         && P2pSendRows.nextTickMs(now + 14 * 60_000, now) == 60_000);

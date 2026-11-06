@@ -868,6 +868,7 @@
     <string name="p2p_share_link">Een link delen</string>
     <string name="p2p_share_link_hint">Via elke app. Werkt overal.</string>
     <string name="p2p_preparing_link">Link voorbereiden…</string>
+    <string name="p2p_link_shared">Gedeeld</string>
     <string name="p2p_show_qr_code">Een QR-code tonen</string>
     <string name="p2p_show_qr_code_hint">Voor een telefoon hier vlakbij, zonder wifi.</string>
     <string name="p2p_hide_qr_code">QR-code verbergen</string>

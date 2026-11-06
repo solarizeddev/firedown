@@ -18,7 +18,10 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat;
 import androidx.preference.PreferenceManager;
 
 import com.bumptech.glide.request.RequestOptions;
@@ -42,6 +45,7 @@ import com.solarized.firedown.p2pshare.ShareState;
 import com.solarized.firedown.utils.ClipboardHelper;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.FragmentArgs;
+import com.solarized.firedown.utils.SheetGroups;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -77,6 +81,10 @@ public class P2pSendFragment extends P2pShareBaseFragment {
     private View mView;
     private String mFileTag;
     private boolean mQrShown;
+    /** The QR block, moved into the QR card while it is unfolded. */
+    private ViewGroup mQrGroup;
+    /** What the cards in p2p_dest_list show (kind:name), to bind in place. */
+    private List<String> mRowKeys = Collections.emptyList();
     private boolean mLinkPreparing;
     private String mRenderedQrCode;
     private String mLastClipTried;
@@ -152,6 +160,8 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         }
 
         mView = inflater.inflate(R.layout.fragment_p2p_send, container, false);
+        mQrGroup = mView.findViewById(R.id.p2p_qr_group);
+        mRowKeys = Collections.emptyList();
         mToolbar = mView.findViewById(R.id.toolbar);
 
         File file = new File(mDownloadEntity.getFilePath());
@@ -224,6 +234,7 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         }
         mLinkPreparing = false;
         mView = null;
+        mQrGroup = null;
         super.onDestroyView();
     }
 
@@ -359,9 +370,13 @@ public class P2pSendFragment extends P2pShareBaseFragment {
     }
 
     /**
-     * Rebuild the rows (a handful at most — no adapter warranted) from
-     * {@link P2pSendRows}, which owns every rule; this only maps a row to its
-     * glyph, words and colours.
+     * Draw the "Send to" cards from {@link P2pSendRows}, which owns every
+     * rule; this only maps a row to its glyph, words and colours. While the
+     * rows' kinds and names are unchanged the cards are BOUND IN PLACE, not
+     * rebuilt: the countdown ticks every minute and discovery reports often,
+     * and a rebuild loses TalkBack's place and cuts off a press. The empty
+     * hint is not a card (every card can be tapped); it is the still line
+     * above the group.
      */
     private void renderRows() {
         mTickHandler.removeCallbacks(mTick);
@@ -369,7 +384,6 @@ public class P2pSendFragment extends P2pShareBaseFragment {
             return;
         }
         LinearLayout list = mView.findViewById(R.id.p2p_dest_list);
-        list.removeAllViews();
         P2pSendRows.Phase phase = phase();
         List<String> names = new ArrayList<>(mDevices.size());
         for (P2pNearbyDiscovery.Device device : mDevices) {
@@ -381,27 +395,50 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         String peer = mLast == null ? null : mLast.peerDevice;
         List<P2pSendRows.Row> rows = P2pSendRows.build(phase, names, peer, linkShared,
                 mLinkPreparing, mQrShown, expiresAt, now);
-        LayoutInflater inflater = LayoutInflater.from(requireContext());
-        boolean qrRowShown = false;
+
+        boolean hint = false;
+        List<P2pSendRows.Row> cards = new ArrayList<>(rows.size());
+        List<String> keys = new ArrayList<>(rows.size());
         for (P2pSendRows.Row row : rows) {
-            list.addView(bindRow(inflater, list, row));
-            if (row.kind == P2pSendRows.Kind.QR) {
-                qrRowShown = true;
+            if (row.kind == P2pSendRows.Kind.EMPTY) {
+                hint = true;
+            } else {
+                cards.add(row);
+                keys.add(row.kind + ":" + row.name);
             }
         }
-        updateQr(qrRowShown && mQrShown);
+        mView.findViewById(R.id.p2p_nearby_hint).setVisibility(hint ? View.VISIBLE : View.GONE);
+
+        if (!keys.equals(mRowKeys)) {
+            parkQr();
+            list.removeAllViews();
+            LayoutInflater inflater = LayoutInflater.from(requireContext());
+            for (int i = 0; i < cards.size(); i++) {
+                list.addView(inflater.inflate(R.layout.item_p2p_device, list, false));
+            }
+            mRowKeys = keys;
+        }
+        View qrCard = null;
+        for (int i = 0; i < cards.size(); i++) {
+            View card = list.getChildAt(i);
+            bindRow(card, cards.get(i));
+            if (cards.get(i).kind == P2pSendRows.Kind.QR) {
+                qrCard = card;
+            }
+        }
+        SheetGroups.applyCorners(list);
+        updateQr(qrCard != null && mQrShown ? qrCard : null);
         mView.findViewById(R.id.p2p_waiting_note).setVisibility(
                 phase == P2pSendRows.Phase.READY && P2pSendRows.somethingOut(phase, peer, linkShared)
                         ? View.VISIBLE : View.GONE);
-        if (phase == P2pSendRows.Phase.READY && linkShared) {
+        if (phase == P2pSendRows.Phase.READY && linkShared && expiresAt > 0) {
             mTickHandler.postDelayed(mTick, P2pSendRows.nextTickMs(expiresAt, now) + 50);
         }
     }
 
-    @NonNull
-    private View bindRow(@NonNull LayoutInflater inflater, @NonNull ViewGroup parent,
-                         @NonNull P2pSendRows.Row row) {
-        View view = inflater.inflate(R.layout.item_p2p_device, parent, false);
+    /** Bind one card. Sets EVERY property it touches, since a card is reused
+     *  for the same row from one render to the next. */
+    private void bindRow(@NonNull View view, @NonNull P2pSendRows.Row row) {
         ImageView icon = view.findViewById(R.id.p2p_device_icon);
         TextView name = view.findViewById(R.id.p2p_device_name);
         TextView status = view.findViewById(R.id.p2p_device_status);
@@ -413,10 +450,6 @@ public class P2pSendFragment extends P2pShareBaseFragment {
                 icon.setImageResource(R.drawable.ic_p2p_24);
                 name.setText(row.name);
             }
-            case EMPTY -> {
-                icon.setImageResource(R.drawable.ic_p2p_24);
-                name.setText(R.string.p2p_nearby_none);
-            }
             case LINK -> {
                 icon.setImageResource(R.drawable.ic_share_24);
                 name.setText(R.string.p2p_share_link);
@@ -426,39 +459,54 @@ public class P2pSendFragment extends P2pShareBaseFragment {
                 name.setText(mQrShown && row.sub != P2pSendRows.Sub.CONNECTING
                     ? R.string.p2p_hide_qr_code : R.string.p2p_show_qr_code);
             }
+            case EMPTY -> {
+            }
         }
         status.setText(statusText(row));
 
         int onSurface = MaterialColors.getColor(view, com.google.android.material.R.attr.colorOnSurface);
         int onSurfaceVariant = MaterialColors.getColor(view, com.google.android.material.R.attr.colorOnSurfaceVariant);
         int brand = MaterialColors.getColor(view, R.attr.brandInk);
-        if (row.kind == P2pSendRows.Kind.EMPTY) {
-            // A still instruction, not a destination: quiet glyph and title.
-            icon.setImageTintList(ColorStateList.valueOf(onSurfaceVariant));
-            name.setTextColor(onSurfaceVariant);
-        } else if (row.active) {
+        if (row.active) {
+            // The brand marks the glyph and its disc; the TEXT is the
+            // theme-split status ink (coral is too faint for text in light).
             icon.setImageTintList(ColorStateList.valueOf(brand));
             icon.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.setAlphaComponent(brand, 0x29)));
-            status.setTextColor(brand);
+            status.setTextColor(ContextCompat.getColor(view.getContext(), R.color.p2p_status_active));
         } else {
             icon.setImageTintList(ColorStateList.valueOf(onSurface));
+            icon.setBackgroundTintList(null);
+            status.setTextColor(onSurfaceVariant);
         }
 
         spinner.setVisibility(row.spinner ? View.VISIBLE : View.GONE);
         chevron.setVisibility(row.tappable ? View.VISIBLE : View.GONE);
+        float rotation = 0f;
         if (row.kind == P2pSendRows.Kind.QR && mQrShown) {
             // The chevron is auto-mirrored: in RTL it points left, so "down"
             // is the opposite turn.
             boolean rtl = view.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
-            chevron.setRotation(rtl ? -90f : 90f);
+            rotation = rtl ? -90f : 90f;
         }
-        if (row.tappable) {
-            view.setOnClickListener(v -> onRowTapped(row));
-        } else {
-            view.setClickable(false);
-            view.setBackground(null);
+        chevron.setRotation(rotation);
+
+        view.setOnClickListener(row.tappable ? v -> onRowTapped(row) : null);
+        view.setClickable(row.tappable);
+        // Still reachable by a screen reader, which reads its status.
+        view.setFocusable(true);
+        ViewCompat.removeAccessibilityAction(view, AccessibilityActionCompat.ACTION_EXPAND.getId());
+        ViewCompat.removeAccessibilityAction(view, AccessibilityActionCompat.ACTION_COLLAPSE.getId());
+        if (row.kind == P2pSendRows.Kind.QR && row.tappable) {
+            // Announced as an expand / collapse control in the screen
+            // reader's own words: the platform actions carry their labels.
+            ViewCompat.replaceAccessibilityAction(view,
+                    mQrShown ? AccessibilityActionCompat.ACTION_COLLAPSE
+                            : AccessibilityActionCompat.ACTION_EXPAND,
+                    null, (v, arguments) -> {
+                        onRowTapped(row);
+                        return true;
+                    });
         }
-        return view;
     }
 
     @NonNull
@@ -469,8 +517,10 @@ public class P2pSendFragment extends P2pShareBaseFragment {
             case NEARBY_HINT -> getString(R.string.p2p_nearby_none_hint);
             case LINK_IDLE -> getString(R.string.p2p_share_link_hint);
             case LINK_PREPARING -> getString(R.string.p2p_preparing_link);
-            case LINK_SHARED -> getResources().getQuantityString(R.plurals.p2p_link_open_for,
-                    row.minutesLeft, row.minutesLeft);
+            case LINK_SHARED -> row.minutesLeft > 0
+                    ? getResources().getQuantityString(R.plurals.p2p_link_open_for,
+                            row.minutesLeft, row.minutesLeft)
+                    : getString(R.string.p2p_link_shared);
             case QR_IDLE -> getString(R.string.p2p_show_qr_code_hint);
             case QR_OPEN -> getString(R.string.p2p_qr_open_hint);
             case CONNECTING -> getString(mLast != null && mLast.stage == ShareState.Stage.CONNECTED
@@ -496,27 +546,50 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         }
     }
 
-    /** The QR, unfolded under its row: rendered lazily, once per offer code. */
-    private void updateQr(boolean show) {
-        View group = mView.findViewById(R.id.p2p_qr_group);
-        String code = mLast == null ? null : mLast.offerCode;
-        if (!show || code == null) {
-            group.setVisibility(View.GONE);
+    /** Take the QR out of whatever card holds it, back under the group
+     *  (hidden), before the cards are rebuilt. */
+    private void parkQr() {
+        if (mQrGroup == null || mView == null) {
             return;
         }
-        group.setVisibility(View.VISIBLE);
+        ViewGroup home = mView.findViewById(R.id.p2p_ready_group);
+        if (mQrGroup.getParent() != home) {
+            if (mQrGroup.getParent() instanceof ViewGroup parent) {
+                parent.removeView(mQrGroup);
+            }
+            home.addView(mQrGroup, home.indexOfChild(mView.findViewById(R.id.p2p_dest_list)) + 1);
+        }
+        mQrGroup.setVisibility(View.GONE);
+    }
+
+    /** The QR, unfolded inside its card ({@code qrCard}, null = folded):
+     *  rendered lazily, once per offer code. */
+    private void updateQr(@Nullable View qrCard) {
+        String code = mLast == null ? null : mLast.offerCode;
+        if (qrCard == null || code == null) {
+            mQrGroup.setVisibility(View.GONE);
+            return;
+        }
+        ViewGroup holder = qrCard.findViewById(R.id.p2p_device_extra);
+        if (mQrGroup.getParent() != holder) {
+            if (mQrGroup.getParent() instanceof ViewGroup parent) {
+                parent.removeView(mQrGroup);
+            }
+            holder.addView(mQrGroup);
+        }
+        mQrGroup.setVisibility(View.VISIBLE);
         if (code.equals(mRenderedQrCode)) {
             return;
         }
         mRenderedQrCode = code;
         // Encode the deep link (not the bare code) so a scan with the phone's
         // own camera offers "open in Firedown"; the in-app scanner unwraps it.
-        boolean rendered = setQr(mView.findViewById(R.id.p2p_qr),
-                P2pShareController.toDeepLink(code));
+        ImageView qr = mQrGroup.findViewById(R.id.p2p_qr);
+        boolean rendered = setQr(qr, P2pShareController.toDeepLink(code));
         // A code too large for a QR leaves no blank white box: say so and
-        // point at the link row above.
-        mView.findViewById(R.id.p2p_qr).setVisibility(rendered ? View.VISIBLE : View.GONE);
-        mView.findViewById(R.id.p2p_qr_too_big).setVisibility(rendered ? View.GONE : View.VISIBLE);
+        // point at the link card above.
+        qr.setVisibility(rendered ? View.VISIBLE : View.GONE);
+        mQrGroup.findViewById(R.id.p2p_qr_too_big).setVisibility(rendered ? View.GONE : View.VISIBLE);
     }
 
     /* ── rendering ──────────────────────────────────────────────────────── */
@@ -594,7 +667,7 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         if (done) {
             tag.setText(getString(R.string.p2p_done_sent_detail,
                     Formatter.formatShortFileSize(requireContext(), state.bytes)));
-            tag.setTextColor(MaterialColors.getColor(tag, R.attr.brandInk));
+            tag.setTextColor(ContextCompat.getColor(tag.getContext(), R.color.p2p_status_active));
         } else {
             tag.setText(mFileTag);
             tag.setTextColor(MaterialColors.getColor(tag,

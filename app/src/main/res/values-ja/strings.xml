@@ -957,6 +957,7 @@
     <string name="p2p_share_link">リンクを共有</string>
     <string name="p2p_share_link_hint">どのアプリからでも。どこでも使えます。</string>
     <string name="p2p_preparing_link">リンクを準備中…</string>
+    <string name="p2p_link_shared">共有済み</string>
     <string name="p2p_show_qr_code">QR コードを表示</string>
     <string name="p2p_show_qr_code_hint">すぐそばの端末向け。Wi‑Fi は不要です。</string>
     <string name="p2p_hide_qr_code">QR コードを隠す</string>

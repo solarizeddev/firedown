@@ -79,7 +79,9 @@ public final class P2pSendRows {
         public final boolean active;
         /** The one bounded spinner (connecting). */
         public final boolean spinner;
-        /** {@link Sub#LINK_SHARED} only: whole minutes left, at least 1. */
+        /** {@link Sub#LINK_SHARED} only: whole minutes left, at least 1; 0 when
+         *  the offer's expiry is unknown (the row then says "Shared" with no
+         *  countdown). */
         public final int minutesLeft;
 
         Row(@NonNull Kind kind, @Nullable String name, @NonNull Sub sub, boolean tappable,
@@ -181,12 +183,12 @@ public final class P2pSendRows {
     /**
      * Whole minutes left in the offer, rounded UP so "14 min" is shown for
      * 13:01 and the last minute reads 1, never 0 (at 0 the controller ends
-     * the session). An unknown expiry (0) also reads 1: no countdown is
-     * invented.
+     * the session). An unknown expiry (0) returns 0, which means "no
+     * countdown": none is invented.
      */
     public static int minutesLeft(long expiresAt, long now) {
         if (expiresAt <= 0) {
-            return 1;
+            return 0;
         }
         long left = expiresAt - now;
         if (left <= 0) {

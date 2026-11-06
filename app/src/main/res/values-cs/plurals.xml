@@ -64,9 +64,9 @@
         <item quantity="other">%d otevřených anonymních karet</item>
     </plurals>
     <plurals name="p2p_link_open_for">
-        <item quantity="one">Sdíleno · otevřeno ještě %d minutu. Klepnutím sdílíte znovu.</item>
-        <item quantity="few">Sdíleno · otevřeno ještě %d minuty. Klepnutím sdílíte znovu.</item>
-        <item quantity="many">Sdíleno · otevřeno ještě %d minuty. Klepnutím sdílíte znovu.</item>
-        <item quantity="other">Sdíleno · otevřeno ještě %d minut. Klepnutím sdílíte znovu.</item>
+        <item quantity="one">Sdíleno · otevřeno ještě %d minutu.</item>
+        <item quantity="few">Sdíleno · otevřeno ještě %d minuty.</item>
+        <item quantity="many">Sdíleno · otevřeno ještě %d minuty.</item>
+        <item quantity="other">Sdíleno · otevřeno ještě %d minut.</item>
     </plurals>
 </resources>

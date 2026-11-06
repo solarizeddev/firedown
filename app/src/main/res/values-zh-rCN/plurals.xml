@@ -40,6 +40,6 @@
         <item quantity="other">已打开 %d 个隐私标签页</item>
     </plurals>
     <plurals name="p2p_link_open_for">
-        <item quantity="other">已分享 · 还可打开 %d 分钟。点按可再次分享。</item>
+        <item quantity="other">已分享 · 还可打开 %d 分钟。</item>
     </plurals>
 </resources>

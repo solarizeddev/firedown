@@ -796,6 +796,7 @@
     <string name="p2p_share_link">लिंक शेयर करें</string>
     <string name="p2p_share_link_hint">किसी भी ऐप से। हर जगह काम करता है।</string>
     <string name="p2p_preparing_link">लिंक तैयार हो रहा है…</string>
+    <string name="p2p_link_shared">शेयर किया गया</string>
     <string name="p2p_show_qr_code">QR कोड दिखाएँ</string>
     <string name="p2p_show_qr_code_hint">यहीं मौजूद फ़ोन के लिए, बिना Wi‑Fi के।</string>
     <string name="p2p_hide_qr_code">QR कोड छिपाएँ</string>

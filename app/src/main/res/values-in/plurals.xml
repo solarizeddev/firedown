@@ -43,6 +43,6 @@
         <item quantity="other">%d tab pribadi terbuka</item>
     </plurals>
     <plurals name="p2p_link_open_for">
-        <item quantity="other">Dibagikan · terbuka %d menit lagi. Ketuk untuk membagikan lagi.</item>
+        <item quantity="other">Dibagikan · terbuka %d menit lagi.</item>
     </plurals>
 </resources>

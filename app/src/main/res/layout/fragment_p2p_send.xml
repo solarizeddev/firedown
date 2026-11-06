@@ -209,9 +209,9 @@
 
                 </LinearLayout>
 
-                <!-- READY / CONNECTING: the "Send to" list. Rows are inflated
-                     from item_p2p_device.xml; the QR unfolds inside the same
-                     card under its row. -->
+                <!-- READY / CONNECTING: the "Send to" list. Cards are inflated
+                     from item_p2p_device.xml; the QR unfolds inside the QR
+                     card. -->
                 <LinearLayout
                     android:id="@+id/p2p_ready_group"
                     android:layout_width="match_parent"
@@ -230,50 +230,90 @@
                         android:textAppearance="?attr/textAppearanceLabelLarge"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 
+                    <!-- Nobody found yet: a still line, not a card. Every card
+                         in the group below can be tapped. -->
                     <LinearLayout
+                        android:id="@+id/p2p_nearby_hint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="20dp"
+                        android:layout_marginBottom="8dp"
+                        android:orientation="horizontal"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginTop="1dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_search_24"
+                            app:tint="?attr/colorOnSurfaceVariant" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/p2p_nearby_none"
+                                android:textAppearance="?attr/textAppearanceBodyMedium"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/p2p_nearby_none_hint"
+                                android:textAppearance="?attr/textAppearanceBodySmall"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- The group of grouped cards (item_p2p_device), corners
+                         from SheetGroups.applyCorners. -->
+                    <LinearLayout
+                        android:id="@+id/p2p_dest_list"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="16dp"
-                        android:background="@drawable/bg_p2p_filecard"
+                        android:orientation="vertical" />
+
+                    <!-- The QR, moved into the QR card's p2p_device_extra by the
+                         fragment while that card is unfolded. -->
+                    <LinearLayout
+                        android:id="@+id/p2p_qr_group"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
                         android:orientation="vertical"
-                        android:paddingVertical="4dp">
+                        android:paddingBottom="16dp"
+                        android:visibility="gone"
+                        tools:visibility="visible">
 
-                        <LinearLayout
-                            android:id="@+id/p2p_dest_list"
+                        <ImageView
+                            android:id="@+id/p2p_qr"
+                            android:layout_width="232dp"
+                            android:layout_height="232dp"
+                            android:background="@drawable/bg_p2p_qr"
+                            android:contentDescription="@string/p2p_qr_content_desc"
+                            android:padding="12dp" />
+
+                        <TextView
+                            android:id="@+id/p2p_qr_too_big"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical" />
-
-                        <LinearLayout
-                            android:id="@+id/p2p_qr_group"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_horizontal"
-                            android:orientation="vertical"
-                            android:paddingBottom="16dp"
-                            android:visibility="gone"
-                            tools:visibility="visible">
-
-                            <ImageView
-                                android:id="@+id/p2p_qr"
-                                android:layout_width="232dp"
-                                android:layout_height="232dp"
-                                android:background="@drawable/bg_p2p_qr"
-                                android:contentDescription="@string/p2p_qr_content_desc"
-                                android:padding="12dp" />
-
-                            <TextView
-                                android:id="@+id/p2p_qr_too_big"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:paddingHorizontal="16dp"
-                                android:text="@string/p2p_qr_too_big"
-                                android:textAppearance="?attr/textAppearanceBodyMedium"
-                                android:textColor="?attr/colorOnSurfaceVariant"
-                                android:visibility="gone" />
-
-                        </LinearLayout>
+                            android:gravity="center"
+                            android:paddingHorizontal="16dp"
+                            android:text="@string/p2p_qr_too_big"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:visibility="gone" />
 
                     </LinearLayout>
 
@@ -361,7 +401,6 @@
             android:id="@+id/p2p_footer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?attr/colorSurfaceContainerHigh"
             android:gravity="center"
             android:paddingHorizontal="16dp"
             android:paddingTop="12dp"

@@ -60,7 +60,7 @@
     <!-- Send: the link row's state once a link went out; the offer's
          15-minute lifetime, counting down. -->
     <plurals name="p2p_link_open_for">
-        <item quantity="one">Shared · open for %d more minute. Tap to share again.</item>
-        <item quantity="other">Shared · open for %d more minutes. Tap to share again.</item>
+        <item quantity="one">Shared · open for %d more minute.</item>
+        <item quantity="other">Shared · open for %d more minutes.</item>
     </plurals>
 </resources>

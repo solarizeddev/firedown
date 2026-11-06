@@ -962,6 +962,7 @@
     <string name="p2p_share_link">Link teilen</string>
     <string name="p2p_share_link_hint">Über jede App. Funktioniert überall.</string>
     <string name="p2p_preparing_link">Link wird vorbereitet…</string>
+    <string name="p2p_link_shared">Geteilt</string>
     <string name="p2p_show_qr_code">QR-Code anzeigen</string>
     <string name="p2p_show_qr_code_hint">Für ein Telefon direkt hier, ohne WLAN.</string>
     <string name="p2p_hide_qr_code">QR-Code ausblenden</string>

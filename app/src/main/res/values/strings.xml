@@ -1138,7 +1138,8 @@
     <string name="p2p_share_link">Share a link</string>
     <string name="p2p_share_link_hint">Through any app. Works anywhere.</string>
     <string name="p2p_preparing_link">Preparing link…</string>
-    <string name="p2p_show_qr_code">Show a QR code</string>
+    <string name="p2p_link_shared">Shared</string>
+    <string name="p2p_show_qr_code">Show QR code</string>
     <string name="p2p_show_qr_code_hint">For a phone right here, without Wi‑Fi.</string>
     <string name="p2p_hide_qr_code">Hide QR code</string>
     <string name="p2p_qr_open_hint">Scan it from Downloads → Receive a file, or with the camera.</string>

@@ -47,8 +47,8 @@
         <item quantity="other">%d abas privativas abertas</item>
     </plurals>
     <plurals name="p2p_link_open_for">
-        <item quantity="one">Compartilhado · aberto por mais %d minuto. Toque para compartilhar de novo.</item>
-        <item quantity="many">Compartilhado · aberto por mais %d minutos. Toque para compartilhar de novo.</item>
-        <item quantity="other">Compartilhado · aberto por mais %d minutos. Toque para compartilhar de novo.</item>
+        <item quantity="one">Compartilhado · aberto por mais %d minuto.</item>
+        <item quantity="many">Compartilhado · aberto por mais %d minutos.</item>
+        <item quantity="other">Compartilhado · aberto por mais %d minutos.</item>
     </plurals>
 </resources>
