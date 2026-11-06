@@ -125,12 +125,12 @@
     <string name="addons_install_from_file_summary">Een ondertekende Firefox-add-on (.xpi)</string>
     <string name="addons_installed">Geïnstalleerd</string>
     <string name="addons_installing">Installeren…</string>
-    <string name="addons_add">Toevoegen</string>
     <string name="addons_add_description">%1$s toevoegen</string>
     <plurals name="addons_users">
         <item quantity="one">%1$s gebruiker</item>
         <item quantity="other">%1$s gebruikers</item>
     </plurals>
+    <string name="addons_users_compact">%1$s gebruikers</string>
     <string name="addons_manage">Add-ons beheren</string>
     <string name="addons_more">Meer</string>
     <string name="addons_no_button">Werkt vanzelf</string>

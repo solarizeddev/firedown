@@ -126,7 +126,6 @@
     <string name="addons_install_from_file_summary">Podepsaný doplněk pro Firefox (.xpi)</string>
     <string name="addons_installed">Nainstalované</string>
     <string name="addons_installing">Instalace…</string>
-    <string name="addons_add">Přidat</string>
     <string name="addons_add_description">Přidat %1$s</string>
     <plurals name="addons_users">
         <item quantity="one">%1$s uživatel</item>
@@ -134,6 +133,7 @@
         <item quantity="many">%1$s uživatele</item>
         <item quantity="other">%1$s uživatelů</item>
     </plurals>
+    <string name="addons_users_compact">%1$s uživatelů</string>
     <string name="addons_manage">Spravovat doplňky</string>
     <string name="addons_more">Další</string>
     <string name="addons_no_button">Funguje samostatně</string>

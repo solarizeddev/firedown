@@ -122,11 +122,11 @@
     <string name="addons_install_from_file_summary">已签名的 Firefox 附加组件（.xpi）</string>
     <string name="addons_installed">已安装</string>
     <string name="addons_installing">正在安装…</string>
-    <string name="addons_add">添加</string>
     <string name="addons_add_description">添加 %1$s</string>
     <plurals name="addons_users">
         <item quantity="other">%1$s 位用户</item>
     </plurals>
+    <string name="addons_users_compact">%1$s 位用户</string>
     <string name="addons_manage">管理附加组件</string>
     <string name="addons_more">更多</string>
     <string name="addons_no_button">自动运行</string>

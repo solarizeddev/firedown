@@ -1361,13 +1361,14 @@
     <string name="addons_footnote">The list is Mozilla\'s selection of add-ons that work on Android, fetched from addons.mozilla.org when you open this screen. Installed add-ons check for updates once a day. Add-ons see the pages you visit and work outside Firedown\'s no-tracking promise.</string>
     <string name="addons_off">Off</string>
     <string name="addons_installing">Installing…</string>
-    <string name="addons_add">Add</string>
     <string name="addons_add_description">Add %1$s</string>
     <string name="addons_rating" translatable="false">★ %1$s</string>
     <plurals name="addons_users">
         <item quantity="one">%1$s user</item>
         <item quantity="other">%1$s users</item>
     </plurals>
+    <!-- A rounded count ("1.2M"): always the plural form for many. -->
+    <string name="addons_users_compact">%1$s users</string>
     <string name="addons_update_review">Update needs your review</string>
     <string name="addons_disabled_blocked">Blocked by Mozilla</string>
     <string name="addons_disabled_unsupported">Doesn\'t work in this version</string>

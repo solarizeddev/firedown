@@ -4391,9 +4391,14 @@ before changing a flow. The rules, each easy to undo:
   say) over the first TWO lines of Mozilla's summary with "…" (summaries
   ran to five lines and stranded the icon beside the third; hard line
   breaks are collapsed in `AmoCatalog`), and a tonal "Add" button in the
-  trailing slot (the shield sheet's "Turn on" shape) so the row says what
-  a tap does; the spinner takes the button's place while it installs, and
-  a tap anywhere on the row does the same. Installed rows carry no
+  trailing slot (the shield sheet's "Turn on" shape, 12dp padding so the
+  meta line keeps to one line beside it) so the row says what a tap does;
+  the spinner takes the button's place while it installs, and a tap
+  anywhere on the row does the same (TalkBack hears it once, on the row:
+  "double-tap to add …", the button hidden from it). A rounded user count
+  ("1,2 тыс.") takes `addons_users_compact`, the plural form for many,
+  never `getQuantityString` on the raw count: Slavic plurals chosen from
+  1201 read "1,2 тыс. пользователь". Installed rows carry no
   chevron: no settings door does. An add-on's page opens with a FLAT
   header (`AddonHeaderPreference`: 48dp icon at 32dp, where the card rows
   start their text; name; author and version on their own lines;
@@ -12380,7 +12385,10 @@ here:
     Continue, progress, the checked filter chip. Never a passive container.
   - **secondary CONTAINER = peach — SUPPORTS.** Tonal ground behind content:
     the recovery-code box, banners. Never fills a
-    button. (The home backup pill used to take it and no longer does — see
+    COMMITTING button; a TONAL button (a secondary action beside content,
+    the shield sheet's "Turn on", Storage's review button, the add-on
+    list's "Add") takes it through `Widget.Material3.Button.TonalButton`,
+    which is that style's own token. (The home backup pill used to take it and no longer does — see
     the cloud-states rule: those two surfaces are plain
     `surfaceContainerHigh`.) **`colorSecondary` itself stays CORAL** —
     `Theme.FireDown` sets no `colorControlActivated` and no

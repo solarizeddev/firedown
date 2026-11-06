@@ -122,12 +122,12 @@
     <string name="addons_install_from_file_summary">एक हस्ताक्षरित Firefox ऐड-ऑन (.xpi)</string>
     <string name="addons_installed">इंस्टॉल किए गए</string>
     <string name="addons_installing">इंस्टॉल हो रहा है…</string>
-    <string name="addons_add">जोड़ें</string>
     <string name="addons_add_description">%1$s जोड़ें</string>
     <plurals name="addons_users">
         <item quantity="one">%1$s उपयोगकर्ता</item>
         <item quantity="other">%1$s उपयोगकर्ता</item>
     </plurals>
+    <string name="addons_users_compact">%1$s उपयोगकर्ता</string>
     <string name="addons_manage">ऐड-ऑन प्रबंधित करें</string>
     <string name="addons_more">और</string>
     <string name="addons_no_button">अपने-आप काम करता है</string>

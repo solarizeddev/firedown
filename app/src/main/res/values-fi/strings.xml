@@ -122,12 +122,12 @@
     <string name="addons_install_from_file_summary">Allekirjoitettu Firefox-lisäosa (.xpi)</string>
     <string name="addons_installed">Asennettu</string>
     <string name="addons_installing">Asennetaan…</string>
-    <string name="addons_add">Lisää</string>
     <string name="addons_add_description">Lisää %1$s</string>
     <plurals name="addons_users">
         <item quantity="one">%1$s käyttäjä</item>
         <item quantity="other">%1$s käyttäjää</item>
     </plurals>
+    <string name="addons_users_compact">%1$s käyttäjää</string>
     <string name="addons_manage">Hallitse lisäosia</string>
     <string name="addons_more">Lisää</string>
     <string name="addons_no_button">Toimii itsestään</string>

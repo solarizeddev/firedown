@@ -111,11 +111,11 @@
     <string name="addons_install_from_file_summary">Pengaya Firefox bertanda tangan (.xpi)</string>
     <string name="addons_installed">Terpasang</string>
     <string name="addons_installing">Memasang…</string>
-    <string name="addons_add">Tambah</string>
     <string name="addons_add_description">Tambah %1$s</string>
     <plurals name="addons_users">
         <item quantity="other">%1$s pengguna</item>
     </plurals>
+    <string name="addons_users_compact">%1$s pengguna</string>
     <string name="addons_manage">Kelola pengaya</string>
     <string name="addons_more">Lainnya</string>
     <string name="addons_no_button">Bekerja dengan sendirinya</string>

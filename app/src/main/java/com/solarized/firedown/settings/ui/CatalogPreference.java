@@ -5,6 +5,8 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat;
 import androidx.preference.PreferenceViewHolder;
 
 import com.solarized.firedown.R;
@@ -25,7 +27,10 @@ public class CatalogPreference extends BusyPreference {
         setWidgetLayoutResource(R.layout.preference_widget_catalog);
     }
 
-    /** What a screen reader says for the button: "Add Dark Reader", not "Add". */
+    /**
+     * What a screen reader says the row does: "double-tap to add Dark
+     * Reader". The button is hidden from it (same action, one node).
+     */
     public void setActionDescription(@Nullable CharSequence description) {
         mActionDescription = description;
     }
@@ -33,13 +38,14 @@ public class CatalogPreference extends BusyPreference {
     @Override
     public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
         super.onBindViewHolder(holder);
+        boolean shown = isSelectable() && !isBusy();
+        ViewCompat.replaceAccessibilityAction(holder.itemView, AccessibilityActionCompat.ACTION_CLICK,
+                shown ? mActionDescription : null, null);
         View action = holder.findViewById(R.id.preference_action);
         if (action == null) {
             return;
         }
-        boolean shown = isSelectable() && !isBusy();
         action.setVisibility(shown ? View.VISIBLE : View.GONE);
-        action.setContentDescription(mActionDescription);
         action.setOnClickListener(shown ? v -> {
             OnPreferenceClickListener listener = getOnPreferenceClickListener();
             if (listener != null) {

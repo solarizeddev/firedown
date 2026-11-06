@@ -125,12 +125,12 @@
     <string name="addons_install_from_file_summary">İmzalı bir Firefox eklentisi (.xpi)</string>
     <string name="addons_installed">Yüklü</string>
     <string name="addons_installing">Yükleniyor…</string>
-    <string name="addons_add">Ekle</string>
     <string name="addons_add_description">%1$s ekle</string>
     <plurals name="addons_users">
         <item quantity="one">%1$s kullanıcı</item>
         <item quantity="other">%1$s kullanıcı</item>
     </plurals>
+    <string name="addons_users_compact">%1$s kullanıcı</string>
     <string name="addons_manage">Eklentileri yönet</string>
     <string name="addons_more">Diğer</string>
     <string name="addons_no_button">Kendi başına çalışır</string>

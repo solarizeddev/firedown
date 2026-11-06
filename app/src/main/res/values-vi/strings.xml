@@ -111,11 +111,11 @@
     <string name="addons_install_from_file_summary">Tiện ích Firefox đã ký (.xpi)</string>
     <string name="addons_installed">Đã cài đặt</string>
     <string name="addons_installing">Đang cài đặt…</string>
-    <string name="addons_add">Thêm</string>
     <string name="addons_add_description">Thêm %1$s</string>
     <plurals name="addons_users">
         <item quantity="other">%1$s người dùng</item>
     </plurals>
+    <string name="addons_users_compact">%1$s người dùng</string>
     <string name="addons_manage">Quản lý tiện ích</string>
     <string name="addons_more">Thêm</string>
     <string name="addons_no_button">Tự hoạt động</string>

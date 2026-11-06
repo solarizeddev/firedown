@@ -126,13 +126,13 @@
     <string name="addons_install_from_file_summary">Un complemento de Firefox firmado (.xpi)</string>
     <string name="addons_installed">Instalados</string>
     <string name="addons_installing">Instalando…</string>
-    <string name="addons_add">Añadir</string>
     <string name="addons_add_description">Añadir %1$s</string>
     <plurals name="addons_users">
         <item quantity="one">%1$s usuario</item>
         <item quantity="many">%1$s usuarios</item>
         <item quantity="other">%1$s usuarios</item>
     </plurals>
+    <string name="addons_users_compact">%1$s usuarios</string>
     <string name="addons_manage">Administrar complementos</string>
     <string name="addons_more">Más</string>
     <string name="addons_no_button">Funciona por sí solo</string>

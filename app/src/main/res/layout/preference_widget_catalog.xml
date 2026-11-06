@@ -19,8 +19,9 @@
         android:insetBottom="0dp"
         android:minWidth="0dp"
         android:minHeight="36dp"
-        android:paddingHorizontal="16dp"
-        android:text="@string/addons_add" />
+        android:paddingHorizontal="12dp"
+        android:importantForAccessibility="no"
+        android:text="@string/addon_prompt_add" />
 
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/preference_busy"

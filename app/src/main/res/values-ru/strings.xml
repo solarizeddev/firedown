@@ -129,7 +129,6 @@
     <string name="addons_install_from_file_summary">Подписанное дополнение Firefox (.xpi)</string>
     <string name="addons_installed">Установленные</string>
     <string name="addons_installing">Установка…</string>
-    <string name="addons_add">Добавить</string>
     <string name="addons_add_description">Добавить %1$s</string>
     <plurals name="addons_users">
         <item quantity="one">%1$s пользователь</item>
@@ -137,6 +136,7 @@
         <item quantity="many">%1$s пользователей</item>
         <item quantity="other">%1$s пользователя</item>
     </plurals>
+    <string name="addons_users_compact">%1$s пользователей</string>
     <string name="addons_manage">Управление дополнениями</string>
     <string name="addons_more">Ещё</string>
     <string name="addons_no_button">Работает самостоятельно</string>

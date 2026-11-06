@@ -122,11 +122,11 @@
     <string name="addons_install_from_file_summary">署名済みの Firefox アドオン (.xpi)</string>
     <string name="addons_installed">インストール済み</string>
     <string name="addons_installing">インストールしています…</string>
-    <string name="addons_add">追加</string>
     <string name="addons_add_description">%1$s を追加</string>
     <plurals name="addons_users">
         <item quantity="other">%1$s 人のユーザー</item>
     </plurals>
+    <string name="addons_users_compact">%1$s 人のユーザー</string>
     <string name="addons_manage">アドオンを管理</string>
     <string name="addons_more">その他</string>
     <string name="addons_no_button">自動で動作します</string>

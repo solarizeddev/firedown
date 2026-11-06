@@ -61,6 +61,8 @@ public class AddonsFragment extends BasePreferenceFragment {
     private static final int CATALOG_DESCRIPTION_LINES = 2;
     /** The rating · users line above it, a little smaller than the description. */
     private static final float CATALOG_META_SCALE = 12f / 14f;
+    /** From here CompactDecimalFormat rounds ("1.2K"): no exact count to agree with. */
+    private static final int COMPACT_FROM = 1000;
 
     private static final String KEY_INSTALLED_CATEGORY = "com.solarized.firedown.preferences.addons.installed.category";
     private static final String KEY_INSTALLED_EMPTY = "com.solarized.firedown.preferences.addons.installed.empty";
@@ -417,7 +419,11 @@ public class AddonsFragment extends BasePreferenceFragment {
         if (entry.users > 0) {
             String users = CompactDecimalFormat.getInstance(locale, CompactDecimalFormat.CompactStyle.SHORT)
                     .format(entry.users);
-            parts.add(getResources().getQuantityString(R.plurals.addons_users, entry.users, users));
+            // A rounded count ("1,2 тыс.") takes the plural for many whatever
+            // its digits, so the form is never chosen from the raw count.
+            parts.add(entry.users >= COMPACT_FROM
+                    ? getString(R.string.addons_users_compact, users)
+                    : getResources().getQuantityString(R.plurals.addons_users, entry.users, users));
         }
         return parts.isEmpty() ? null : TextUtils.join(" · ", parts);
     }

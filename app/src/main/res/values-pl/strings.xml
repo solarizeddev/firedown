@@ -129,7 +129,6 @@
     <string name="addons_install_from_file_summary">Podpisany dodatek do Firefoksa (.xpi)</string>
     <string name="addons_installed">Zainstalowane</string>
     <string name="addons_installing">Instalowanie…</string>
-    <string name="addons_add">Dodaj</string>
     <string name="addons_add_description">Dodaj %1$s</string>
     <plurals name="addons_users">
         <item quantity="one">%1$s użytkownik</item>
@@ -137,6 +136,7 @@
         <item quantity="many">%1$s użytkowników</item>
         <item quantity="other">%1$s użytkownika</item>
     </plurals>
+    <string name="addons_users_compact">%1$s użytkowników</string>
     <string name="addons_manage">Zarządzaj dodatkami</string>
     <string name="addons_more">Więcej</string>
     <string name="addons_no_button">Działa samodzielnie</string>

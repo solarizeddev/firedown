@@ -122,12 +122,12 @@
     <string name="addons_install_from_file_summary">Подписана добавка за Firefox (.xpi)</string>
     <string name="addons_installed">Инсталирани</string>
     <string name="addons_installing">Инсталиране…</string>
-    <string name="addons_add">Добави</string>
     <string name="addons_add_description">Добави %1$s</string>
     <plurals name="addons_users">
         <item quantity="one">%1$s потребител</item>
         <item quantity="other">%1$s потребители</item>
     </plurals>
+    <string name="addons_users_compact">%1$s потребители</string>
     <string name="addons_manage">Управление на добавките</string>
     <string name="addons_more">Още</string>
     <string name="addons_no_button">Работи самостоятелно</string>

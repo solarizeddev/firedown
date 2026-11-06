@@ -126,7 +126,6 @@
     <string name="addons_install_from_file_summary">Підписаний додаток Firefox (.xpi)</string>
     <string name="addons_installed">Встановлені</string>
     <string name="addons_installing">Встановлення…</string>
-    <string name="addons_add">Додати</string>
     <string name="addons_add_description">Додати %1$s</string>
     <plurals name="addons_users">
         <item quantity="one">%1$s користувач</item>
@@ -134,6 +133,7 @@
         <item quantity="many">%1$s користувачів</item>
         <item quantity="other">%1$s користувача</item>
     </plurals>
+    <string name="addons_users_compact">%1$s користувачів</string>
     <string name="addons_manage">Керувати додатками</string>
     <string name="addons_more">Більше</string>
     <string name="addons_no_button">Працює самостійно</string>
