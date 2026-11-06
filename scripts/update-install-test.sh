@@ -62,6 +62,14 @@
 
 set -Euo pipefail
 
+# Every awk here reads bytes: the phone's log and screen dumps carry bytes
+# that are not valid UTF-8, and gawk in a UTF-8 locale warns on each line
+# its string functions touch ("Invalid multibyte data detected"). Matching
+# and the field splits need nothing more than bytes.
+awk() {
+    LC_ALL=C command awk "$@"
+}
+
 PKG=com.solarized.firedown
 ACTIVITY="$PKG/$PKG.phone.BrowserActivity"
 RX="$PKG/$PKG.updatetest.UpdateTestReceiver"
