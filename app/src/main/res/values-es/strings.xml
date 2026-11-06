@@ -965,7 +965,7 @@
     <string name="p2p_link_shared">Compartido</string>
     <string name="p2p_show_qr_code">Mostrar un código QR</string>
     <string name="p2p_show_qr_code_hint">Para un teléfono que está aquí, sin Wi‑Fi.</string>
-    <string name="p2p_qr_scan_line">Luego tocan Escanear código, o escanean con cualquier app de cámara.</string>
+    <string name="p2p_qr_scan_line">Tocan Escanear código, o escanean con cualquier app de cámara.</string>
     <string name="p2p_send_to_hint">En su teléfono: Descargas → ⋮ → Recibir un archivo. En esta Wi‑Fi, su teléfono aparece aquí.</string>
     <string name="p2p_hide_qr_code">Ocultar el código QR</string>
     <string name="p2p_qr_too_big">Este envío es demasiado grande para un código QR. Comparte un enlace en su lugar.</string>

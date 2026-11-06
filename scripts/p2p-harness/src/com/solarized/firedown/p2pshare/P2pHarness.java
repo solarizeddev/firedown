@@ -450,7 +450,8 @@ public final class P2pHarness {
                 r.get(1).tappable && r.get(2).tappable && r.get(3).tappable, rows(r));
         check("rows: waiting is still, not a spinner", spinners(r) == 0, rows(r));
         check("rows: Cancel once a phone was asked", P2pSendRows.somethingOut(READY, "Ana's Pixel 8", false));
-        // The asked phone left the network: it disappears, nothing waits on a ghost row.
+        // The asked phone left discovery (its screen went off): its waiting row
+        // stays, the request is still out.
         r = P2pSendRows.build(READY, Collections.singletonList("Galaxy A52"), "Ana's Pixel 8",
                 false, false, false, fifteen, now);
         check("rows: an asked phone that left discovery keeps its waiting row",

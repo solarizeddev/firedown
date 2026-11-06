@@ -958,7 +958,7 @@
     <string name="p2p_show_qr_code">显示二维码</string>
     <string name="p2p_show_qr_code_hint">适用于就在身边的手机，无需 Wi‑Fi。</string>
     <string name="p2p_qr_scan_line">对方点按“扫描二维码”，或用任意相机应用扫描。</string>
-    <string name="p2p_send_to_hint">对方打开 下载 → ⋮ → 接收文件。在同一 Wi‑Fi 下，对方手机会显示在这里。</string>
+    <string name="p2p_send_to_hint">对方打开“下载”→ ⋮ →“接收文件”。在同一 Wi‑Fi 下，对方手机会显示在这里。</string>
     <string name="p2p_hide_qr_code">隐藏二维码</string>
     <string name="p2p_qr_too_big">此分享太大，无法生成二维码。请改为分享链接。</string>
     <string name="p2p_waiting_note">对方接受后传输即开始，即使你离开此屏幕。</string>

@@ -965,7 +965,7 @@
     <string name="p2p_link_shared">Partagé</string>
     <string name="p2p_show_qr_code">Afficher un code QR</string>
     <string name="p2p_show_qr_code_hint">Pour un téléphone juste à côté, sans Wi‑Fi.</string>
-    <string name="p2p_qr_scan_line">Puis Scanner le code, ou n\'importe quelle appli appareil photo.</string>
+    <string name="p2p_qr_scan_line">Ils touchent Scanner le code, ou scannent avec n\'importe quelle appli photo.</string>
     <string name="p2p_send_to_hint">Sur l\'autre téléphone : Téléchargements → ⋮ → Recevoir un fichier. Sur ce Wi‑Fi, il apparaît ici.</string>
     <string name="p2p_hide_qr_code">Masquer le code QR</string>
     <string name="p2p_qr_too_big">Ce partage est trop volumineux pour un code QR. Partagez plutôt un lien.</string>

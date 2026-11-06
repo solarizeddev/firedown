@@ -796,8 +796,8 @@
     <string name="p2p_link_shared">शेयर किया गया</string>
     <string name="p2p_show_qr_code">QR कोड दिखाएँ</string>
     <string name="p2p_show_qr_code_hint">यहीं मौजूद फ़ोन के लिए, बिना Wi‑Fi के।</string>
-    <string name="p2p_qr_scan_line">वे कोड स्कैन करें पर टैप करें, या किसी भी कैमरा ऐप से स्कैन करें।</string>
-    <string name="p2p_send_to_hint">वे डाउनलोड → ⋮ → फ़ाइल प्राप्त करें खोलें। इस वाई‑फ़ाई पर उनका फ़ोन यहाँ दिखेगा।</string>
+    <string name="p2p_qr_scan_line">वे कोड स्कैन करें पर टैप करते हैं, या किसी भी कैमरा ऐप से स्कैन करते हैं।</string>
+    <string name="p2p_send_to_hint">वे डाउनलोड → ⋮ → फ़ाइल प्राप्त करें खोलते हैं। इस वाई‑फ़ाई पर उनका फ़ोन यहाँ दिखेगा।</string>
     <string name="p2p_hide_qr_code">QR कोड छिपाएँ</string>
     <string name="p2p_qr_too_big">यह शेयर QR कोड के लिए बहुत बड़ा है। इसके बजाय लिंक शेयर करें।</string>
     <string name="p2p_waiting_note">उनके स्वीकार करते ही ट्रांसफ़र शुरू हो जाता है, भले ही आप यह स्क्रीन छोड़ दें।</string>
