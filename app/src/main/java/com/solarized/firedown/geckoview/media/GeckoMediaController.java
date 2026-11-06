@@ -479,6 +479,11 @@ public class GeckoMediaController {
 
     // ── Playback control ──────────────────────────────────────────────────────────────────────────
 
+    /** True while a page's media is playing (not paused). */
+    public boolean isPlaying() {
+        return !mPlayingSessionIds.isEmpty();
+    }
+
     public boolean isActive() {
         GeckoMediaSession session = mSessionMap.get(mCurrentSessionId);
         return session != null && session.getMediaSession().isActive();

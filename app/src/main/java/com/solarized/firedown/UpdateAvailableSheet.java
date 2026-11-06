@@ -20,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.FragmentManager;
+import androidx.media3.exoplayer.ExoPlayer;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.button.MaterialButton;
@@ -28,7 +29,6 @@ import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.solarized.firedown.UpdatePromptPolicy.Busy;
 import com.solarized.firedown.UpdatePromptPolicy.Place;
 import com.solarized.firedown.data.di.RepositoryEntryPoint;
-import com.solarized.firedown.geckoview.media.GeckoMediaPlaybackService;
 import com.solarized.firedown.manager.RunnableManager;
 import com.solarized.firedown.phone.dialogs.BaseBottomSheetDialogFragment;
 import com.solarized.firedown.phone.player.PlaybackHub;
@@ -67,6 +67,8 @@ import dagger.hilt.android.EntryPointAccessors;
 public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
 
     private static final String TAG = "UpdateAvailableSheet";
+    /** The sheet's fragment tag (the crash sheet steps aside for it). */
+    public static final String FRAGMENT_TAG = TAG;
     // CrashReportSheet's own tag (private there) — the crash sheet is also shown
     // from BaseActivity.onResume and takes priority over this one.
     private static final String CRASH_SHEET_TAG = "CrashReportSheet";
@@ -157,11 +159,17 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     public static Busy busyNow(@NonNull Context context) {
         RepositoryEntryPoint ep = EntryPointAccessors.fromApplication(
                 context.getApplicationContext(), RepositoryEntryPoint.class);
+        // Playing, not merely a media notification: a paused session keeps
+        // its notification (and its service) for hours, and would otherwise
+        // hold the sheet back with nothing playing.
+        ExoPlayer player = PlaybackHub.player();
+        boolean backgroundPlaying = PlaybackHub.isBackgroundActive()
+                && player != null && player.isPlaying();
         return UpdatePromptPolicy.busy(
                 RunnableManager.isRunning(),
                 ep.getTaskRepository().isTaskInFlight(),
                 ep.getP2pShareController().hasLiveSession(),
-                PlaybackHub.isBackgroundActive() || GeckoMediaPlaybackService.isRunning());
+                backgroundPlaying || ep.getGeckoMediaController().isPlaying());
     }
 
     /** The line that says what installing would stop, or 0. */
@@ -468,8 +476,11 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
             if (item.isEmpty()) {
                 continue;
             }
-            if (item.startsWith("•") || item.startsWith("-") || item.startsWith("*")) {
+            // Only a bullet followed by a space: "-5% size" keeps its sign.
+            if (item.startsWith("•")) {
                 item = item.substring(1).trim();
+            } else if (item.startsWith("- ") || item.startsWith("* ")) {
+                item = item.substring(2).trim();
             }
             TextView row = (TextView) inflater.inflate(
                     R.layout.item_update_changelog_bullet, container, false);

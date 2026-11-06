@@ -969,8 +969,9 @@
     <!-- Versioned notification body; %1$s is the new version name. -->
     <string name="update_prompt_install_body_versioned">%1$s is ready. Tap to update.</string>
     <string name="update_prompt_install_title">Firedown update</string>
-    <!-- In-app update-available bottom sheet (UpdateAvailableSheet). %1$s is the
-         new version name, e.g. "Firedown 1.1.81". -->
+    <!-- The "Update ready" sheet (UpdateAvailableSheet) and the ⋮ menus'
+         row. update_busy_*: what installing would stop, shown when the sheet
+         is opened on purpose while it runs (installing closes Firedown). -->
     <string name="update_ready_title">Update ready</string>
     <string name="update_sheet_closes_note">Firedown closes while the update installs.</string>
     <string name="update_busy_download">A download is running. It stops when Firedown closes.</string>

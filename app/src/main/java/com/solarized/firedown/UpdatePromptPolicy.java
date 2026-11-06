@@ -5,9 +5,10 @@ package com.solarized.firedown;
  * run in a plain JVM test ({@code UpdatePromptPolicyTest}).
  *
  * <p>The sheet opens by itself only (1) when an update is ready and not
- * snoozed, (2) on a screen where nothing is being read or watched — the
- * home screen, Downloads, Settings — or on the first screen after the app
- * starts, and (3) while nothing runs that installing would stop. Installing
+ * snoozed, (2) on a screen where nothing is being read, watched or filled
+ * in — the home screen, the Downloads list, the Settings list — or on the
+ * first screen after the app starts, and (3) while nothing runs that
+ * installing would stop. Installing
  * closes Firedown (on Android 12 and newer at once, with no question), so a
  * running download, a GIF or Safe Folder task, a file share or playback
  * would stop. It used to open on every resume of every screen, over a page
@@ -25,9 +26,12 @@ public final class UpdatePromptPolicy {
     public enum Place {
         /** The browser's home screen (regular or private). */
         HOME,
-        /** A screen of the app's own: Downloads, Settings. */
+        /** The main list of the app's own screens: Downloads, Settings. */
         SCREEN,
-        /** A web page in the browser. */
+        /**
+         * Something being read or used: a web page, or a sub-screen of
+         * Downloads or Settings (a form, a share screen).
+         */
         PAGE,
         /** Never here: the lock screen, the Safe Folder, a page viewer. */
         NEVER

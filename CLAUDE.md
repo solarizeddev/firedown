@@ -4811,14 +4811,24 @@ is **~75 MB**, the APK 205 MB.
   repo always download the full APK — the F-Droid repo format has no patches.
 - **The "Update ready" sheet opens by itself only where and when it
   interrupts nothing** (`UpdatePromptPolicy`, pure, in the update harness
-  with four mutants): on the browser's home screen, Downloads or Settings,
-  or as the first screen after the app starts; never over a page being
-  read, never on the lock screen, the Safe Folder or the page viewer
-  (`BaseActivity.updatePromptPlace`, NEVER by default; the home fragments
-  offer it again when the browser returns home without a resume); and
-  never while something installing would stop is running (a download, a
-  GIF/audio/Safe Folder task, an open file share, background or web
-  playback: `UpdateAvailableSheet.busyNow`). Installing closes Firedown (on
+  with four mutants): on the browser's home screen or the Downloads or
+  Settings LIST (a sub-screen — a sign-in form, the share screen, a review
+  list — counts as a page), or as the first screen after the app starts;
+  never over a page being read, never on or under the lock screen, the
+  Safe Folder or the page viewer (`BaseActivity.updatePromptPlace`, NEVER
+  by default, `showsDestination` for the lists; the home fragments offer
+  it again when the browser returns home without a resume); and never
+  while something installing would stop is running (a download, a
+  GIF/audio/Safe Folder task, an open file share, media actually PLAYING —
+  a paused session keeps its notification for hours and must not hold it
+  back: `UpdateAvailableSheet.busyNow`). With the app lock due, the lock
+  screen is started from inside `super.onResume()`, so BaseActivity skips
+  the check and does not use up the first-screen flag: the screen reached
+  after unlocking is the first one. `mPaused` is set in `onPause` (nothing
+  set it before, so the posted checks never saw a screen that had left).
+  The crash sheet steps aside for an open update sheet and shows on the
+  next resume (it decides after a disk read, so it always came second and
+  landed on top). Installing closes Firedown (on
   Android 12+ at once, with no question) and nothing reopens it, so the
   button stays "Install" with the line "Firedown closes while the update
   installs" — never "Install and restart". It opened on every resume of
@@ -4832,7 +4842,8 @@ is **~75 MB**, the APK 205 MB.
   sheet itself: no size (it is already downloaded, and the file on disk is
   the rebuilt APK, not what was fetched), "Update ready", a 72dp picture
   (132 took a third of the sheet), a fade at the notes' bottom edge,
-  wrapped bullets indented under their text, the version line in
+  wrapped bullets indented under their text (only a "• ", "- " or "* "
+  bullet is stripped, so "-5%" keeps its sign), the version line in
   `update_version_ink` (dark in light theme: coral is 2.2:1 there), and
   Not now + Install. Not now does what a swipe does (snooze a day,
   permanent after three); a full-width "Later" under Install was removed

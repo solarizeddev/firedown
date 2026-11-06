@@ -54,11 +54,13 @@ public class DownloadsActivity extends BaseActivity {
     P2pShareController mP2pShareController;
 
 
-    /* One of the app's own screens: the update sheet may open here. */
+    /* The main list: the update sheet may open here. A sub-screen (a form,
+     * a share screen, a review list) is something being used, like a page. */
     @NonNull
     @Override
     protected UpdatePromptPolicy.Place updatePromptPlace() {
-        return UpdatePromptPolicy.Place.SCREEN;
+        return showsDestination(R.id.downloads)
+                ? UpdatePromptPolicy.Place.SCREEN : UpdatePromptPolicy.Place.PAGE;
     }
 
     /* Opened from a notification or a link with no browser behind it,

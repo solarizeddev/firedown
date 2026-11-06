@@ -143,9 +143,10 @@
       After Install the footer shows the install instead of the buttons
       (UpdateAvailableSheet.render): "Preparing update… 42%" over a bar while
       the APK is copied into Android's installer, then "Installing…" with an
-      indeterminate bar until Android answers, and the sheet closes. The
-      progress block keeps the buttons' 48dp so the sheet doesn't jump. A
-      failure brings the buttons back with the error line above them.
+      indeterminate bar until Android answers, and the sheet closes. Only
+      the button row (48dp) swaps with the progress (48dp), so the sheet
+      doesn't jump. A failure brings the buttons back with the error line
+      above them.
     -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -182,46 +183,42 @@
             tools:text="@string/update_busy_download"
             tools:visibility="visible" />
 
+        <!-- Installing closes Firedown: on Android 12 and newer at once,
+             with no question from Android. Firedown does not reopen by
+             itself; a "Firedown updated" notification follows. Stays during
+             the install too, which is when it happens. Outside the buttons,
+             so only the 48dp button row swaps with the 48dp progress. -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:gravity="center"
+            android:text="@string/update_sheet_closes_note"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
         <LinearLayout
             android:id="@+id/update_sheet_actions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:orientation="horizontal">
 
-            <!-- Installing closes Firedown: on Android 12 and newer at once,
-                 with no question from Android. Firedown does not reopen by
-                 itself; a "Firedown updated" notification follows. -->
-            <TextView
-                android:layout_width="match_parent"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/update_sheet_not_now"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:gravity="center"
-                android:text="@string/update_sheet_closes_note"
-                android:textAppearance="?attr/textAppearanceBodySmall"
-                android:textColor="?attr/colorOnSurfaceVariant" />
+                android:layout_marginEnd="8dp"
+                android:text="@string/translate_not_now" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/update_sheet_install"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/update_sheet_not_now"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:text="@string/translate_not_now" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/update_sheet_install"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/update_available_sheet_install" />
-
-            </LinearLayout>
+                android:layout_weight="1"
+                android:text="@string/update_available_sheet_install" />
 
         </LinearLayout>
 

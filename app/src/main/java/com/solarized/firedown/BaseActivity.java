@@ -31,6 +31,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentContainerView;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
+import androidx.navigation.NavDestination;
 import androidx.navigation.fragment.NavHostFragment;
 
 import androidx.preference.PreferenceManager;
@@ -95,6 +96,10 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
 
     @Inject
     protected AddonManager mAddonManager;
+
+    /** Whether the lock screen is about to cover this one (the update sheet waits). */
+    @Inject
+    protected AppLock mAppLock;
 
     /** Background executor for the crash-sheet's disk scan (keeps it off the main thread). */
     @Inject
@@ -488,9 +493,16 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
         // commits over the top, hiding the sheet until the user
         // navigates to a Browser tab.
         // The first screen since the app started: the user has just opened
-        // the app and is not reading anything yet (UpdatePromptPolicy).
+        // the app and is not reading anything yet (UpdatePromptPolicy). A
+        // screen that can never show the sheet (the lock screen) does not
+        // use it up, and neither does one the lock screen is about to cover
+        // (ApplicationLifeCycleHandler starts it from super.onResume()): the
+        // screen the user reaches after unlocking is the first one.
+        boolean locked = mAppLock.isLocked();
         boolean firstScreen = !sScreenResumed;
-        sScreenResumed = true;
+        if (!locked && updatePromptPlace() != UpdatePromptPolicy.Place.NEVER) {
+            sScreenResumed = true;
+        }
         getWindow().getDecorView().post(() -> {
             // mPaused covers the common case (user navigated away
             // before the post ran). The other two catch the rarer
@@ -501,11 +513,33 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
             CrashReportSheet.showIfPending(
                     this, getSupportFragmentManager(), mDiskExecutor);
             // A ready update, where and when UpdatePromptPolicy allows; also
-            // the fallback when notifications are denied. Self-bails if the
-            // crash sheet above claimed the slot.
-            UpdateAvailableSheet.showIfReady(
-                    this, getSupportFragmentManager(), updatePromptPlace(), firstScreen);
+            // the fallback when notifications are denied. Never under the
+            // lock screen: it would be the first thing seen after unlocking.
+            if (!locked) {
+                UpdateAvailableSheet.showIfReady(
+                        this, getSupportFragmentManager(), updatePromptPlace(), firstScreen);
+            }
         });
+    }
+
+    @Override
+    protected void onPause() {
+        // Read by the posted sheet checks above: a screen that left before
+        // they ran shows nothing. Nothing set it before, so the check only
+        // ever caught a finishing or destroyed activity.
+        mPaused = true;
+        super.onPause();
+    }
+
+    /**
+     * Whether the screen's own navigation shows {@code destinationId} now:
+     * for {@link #updatePromptPlace()}, which tells a screen's main list
+     * from its sub-screens.
+     */
+    protected boolean showsDestination(int destinationId) {
+        NavController nav = getNavController();
+        NavDestination destination = nav != null ? nav.getCurrentDestination() : null;
+        return destination != null && destination.getId() == destinationId;
     }
 
     /** Set by the first screen of the process that resumes. */
@@ -526,7 +560,7 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
      * without a resume (the browser going back to its home page).
      */
     public void offerUpdateHere() {
-        if (mPaused || isFinishing() || isDestroyed()) {
+        if (mPaused || isFinishing() || isDestroyed() || mAppLock.isLocked()) {
             return;
         }
         UpdateAvailableSheet.showIfReady(this, getSupportFragmentManager(), updatePromptPlace(), false);

@@ -439,7 +439,7 @@ wait_sheet() {
 # Why wait_sheet failed, for the report.
 no_sheet() {
     if [ "$SCREEN_READ" = 1 ]; then
-        fail "the update sheet did not appear (another sheet on top? see the screenshot)"
+        fail "the update sheet did not appear (another sheet on top, the app lock, or something running in Firedown that holds it back: a download, a task, a file share, playback? see the screenshot)"
     else
         fail "the screen could not be read (uiautomator never saw it idle: a page animating in the open tab?). Open a still page in Firedown and run again"
     fi

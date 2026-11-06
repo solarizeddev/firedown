@@ -5,8 +5,6 @@ import android.os.Process;
 
 import androidx.annotation.NonNull;
 import androidx.core.splashscreen.SplashScreen;
-import androidx.navigation.NavController;
-import androidx.navigation.NavDestination;
 
 import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.R;
@@ -61,10 +59,7 @@ public class BrowserMainActivity extends BaseActivity {
     @NonNull
     @Override
     protected UpdatePromptPolicy.Place updatePromptPlace() {
-        NavController nav = getNavController();
-        NavDestination destination = nav != null ? nav.getCurrentDestination() : null;
-        if (destination != null && (destination.getId() == R.id.home
-                || destination.getId() == R.id.home_incognito)) {
+        if (showsDestination(R.id.home) || showsDestination(R.id.home_incognito)) {
             return UpdatePromptPolicy.Place.HOME;
         }
         return UpdatePromptPolicy.Place.PAGE;
