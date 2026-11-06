@@ -37,6 +37,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.di.RepositoryEntryPoint;
 import com.solarized.firedown.data.entity.DownloadEntity;
+import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.p2pshare.ShareState;
 import com.solarized.firedown.phone.fragments.P2pReceiveFragment;
@@ -214,6 +215,7 @@ public class P2pScreensDeviceTest {
         entity.setId(0x7E570001);
         entity.setFileName(FILE_NAME);
         entity.setFilePath(mFile.getAbsolutePath());
+        entity.setFileMimeType(FileUriHelper.getMimeTypeFromFile(FILE_NAME));
         entity.setFileSize(mFile.length());
         entity.setFileStatus(Download.FINISHED);
         Bundle args = new Bundle();

@@ -27,6 +27,7 @@ import com.bumptech.glide.request.target.Target;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.App;
+import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.phone.PlayerActivity;
 import com.solarized.firedown.R;
@@ -260,8 +261,8 @@ public class ImageViewerFragment extends Fragment {
                     .into(mPhotoView);
         }else if ((FileUriHelper.isSVG(mimeType)  ||
                 FileUriHelper.isWEP(mimeType)) && !mDownloadEntity.isFileEncrypted()) {
-            RequestOptions options = new RequestOptions().frame(interval)
-                    .set(GlideRequestOptions.MIMETYPE, mimeType).set(GlideRequestOptions.FILEPATH, filePath);
+            RequestOptions options = GlideHelper.withFileOptions(
+                    new RequestOptions().frame(interval), mimeType, filePath);
             Glide.with(App.getAppContext())
                     .load(RestoredFileAccess.openableUri(App.getAppContext(), filePath))
                     .apply(options)
@@ -270,12 +271,11 @@ public class ImageViewerFragment extends Fragment {
                     .error(R.drawable.ic_baseline_image_24)
                     .into(mPhotoView);
         } else {
-            RequestOptions options =
+            RequestOptions options = GlideHelper.withFileOptions(
                     new RequestOptions()
-                            .set(GlideRequestOptions.MIMETYPE, mDownloadEntity.getFileMimeType())
-                            .set(GlideRequestOptions.FILEPATH, mDownloadEntity.getFilePath())
                             .set(GlideRequestOptions.LENGTH, mDownloadEntity.getFileSize())
-                            .set(GlideRequestOptions.FRAME, mDownloadEntity.getThumbnailDuration());
+                            .set(GlideRequestOptions.FRAME, mDownloadEntity.getThumbnailDuration()),
+                    mDownloadEntity.getFileMimeType(), mDownloadEntity.getFilePath());
 
             Glide.with(App.getAppContext()).load(mDownloadEntity)
                     .dontTransform()

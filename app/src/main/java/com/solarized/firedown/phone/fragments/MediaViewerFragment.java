@@ -83,6 +83,7 @@ import com.bumptech.glide.signature.ObjectKey;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.App;
 import com.solarized.firedown.BuildConfig;
+import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.GlideRequestOptions;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.data.Download;
@@ -873,12 +874,11 @@ public class MediaViewerFragment extends Fragment implements SubtitleSheetDialog
             // A file opened by a VIEW intent has a path and no URL.
             String url = mDownloadEntity.getFileUrl() != null
                     ? mDownloadEntity.getFileUrl() : mDownloadEntity.getFilePath();
-            RequestOptions options =
+            RequestOptions options = GlideHelper.withFileOptions(
                     new RequestOptions().frame(interval)
-                            .set(GlideRequestOptions.MIMETYPE, mDownloadEntity.getFileMimeType())
-                            .set(GlideRequestOptions.FILEPATH, mDownloadEntity.getFilePath())
                             .set(GlideRequestOptions.LENGTH, mDownloadEntity.getFileSize())
-                            .set(GlideRequestOptions.FRAME, mDownloadEntity.getThumbnailDuration());
+                            .set(GlideRequestOptions.FRAME, mDownloadEntity.getThumbnailDuration()),
+                    mDownloadEntity.getFileMimeType(), mDownloadEntity.getFilePath());
 
             // Same model + options the downloads list uses, so the
             // shared-element transition lands on the same picture the
