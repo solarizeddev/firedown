@@ -843,7 +843,6 @@
     <string name="p2p_paste_reply">Wklej odpowiedź</string>
     <string name="p2p_scan_code">Skanuj kod</string>
     <string name="p2p_paste_code">Wklej kod</string>
-    <string name="p2p_receive_from">od %1$s</string>
     <string name="p2p_accept">Akceptuj</string>
     <string name="p2p_decline">Odrzuć</string>
     <string name="p2p_state_connecting">Łączenie…</string>
@@ -878,12 +877,14 @@
     <string name="p2p_link_shared">Udostępniono</string>
     <string name="p2p_show_qr_code">Pokaż kod QR</string>
     <string name="p2p_show_qr_code_hint">Dla telefonu tuż obok, bez Wi‑Fi.</string>
+    <string name="p2p_qr_scan_line">Na ich telefonie: Pliki do pobrania → Odbierz plik → Zeskanuj kod. Aplikacja aparatu też zadziała.</string>
     <string name="p2p_hide_qr_code">Ukryj kod QR</string>
-    <string name="p2p_qr_open_hint">Zeskanuj go w Pliki do pobrania → Odbierz plik lub aparatem.</string>
     <string name="p2p_qr_too_big">To udostępnienie jest za duże na kod QR. Udostępnij zamiast tego link.</string>
     <string name="p2p_waiting_note">Przesyłanie zacznie się, gdy zaakceptują, nawet jeśli opuścisz ten ekran.</string>
     <string name="p2p_visible_hint_link">Telefony w tej sieci Wi‑Fi mogą wysyłać do Ciebie pliki, dopóki ten ekran jest otwarty. Link, który ktoś Ci wysłał, otworzy się tutaj po dotknięciu.</string>
     <string name="p2p_accept_first">Nic nie zostanie odebrane, dopóki nie zaakceptujesz.</string>
+    <string name="p2p_wants_to_send">%1$s chce ci wysłać</string>
+    <string name="p2p_wants_to_send_unknown">Ktoś chce ci wysłać</string>
     <string name="p2p_nearby_sent">Wysłano · czeka na akceptację</string>
     <string name="p2p_nearby_busy">%1$s jest zajęty innym transferem.</string>
     <string name="p2p_nearby_unreachable">Nie można połączyć się z %1$s.</string>

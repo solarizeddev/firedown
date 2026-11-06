@@ -251,13 +251,38 @@
                         android:visibility="gone"
                         tools:visibility="visible">
 
-                        <ImageView
-                            android:id="@+id/p2p_qr"
-                            android:layout_width="232dp"
-                            android:layout_height="232dp"
-                            android:background="@drawable/bg_p2p_qr"
-                            android:contentDescription="@string/p2p_qr_content_desc"
-                            android:padding="12dp" />
+                        <!-- The QR on its own tile, one step off the card's
+                             tone in both themes, so the white code has an edge. -->
+                        <FrameLayout
+                            android:id="@+id/p2p_qr_tile"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="16dp"
+                            android:background="@drawable/bg_p2p_qr_tile"
+                            android:padding="16dp">
+
+                            <ImageView
+                                android:id="@+id/p2p_qr"
+                                android:layout_width="232dp"
+                                android:layout_height="232dp"
+                                android:layout_gravity="center_horizontal"
+                                android:background="@drawable/bg_p2p_qr"
+                                android:contentDescription="@string/p2p_qr_content_desc"
+                                android:padding="12dp" />
+
+                        </FrameLayout>
+
+                        <!-- Where the other person taps: one line, no steps. -->
+                        <TextView
+                            android:id="@+id/p2p_qr_scan_line"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:paddingHorizontal="24dp"
+                            android:paddingTop="10dp"
+                            android:text="@string/p2p_qr_scan_line"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
 
                         <TextView
                             android:id="@+id/p2p_qr_too_big"

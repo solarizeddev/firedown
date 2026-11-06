@@ -1,7 +1,12 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.format.Formatter;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -13,13 +18,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.R;
 import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.p2pshare.ShareState;
 import com.solarized.firedown.utils.FileUriHelper;
-
-import java.util.Locale;
-
 import dagger.hilt.android.AndroidEntryPoint;
 
 /**
@@ -316,15 +319,30 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
     private void bindPreview(@NonNull ShareState state) {
         mView.findViewById(R.id.p2p_accept).setEnabled(true);
         mView.findViewById(R.id.p2p_decline).setEnabled(true);
+        // Who is sending leads: the device name the sender's phone claims,
+        // in the title's weight (the copy never calls it verified).
+        String device = state.peerDevice == null ? "" : state.peerDevice.trim();
+        CharSequence from;
+        if (device.isEmpty()) {
+            from = getString(R.string.p2p_wants_to_send_unknown);
+        } else {
+            String text = getString(R.string.p2p_wants_to_send, device);
+            SpannableString styled = new SpannableString(text);
+            int at = text.indexOf(device);
+            if (at >= 0) {
+                styled.setSpan(new StyleSpan(Typeface.BOLD), at, at + device.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                styled.setSpan(new ForegroundColorSpan(MaterialColors.getColor(mView,
+                                com.google.android.material.R.attr.colorOnSurface)),
+                        at, at + device.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            from = styled;
+        }
+        ((TextView) mView.findViewById(R.id.p2p_preview_from)).setText(from);
         ((TextView) mView.findViewById(R.id.p2p_preview_name)).setText(
                 state.fileName == null ? "" : state.fileName);
-        String sizeText = Formatter.formatShortFileSize(requireContext(), state.fileSize);
-        String device = state.peerDevice == null ? "" : state.peerDevice;
-        String tag = device.isEmpty()
-                ? sizeText
-                : String.format(Locale.ROOT, "%s · %s", sizeText,
-                        getString(R.string.p2p_receive_from, device));
-        ((TextView) mView.findViewById(R.id.p2p_preview_tag)).setText(tag);
+        ((TextView) mView.findViewById(R.id.p2p_preview_tag)).setText(
+                Formatter.formatShortFileSize(requireContext(), state.fileSize));
         ((ImageView) mView.findViewById(R.id.p2p_preview_icon)).setImageResource(
                 FileUriHelper.getMimeTypeIcon(state.mime == null ? "" : state.mime));
     }

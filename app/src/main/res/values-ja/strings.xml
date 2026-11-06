@@ -924,7 +924,6 @@
     <string name="p2p_paste_reply">返信を貼り付け</string>
     <string name="p2p_scan_code">コードをスキャン</string>
     <string name="p2p_paste_code">コードを貼り付け</string>
-    <string name="p2p_receive_from">%1$s から</string>
     <string name="p2p_accept">受け入れる</string>
     <string name="p2p_decline">拒否</string>
     <string name="p2p_state_connecting">接続中…</string>
@@ -959,12 +958,14 @@
     <string name="p2p_link_shared">共有済み</string>
     <string name="p2p_show_qr_code">QR コードを表示</string>
     <string name="p2p_show_qr_code_hint">すぐそばの端末向け。Wi‑Fi は不要です。</string>
+    <string name="p2p_qr_scan_line">相手の端末で「ダウンロード」→「ファイルを受信」→「コードをスキャン」。カメラアプリでも読み取れます。</string>
     <string name="p2p_hide_qr_code">QR コードを隠す</string>
-    <string name="p2p_qr_open_hint">「ダウンロード」→「ファイルを受信」から、またはカメラでスキャンしてください。</string>
     <string name="p2p_qr_too_big">この共有は QR コードには大きすぎます。代わりにリンクを共有してください。</string>
     <string name="p2p_waiting_note">相手が承認すると転送が始まります。この画面を離れても大丈夫です。</string>
     <string name="p2p_visible_hint_link">この画面を開いている間、同じ Wi‑Fi 上の端末から送信できます。届いたリンクをタップするとここで開きます。</string>
     <string name="p2p_accept_first">承認するまで何も受信されません。</string>
+    <string name="p2p_wants_to_send">%1$s から送信のリクエスト</string>
+    <string name="p2p_wants_to_send_unknown">送信のリクエスト</string>
     <string name="p2p_nearby_sent">送信済み · 承認待ち</string>
     <string name="p2p_nearby_busy">%1$s は別の転送中です。</string>
     <string name="p2p_nearby_unreachable">%1$s に接続できませんでした。</string>

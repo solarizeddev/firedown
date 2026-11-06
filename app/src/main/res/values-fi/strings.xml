@@ -793,7 +793,6 @@
     <string name="p2p_paste_reply">Liitä vastaus</string>
     <string name="p2p_scan_code">Skannaa koodi</string>
     <string name="p2p_paste_code">Liitä koodi</string>
-    <string name="p2p_receive_from">lähettäjältä %1$s</string>
     <string name="p2p_accept">Hyväksy</string>
     <string name="p2p_decline">Hylkää</string>
     <string name="p2p_state_connecting">Yhdistetään…</string>
@@ -828,12 +827,14 @@
     <string name="p2p_link_shared">Jaettu</string>
     <string name="p2p_show_qr_code">Näytä QR-koodi</string>
     <string name="p2p_show_qr_code_hint">Tässä lähellä olevalle puhelimelle, ilman Wi‑Fi-yhteyttä.</string>
+    <string name="p2p_qr_scan_line">Toisessa puhelimessa: Lataukset → Vastaanota tiedosto → Skannaa koodi. Myös kamerasovellus käy.</string>
     <string name="p2p_hide_qr_code">Piilota QR-koodi</string>
-    <string name="p2p_qr_open_hint">Skannaa se kohdasta Lataukset → Vastaanota tiedosto tai kameralla.</string>
     <string name="p2p_qr_too_big">Tämä jako on liian suuri QR-koodiksi. Jaa linkki sen sijaan.</string>
     <string name="p2p_waiting_note">Siirto alkaa, kun he hyväksyvät, vaikka poistuisit tältä näytöltä.</string>
     <string name="p2p_visible_hint_link">Tämän Wi‑Fi-verkon puhelimet voivat lähettää sinulle, kun tämä näyttö on auki. Sinulle lähetetty linkki avautuu tänne, kun napautat sitä.</string>
     <string name="p2p_accept_first">Mitään ei vastaanoteta ennen kuin hyväksyt.</string>
+    <string name="p2p_wants_to_send">%1$s haluaa lähettää sinulle</string>
+    <string name="p2p_wants_to_send_unknown">Joku haluaa lähettää sinulle</string>
     <string name="p2p_nearby_sent">Lähetetty · odottaa hyväksyntää</string>
     <string name="p2p_nearby_busy">%1$s on varattu toiseen siirtoon.</string>
     <string name="p2p_nearby_unreachable">Laitetta %1$s ei tavoitettu.</string>

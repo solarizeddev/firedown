@@ -5657,7 +5657,12 @@ and the in-person path was a QR to aim across a table. Now:
   + ONE "Send to" list** (`P2pSendRows`, pure Java, pinned by
   `scripts/p2p-harness` with mutants and `P2pSendRowsTest`): nearby phones
   ("On this Wi‑Fi"), then "Share a link", then "Show QR code" (unfolds
-  inside its own card), each a grouped `SheetRowCard`
+  inside its own card: the code on a pale rounded tile, `bg_p2p_qr_tile`,
+  one tone off the card in both themes, and ONE line under it saying where
+  the other person taps, `p2p_qr_scan_line`; the row drops its second line
+  while open. Signal's and Telegram's tile, NOT their full page of numbered
+  steps: there scanning is the only way, here the QR is the third of three
+  options and the person is next to you), each a grouped `SheetRowCard`
   (`item_p2p_device`, corners from `SheetGroups.applyCorners`, so a press
   stays inside the card). With nobody found, a FOOTNOTE under the group
   says how a phone gets listed ("A phone on this Wi‑Fi appears here once
@@ -5693,8 +5698,14 @@ and the in-person path was a QR to aim across a table. Now:
   lead sentence ("no server in between", untrue for a short or relayed
   share) and the meaningless live dot are gone. **Receive** = the "Visible
   as <name>" card (its hint now also says a tapped link opens here) and
-  one "Scan code" button; Paste code is in the overflow (idle only); the
-  request card adds "Nothing is received until you accept."; the
+  one "Scan code" button; Paste code is in the overflow (idle only); a
+  request REPLACES that stage and is laid out as the decision, AirDrop's
+  shape: "<device> wants to send you" first (the name in the title's
+  weight, `p2p_wants_to_send`; "Someone…" when none), the file type's
+  glyph on a 112dp tile, name and size, full-width Decline / Accept, and
+  "Nothing is received until you accept." (a bottom sheet over the
+  waiting screen, Quick Share's shape, was sketched and not taken: a
+  swipe-away reads as an ambiguous decline); the
   human-relayed reply only when both push paths failed
   (`ShareState.answerCode`). Don't bring back a second card for a state,
   a spinner at rest, or a per-share privacy choice.

@@ -929,7 +929,6 @@
     <string name="p2p_paste_reply">Antwort einfügen</string>
     <string name="p2p_scan_code">Code scannen</string>
     <string name="p2p_paste_code">Code einfügen</string>
-    <string name="p2p_receive_from">von %1$s</string>
     <string name="p2p_accept">Annehmen</string>
     <string name="p2p_decline">Ablehnen</string>
     <string name="p2p_state_connecting">Verbindung wird hergestellt…</string>
@@ -964,12 +963,14 @@
     <string name="p2p_link_shared">Geteilt</string>
     <string name="p2p_show_qr_code">QR-Code anzeigen</string>
     <string name="p2p_show_qr_code_hint">Für ein Telefon direkt hier, ohne WLAN.</string>
+    <string name="p2p_qr_scan_line">Auf dem anderen Telefon: Downloads → Datei empfangen → Code scannen. Die Kamera-App geht auch.</string>
     <string name="p2p_hide_qr_code">QR-Code ausblenden</string>
-    <string name="p2p_qr_open_hint">Scanne ihn unter Downloads → Datei empfangen oder mit der Kamera.</string>
     <string name="p2p_qr_too_big">Diese Freigabe ist zu groß für einen QR-Code. Teile stattdessen einen Link.</string>
     <string name="p2p_waiting_note">Die Übertragung startet, sobald sie annehmen, auch wenn du diesen Bildschirm verlässt.</string>
     <string name="p2p_visible_hint_link">Telefone in diesem WLAN können dir senden, solange dieser Bildschirm geöffnet ist. Ein Link, den dir jemand geschickt hat, öffnet sich hier, wenn du darauf tippst.</string>
     <string name="p2p_accept_first">Nichts wird empfangen, bevor du annimmst.</string>
+    <string name="p2p_wants_to_send">%1$s möchte dir senden</string>
+    <string name="p2p_wants_to_send_unknown">Jemand möchte dir senden</string>
     <string name="p2p_nearby_sent">Gesendet · wartet auf Annahme</string>
     <string name="p2p_nearby_busy">%1$s ist mit einer anderen Übertragung beschäftigt.</string>
     <string name="p2p_nearby_unreachable">%1$s ist nicht erreichbar.</string>

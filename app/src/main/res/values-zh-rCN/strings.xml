@@ -924,7 +924,6 @@
     <string name="p2p_paste_reply">粘贴回复</string>
     <string name="p2p_scan_code">扫描代码</string>
     <string name="p2p_paste_code">粘贴代码</string>
-    <string name="p2p_receive_from">来自 %1$s</string>
     <string name="p2p_accept">接受</string>
     <string name="p2p_decline">拒绝</string>
     <string name="p2p_state_connecting">正在连接…</string>
@@ -959,12 +958,14 @@
     <string name="p2p_link_shared">已分享</string>
     <string name="p2p_show_qr_code">显示二维码</string>
     <string name="p2p_show_qr_code_hint">适用于就在身边的手机，无需 Wi‑Fi。</string>
+    <string name="p2p_qr_scan_line">在对方手机上：下载 → 接收文件 → 扫描二维码。也可以用相机应用扫描。</string>
     <string name="p2p_hide_qr_code">隐藏二维码</string>
-    <string name="p2p_qr_open_hint">在“下载 → 接收文件”中扫描，或用相机扫描。</string>
     <string name="p2p_qr_too_big">此分享太大，无法生成二维码。请改为分享链接。</string>
     <string name="p2p_waiting_note">对方接受后传输即开始，即使你离开此屏幕。</string>
     <string name="p2p_visible_hint_link">此屏幕保持打开时，同一 Wi‑Fi 上的手机可以向你发送文件。别人发给你的链接，点按后会在这里打开。</string>
     <string name="p2p_accept_first">在你接受之前不会接收任何内容。</string>
+    <string name="p2p_wants_to_send">%1$s 想向你发送</string>
+    <string name="p2p_wants_to_send_unknown">有人想向你发送</string>
     <string name="p2p_nearby_sent">已发送 · 等待对方接受</string>
     <string name="p2p_nearby_busy">%1$s 正忙于另一项传输。</string>
     <string name="p2p_nearby_unreachable">无法连接到 %1$s。</string>

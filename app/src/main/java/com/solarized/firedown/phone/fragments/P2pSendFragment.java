@@ -463,6 +463,7 @@ public class P2pSendFragment extends P2pShareBaseFragment {
             }
         }
         status.setText(statusText(row));
+        status.setVisibility(row.sub == P2pSendRows.Sub.QR_OPEN ? View.GONE : View.VISIBLE);
 
         int onSurface = MaterialColors.getColor(view, com.google.android.material.R.attr.colorOnSurface);
         int onSurfaceVariant = MaterialColors.getColor(view, com.google.android.material.R.attr.colorOnSurfaceVariant);
@@ -522,7 +523,9 @@ public class P2pSendFragment extends P2pShareBaseFragment {
                             row.minutesLeft, row.minutesLeft)
                     : getString(R.string.p2p_link_shared);
             case QR_IDLE -> getString(R.string.p2p_show_qr_code_hint);
-            case QR_OPEN -> getString(R.string.p2p_qr_open_hint);
+            // Open: no second line; "Hide QR code" says it, and where the
+            // other person taps is the line under the code's tile.
+            case QR_OPEN -> "";
             case CONNECTING -> getString(mLast != null && mLast.stage == ShareState.Stage.CONNECTED
                     ? R.string.p2p_state_connected : R.string.p2p_state_connecting);
         };
@@ -588,7 +591,8 @@ public class P2pSendFragment extends P2pShareBaseFragment {
         boolean rendered = setQr(qr, P2pShareController.toDeepLink(code));
         // A code too large for a QR leaves no blank white box: say so and
         // point at the link card above.
-        qr.setVisibility(rendered ? View.VISIBLE : View.GONE);
+        mQrGroup.findViewById(R.id.p2p_qr_tile).setVisibility(rendered ? View.VISIBLE : View.GONE);
+        mQrGroup.findViewById(R.id.p2p_qr_scan_line).setVisibility(rendered ? View.VISIBLE : View.GONE);
         mQrGroup.findViewById(R.id.p2p_qr_too_big).setVisibility(rendered ? View.GONE : View.VISIBLE);
     }
 

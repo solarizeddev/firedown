@@ -755,12 +755,14 @@
     <string name="p2p_link_shared">Đã chia sẻ</string>
     <string name="p2p_show_qr_code">Hiện mã QR</string>
     <string name="p2p_show_qr_code_hint">Cho điện thoại ngay bên cạnh, không cần Wi‑Fi.</string>
+    <string name="p2p_qr_scan_line">Trên điện thoại của họ: Tải xuống → Nhận tệp → Quét mã. Ứng dụng máy ảnh cũng được.</string>
     <string name="p2p_hide_qr_code">Ẩn mã QR</string>
-    <string name="p2p_qr_open_hint">Quét mã từ Tải xuống → Nhận tệp, hoặc bằng camera.</string>
     <string name="p2p_qr_too_big">Lượt chia sẻ này quá lớn để tạo mã QR. Hãy chia sẻ liên kết thay thế.</string>
     <string name="p2p_waiting_note">Quá trình truyền bắt đầu khi họ chấp nhận, kể cả khi bạn rời màn hình này.</string>
     <string name="p2p_visible_hint_link">Điện thoại trên Wi‑Fi này có thể gửi cho bạn khi màn hình này đang mở. Liên kết ai đó gửi cho bạn sẽ mở tại đây khi bạn nhấn vào.</string>
     <string name="p2p_accept_first">Không có gì được nhận cho đến khi bạn chấp nhận.</string>
+    <string name="p2p_wants_to_send">%1$s muốn gửi cho bạn</string>
+    <string name="p2p_wants_to_send_unknown">Ai đó muốn gửi cho bạn</string>
     <string name="p2p_nearby_sent">Đã gửi · đang chờ họ chấp nhận</string>
     <string name="p2p_nearby_unreachable">Không thể kết nối tới %1$s.</string>
     <string name="p2p_not_visible">Không hiển thị với thiết bị lân cận. Hãy kết nối Wi‑Fi, hoặc dùng mã hay liên kết.</string>
@@ -774,7 +776,6 @@
     <string name="p2p_preparing">Đang chuẩn bị…</string>
     <string name="p2p_progress_of">%1$s / %2$s · %3$s/s</string>
     <string name="p2p_qr_content_desc">Mã chia sẻ của bạn, dạng QR</string>
-    <string name="p2p_receive_from">từ %1$s</string>
     <string name="p2p_receive_title">Nhận tệp</string>
     <string name="p2p_reconnecting">Đang kết nối lại…</string>
     <string name="p2p_reply_detected">Đã tìm thấy phản hồi. Đang kết nối…</string>

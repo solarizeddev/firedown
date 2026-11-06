@@ -932,7 +932,6 @@
     <string name="p2p_paste_reply">Coller la réponse</string>
     <string name="p2p_scan_code">Scanner le code</string>
     <string name="p2p_paste_code">Coller le code</string>
-    <string name="p2p_receive_from">de %1$s</string>
     <string name="p2p_accept">Accepter</string>
     <string name="p2p_decline">Refuser</string>
     <string name="p2p_state_connecting">Connexion…</string>
@@ -967,12 +966,14 @@
     <string name="p2p_link_shared">Partagé</string>
     <string name="p2p_show_qr_code">Afficher un code QR</string>
     <string name="p2p_show_qr_code_hint">Pour un téléphone juste à côté, sans Wi‑Fi.</string>
+    <string name="p2p_qr_scan_line">Sur l\'autre téléphone : Téléchargements → Recevoir un fichier → Scanner un code. L\'appareil photo marche aussi.</string>
     <string name="p2p_hide_qr_code">Masquer le code QR</string>
-    <string name="p2p_qr_open_hint">Scannez-le depuis Téléchargements → Recevoir un fichier, ou avec l\'appareil photo.</string>
     <string name="p2p_qr_too_big">Ce partage est trop volumineux pour un code QR. Partagez plutôt un lien.</string>
     <string name="p2p_waiting_note">Le transfert démarre dès qu\'ils acceptent, même si vous quittez cet écran.</string>
     <string name="p2p_visible_hint_link">Les téléphones de ce Wi‑Fi peuvent vous envoyer des fichiers tant que cet écran est ouvert. Un lien qu\'on vous a envoyé s\'ouvre ici quand vous appuyez dessus.</string>
     <string name="p2p_accept_first">Rien n\'est reçu tant que vous n\'avez pas accepté.</string>
+    <string name="p2p_wants_to_send">%1$s veut vous envoyer</string>
+    <string name="p2p_wants_to_send_unknown">Quelqu\'un veut vous envoyer</string>
     <string name="p2p_nearby_sent">Envoyé · en attente d\'acceptation</string>
     <string name="p2p_nearby_busy">%1$s est occupé par un autre transfert.</string>
     <string name="p2p_nearby_unreachable">Impossible de joindre %1$s.</string>

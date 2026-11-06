@@ -835,7 +835,6 @@
     <string name="p2p_paste_reply">Antwoord plakken</string>
     <string name="p2p_scan_code">Code scannen</string>
     <string name="p2p_paste_code">Code plakken</string>
-    <string name="p2p_receive_from">van %1$s</string>
     <string name="p2p_accept">Accepteren</string>
     <string name="p2p_decline">Weigeren</string>
     <string name="p2p_state_connecting">Verbinden…</string>
@@ -870,12 +869,14 @@
     <string name="p2p_link_shared">Gedeeld</string>
     <string name="p2p_show_qr_code">Een QR-code tonen</string>
     <string name="p2p_show_qr_code_hint">Voor een telefoon hier vlakbij, zonder wifi.</string>
+    <string name="p2p_qr_scan_line">Op hun telefoon: Downloads → Een bestand ontvangen → Code scannen. De camera-app werkt ook.</string>
     <string name="p2p_hide_qr_code">QR-code verbergen</string>
-    <string name="p2p_qr_open_hint">Scan hem via Downloads → Een bestand ontvangen, of met de camera.</string>
     <string name="p2p_qr_too_big">Deze deelactie is te groot voor een QR-code. Deel in plaats daarvan een link.</string>
     <string name="p2p_waiting_note">De overdracht start zodra ze accepteren, ook als je dit scherm verlaat.</string>
     <string name="p2p_visible_hint_link">Telefoons op deze wifi kunnen je bestanden sturen zolang dit scherm open is. Een link die iemand je stuurde, opent hier als je erop tikt.</string>
     <string name="p2p_accept_first">Er wordt niets ontvangen tot je accepteert.</string>
+    <string name="p2p_wants_to_send">%1$s wil je iets sturen</string>
+    <string name="p2p_wants_to_send_unknown">Iemand wil je iets sturen</string>
     <string name="p2p_nearby_sent">Verstuurd · wacht op acceptatie</string>
     <string name="p2p_nearby_busy">%1$s is bezig met een andere overdracht.</string>
     <string name="p2p_nearby_unreachable">%1$s is niet bereikbaar.</string>

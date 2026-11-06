@@ -715,12 +715,14 @@
     <string name="p2p_link_shared">Dibagikan</string>
     <string name="p2p_show_qr_code">Tampilkan kode QR</string>
     <string name="p2p_show_qr_code_hint">Untuk ponsel di dekat Anda, tanpa Wi‑Fi.</string>
+    <string name="p2p_qr_scan_line">Di ponsel mereka: Unduhan → Terima berkas → Pindai kode. Aplikasi kamera juga bisa.</string>
     <string name="p2p_hide_qr_code">Sembunyikan kode QR</string>
-    <string name="p2p_qr_open_hint">Pindai dari Unduhan → Terima berkas, atau dengan kamera.</string>
     <string name="p2p_qr_too_big">Berbagi ini terlalu besar untuk kode QR. Bagikan tautan saja.</string>
     <string name="p2p_waiting_note">Transfer dimulai saat mereka menerima, meski Anda meninggalkan layar ini.</string>
     <string name="p2p_visible_hint_link">Ponsel di Wi‑Fi ini dapat mengirim ke Anda selama layar ini terbuka. Tautan yang dikirim seseorang kepada Anda terbuka di sini saat diketuk.</string>
     <string name="p2p_accept_first">Tidak ada yang diterima sebelum Anda menyetujuinya.</string>
+    <string name="p2p_wants_to_send">%1$s ingin mengirim kepada Anda</string>
+    <string name="p2p_wants_to_send_unknown">Seseorang ingin mengirim kepada Anda</string>
     <string name="p2p_nearby_sent">Terkirim · menunggu mereka menerima</string>
     <string name="p2p_nearby_unreachable">Tidak dapat menjangkau %1$s.</string>
     <string name="p2p_not_visible">Tidak terlihat di sekitar. Hubungkan ke Wi‑Fi, atau gunakan kode atau tautan.</string>
@@ -734,7 +736,6 @@
     <string name="p2p_preparing">Menyiapkan…</string>
     <string name="p2p_progress_of">%1$s dari %2$s · %3$s/dtk</string>
     <string name="p2p_qr_content_desc">Kode berbagi Anda, sebagai QR</string>
-    <string name="p2p_receive_from">dari %1$s</string>
     <string name="p2p_receive_title">Terima berkas</string>
     <string name="p2p_reconnecting">Menghubungkan ulang…</string>
     <string name="p2p_reply_detected">Balasan ditemukan. Menghubungkan…</string>

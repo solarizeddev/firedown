@@ -730,7 +730,6 @@
     <string name="p2p_paste_reply">Kleebi vastus</string>
     <string name="p2p_scan_code">Skanni kood</string>
     <string name="p2p_paste_code">Kleebi kood</string>
-    <string name="p2p_receive_from">saatjalt %1$s</string>
     <string name="p2p_accept">Nõustu</string>
     <string name="p2p_decline">Keeldu</string>
     <string name="p2p_state_connecting">Ühendamine…</string>
@@ -765,12 +764,14 @@
     <string name="p2p_link_shared">Jagatud</string>
     <string name="p2p_show_qr_code">Näita QR-koodi</string>
     <string name="p2p_show_qr_code_hint">Siinsamas olevale telefonile, ilma Wi‑Fi-ta.</string>
+    <string name="p2p_qr_scan_line">Teises telefonis: Allalaadimised → Võta fail vastu → Skanni kood. Ka kaamerarakendus sobib.</string>
     <string name="p2p_hide_qr_code">Peida QR-kood</string>
-    <string name="p2p_qr_open_hint">Skanni see jaotisest Allalaadimised → Võta fail vastu või kaameraga.</string>
     <string name="p2p_qr_too_big">See jagamine on QR-koodi jaoks liiga suur. Jaga selle asemel linki.</string>
     <string name="p2p_waiting_note">Ülekanne algab, kui nad vastu võtavad, isegi kui sellelt ekraanilt lahkud.</string>
     <string name="p2p_visible_hint_link">Selle Wi‑Fi võrgu telefonid saavad sulle saata, kuni see ekraan on avatud. Link, mille keegi sulle saatis, avaneb puudutamisel siin.</string>
     <string name="p2p_accept_first">Midagi ei võeta vastu, enne kui nõustud.</string>
+    <string name="p2p_wants_to_send">%1$s soovib sulle saata</string>
+    <string name="p2p_wants_to_send_unknown">Keegi soovib sulle saata</string>
     <string name="p2p_nearby_sent">Saadetud · ootab vastuvõtmist</string>
     <string name="p2p_nearby_busy">%1$s on hõivatud teise ülekandega.</string>
     <string name="p2p_nearby_unreachable">%1$s ei ole kättesaadav.</string>

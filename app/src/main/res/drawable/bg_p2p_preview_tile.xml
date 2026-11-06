@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The incoming file's glyph tile on the Receive request (the file is not
+     here yet, so its type is all there is to show). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="?attr/colorSurfaceContainerHigh" />
+    <corners android:radius="24dp" />
+</shape>

@@ -1094,7 +1094,6 @@
     <string name="p2p_paste_reply">Paste reply</string>
     <string name="p2p_scan_code">Scan code</string>
     <string name="p2p_paste_code">Paste code</string>
-    <string name="p2p_receive_from">from %1$s</string>
     <string name="p2p_accept">Accept</string>
     <string name="p2p_decline">Decline</string>
     <string name="p2p_preparing">Preparing…</string>
@@ -1140,13 +1139,15 @@
     <string name="p2p_link_shared">Shared</string>
     <string name="p2p_show_qr_code">Show QR code</string>
     <string name="p2p_show_qr_code_hint">For a phone right here, without Wi‑Fi.</string>
+    <string name="p2p_qr_scan_line">On their phone: Downloads → Receive a file → Scan code. Their camera app works too.</string>
     <string name="p2p_hide_qr_code">Hide QR code</string>
-    <string name="p2p_qr_open_hint">Scan it from Downloads → Receive a file, or with the camera.</string>
     <string name="p2p_qr_too_big">This share is too big for a QR code. Share a link instead.</string>
     <string name="p2p_waiting_note">The transfer starts when they accept, even if you leave this screen.</string>
     <!-- Receive -->
     <string name="p2p_visible_hint_link">Phones on this Wi‑Fi can send to you while this screen is open. A link someone sent you opens here when you tap it.</string>
     <string name="p2p_accept_first">Nothing is received until you accept.</string>
+    <string name="p2p_wants_to_send">%1$s wants to send you</string>
+    <string name="p2p_wants_to_send_unknown">Someone wants to send you</string>
     <string name="p2p_nearby_sent">Sent · waiting for them to accept</string>
     <string name="p2p_nearby_busy">%1$s is busy with another transfer.</string>
     <string name="p2p_nearby_unreachable">Couldn\'t reach %1$s.</string>

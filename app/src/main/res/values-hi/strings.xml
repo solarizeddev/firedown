@@ -763,7 +763,6 @@
     <string name="p2p_paste_reply">जवाब पेस्ट करें</string>
     <string name="p2p_scan_code">कोड स्कैन करें</string>
     <string name="p2p_paste_code">कोड पेस्ट करें</string>
-    <string name="p2p_receive_from">%1$s से</string>
     <string name="p2p_accept">स्वीकार करें</string>
     <string name="p2p_decline">अस्वीकार करें</string>
     <string name="p2p_state_connecting">कनेक्ट हो रहा है…</string>
@@ -798,12 +797,14 @@
     <string name="p2p_link_shared">शेयर किया गया</string>
     <string name="p2p_show_qr_code">QR कोड दिखाएँ</string>
     <string name="p2p_show_qr_code_hint">यहीं मौजूद फ़ोन के लिए, बिना Wi‑Fi के।</string>
+    <string name="p2p_qr_scan_line">उनके फ़ोन पर: डाउनलोड → फ़ाइल प्राप्त करें → कोड स्कैन करें। कैमरा ऐप भी काम करता है।</string>
     <string name="p2p_hide_qr_code">QR कोड छिपाएँ</string>
-    <string name="p2p_qr_open_hint">इसे डाउनलोड → फ़ाइल प्राप्त करें से या कैमरे से स्कैन करें।</string>
     <string name="p2p_qr_too_big">यह शेयर QR कोड के लिए बहुत बड़ा है। इसके बजाय लिंक शेयर करें।</string>
     <string name="p2p_waiting_note">उनके स्वीकार करते ही ट्रांसफ़र शुरू हो जाता है, भले ही आप यह स्क्रीन छोड़ दें।</string>
     <string name="p2p_visible_hint_link">जब तक यह स्क्रीन खुली है, इस Wi‑Fi के फ़ोन आपको फ़ाइलें भेज सकते हैं। किसी का भेजा लिंक टैप करने पर यहीं खुलता है।</string>
     <string name="p2p_accept_first">आपके स्वीकार करने तक कुछ भी प्राप्त नहीं होता।</string>
+    <string name="p2p_wants_to_send">%1$s आपको भेजना चाहता है</string>
+    <string name="p2p_wants_to_send_unknown">कोई आपको भेजना चाहता है</string>
     <string name="p2p_nearby_sent">भेजा गया · स्वीकार होने की प्रतीक्षा</string>
     <string name="p2p_nearby_busy">%1$s किसी अन्य ट्रांसफ़र में व्यस्त है।</string>
     <string name="p2p_nearby_unreachable">%1$s से संपर्क नहीं हो सका।</string>

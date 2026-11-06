@@ -772,7 +772,6 @@
     <string name="p2p_paste_reply">Вставити відповідь</string>
     <string name="p2p_scan_code">Сканувати код</string>
     <string name="p2p_paste_code">Вставити код</string>
-    <string name="p2p_receive_from">від %1$s</string>
     <string name="p2p_accept">Прийняти</string>
     <string name="p2p_decline">Відхилити</string>
     <string name="p2p_state_connecting">Підключення…</string>
@@ -807,12 +806,14 @@
     <string name="p2p_link_shared">Надіслано</string>
     <string name="p2p_show_qr_code">Показати QR-код</string>
     <string name="p2p_show_qr_code_hint">Для телефона поруч, без Wi‑Fi.</string>
+    <string name="p2p_qr_scan_line">На їхньому телефоні: Завантаження → Отримати файл → Сканувати код. Підійде й застосунок камери.</string>
     <string name="p2p_hide_qr_code">Сховати QR-код</string>
-    <string name="p2p_qr_open_hint">Відскануйте його в Завантаження → Отримати файл або камерою.</string>
     <string name="p2p_qr_too_big">Це надсилання завелике для QR-коду. Натомість поділіться посиланням.</string>
     <string name="p2p_waiting_note">Передавання почнеться, щойно вони приймуть, навіть якщо ви вийдете з цього екрана.</string>
     <string name="p2p_visible_hint_link">Телефони в цій мережі Wi‑Fi можуть надсилати вам файли, поки відкритий цей екран. Надіслане вам посилання відкриється тут, коли ви його торкнетеся.</string>
     <string name="p2p_accept_first">Нічого не буде отримано, доки ви не приймете.</string>
+    <string name="p2p_wants_to_send">%1$s хоче надіслати вам</string>
+    <string name="p2p_wants_to_send_unknown">Хтось хоче надіслати вам</string>
     <string name="p2p_nearby_sent">Надіслано · очікується прийняття</string>
     <string name="p2p_nearby_busy">%1$s зайнятий іншою передачею.</string>
     <string name="p2p_nearby_unreachable">Не вдалося зв\'язатися з %1$s.</string>

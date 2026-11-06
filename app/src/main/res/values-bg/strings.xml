@@ -752,7 +752,6 @@
     <string name="p2p_paste_reply">Постави отговора</string>
     <string name="p2p_scan_code">Сканирай кода</string>
     <string name="p2p_paste_code">Постави кода</string>
-    <string name="p2p_receive_from">от %1$s</string>
     <string name="p2p_accept">Приеми</string>
     <string name="p2p_decline">Откажи</string>
     <string name="p2p_state_connecting">Свързване…</string>
@@ -787,12 +786,14 @@
     <string name="p2p_link_shared">Споделено</string>
     <string name="p2p_show_qr_code">Покажи QR код</string>
     <string name="p2p_show_qr_code_hint">За телефон точно тук, без Wi‑Fi.</string>
+    <string name="p2p_qr_scan_line">На другия телефон: Изтегляния → Получаване на файл → Сканиране на код. Работи и приложението за камера.</string>
     <string name="p2p_hide_qr_code">Скрий QR кода</string>
-    <string name="p2p_qr_open_hint">Сканирайте го от Изтегляния → Получаване на файл или с камерата.</string>
     <string name="p2p_qr_too_big">Това споделяне е твърде голямо за QR код. Вместо това споделете линк.</string>
     <string name="p2p_waiting_note">Трансферът започва, щом приемат, дори ако излезете от този екран.</string>
     <string name="p2p_visible_hint_link">Телефони в тази Wi‑Fi мрежа могат да ви изпращат файлове, докато този екран е отворен. Линк, който някой ви е изпратил, се отваря тук, когато го докоснете.</string>
     <string name="p2p_accept_first">Нищо не се получава, докато не приемете.</string>
+    <string name="p2p_wants_to_send">%1$s иска да ви изпрати</string>
+    <string name="p2p_wants_to_send_unknown">Някой иска да ви изпрати</string>
     <string name="p2p_nearby_sent">Изпратено · изчаква се приемане</string>
     <string name="p2p_nearby_busy">%1$s е зает с друг трансфер.</string>
     <string name="p2p_nearby_unreachable">%1$s не отговаря.</string>

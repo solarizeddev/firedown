@@ -804,7 +804,6 @@
     <string name="p2p_paste_reply">Vložit odpověď</string>
     <string name="p2p_scan_code">Naskenovat kód</string>
     <string name="p2p_paste_code">Vložit kód</string>
-    <string name="p2p_receive_from">od %1$s</string>
     <string name="p2p_accept">Přijmout</string>
     <string name="p2p_decline">Odmítnout</string>
     <string name="p2p_state_connecting">Připojování…</string>
@@ -839,12 +838,14 @@
     <string name="p2p_link_shared">Sdíleno</string>
     <string name="p2p_show_qr_code">Zobrazit QR kód</string>
     <string name="p2p_show_qr_code_hint">Pro telefon přímo tady, bez Wi‑Fi.</string>
+    <string name="p2p_qr_scan_line">Na druhém telefonu: Stahování → Přijmout soubor → Naskenovat kód. Funguje i aplikace fotoaparátu.</string>
     <string name="p2p_hide_qr_code">Skrýt QR kód</string>
-    <string name="p2p_qr_open_hint">Naskenujte ho ve Stahování → Přijmout soubor nebo fotoaparátem.</string>
     <string name="p2p_qr_too_big">Toto sdílení je na QR kód příliš velké. Sdílejte místo toho odkaz.</string>
     <string name="p2p_waiting_note">Přenos začne, jakmile přijmou, i když tuto obrazovku opustíte.</string>
     <string name="p2p_visible_hint_link">Telefony v této Wi‑Fi síti vám mohou posílat soubory, dokud je tato obrazovka otevřená. Odkaz, který vám někdo poslal, se po klepnutí otevře zde.</string>
     <string name="p2p_accept_first">Nic nepřijde, dokud to nepřijmete.</string>
+    <string name="p2p_wants_to_send">%1$s vám chce poslat</string>
+    <string name="p2p_wants_to_send_unknown">Někdo vám chce poslat</string>
     <string name="p2p_nearby_sent">Odesláno · čeká se na přijetí</string>
     <string name="p2p_nearby_busy">%1$s je zaneprázdněn jiným přenosem.</string>
     <string name="p2p_nearby_unreachable">%1$s je nedostupný.</string>
