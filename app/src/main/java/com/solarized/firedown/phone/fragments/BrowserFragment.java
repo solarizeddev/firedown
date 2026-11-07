@@ -45,6 +45,7 @@ import androidx.navigation.NavDestination;
 
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
+import com.solarized.firedown.phone.PipPolicy;
 
 import com.solarized.firedown.UpdateReadyLiveData;
 import com.solarized.firedown.addons.AddonPolicy;
@@ -169,6 +170,9 @@ public class BrowserFragment extends BaseBrowserFragment
     private boolean mRecreatingSession = false;
 
     private UiState mUiState = UiState.INIT;
+
+    /** The "exit fullscreen with back" hint, dismissed when PiP opens. */
+    private Snackbar mFullScreenHint;
 
     // ── Toolbar scroll policy (Fenix ToolbarBehaviorController equivalent) ───────────────────────
     //
@@ -427,9 +431,18 @@ public class BrowserFragment extends BaseBrowserFragment
         // dot so it never outlives the row, and bring the page on screen in
         // line with the switch.
         refreshShield();
+        // Back from a PiP window (or any trip away) on a fullscreen page:
+        // the system may have shown its bars meanwhile.
+        if (mUiState == UiState.FULL_SCREEN) {
+            applySystemBars(mActivity.getWindow(), mActivity.getWindow().getDecorView(), true);
+        }
         GeckoState current = peekCurrentGeckoState();
         reconcileDrm(current);
         showPendingDrmNotice(current);
+        // A download the page started while the tab played in a PiP window.
+        if (current != null) {
+            showPendingDownload(current);
+        }
     }
 
     /**
@@ -1458,7 +1471,9 @@ public class BrowserFragment extends BaseBrowserFragment
         // spinner must not appear over.
         mSwipeRefreshLayout.setEnabled(false);
         mDownloadButton.hide();
-        makeSnackbar(mBottomNavigationBar, R.string.exit_fullscreen_with_back_button_short, mIsIncognitoThemed).show();
+        mFullScreenHint = makeSnackbar(mBottomNavigationBar,
+                R.string.exit_fullscreen_with_back_button_short, mIsIncognitoThemed);
+        mFullScreenHint.show();
     }
 
     /**
@@ -1805,6 +1820,14 @@ public class BrowserFragment extends BaseBrowserFragment
             exitFullScreen(decorView);
         }
 
+        applySystemBars(window, decorView, fullScreen);
+
+        // Pull-to-refresh must be disabled in fullscreen.
+        mSwipeRefreshLayout.setEnabled(!fullScreen);
+    }
+
+    /** Hides the system bars for page fullscreen, or shows them again. */
+    private void applySystemBars(Window window, View decorView, boolean fullScreen) {
         if (BuildUtils.hasAndroidR()) {
             final WindowInsetsControllerCompat controller =
                     WindowCompat.getInsetsController(window, decorView);
@@ -1823,9 +1846,68 @@ public class BrowserFragment extends BaseBrowserFragment
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                     : View.SYSTEM_UI_FLAG_VISIBLE);
         }
+    }
 
-        // Pull-to-refresh must be disabled in fullscreen.
-        mSwipeRefreshLayout.setEnabled(!fullScreen);
+    // ─────────────────────────────────────────────────────────────────────────────────────────────
+    // Picture-in-picture (PipPolicy; driven by BrowserMainActivity)
+    // ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Whether leaving the app now should put this page in a PiP window:
+     * the browser page is on screen, its tab (of THIS fragment's mode) is
+     * in page fullscreen, and that tab's media plays.
+     */
+    public boolean wantsPictureInPicture(boolean leavingForOwnStart, boolean inPip) {
+        GeckoState current = peekCurrentGeckoState();
+        if (current == null || mGeckoView == null || mNavController == null) {
+            return false;
+        }
+        NavDestination destination = mNavController.getCurrentDestination();
+        boolean onBrowser = destination != null && destination.getId() == R.id.browser;
+        boolean domFullScreen = current.isFullScreen() && mUiState == UiState.FULL_SCREEN;
+        boolean playing = mGeckoMediaController.isPlaying(current.getEntityId());
+        return PipPolicy.browserShouldEnter(onBrowser, domFullScreen, playing,
+                leavingForOwnStart, inPip);
+    }
+
+    /** The PiP window's aspect {num, den}, from the fullscreen video's size. */
+    public int[] pictureInPictureAspect() {
+        GeckoState current = peekCurrentGeckoState();
+        if (current == null) {
+            return PipPolicy.aspect(0, 0);
+        }
+        return PipPolicy.aspect(current.getMediaFullScreenWidth(),
+                current.getMediaFullScreenHeight());
+    }
+
+    /**
+     * Entering PiP: nothing but the video belongs in the small window, so
+     * the transient chrome laid over the page goes.
+     */
+    public void onPictureInPictureEntered() {
+        if (mFullScreenHint != null) {
+            mFullScreenHint.dismiss();
+            mFullScreenHint = null;
+        }
+        dismissDrmTip();
+        hideTranslateOffer();
+    }
+
+    /**
+     * The user threw the PiP window away (X, or dragged it off): the video
+     * ends there, as in the file player. Its media pauses and the page
+     * leaves fullscreen, so the app reopens on the page, not on a paused
+     * fullscreen video with no way to tell it is the browser.
+     */
+    public void onPictureInPictureDismissed() {
+        GeckoState current = peekCurrentGeckoState();
+        if (current == null) {
+            return;
+        }
+        mGeckoMediaController.pause(current.getEntityId());
+        if (current.isFullScreen()) {
+            current.exitFullScreen();
+        }
     }
 
     // ── Built-in translator ──────────────────────────────────────────────
@@ -2290,6 +2372,11 @@ public class BrowserFragment extends BaseBrowserFragment
         if (!NavigationUtils.checkCurrentDestination(mNavController, R.id.browser)) {
             return;
         }
+        // Not in a picture-in-picture window: the response waits on the tab
+        // and the dialog opens when the window is expanded (onResume).
+        if (mActivity.isInPictureInPictureMode()) {
+            return;
+        }
         if (!geckoState.claimDownloadPrompt()) {
             return;
         }
@@ -2468,6 +2555,11 @@ public class BrowserFragment extends BaseBrowserFragment
         }
         // Web links load in the tab; of them, only store listings come here.
         if (UrlStringUtils.isHttpOrHttps(uri) && !UrlStringUtils.isPlayStoreUrl(uri)) {
+            return;
+        }
+        // The page firing an app link while it plays in a PiP window: Gecko
+        // already refused the load; no snackbar or sheet in the small window.
+        if (pageFired && mActivity.isInPictureInPictureMode()) {
             return;
         }
         AppLinkTarget target = AppLinkResolver.resolve(mActivity, uri);
@@ -3130,6 +3222,20 @@ public class BrowserFragment extends BaseBrowserFragment
         // floating over the newly attached tab. Fall back to the raw call
         // for an orphaned session no repo knows (or one whose state already
         // swapped its session reference) — same behavior as before.
+        // Another tab put on screen while this one is fullscreen (a link
+        // from another app, which also expands a PiP window): the old tab
+        // leaves fullscreen and the chrome comes back. Its own
+        // onFullScreen(false) would be gated out, as it is no longer the
+        // current tab.
+        if (previousSession != null && previousSession != newSession
+                && mUiState == UiState.FULL_SCREEN && !geckoState.isFullScreen()) {
+            previousSession.exitFullScreen();
+            final Window window = mActivity.getWindow();
+            collapseBrowserView();
+            exitFullScreen(window.getDecorView());
+            applySystemBars(window, window.getDecorView(), false);
+        }
+
         if (previousSession != null && previousSession != newSession) {
             Log.d(TAG, "setGeckoViewSession: deactivating previousSession");
             controller.setTabActive(previousSession, false);

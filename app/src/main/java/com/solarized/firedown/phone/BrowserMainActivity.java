@@ -1,14 +1,26 @@
 package com.solarized.firedown.phone;
 
+import android.app.PictureInPictureParams;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentSender;
+import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.os.Process;
+import android.util.Rational;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.R;
 import com.solarized.firedown.UpdatePromptPolicy;
+import com.solarized.firedown.phone.fragments.BrowserFragment;
 
 import org.mozilla.geckoview.GeckoRuntime;
 
@@ -27,6 +39,33 @@ public class BrowserMainActivity extends BaseActivity {
 
     private boolean mKillProcessOnDestroy;
 
+    // ── Picture-in-picture (PipPolicy) ───────────────────────────────────────
+    //
+    // Leaving the app from a fullscreen web video that plays puts the page in
+    // a PiP window (Firefox for Android's rule); any other page keeps playing
+    // its audio in the background, as before. Closing the window ends the
+    // video (paused, page out of fullscreen); expanding it returns to the
+    // fullscreen video.
+
+    /**
+     * The app itself started another screen or app since the last resume:
+     * onUserLeaveHint fires for that too ("Open in app" from a fullscreen
+     * page, the file picker), and it must not put the page in PiP.
+     */
+    private boolean mLeavingForOwnStart;
+
+    /** In a PiP window since the last resume, and not yet dismissed. */
+    private boolean mInPipStay;
+
+    /**
+     * True from onPictureInPictureModeChanged(false) until the next
+     * onResume: an expand ends in onResume, a dismissal in onStop.
+     */
+    private boolean mPipTeardown;
+
+    /** values-sw600dp/sw720dp bucket the activity was created with. */
+    private int mWidthBucket;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -41,6 +80,9 @@ public class BrowserMainActivity extends BaseActivity {
 
         GeckoRuntime sGeckoRuntime = mGeckoRuntimeHelper.getGeckoRuntime();
         sGeckoRuntime.setDelegate(() -> mKillProcessOnDestroy = true);
+
+        mWidthBucket = PipPolicy.widthBucket(
+                getResources().getConfiguration().smallestScreenWidthDp);
 
         setContentView(R.layout.actvity_main);
         mActivityContentFrame = findViewById(R.id.content_frame);
@@ -63,6 +105,133 @@ public class BrowserMainActivity extends BaseActivity {
             return UpdatePromptPolicy.Place.HOME;
         }
         return UpdatePromptPolicy.Place.PAGE;
+    }
+
+    @Override
+    public void startActivityForResult(@NonNull Intent intent, int requestCode,
+                                       @Nullable Bundle options) {
+        mLeavingForOwnStart = true;
+        super.startActivityForResult(intent, requestCode, options);
+    }
+
+    @Override
+    public void startIntentSenderForResult(@NonNull IntentSender intent, int requestCode,
+                                           @Nullable Intent fillInIntent, int flagsMask,
+                                           int flagsValues, int extraFlags,
+                                           @Nullable Bundle options)
+            throws IntentSender.SendIntentException {
+        mLeavingForOwnStart = true;
+        super.startIntentSenderForResult(intent, requestCode, fillInIntent, flagsMask,
+                flagsValues, extraFlags, options);
+    }
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        BrowserFragment fragment = browserFragment();
+        if (fragment == null
+                || !fragment.wantsPictureInPicture(mLeavingForOwnStart, isInPictureInPictureMode())) {
+            return;
+        }
+        int[] aspect = fragment.pictureInPictureAspect();
+        PictureInPictureParams params = new PictureInPictureParams.Builder()
+                .setAspectRatio(new Rational(aspect[0], aspect[1]))
+                .build();
+        try {
+            enterPictureInPictureMode(params);
+        } catch (IllegalStateException | IllegalArgumentException ignored) {
+            // No PiP on this device or configuration, or an OEM narrowed the
+            // accepted aspect range: the audio keeps playing as before.
+        }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode,
+                                              @NonNull Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        if (isInPictureInPictureMode) {
+            mInPipStay = true;
+            mPipTeardown = false;
+            BrowserFragment fragment = browserFragment();
+            if (fragment != null) {
+                fragment.onPictureInPictureEntered();
+            }
+            return;
+        }
+        boolean stopped = !getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED);
+        if (PipPolicy.dismissedAtModeExit(stopped)) {
+            pipDismissed();
+        } else {
+            mPipTeardown = true;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mLeavingForOwnStart = false;
+        // Back on screen: an expanded PiP window ends here.
+        mInPipStay = false;
+        mPipTeardown = false;
+        recreateIfWidthBucketChanged(getResources().getConfiguration());
+    }
+
+    @Override
+    protected void onStop() {
+        if (mInPipStay) {
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            boolean interactive = pm == null || pm.isInteractive();
+            if (PipPolicy.dismissedAtStop(mPipTeardown, isInPictureInPictureMode(), interactive)) {
+                pipDismissed();
+            }
+        }
+        super.onStop();
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        recreateIfWidthBucketChanged(newConfig);
+    }
+
+    /**
+     * The recreate Android did itself before the browser handled
+     * smallestScreenSize: only for a real change of resource bucket, never
+     * for a PiP window (onResume checks again once the window is gone).
+     */
+    private void recreateIfWidthBucketChanged(Configuration config) {
+        if (isInPictureInPictureMode() || mInPipStay || mPipTeardown) {
+            return;
+        }
+        if (PipPolicy.widthBucket(config.smallestScreenWidthDp) != mWidthBucket) {
+            recreate();
+        }
+    }
+
+    private void pipDismissed() {
+        if (!mInPipStay) {
+            return;
+        }
+        mInPipStay = false;
+        mPipTeardown = false;
+        BrowserFragment fragment = browserFragment();
+        if (fragment != null) {
+            fragment.onPictureInPictureDismissed();
+        }
+    }
+
+    /** The browser page fragment when it is the navigation's primary one. */
+    @Nullable
+    private BrowserFragment browserFragment() {
+        if (mActivityContentFrame == null) {
+            return null;
+        }
+        Fragment host = mActivityContentFrame.getFragment();
+        if (!(host instanceof NavHostFragment)) {
+            return null;
+        }
+        Fragment primary = host.getChildFragmentManager().getPrimaryNavigationFragment();
+        return primary instanceof BrowserFragment ? (BrowserFragment) primary : null;
     }
 
     @Override

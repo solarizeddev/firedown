@@ -692,6 +692,30 @@ public class GeckoState {
         return mLoading;
     }
 
+    // ── Media fullscreen (MediaSession.Delegate.onFullscreen) ───────────────
+
+    /**
+     * Size of the video the page put in fullscreen, from the media
+     * session's element metadata; 0 when none is (or the size is unknown).
+     * The browser's picture-in-picture window takes its aspect from it.
+     * Not persisted: a restored tab is never fullscreen.
+     */
+    private int mMediaFullScreenWidth;
+    private int mMediaFullScreenHeight;
+
+    public void setMediaFullScreenSize(int width, int height) {
+        mMediaFullScreenWidth = Math.max(width, 0);
+        mMediaFullScreenHeight = Math.max(height, 0);
+    }
+
+    public int getMediaFullScreenWidth() {
+        return mMediaFullScreenWidth;
+    }
+
+    public int getMediaFullScreenHeight() {
+        return mMediaFullScreenHeight;
+    }
+
     // ── Error page (see mShowingErrorPage) ───────────────────────────────────
 
     /**

@@ -484,6 +484,11 @@ public class GeckoMediaController {
         return !mPlayingSessionIds.isEmpty();
     }
 
+    /** True while THIS tab's media is playing (another tab's does not count). */
+    public boolean isPlaying(int sessionId) {
+        return mPlayingSessionIds.contains(sessionId);
+    }
+
     public boolean isActive() {
         GeckoMediaSession session = mSessionMap.get(mCurrentSessionId);
         return session != null && session.getMediaSession().isActive();
@@ -495,6 +500,17 @@ public class GeckoMediaController {
 
     public void pause() {
         executeOnCurrent(s -> s.getMediaSession().pause());
+    }
+
+    /**
+     * Pauses one tab's media, whichever tab the notification follows. The
+     * page answers with onPause, which updates the notification.
+     */
+    public void pause(int sessionId) {
+        GeckoMediaSession session = mSessionMap.get(sessionId);
+        if (session != null) {
+            session.getMediaSession().pause();
+        }
     }
 
     public void stop()  {

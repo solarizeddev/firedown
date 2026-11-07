@@ -80,8 +80,12 @@ public class GeckoPromptManager {
         dialog.show();
     }
 
-    private boolean canShowPrompt(GeckoState state, NavController controller) {
+    private boolean canShowPrompt(Activity activity, GeckoState state, NavController controller) {
         if (controller.getCurrentDestination() == null) return false;
+        // A picture-in-picture window shows the video and nothing else: a
+        // dialog in it is unreadable and its buttons unreachable. The page
+        // gets the dismissal it would get from a sheet being up.
+        if (activity.isInPictureInPictureMode()) return false;
         // isPromptFlooding: a page nagging in a modal loop (3 dialogs inside
         // 10s) stops getting dialogs until it calms down — each declined
         // prompt is auto-dismissed at the caller's gate, so the page's JS
@@ -108,7 +112,7 @@ public class GeckoPromptManager {
 
     public void onAlertPrompt(Activity activity, GeckoState state, NavController nav, GeckoSession.PromptDelegate.AlertPrompt prompt,
                           GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
-        if (!canShowPrompt(state, nav)) {
+        if (!canShowPrompt(activity, state, nav)) {
             dismissPrompt(res, prompt);
             return;
         }
@@ -121,7 +125,7 @@ public class GeckoPromptManager {
 
     public void onPromptUnload(Activity activity, GeckoState state, NavController nav, GeckoSession.PromptDelegate.BeforeUnloadPrompt prompt,
                           GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
-        if (!canShowPrompt(state, nav)) {
+        if (!canShowPrompt(activity, state, nav)) {
             dismissPrompt(res, prompt);
             return;
         }
@@ -135,7 +139,7 @@ public class GeckoPromptManager {
 
     public void onColorPrompt(Activity activity, GeckoState state, NavController nav, GeckoSession.PromptDelegate.ColorPrompt prompt,
                           GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
-        if (!canShowPrompt(state, nav)) {
+        if (!canShowPrompt(activity, state, nav)) {
             dismissPrompt(res, prompt);
             return;
         }
@@ -148,7 +152,7 @@ public class GeckoPromptManager {
 
     public void onTextPrompt(Activity activity, GeckoState state, NavController nav, GeckoSession.PromptDelegate.TextPrompt prompt,
                           GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
-        if (!canShowPrompt(state, nav)) {
+        if (!canShowPrompt(activity, state, nav)) {
             dismissPrompt(res, prompt);
             return;
         }
@@ -162,7 +166,7 @@ public class GeckoPromptManager {
 
     public void onButtonPrompt(Activity activity, GeckoState state, NavController nav, GeckoSession.PromptDelegate.ButtonPrompt prompt,
                           GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
-        if (!canShowPrompt(state, nav)) {
+        if (!canShowPrompt(activity, state, nav)) {
             dismissPrompt(res, prompt);
             return;
         }
@@ -175,7 +179,7 @@ public class GeckoPromptManager {
 
     public void onRepostPrompt(Activity activity, GeckoState state, NavController nav, GeckoSession.PromptDelegate.RepostConfirmPrompt prompt,
                           GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
-        if (!canShowPrompt(state, nav)) {
+        if (!canShowPrompt(activity, state, nav)) {
             dismissPrompt(res, prompt);
             return;
         }
@@ -189,7 +193,7 @@ public class GeckoPromptManager {
     public void onContentPermission(Activity activity, GeckoState state, NavController nav, String message,
                                     GeckoSession.PermissionDelegate.ContentPermission permission,
                                     GeckoComponents.PermissionResult res) {
-        if (!canShowPrompt(state, nav)) {
+        if (!canShowPrompt(activity, state, nav)) {
             // No decision — nothing is stored, so the site can re-ask when
             // the tab is actually in front of the user. The old bare return
             // left the permission GeckoResult uncompleted, hanging the
@@ -209,7 +213,7 @@ public class GeckoPromptManager {
 
     public void onDatePrompt(Activity activity, GeckoState state, NavController nav, GeckoSession.PromptDelegate.DateTimePrompt prompt,
                           GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
-        if (!canShowPrompt(state, nav)) {
+        if (!canShowPrompt(activity, state, nav)) {
             dismissPrompt(res, prompt);
             return;
         }
@@ -223,7 +227,7 @@ public class GeckoPromptManager {
 
     public void onChoicePrompt(Activity activity, GeckoState state, NavController nav, GeckoSession.PromptDelegate.ChoicePrompt prompt,
                           GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
-        if (!canShowPrompt(state, nav)) {
+        if (!canShowPrompt(activity, state, nav)) {
             dismissPrompt(res, prompt);
             return;
         }
@@ -237,7 +241,7 @@ public class GeckoPromptManager {
 
     public void onAuthPrompt(Activity activity, GeckoState state, NavController nav, GeckoSession.PromptDelegate.AuthPrompt prompt,
                           GeckoResult<GeckoSession.PromptDelegate.PromptResponse> res) {
-        if (!canShowPrompt(state, nav)) {
+        if (!canShowPrompt(activity, state, nav)) {
             dismissPrompt(res, prompt);
             return;
         }

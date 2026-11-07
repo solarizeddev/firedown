@@ -135,6 +135,20 @@ public class PromptHarness {
         check("8b tab switch dismisses the dialog and answers the prompt",
                 dismissed(onD) && !tabD.isPromptDisplaying(), "");
 
+        // ── 8c. picture-in-picture: the page's dialog never opens in the
+        //       small window; the page gets its answer at once ───────────
+        int beforePip = dialogs();
+        activity.inPip = true;
+        GeckoState tabE = newTab();
+        GeckoResult<PromptDelegate.PromptResponse> inPip = fireAlert(tabE);
+        check("8c prompt while the browser is a PiP window: dismissed, no dialog",
+                dismissed(inPip) && dialogs() == beforePip && !tabE.isPromptDisplaying(), "");
+        activity.inPip = false;
+        GeckoResult<PromptDelegate.PromptResponse> afterPip = fireAlert(tabE);
+        check("8d back from PiP the same tab gets its dialog again",
+                !afterPip.completed && dialogs() == beforePip + 1, "");
+        lastDialog().answer();
+
         // ── 9. the leak sweep: every result ever created is completed ────
         int leaked = 0;
         for (GeckoResult<?> r : GeckoResult.ALL) if (!r.completed) leaked++;

@@ -378,37 +378,14 @@ public class PlayerActivity extends AppCompatActivity {
         return builder.build();
     }
 
-    /**
-     * Clamp the aspect ratio to the framework's accepted range
-     * (100/239 .. 239/100 in AOSP). Outside that range the system
-     * server rejects the params with IllegalArgumentException.
-     *
-     * Don't clamp by integer-adjusting one side: Math.round on the
-     * adjusted side can round the wrong way and land just outside the
-     * limit again (e.g. a 10px-wide source: round(10 * 2.39) = 24,
-     * and 10/24 = 0.4167 < 0.41841 — the exact crash this fixes).
-     * Instead clamp the real-valued ratio with a small margin INSIDE
-     * the bounds (absorbs Rational->float rounding in the framework
-     * check) and rationalize over a fixed denominator. The clamped
-     * ratio stays on the same side of 1, so the PiP window keeps the
-     * source video's orientation.
-     */
+    /** The video's aspect, clamped to the framework's range (PipPolicy.aspect). */
     private Rational computeAspectRatio() {
         MediaViewerFragment fragment = getMediaFragment();
         Rect videoRect = (fragment != null) ? fragment.getVideoBounds() : null;
         int w = (videoRect != null) ? videoRect.width() : 16;
         int h = (videoRect != null) ? videoRect.height() : 9;
-        if (w <= 0 || h <= 0) { w = 16; h = 9; }
-
-        final double minAspect = 100.0 / 239.0;
-        final double maxAspect = 239.0 / 100.0;
-        final double margin = 0.001;
-        double ratio = (double) w / (double) h;
-        if (ratio < minAspect || ratio > maxAspect) {
-            double clamped = Math.min(Math.max(ratio, minAspect + margin), maxAspect - margin);
-            return new Rational((int) Math.round(clamped * 10000), 10000);
-        }
-        return new Rational(w, h);
+        int[] aspect = PipPolicy.aspect(w, h);
+        return new Rational(aspect[0], aspect[1]);
     }
 
     private RemoteAction buildPlayPauseAction(boolean isPlaying) {

@@ -9,6 +9,7 @@
 - Pages can use Android's share sheet and lock the screen rotation
 - The shield no longer counts other add-ons as ad blockers
 - Add-ons: the list shows each add-on's rating and users, and its page lists permissions one by one
+- Fullscreen videos keep playing in a picture-in-picture window when you leave the app
 - Fixed a crash when showing some restored or imported downloads
 
 ## [1.2.6] - 2026-11-05

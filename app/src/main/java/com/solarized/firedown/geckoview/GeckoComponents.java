@@ -1458,6 +1458,22 @@ public class GeckoComponents {
             if(geckoState == null)
                 return;
 
+            // Per tab and ungated, like the DOM fullscreen flag: the
+            // browser's picture-in-picture window reads it when the user
+            // leaves the app.
+            if (enabled && meta != null) {
+                geckoState.setMediaFullScreenSize((int) meta.width, (int) meta.height);
+            } else {
+                geckoState.setMediaFullScreenSize(0, 0);
+            }
+
+            // Orientation is UI: only the tab on screen may rotate it (a
+            // background tab's video going fullscreen rotated the visible
+            // one).
+            if (!isCurrentGeckoState(geckoState)) {
+                return;
+            }
+
             if (!enabled) {
                 mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_USER);
                 return;
