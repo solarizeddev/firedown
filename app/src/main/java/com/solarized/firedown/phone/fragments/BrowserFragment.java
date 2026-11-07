@@ -1805,6 +1805,12 @@ public class BrowserFragment extends BaseBrowserFragment
             mFullScreenExitDeferred = true;
             return;
         }
+        // Back in fullscreen before the deferred exit ran: the chrome never
+        // left it, so there is nothing to enter again.
+        if (fullScreen && mFullScreenExitDeferred && mUiState == UiState.FULL_SCREEN) {
+            mFullScreenExitDeferred = false;
+            return;
+        }
         mFullScreenExitDeferred = false;
 
         // System UI / immersive mode — mirrors upstream enterImmersiveMode / exitImmersiveMode.

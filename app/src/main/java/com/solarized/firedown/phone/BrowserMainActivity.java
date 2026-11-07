@@ -201,6 +201,14 @@ public class BrowserMainActivity extends BaseActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        // Visible again: a later finish (swiped from recents) is the user
+        // leaving the browser, not a closed PiP window.
+        mClosedFromPip = false;
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         // onUserLeaveHint runs before onPause: an own start is one leave.
