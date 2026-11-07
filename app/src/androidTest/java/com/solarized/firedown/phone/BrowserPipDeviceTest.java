@@ -28,13 +28,16 @@ import androidx.fragment.app.FragmentManager;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.lifecycle.ActivityLifecycleCallback;
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitor;
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
 import androidx.test.runner.lifecycle.Stage;
 
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.di.RepositoryEntryPoint;
+import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
+import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.media.GeckoMediaController;
 
@@ -97,6 +100,8 @@ public class BrowserPipDeviceTest {
     private String mPkg;
     private SharedPreferences mPrefs;
     private GeckoStateDataRepository mTabs;
+    private IncognitoStateRepository mPrivateTabs;
+    private GeckoState mPrivateTab;
     private GeckoMediaController mMedia;
     private Boolean mSavedLock;
     private PageServer mServer;
@@ -112,6 +117,7 @@ public class BrowserPipDeviceTest {
         RepositoryEntryPoint entryPoint = EntryPointAccessors.fromApplication(mApp, RepositoryEntryPoint.class);
         mPrefs = entryPoint.getSharedPreferences();
         mTabs = entryPoint.getGeckoStateDataRepository();
+        mPrivateTabs = entryPoint.getIncognitoStateRepository();
         mMedia = entryPoint.getGeckoMediaController();
 
         shell("input keyevent KEYCODE_WAKEUP");
@@ -124,6 +130,7 @@ public class BrowserPipDeviceTest {
                 ? mPrefs.getBoolean(Preferences.SETTINGS_APP_LOCK, false) : null;
         mPrefs.edit().putBoolean(Preferences.SETTINGS_APP_LOCK, false).commit();
 
+        finishStrayActivities();
         ActivityLifecycleMonitorRegistry.getInstance().addLifecycleCallback(mRecorder);
         mServer = new PageServer();
         mServer.start();
@@ -132,6 +139,16 @@ public class BrowserPipDeviceTest {
     @After
     public void tearDown() {
         try {
+            if (mPrivateTab != null) {
+                GeckoState privateTab = mPrivateTab;
+                mPrivateTab = null;
+                onMain(() -> {
+                    if (mPrivateTabs.getGeckoState(privateTab.getEntityId()) != null) {
+                        mPrivateTabs.closeGeckoState(privateTab);
+                    }
+                    return null;
+                });
+            }
             GeckoState tab = currentTab();
             if (tab != null && tab.getEntityUri() != null
                     && tab.getEntityUri().startsWith(mServer.url(""))) {
@@ -197,6 +214,16 @@ public class BrowserPipDeviceTest {
     @Test
     public void closingThePipWindowPausesAndLeavesFullscreen() {
         BrowserMainActivity browser = openPage("/");
+        // A private tab open meanwhile: closing the window removes the task
+        // and finishes the browser on most devices, which must not end
+        // private browsing.
+        mPrivateTab = onMain(() -> {
+            GeckoStateEntity entity = new GeckoStateEntity(false, mServer.url("/?private=1"));
+            entity.setIncognito(true);
+            GeckoState state = new GeckoState(entity);
+            mPrivateTabs.setGeckoState(state, false);
+            return state;
+        });
         GeckoState tab = playFullscreen();
         shell("input keyevent KEYCODE_HOME");
         assertTrue("the browser never entered PiP. " + describe(browser, tab),
@@ -210,6 +237,9 @@ public class BrowserPipDeviceTest {
         assertTrue("the page stayed fullscreen after the window was closed. " + describe(browser, tab),
                 waitUntil(() -> !tab.isFullScreen(), WAIT_MS));
         assertFalse("the browser is still in PiP", onMain(browser::isInPictureInPictureMode));
+        SystemClock.sleep(SETTLE_MS);
+        assertNotNull("closing the PiP window deleted the private tabs. " + describe(browser, tab),
+                onMain(() -> mPrivateTabs.getGeckoState(mPrivateTab.getEntityId())));
     }
 
     /** The reporter's other case: not fullscreen → audio only, as before. */
@@ -241,11 +271,14 @@ public class BrowserPipDeviceTest {
         shell("input keyevent KEYCODE_HOME");
         assertTrue("the browser never entered PiP. " + describe(browser, tab),
                 waitUntil(() -> onMain(browser::isInPictureInPictureMode), WAIT_MS));
-        // The page alerts 6 s after going fullscreen, then retitles itself.
+        // The page alerts when its viewport shrinks to the window's size,
+        // then retitles itself.
         assertTrue("the page's script never got past alert() in PiP. " + describe(browser, tab),
                 waitUntil(() -> "after-alert".equals(tab.getEntityTitle()), WAIT_MS));
         assertTrue("still in PiP", onMain(browser::isInPictureInPictureMode));
-        assertEquals("a dialog opened in the PiP window", "", onMain(() -> dialogsIn(
+        // Prompt dialogs are plain AlertDialogs, marked on their tab.
+        assertFalse("a dialog opened in the PiP window", tab.isPromptDisplaying());
+        assertEquals("a sheet opened in the PiP window", "", onMain(() -> dialogsIn(
                 browser.getSupportFragmentManager())));
     }
 
@@ -288,6 +321,9 @@ public class BrowserPipDeviceTest {
     private boolean dismissPipWindow() {
         UiAutomation ua = mInstrumentation.getUiAutomation();
         AccessibilityServiceInfo info = ua.getServiceInfo();
+        if (info == null) {
+            return false;
+        }
         info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         ua.setServiceInfo(info);
         long deadline = SystemClock.uptimeMillis() + 5_000;
@@ -304,6 +340,23 @@ public class BrowserPipDeviceTest {
             SystemClock.sleep(250);
         }
         return false;
+    }
+
+    /** A browser left by an earlier run would hide the one this test opens. */
+    private void finishStrayActivities() {
+        onMain(() -> {
+            ActivityLifecycleMonitor monitor = ActivityLifecycleMonitorRegistry.getInstance();
+            for (Stage stage : Stage.values()) {
+                if (stage == Stage.DESTROYED) {
+                    continue;
+                }
+                for (Activity a : monitor.getActivitiesInStage(stage)) {
+                    a.finish();
+                }
+            }
+            return null;
+        });
+        SystemClock.sleep(SETTLE_MS);
     }
 
     private GeckoState currentTab() {
@@ -523,9 +576,10 @@ public class BrowserPipDeviceTest {
 
         /**
          * A tap anywhere plays the video, and puts it in fullscreen unless the
-         * page was opened with ?inline=1. With ?alert=1 the page alerts 6 s
-         * after going fullscreen, then retitles itself: the title says the
-         * script got past alert().
+         * page was opened with ?inline=1. With ?alert=1 the page alerts once
+         * its fullscreen viewport shrinks to under a quarter of its area (the
+         * PiP window), then retitles itself: the title says the script got
+         * past alert().
          */
         private static String page() {
             return "<!doctype html><html><head><meta charset=\"utf-8\">"
@@ -543,9 +597,14 @@ public class BrowserPipDeviceTest {
                     + "    document.title = 'fullscreen refused: ' + e; }); }"
                     + "  v.play().catch(function (e) { document.title = 'play refused: ' + e; });"
                     + "});"
+                    + "let fullArea = 0, alerted = false;"
                     + "document.addEventListener('fullscreenchange', function () {"
-                    + "  if (document.fullscreenElement && q.has('alert')) {"
-                    + "    setTimeout(function () { alert('in pip'); document.title = 'after-alert'; }, 6000);"
+                    + "  if (document.fullscreenElement) { fullArea = innerWidth * innerHeight; }"
+                    + "});"
+                    + "addEventListener('resize', function () {"
+                    + "  if (!q.has('alert') || alerted || !document.fullscreenElement || fullArea === 0) return;"
+                    + "  if (innerWidth * innerHeight * 4 < fullArea) {"
+                    + "    alerted = true; alert('in pip'); document.title = 'after-alert';"
                     + "  }"
                     + "});"
                     + "document.title = 'ready';"

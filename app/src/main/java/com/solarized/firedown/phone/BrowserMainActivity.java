@@ -63,6 +63,9 @@ public class BrowserMainActivity extends BaseActivity {
      */
     private boolean mPipTeardown;
 
+    /** The user closed the PiP window (see wasClosedFromPip). */
+    private boolean mClosedFromPip;
+
     /** values-sw600dp/sw720dp bucket the activity was created with. */
     private int mWidthBucket;
 
@@ -111,7 +114,13 @@ public class BrowserMainActivity extends BaseActivity {
     public void startActivityForResult(@NonNull Intent intent, int requestCode,
                                        @Nullable Bundle options) {
         mLeavingForOwnStart = true;
-        super.startActivityForResult(intent, requestCode, options);
+        try {
+            super.startActivityForResult(intent, requestCode, options);
+        } catch (RuntimeException e) {
+            // Nothing started (no app for it): the next Home is the user's.
+            mLeavingForOwnStart = false;
+            throw e;
+        }
     }
 
     @Override
@@ -121,8 +130,13 @@ public class BrowserMainActivity extends BaseActivity {
                                            @Nullable Bundle options)
             throws IntentSender.SendIntentException {
         mLeavingForOwnStart = true;
-        super.startIntentSenderForResult(intent, requestCode, fillInIntent, flagsMask,
-                flagsValues, extraFlags, options);
+        try {
+            super.startIntentSenderForResult(intent, requestCode, fillInIntent, flagsMask,
+                    flagsValues, extraFlags, options);
+        } catch (IntentSender.SendIntentException | RuntimeException e) {
+            mLeavingForOwnStart = false;
+            throw e;
+        }
     }
 
     @Override
@@ -158,11 +172,18 @@ public class BrowserMainActivity extends BaseActivity {
             }
             return;
         }
-        boolean stopped = !getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED);
+        Lifecycle.State state = getLifecycle().getCurrentState();
+        boolean stopped = !state.isAtLeast(Lifecycle.State.STARTED);
         if (PipPolicy.dismissedAtModeExit(stopped)) {
             pipDismissed();
-        } else {
+        } else if (!state.isAtLeast(Lifecycle.State.RESUMED)) {
+            // Expand (onResume follows) or a close on its way to onStop. A
+            // ROM that resumed before reporting the mode change has expanded.
             mPipTeardown = true;
+        }
+        BrowserFragment fragment = browserFragment();
+        if (fragment != null) {
+            fragment.onPictureInPictureLeft();
         }
     }
 
@@ -170,10 +191,30 @@ public class BrowserMainActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         mLeavingForOwnStart = false;
-        // Back on screen: an expanded PiP window ends here.
+        // Back on screen: an expanded PiP window ends here. No resource
+        // bucket check here: the resources can still carry the PiP window's
+        // size at this point, and a recreate mid-expand loses the fullscreen
+        // page (a bucket change while in PiP, an unfold, is the residual).
         mInPipStay = false;
         mPipTeardown = false;
-        recreateIfWidthBucketChanged(getResources().getConfiguration());
+        mClosedFromPip = false;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // onUserLeaveHint runs before onPause: an own start is one leave.
+        mLeavingForOwnStart = false;
+    }
+
+    /**
+     * The PiP window was closed: on most devices the system then removes the
+     * task, which FINISHES the browser. That is not the user leaving private
+     * browsing (the finishing rule in ApplicationLifeCycleHandler), so the
+     * private tabs stay.
+     */
+    public boolean wasClosedFromPip() {
+        return mClosedFromPip;
     }
 
     @Override
@@ -197,7 +238,7 @@ public class BrowserMainActivity extends BaseActivity {
     /**
      * The recreate Android did itself before the browser handled
      * smallestScreenSize: only for a real change of resource bucket, never
-     * for a PiP window (onResume checks again once the window is gone).
+     * for a PiP window or its way in or out.
      */
     private void recreateIfWidthBucketChanged(Configuration config) {
         if (isInPictureInPictureMode() || mInPipStay || mPipTeardown) {
@@ -214,6 +255,7 @@ public class BrowserMainActivity extends BaseActivity {
         }
         mInPipStay = false;
         mPipTeardown = false;
+        mClosedFromPip = true;
         BrowserFragment fragment = browserFragment();
         if (fragment != null) {
             fragment.onPictureInPictureDismissed();

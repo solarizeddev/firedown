@@ -174,6 +174,9 @@ public class BrowserFragment extends BaseBrowserFragment
     /** The "exit fullscreen with back" hint, dismissed when PiP opens. */
     private Snackbar mFullScreenHint;
 
+    /** The page left fullscreen inside a PiP window; applied when it ends. */
+    private boolean mFullScreenExitDeferred;
+
     // ── Toolbar scroll policy (Fenix ToolbarBehaviorController equivalent) ───────────────────────
     //
     // Fenix forces the dynamic toolbar visible and disables scroll-to-hide in a handful of
@@ -1795,6 +1798,15 @@ public class BrowserFragment extends BaseBrowserFragment
         // flip this fragment's chrome.
         if (geckoState.isIncognito() != mIsIncognitoThemed) return;
 
+        // The page left fullscreen while it plays in a PiP window (a video
+        // ending): the toolbar and bottom bar would be drawn inside the
+        // small window. They come back when it is expanded or closed.
+        if (!fullScreen && mActivity.isInPictureInPictureMode()) {
+            mFullScreenExitDeferred = true;
+            return;
+        }
+        mFullScreenExitDeferred = false;
+
         // System UI / immersive mode — mirrors upstream enterImmersiveMode / exitImmersiveMode.
         final Window window = mActivity.getWindow();
         final View decorView = window.getDecorView();
@@ -1894,6 +1906,30 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     /**
+     * The window left PiP (expanded, or on its way to closing): a fullscreen
+     * exit the page made meanwhile is applied now.
+     */
+    public void onPictureInPictureLeft() {
+        if (!mFullScreenExitDeferred) {
+            return;
+        }
+        mFullScreenExitDeferred = false;
+        GeckoState current = peekCurrentGeckoState();
+        if (mUiState == UiState.FULL_SCREEN && (current == null || !current.isFullScreen())) {
+            leaveFullScreenUi();
+        }
+    }
+
+    /** The chrome back from page fullscreen: bars, layout, system bars, rotation. */
+    private void leaveFullScreenUi() {
+        final Window window = mActivity.getWindow();
+        collapseBrowserView();
+        exitFullScreen(window.getDecorView());
+        applySystemBars(window, window.getDecorView(), false);
+        mSwipeRefreshLayout.setEnabled(true);
+    }
+
+    /**
      * The user threw the PiP window away (X, or dragged it off): the video
      * ends there, as in the file player. Its media pauses and the page
      * leaves fullscreen, so the app reopens on the page, not on a paused
@@ -1907,6 +1943,8 @@ public class BrowserFragment extends BaseBrowserFragment
         mGeckoMediaController.pause(current.getEntityId());
         if (current.isFullScreen()) {
             current.exitFullScreen();
+        } else {
+            onPictureInPictureLeft();
         }
     }
 
@@ -3229,11 +3267,14 @@ public class BrowserFragment extends BaseBrowserFragment
         // current tab.
         if (previousSession != null && previousSession != newSession
                 && mUiState == UiState.FULL_SCREEN && !geckoState.isFullScreen()) {
-            previousSession.exitFullScreen();
-            final Window window = mActivity.getWindow();
-            collapseBrowserView();
-            exitFullScreen(window.getDecorView());
-            applySystemBars(window, window.getDecorView(), false);
+            if (previousSession.isOpen()) {
+                previousSession.exitFullScreen();
+            }
+            mFullScreenExitDeferred = false;
+            leaveFullScreenUi();
+            // The old tab's media fullscreen exit, which resets a landscape
+            // lock, is gated out too.
+            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
         }
 
         if (previousSession != null && previousSession != newSession) {

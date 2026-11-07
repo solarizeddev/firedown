@@ -176,8 +176,13 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
 
             if (activity.isFinishing()) {
                 stopMediaPlaybackService();
-                mIncognitoStateRepository.deleteAll();
-                mIncognitoNotification.dismiss();
+                // Closing a PiP window removes the task and so finishes the
+                // browser: not a way out of private browsing.
+                boolean closedFromPip = ((BrowserMainActivity) activity).wasClosedFromPip();
+                if (!closedFromPip) {
+                    mIncognitoStateRepository.deleteAll();
+                    mIncognitoNotification.dismiss();
+                }
             }
         }
     }
