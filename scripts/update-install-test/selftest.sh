@@ -5,8 +5,10 @@
 # then the whole script against two simulated phones (fake_adb.py): one
 # where Android 12+ installs the update without asking, as the first real
 # run found, one that shows Android's dialog (with fingers that close the
-# shade or the sheet); and five faults planted in
-# them, each of which it must report.
+# shade or the sheet); five faults planted in
+# them, each of which it must report; and the phone put back as it was
+# (its own settings, a refused downgrade at the end, the cable pulled
+# before the end and the next run, animations already off).
 #   bash scripts/update-install-test/selftest.sh      (QUICK=1: canned input only)
 
 set -Euo pipefail
@@ -263,7 +265,12 @@ GRADLEW
         if [ "${1:-}" = -- ]; then
             shift
         fi
-        rm -rf "$FAKE/phone"
+        # KEEP_PHONE=1: the same phone as the run before, with what that run
+        # left on it and on this computer.
+        if [ "${KEEP_PHONE:-0}" != 1 ]; then
+            rm -rf "$FAKE/phone"
+            rm -f "$FAKE/root/build/update-install-test"/phone-settings-*.txt
+        fi
         mkdir -p "$FAKE/phone"
         # shellcheck disable=SC2031 # the real PATH, untouched by the subshells above
         env PATH="$FAKE/bin:$PATH" FAKE_BUG="$bug" FAKE_PHONE_DIR="$FAKE/phone" FAKE_COPY_S=1.5 \
@@ -283,6 +290,22 @@ GRADLEW
 import json, sys
 s = json.load(open(sys.argv[1]))
 print(s['installed'], s['appops'], s['settings'], s['files'], s['notif_perm'], s['revokes'])" "$FAKE/phone-$1.json"
+    }
+    # The animation scales the phone runs with after the run (animator,
+    # transition, window): what a setting change made WindowManager read.
+    live() {
+        python3 -c "
+import json, sys
+s = json.load(open(sys.argv[1]))['live']
+print(s['global/animator_duration_scale'], s['global/transition_animation_scale'], s['global/window_animation_scale'])" "$FAKE/phone-$1.json"
+    }
+    # Whether a run left its record of the phone's settings on this computer.
+    record_left() {
+        if [ -f "$FAKE/root/build/update-install-test/phone-settings-FAKE0123.txt" ]; then
+            echo yes
+        else
+            echo no
+        fi
     }
 
     printf 'running the script against the simulated phones…\n'
@@ -312,6 +335,38 @@ print(s['installed'], s['appops'], s['settings'], s['files'], s['notif_perm'], s
     check "silent: every adb command understood" "$(cat "$FAKE/phone/unhandled.txt" 2>/dev/null)" ""
     check "silent: build.gradle put back" "$(cmp -s "$FAKE/build.gradle.orig" "$FAKE/root/app/build.gradle" && echo same)" "same"
     check "silent: the phone put back, notifications still allowed" "$(left clean)" "$base default {} {} True 0"
+    check "silent: animations run again" "$(live clean)" "1 1 1"
+    check "silent: no settings record left" "$(record_left)" "no"
+
+    # Settings the phone had come back as they were.
+    check "own settings: exit code" "$(run_fake seeded '' FAKE_SETTINGS=global/animator_duration_scale=0.5,system/font_scale=1.1 -- --skip-build --only sheet)" "0"
+    check "own settings: put back" "$(left seeded)" "$base default {'global/animator_duration_scale': '0.5', 'system/font_scale': '1.1'} {} True 0"
+    check "own settings: the scale in force" "$(live seeded)" "0.5 1 1"
+    # Putting the original version back fails at the end: the settings are
+    # back all the same (that failure used to end the cleanup before them).
+    run_fake downgrade '' FAKE_DOWNGRADE=fails -- --skip-build --only install > /dev/null
+    check "refused downgrade: named" "$(said downgrade 'STOPPED: adb install failed')" "yes"
+    check "refused downgrade: settings back" "$(left downgrade | cut -d' ' -f2-3)" "default {}"
+    check "refused downgrade: animations run" "$(live downgrade)" "1 1 1"
+    # The cable pulled before the end: the script says so and how to fix
+    # it, and the next run puts the phone back before saving anything.
+    run_fake gone '' FAKE_GONE_AT_END=1 -- --skip-build --only sheet > /dev/null
+    check "phone gone: warned" "$(said gone "WARNING: the phone's settings were not all put back")" "yes"
+    check "phone gone: the fix printed" "$(said gone 'adb shell settings put global animator_duration_scale 1')" "yes"
+    check "phone gone: record kept" "$(record_left)" "yes"
+    check "phone gone: animations still off" "$(live gone)" "0 0 0"
+    check "phone gone: the install permission's fix printed" "$(said gone 'REQUEST_INSTALL_PACKAGES default')" "yes"
+    check "next run: exit code" "$(KEEP_PHONE=1 run_fake back '' -- --skip-build --only sheet)" "0"
+    check "next run: put back first" "$(said back 'An earlier run did not put the phone')" "yes"
+    check "next run: not taken for the phone's own" "$(said back 'animations are already off')" "no"
+    check "next run: settings back" "$(left back | cut -d' ' -f2-3)" "default {}"
+    check "next run: animations run" "$(live back)" "1 1 1"
+    check "next run: record gone" "$(record_left)" "no"
+    # Animations off with no record (a run of an older script): said, and
+    # left as found.
+    check "already off: exit code" "$(run_fake off '' FAKE_SETTINGS=global/animator_duration_scale=0,global/transition_animation_scale=0,global/window_animation_scale=0 -- --skip-build --only sheet)" "0"
+    check "already off: said" "$(said off 'animations are already off on this phone')" "yes"
+    check "already off: left as found" "$(live off)" "0 0 0"
 
     # Android's dialog (an older phone, or another installer owning updates).
     check "dialog: exit code" "$(run_fake dialog '' FAKE_DIALOG=1 FAKE_NOTIF_GRANTED=0 -- --skip-build)" "0"
