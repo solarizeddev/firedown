@@ -3,6 +3,9 @@ package com.solarized.firedown.addons;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -1409,14 +1412,28 @@ public class AddonManager {
             runtime.getWebExtensionController().update(extension).accept(updated -> {
                 mInteractiveUpdates.remove(id);
                 mDeclinedUpdates.remove(id);
-                // Updated, or no update offered any more: nothing waits.
-                clearReview(id);
                 if (updated != null) {
+                    clearReview(id);
                     onChanged(updated);
                     if (interactive) {
                         emit(Event.UPDATED, name);
                     }
-                } else if (interactive) {
+                    return;
+                }
+                if (mReviews.isWaiting(id)) {
+                    // "No update" is also what a FAILED check says.
+                    switch (AddonUpdateReviews.afterNoUpdate(isNetworkValidated(), interactive)) {
+                        case AddonUpdateReviews.CLEAR:
+                            clearReview(id);
+                            break;
+                        case AddonUpdateReviews.SEEN:
+                            onUpdateSeen(id, null);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                if (interactive) {
                     emit(Event.NO_UPDATE, name);
                 }
             }, e -> {
@@ -1493,11 +1510,40 @@ public class AddonManager {
     /** The user saw the update question and did not update. */
     private void onUpdateDeclined(@NonNull String id, @Nullable String version) {
         mDeclinedUpdates.add(id);
+        onUpdateSeen(id, version);
+    }
+
+    /**
+     * The user has looked: nothing points at the update any more. The mark
+     * itself stays until the update is installed (an accepted update can
+     * still fail, and must not then come back as new).
+     */
+    private void onUpdateSeen(@NonNull String id, @Nullable String version) {
         if (mReviews.answered(id, version)) {
             saveReviews();
             publish();
         }
         refreshReviewNotification();
+    }
+
+    /**
+     * Android validated the network: it reaches the internet, so Gecko's
+     * "no update" is believed (see AddonUpdateReviews.afterNoUpdate). A
+     * network that never validates (some VPNs, blocked probe servers) only
+     * keeps a mark longer.
+     */
+    private boolean isNetworkValidated() {
+        ConnectivityManager cm = mContext.getSystemService(ConnectivityManager.class);
+        if (cm == null) {
+            return false;
+        }
+        try {
+            Network network = cm.getActiveNetwork();
+            NetworkCapabilities caps = network == null ? null : cm.getNetworkCapabilities(network);
+            return caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
     private void clearReview(@NonNull String id) {
@@ -1605,7 +1651,9 @@ public class AddonManager {
         complete(current, allow, allowPrivate, allowTechnicalData && current.offersTechnicalData);
         if (current.type == Prompt.UPDATE) {
             if (allow) {
-                clearReview(current.addon.id);
+                // Cleared when the install lands (checkForUpdates): one
+                // that fails keeps its mark, so it is not announced again.
+                onUpdateSeen(current.addon.id, current.addon.version);
             } else {
                 onUpdateDeclined(current.addon.id, current.addon.version);
             }

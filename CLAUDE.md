@@ -4305,7 +4305,15 @@ before changing a flow. The rules, each easy to undo:
   - **Waiting** (the mark) is what Settings says: the add-on's row in
     Settings → Add-ons reads "Update needs your review" and its page shows
     "Review update" in place of "Check for update", until the update is
-    installed, the add-on removed, or no update is offered any more.
+    installed, the add-on removed, or no update is offered any more. That
+    last one is believed only on a network Android has VALIDATED
+    (`AddonUpdateReviews.afterNoUpdate`): Gecko answers a FAILED check
+    (offline, the server down; XPIInstall's `onUpdateCheckError` calls
+    `onNoUpdateAvailable`) exactly like "no update", and clearing on it
+    forgot that the user had declined, so the next check announced the
+    same update as new (found by review). The user's own check on any
+    other network only clears the dot. Cost, accepted: a pulled update on
+    a network that never validates keeps its "Review update" row.
   - **Needs attention** (waiting and not seen) is what points at it: a
     coral dot on the bottom bar's ⋮ (`BottomNavigationBar.setAddonAttention`;
     the one badge an app update ready also lights) and on the ⋮ menus' Add-ons row
@@ -4313,7 +4321,9 @@ before changing a flow. The rules, each easy to undo:
     each also said in words to a screen reader; the ⋮ Add-ons sheet's row
     for that add-on reads "Update needs your review" and opens the question
     (`R.id.addon_review_update` → `EXTRA_REVIEW_ADDON_UPDATE`) instead of
-    the add-on's own button, and "Manage add-ons" carries the dot when the
+    the add-on's own button (until the question is seen: one Cancel gives
+    the button back, and uBlock's popup stays one tap away on the shield
+    sheet), and "Manage add-ons" carries the dot when the
     add-on isn't listed in this tab's mode (off, or not allowed in private
     tabs); the Settings home's Add-ons row takes the notification's words.
     The notification (`AddonUpdateNotification`, the Updates channel,
@@ -4327,7 +4337,9 @@ before changing a flow. The rules, each easy to undo:
     Cancel (or Back) keeps the old version and the mark, but no dot, no
     sheet line and no notification point at it any more: a dot that only
     Update could clear would push people into granting permissions to make
-    it stop. A DIFFERENT version offered later arms all of it again.
+    it stop. A DIFFERENT version offered later arms all of it again. Update
+    clears the mark only once the install LANDS: an accepted update that
+    fails keeps it, seen, so it is not announced again as new.
   - Cancel is not an error: Gecko reports a declined update as a cancelled
     install, which used to show "Couldn't add <add-on>" right after the
     user said no; a declined question's failure says nothing now
@@ -4471,7 +4483,7 @@ before changing a flow. The rules, each easy to undo:
   them.
 - **Verify** with `sh scripts/addons-harness/run.sh /path/to/firefox-src`
   (the real pure classes against Firefox's own test fixtures and AMO
-  shapes; 117 checks without the Firefox fixtures, 21 mutants must
+  shapes; 121 checks without the Firefox fixtures, 22 mutants must
   fail), the JUnit
   `AddonsPureTest`, and on a device `addons/AddonsDeviceTest`
   (`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.addons.AddonsDeviceTest`;
