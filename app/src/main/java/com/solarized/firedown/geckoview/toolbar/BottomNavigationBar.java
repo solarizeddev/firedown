@@ -274,17 +274,18 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     }
 
     /**
-     * Puts a dot on its icon's top-end corner, Material's own place for a
+     * Puts a dot in its icon's top-end corner, Material's own place for a
      * badge on a 24dp icon. The badge measures its offsets from the BUTTON,
      * a fifth of the bar, so fixed offsets put the dot further from its icon
-     * the wider the bar: 7dp off on a 390dp phone, 52dp in landscape. The
-     * offsets are worked out from where the button draws its icon, again on
-     * every layout, since a rotation resizes the bar without recreating it.
-     * The math is for Material 3's badge style (the app themes'), which
-     * aligns the dot's edge, not its centre, on the offsets.
+     * the wider the bar: 7dp off on a 390dp phone, 52dp in landscape. Here
+     * they come from where the button draws its icon and from the dot's size
+     * as Material rounded it at this density ({@link IconBadgeOffsets}), on
+     * every layout: a rotation resizes the bar without recreating it, and the
+     * badge keeps the button's old bounds until told
+     * ({@code setBadgeDrawableBounds}). The math is for Material 3's badge
+     * style, the app themes'.
      */
     private void pinBadgeToIcon(ImageView button, BadgeDrawable badge) {
-        int inset = getResources().getDimensionPixelOffset(R.dimen.badge_icon_offset);
         button.addOnLayoutChangeListener(new OnLayoutChangeListener() {
             private boolean mAttached;
 
@@ -292,6 +293,12 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom,
                                        int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                if (mAttached) {
+                    BadgeUtils.setBadgeDrawableBounds(badge, button, null);
+                } else {
+                    mAttached = true;
+                    BadgeUtils.attachBadgeDrawable(badge, button);
+                }
                 Drawable icon = button.getDrawable();
                 if (icon == null) {
                     return;
@@ -300,13 +307,11 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
                 button.getImageMatrix().mapRect(bounds);
                 bounds.offset(button.getPaddingLeft(), button.getPaddingTop());
                 boolean rtl = button.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
-                float fromEnd = rtl ? bounds.left : button.getWidth() - bounds.right;
-                badge.setHorizontalOffset(Math.round(fromEnd) + inset);
-                badge.setVerticalOffset(Math.round(bounds.top) + inset);
-                if (!mAttached) {
-                    mAttached = true;
-                    BadgeUtils.attachBadgeDrawable(badge, button);
-                }
+                badge.setHorizontalOffset(IconBadgeOffsets.horizontal(button.getWidth(),
+                        Math.round(bounds.left), Math.round(bounds.right), rtl,
+                        badge.getIntrinsicWidth()));
+                badge.setVerticalOffset(IconBadgeOffsets.vertical(Math.round(bounds.top),
+                        badge.getIntrinsicHeight()));
             }
         });
     }
