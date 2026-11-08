@@ -13223,7 +13223,8 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   task, so the window stays (the first device run, SM-A426B Android 12,
   failed on exactly that). With it the task comes to the front, the start
   is reported as a restart of the pinned activity and the system expands
-  the window. First run (SM-A426B): enter, close, inline and alert green.
+  the window. All five green on SM-A426B (Android 12), the icon case
+  included.
   Not covered on a device: the app lock with PiP, a content crash in PiP,
   a download notification tapped while in PiP.
 

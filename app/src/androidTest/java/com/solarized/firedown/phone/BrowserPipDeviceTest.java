@@ -87,9 +87,9 @@ import dagger.hilt.android.EntryPointAccessors;
  * ./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.phone.BrowserPipDeviceTest
  * </pre>
  *
- * Written for issue #311. First run (SM-A426B, Android 12): entering PiP,
- * closing, the inline video and the alert passed; the expand failed because
- * the shell start standing for the icon lacked RESET_TASK_IF_NEEDED.
+ * Written for issue #311. Green on SM-A426B (Android 12). Its first run
+ * failed the expand only because the shell start standing for the icon
+ * lacked RESET_TASK_IF_NEEDED.
  */
 @RunWith(AndroidJUnit4.class)
 public class BrowserPipDeviceTest {
