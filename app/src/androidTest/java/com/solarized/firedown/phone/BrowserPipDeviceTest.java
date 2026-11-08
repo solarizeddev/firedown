@@ -78,15 +78,18 @@ import dagger.hilt.android.EntryPointAccessors;
  * from the shell (another app), a real tap ({@code input tap}) as the user
  * gesture that lets the page go fullscreen and play, the Home key from the
  * shell, and the activity read in place. Needs no network; plays a
- * near-silent tone. The PiP window is closed through its accessibility
- * dismiss action (what TalkBack's "close" does); a device whose system UI
- * does not offer it skips that case.
+ * near-silent tone. The PiP window is expanded and closed through its
+ * accessibility actions (what TalkBack's "expand" and "close" do); a device
+ * whose system UI does not offer them skips those cases. The app icon is
+ * the launcher's own start, flags included.
  *
  * <pre>
  * ./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.phone.BrowserPipDeviceTest
  * </pre>
  *
- * Written for issue #311; not run on a device at write time.
+ * Written for issue #311. First run (SM-A426B, Android 12): entering PiP,
+ * closing, the inline video and the alert passed; the expand failed because
+ * the shell start standing for the icon lacked RESET_TASK_IF_NEEDED.
  */
 @RunWith(AndroidJUnit4.class)
 public class BrowserPipDeviceTest {
@@ -184,7 +187,36 @@ public class BrowserPipDeviceTest {
     public void fullscreenVideoGoesToPipOnHomeAndExpandsBackToFullscreen() {
         BrowserMainActivity browser = openPage("/");
         GeckoState tab = playFullscreen();
+        goHomeIntoPip(browser, tab);
 
+        // Expand through the window's own control (what its expand button
+        // and TalkBack's "expand" do).
+        assumeTrue("this system UI offers no accessibility expand on the PiP window",
+                actOnPipWindow(AccessibilityNodeInfo.ACTION_EXPAND));
+        assertExpandedToFullscreen(browser, tab, "expand");
+    }
+
+    /**
+     * The app icon tapped while the video is in the PiP window. A launcher
+     * sends NEW_TASK | RESET_TASK_IF_NEEDED: the task comes to the front and
+     * the system expands the window. Opened the way a link from another app
+     * opens it, so the task's root is the browser (the routing activity is
+     * gone).
+     */
+    @Test
+    public void appIconExpandsThePipWindow() {
+        BrowserMainActivity browser = openPage("/");
+        GeckoState tab = playFullscreen();
+        goHomeIntoPip(browser, tab);
+
+        String answer = shell("am start -W -a android.intent.action.MAIN"
+                + " -c android.intent.category.LAUNCHER -f 0x10200000 -n "
+                + mPkg + "/com.solarized.firedown.phone.BrowserActivity");
+        assertExpandedToFullscreen(browser, tab, "the app icon (am start said: "
+                + answer.trim().replace('\n', ' ') + ")");
+    }
+
+    private void goHomeIntoPip(BrowserMainActivity browser, GeckoState tab) {
         shell("input keyevent KEYCODE_HOME");
         assertTrue("the browser never entered PiP. " + describe(browser, tab),
                 waitUntil(() -> onMain(browser::isInPictureInPictureMode), WAIT_MS));
@@ -196,11 +228,10 @@ public class BrowserPipDeviceTest {
         assertTrue("still fullscreen in PiP. " + describe(browser, tab), tab.isFullScreen());
         assertTrue("still playing in PiP. " + describe(browser, tab), mMedia.isPlaying(tab.getEntityId()));
         assertFalse("the toolbar shows in the PiP window", viewShown(browser, R.id.toolbar_layout));
+    }
 
-        // Expand: the icon brings the task back, the window leaves PiP.
-        shell("am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n "
-                + mPkg + "/com.solarized.firedown.phone.BrowserActivity");
-        assertTrue("the browser never left PiP. " + describe(browser, tab),
+    private void assertExpandedToFullscreen(BrowserMainActivity browser, GeckoState tab, String how) {
+        assertTrue("the browser never left PiP after " + how + ". " + describe(browser, tab),
                 waitUntil(() -> !onMain(browser::isInPictureInPictureMode)
                         && mRecorder.stage(browser) == Stage.RESUMED, WAIT_MS));
         SystemClock.sleep(SETTLE_MS);
@@ -231,7 +262,7 @@ public class BrowserPipDeviceTest {
         SystemClock.sleep(SETTLE_MS);
 
         assumeTrue("this system UI offers no accessibility dismiss on the PiP window",
-                dismissPipWindow());
+                actOnPipWindow(AccessibilityNodeInfo.ACTION_DISMISS));
         assertTrue("the video kept playing after the window was closed. " + describe(browser, tab),
                 waitUntil(() -> !mMedia.isPlaying(tab.getEntityId()), WAIT_MS));
         assertTrue("the page stayed fullscreen after the window was closed. " + describe(browser, tab),
@@ -317,8 +348,11 @@ public class BrowserPipDeviceTest {
         shell("input tap " + dm.widthPixels / 2 + " " + dm.heightPixels / 2);
     }
 
-    /** TalkBack's "close" on the PiP window (SystemUI's replacing connection). */
-    private boolean dismissPipWindow() {
+    /**
+     * TalkBack's "close" or "expand" on the PiP window (SystemUI's replacing
+     * accessibility connection).
+     */
+    private boolean actOnPipWindow(int action) {
         UiAutomation ua = mInstrumentation.getUiAutomation();
         AccessibilityServiceInfo info = ua.getServiceInfo();
         if (info == null) {
@@ -333,7 +367,7 @@ public class BrowserPipDeviceTest {
                     continue;
                 }
                 AccessibilityNodeInfo root = window.getRoot();
-                if (root != null && root.performAction(AccessibilityNodeInfo.ACTION_DISMISS)) {
+                if (root != null && root.performAction(action)) {
                     return true;
                 }
             }
