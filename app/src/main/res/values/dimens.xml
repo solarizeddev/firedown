@@ -20,10 +20,6 @@
     <dimen name="app_bar_fab_elevation">12dp</dimen>
     <dimen name="app_bar_fab_margin">16dp</dimen>
     <dimen name="autocomplete_elevation">20dp</dimen>
-    <!-- How far a bottom-bar dot reaches into its icon's top-end corner,
-         Material's m3_badge_offset: a 6dp dot then sits inside the corner,
-         touching the icon's top and end edges. -->
-    <dimen name="badge_icon_offset">6dp</dimen>
     <dimen name="button_icons_padding">8dp</dimen>
     <dimen name="card_radius">8dp</dimen>
     <dimen name="dialog_padding_standard">20dp</dimen>
