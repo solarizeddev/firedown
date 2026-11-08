@@ -13219,9 +13219,28 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   Firedown screen started over it is not a close either**
   (`ApplicationLifeCycleHandler.otherScreenStarted()`, a count of started
   non-browser activities): a download notification opens Downloads into
-  the pinned task, the window expands and the browser stops behind it
-  unresumed; the video goes on as audio, as when the app is left without
-  PiP. That reading is provisional: a FINISHING destroy within 5 s of it
+  the pinned task and the browser stops behind it unresumed; the video
+  goes on as audio, as when the app is left without PiP. **The window does
+  not expand by itself**: Android adds the new screen to the pinned task
+  and leaves it inside the small window, paused (found on SM-A426B by the
+  device test; only a start that brings the task to the FRONT is reported
+  as a restart of the pinned activity, which the system expands). So
+  `BaseActivity.onPostCreate` checks `BrowserMainActivity.isPipTask(
+  getTaskId())` (the task id is recorded on entry, cleared on exit and
+  destroy) and, posted, sends the icon's own start
+  (`LauncherActivity.openAppIntent`): the task comes to the front with the
+  new screen still on top, and the window expands. Every non-browser
+  screen of the app gets it (Settings from a backup notification, a
+  share link's Downloads). **The same check reports the screen to the
+  browser** (`screenOpenedInPipTask` → `PipSession.screenOpenedInWindow`),
+  and the browser's next stop or settle ends the stay under it, whatever
+  the started count says: the expand recreates the new screen for the
+  full size, so for a moment no other screen is started when the browser
+  stops (the second device run read that as a close and paused the
+  video). Residual: if the launcher start fails and the window stays
+  small with the screen inside it, a close more than 5 s after the
+  browser stopped behind that screen is not caught (the video goes on,
+  the private tabs go with the task), the 5 s bound below. That reading is provisional: a FINISHING destroy within 5 s of it
   is a close after all (Downloads shown in a task of its own, the window
   floating over it, then closed with X — the system removes the browser's
   task). **Closing removes the task, which FINISHES the browser** on AOSP:
@@ -13230,6 +13249,16 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   browser, not for closing a video window), only within 5 s of the close
   (a ROM that keeps the activity and is swiped from recents later still
   deletes them); the playback service still stops.
+- **A recreate in the window (dark mode, locale) is not a close.** It
+  stops the activity still in PiP with the screen on, exactly Samsung's
+  drag-dismiss: `onStop` and `onDestroy` pass `isChangingConfigurations()`
+  and decide nothing then (the first device run paused the video and left
+  fullscreen on a dark-mode switch). The saved flag is the WINDOW
+  (`isInPictureInPictureMode()`), not the stay, and the new instance is
+  seeded with `recreatedInPip()`: it passes through onResume on its way
+  back to paused in the window, and that one resume keeps the stay
+  (`mResumeInWindow`, cleared by onPause, by any mode exit, and consumed
+  by the resume). A mode exit while RESUMED ends the stay.
 - **Another tab put on screen while fullscreen** (a link from another app,
   which also expands the window): `setGeckoViewSession` exits the old tab's
   DOM fullscreen, restores the chrome and resets the orientation itself,
@@ -13237,12 +13266,15 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   gated out — `MediaSession.Delegate.onFullscreen`'s orientation notify is
   gated on the current tab now (a background tab's video used to rotate
   the visible one).
-- Verify: `PipPolicyTest` + `PipSessionTest` (JVM; twelve planted bugs
+- Verify: `PipPolicyTest` + `PipSessionTest` (JVM; eighteen planted bugs
   each fail the latter: a stopped exit closing at once, onStart not
   cancelling it, no time bound, screen off read as a close, the teardown
   ignored, the destroy not settling, onResume clearing the own start,
   another screen ignored at the stop or the settle, a 500 ms settle, no
-  provisional close, a provisional close with no time bound),
+  provisional close, a provisional close with no time bound, a recreate's
+  stop or destroy deciding, the transit resume ending the stay, a mode
+  exit not clearing the transit flag, a resumed mode exit keeping the
+  stay, a screen reported in the window ignored),
   `sh scripts/prompt-harness/run.sh`, and on
   a device `phone/BrowserPipDeviceTest` (a loopback page whose `<video>`
   goes fullscreen and plays on a real `input tap`; Home → PiP with the same
@@ -13260,10 +13292,31 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   task, so the window stays (the first device run, SM-A426B Android 12,
   failed on exactly that). With it the task comes to the front, the start
   is reported as a restart of the pinned activity and the system expands
-  the window. All five green on SM-A426B (Android 12), the icon case
-  included.
-  Not covered on a device: the app lock with PiP, a content crash in PiP,
-  a download notification tapped while in PiP.
+  the window. Five more cases: the app lock due while the video floats,
+  then the window expanded → the lock screen, and the video not back in a
+  window beside it; the lock due when leaving → no PiP; a finished
+  download's notification tapped (its real PendingIntent) → Downloads,
+  and past the 2 s settle the video still plays and the private tab
+  stays; dark mode switched in the window (`cmd uimode night`, put back
+  after) → still in PiP, fullscreen, playing, no toolbar, and closing
+  then still ends the video; the screen off in the window → past the
+  settle still playing and fullscreen, the window back after
+  wake + unlock, then the icon expands it. The lock cases need a screen
+  lock, the notification case notifications allowed (else skipped); the
+  screen-off case runs last (`@FixMethodOrder`, `t01`…`t10`), sets
+  `lock_screen_lock_after_timeout` to 30 min for its run and, on a phone
+  that locks at once anyway, waits a minute for the person to unlock it
+  (or types `-Pandroid.testInstrumentationRunnerArguments.pin=<PIN>`).
+  On SM-A426B (Android 12) t01–t07 green; t08 and t09 found the two bugs
+  above (Downloads stuck in the window, a dark-mode recreate read as a
+  close), t10 waited too briefly for the unlock. On the rerun t08 found a
+  third: the expand recreated Downloads and the browser's stop counted no
+  started screen (now reported from BaseActivity, see above). t08 now
+  waits for the browser to stop with the window gone before it checks
+  (the first Downloads resumes inside the window, before anything is
+  decided) and checks fullscreen too. With these fixes all ten pass on
+  SM-A426B (Android 12).
+  Not covered on a device: a content crash in PiP.
 
 ### Subtitles in the local player — side-loaded downloads, one sheet, add a file
 
