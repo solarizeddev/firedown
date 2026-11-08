@@ -525,7 +525,6 @@
         <item quantity="one">%d fail</item>
         <item quantity="other">%d faili</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Varundatud. Suurus pole teada, kuni kaust pole kättesaadav</string>
     <string name="settings_cloud_backup_active">Ülekanne käib…</string>
     <string name="settings_cloud_backup_files_summary">Vaata ja taasta varundatut</string>
 
@@ -549,7 +548,6 @@
     <string name="folder_backup_hero_on">Asukohas %1$s</string>
     <string name="folder_backup_lost_title">Varunduskaust pole kättesaadav</string>
     <string name="folder_backup_lost_body">Kaust võib olla teisaldatud, kustutatud või välja logitud. Vali see uuesti, et varundamist jätkata. Selles telefonis ei muutu midagi.</string>
-    <string name="folder_backup_lost_seen">Viimati nähtud: %1$s</string>
     <string name="folder_backup_choose_cta">Vali varunduskaust</string>
     <string name="folder_backup_pick_title">Kuhu varundada</string>
     <string name="folder_backup_pick_unavailable">Selles telefonis pole kaustavalijat</string>
@@ -652,7 +650,6 @@
     <string name="folder_backup_guard_message">Firedown hoiab sinu allalaadimisi juba kaustas %1$s. Sealne varukoopia kaob koos telefoniga. Vali selle asemel kaust pilverakenduses või SD-kaardil.</string>
     <string name="folder_backup_guard_choose_other">Vali teine</string>
     <string name="folder_backup_guard_use_anyway">Kasuta siiski</string>
-    <string name="folder_backup_step_folder">Vali, kuhu varundada</string>
     <string name="folder_backup_rechoose_cta">Vali kaust uuesti</string>
     <string name="folder_backup_folder_set">Varunduskaust: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup asukohas %1$s</string>
@@ -705,11 +702,13 @@
         <item quantity="one">%d valitud failidest taastatakse praegu. Eemaldamine katkestab taastamise.</item>
         <item quantity="other">%d valitud failidest taastatakse praegu. Eemaldamine katkestab need taastamised.</item>
     </plurals>
-    <string name="cloud_status_backed_up">varundatud</string>
     <string name="cloud_backup_header_encrypted">läbivalt krüpteeritud</string>
     <string name="cloud_status_empty_title">Midagi pole veel varundatud</string>
+    <string name="backup_hero_setup_title">Varunda oma allalaadimised</string>
+    <string name="backup_hero_setup_body">Krüpteeritud selles telefonis, siis salvestatud sinu valitud kohta.</string>
+    <string name="backup_hero_setup_cta">Seadista varundus</string>
+    <string name="backup_hero_size">%1$s varundatud</string>
     <string name="cloud_status_empty_body">Varunda mis tahes lõpetatud allalaadimine selle ⋮ menüüst.</string>
-    <string name="settings_sync_create_title">Loo taastekood</string>
     <string name="settings_sync_needs_key">Loo või sisesta esmalt taastekood</string>
     <string name="settings_sync_link_title">Mul on taastekood</string>
     <string name="settings_sync_link_summary">Kasuta teise seadme koodi ja vali seejärel selle varunduskaust</string>

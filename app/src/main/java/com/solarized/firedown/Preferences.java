@@ -175,12 +175,6 @@ public class Preferences {
     /** The Backup screen's "Backup folder" row: title + the location as its
      *  summary; tap = change it (confirmed while the folder holds files). */
     public static final String SETTINGS_CLOUD_BACKUP_FOLDER = "com.solarized.firedown.preferences.cloud.backup.folder";
-    /** The Backup screen's MORPHING CTA (the button under the hero): "Create
-     *  recovery code" pre-key, "Choose backup folder" once a key exists,
-     *  "Choose the folder again" when the folder is unreachable; HIDDEN once
-     *  the backup is healthy (the folder row carries the change). The key
-     *  value is historical. */
-    public static final String SETTINGS_CLOUD_BACKUP_CTA = "com.solarized.firedown.preferences.cloud.backup.buy";
     public static final String SETTINGS_CLOUD_BACKUP_SHOW_CODE = "com.solarized.firedown.preferences.cloud.backup.show.code";
     /** The ONE erasure door on the Backup screen — opens the scoped sub-screen. */
     public static final String SETTINGS_CLOUD_DELETE = "com.solarized.firedown.preferences.cloud.delete";

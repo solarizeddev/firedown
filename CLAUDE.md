@@ -7023,8 +7023,8 @@ not hidden):
   FOLDER, not the network": `VaultBackupWorker` fails terminally with
   `SLUG_FOLDER` and posts the folder-lost notification ONCE (tap → the Backup
   screen), the Backups list's transfer row names it
-  (`folder_backup_transfer_lost`), and the Backup screen's hero shows the
-  lost state with the CTA reading "Choose the folder again".
+  (`folder_backup_transfer_lost`), and the Backup screen's status card shows the
+  lost state with its button reading "Choose the folder again".
   `isReachable()` = the persisted grant is still held with read+write AND
   the tree's root document answers a query — one resolver round trip, OFF
   the main thread only (Drive answers a cold listing from the network).
@@ -7215,7 +7215,7 @@ recovery code, the password sealed under the same keystore key through
   folder row wears `dns_24` and reads "<host> · WebDAV"
   (`webdav_folder_row`, untranslatable); the hero's lost state reads "Can't
   reach your backup server" with a body naming offline / a changed password
-  or certificate (`CloudStatusPreference.setPlace`); the CTA in that state
+  or certificate (`CloudStatusPreference.setPlace`); the card's button in that state
   is **"Reconnect"** and opens the prefilled sign-in page directly, not
   the chooser; the worker fails a server with **`SLUG_SERVER`** (its own
   words on the row, the snackbar and the notification, and the Backups
@@ -7743,62 +7743,52 @@ either: everything is plain REST through the app's OkHttp.
 
 ONE screen hosts the downloads backup AND the bookmarks switch (the
 two-level IA and the focused bookmarks screen were retired as tap tax).
-Order = priority: the **status hero** (`CloudStatusPreference`, flat), the
-**morphing CTA** (`CloudBuyButtonPreference` — historical name, nothing is
-bought; the MaterialButton carries `@android:id/title` so the Preference
-TITLE is its label), then three UNLABELLED card groups: KEY (Recovery code
+Order = priority: the **status card** (`CloudStatusPreference`, flat,
+with the screen's one button INSIDE it), then three UNLABELLED card groups: KEY (Recovery code
 reveal + "I have a recovery code"), USE (Backups + the Bookmarks switch),
 last (the "How sync & encryption work" link → `firedown.app/security` + the
 "Delete backup data" door). The KEY and USE groups SWAP by life stage
 (`SETTINGS_CLOUD_GROUP_KEY`/`_USE`): KEY above USE until set up (the adopt
-door is the second way in, right under the create-CTA), USE above KEY once
+door is the second way in, right under the setup card), USE above KEY once
 set up — groups, not rows, so each card stays whole. NO category labels
 (the last header umbrella'd the code/help/delete rows as "Bookmarks"
 children — the card edges do the grouping).
 
-- **The hero has THREE states** (`CloudStatusPreference`): set up + folder
-  reachable (the cloud-upload glyph, `cloud_upload_24` — THE backup glyph
-  on every door and notification, the maintainer's pick over the earlier
-  folder — "Firedown Backup" over "On <provider › folder>" (the location
-  label, below), the backed-up size headline, a file-count caption; the
-  ⋮-menu hint while
-  nothing is backed up yet; "Transfer in progress…" while a worker runs);
-  set up + folder LOST (the cloud-off glyph, `cloud_off_24` — the healthy
-  glyph's struck twin, so the pair stays one family; the same glyph is the
-  folder-lost notification's small icon — "Can't reach your backup
-  folder", the LAST SEEN totals, the body line saying what to do — the card
-  states the fact, the CTA acts); not set up → the dashed ROADMAP ① Create
-  recovery code → ② Choose backup folder → ③ Back up a finished download
-  from its ⋮. Each step is a HANGING row (`cb_step_*_mark` /
-  `cb_step_*_done` + `cb_step_*`): a 20dp marker in the glyph's 24dp
-  column, the text in a column under the title, so a wrapped line
-  continues under its text. The marker is a SHAPE, not typed text: a ring
-  round the number (ahead), the number on a disc filled like the CTA
-  under the card (current — the button performs that step), a check on a
-  tonal disc (done); the numeral is in dp (a glyph of a fixed circle), the
-  text beside it follows the font scale. It was one TextView per step
-  with "2 ·  " typed in front (step ②'s second line sat under the
-  number), then text markers "1 ·" / "✓" / "3 ·" of three widths,
-  start-aligned in a 28dp column, which lined up with nothing (both
-  reported on-device). **The hero sits on the card rows' two axes**: the
-  rows below are a card 16dp from the screen with 16dp padding, a 24dp
-  icon and the title at 72dp, so every state's glyph is 24dp at 32dp
-  (the root's 16dp gutter + the hero's or the dashed card's 16dp), every
-  title, step text, size figure and caption starts at 72dp, and the
-  glyph, the markers and the rows' icons share one centre line (44dp).
-  The glyph was 28dp at the card's edge with the text at 56dp. The row
-  carries the spoken line, the marker column is hidden from TalkBack.
-  There is no
-  quota, meter or chip: the folder is the user's own storage, so the only
-  facts the card can state are what is in it and whether it answers.
-  `mReachable` defaults TRUE so a cold bind never flashes the lost state;
-  the hero binds `lastStatus()` first, then the fresh read.
-- **The CTA shows ONLY while a step is owed, and the FOLDER is a ROW**
-  (`applyCta` / `applyFolderRow`, 2026-10-13, the maintainer's "open folder
-  or change folder is still confusing for cloud"): no key → "Create
-  recovery code" (FILLED; with the mandatory "I've saved it" dialog), key
-  but no folder → "Choose backup folder" (FILLED), folder lost → "Choose
-  the folder again" (FILLED), healthy → the button is HIDDEN. It stayed as
+- **The status card is Signal's "Secure Backups" card** (2026-11, the
+  maintainer: "instead of the 1·2·3 steps, simplify like Signal"):
+  `preference_cloud_status.xml` is one `MaterialCardView`
+  (`surfaceContainerHigh`, 24dp corners, 24dp padding) with the words on
+  the start side — an optional line above the title, the title
+  (TitleLarge), one line under it, at most one button — and the glyph on a
+  64dp tonal disc (`bg_empty_disc`) on the end side, in `brandInk`
+  (`cloud_upload_24`) or the error ink (`cloud_off_24`, the struck twin;
+  also the folder-lost notification's small icon). THREE states:
+  not set up → "Back up your downloads" / "Encrypted on this phone, then
+  saved where you choose." / **[Set up backup]**; set up + reachable →
+  "On <provider › folder>" over "854 MB backed up" (`backup_hero_size`),
+  "14 files · encrypted end-to-end" (or "Nothing backed up yet" + the
+  ⋮-menu hint, or "Transfer in progress…" while a worker runs), NO
+  button; set up + LOST → the place over the lost title in the error ink,
+  what to do, **[Choose the folder again]** / **[Reconnect]**. It replaced
+  a dashed numbered ROADMAP (① code → ② folder → ③ first backup, with
+  ring/disc/check markers) plus a separate morphing CTA row under it
+  (`CloudBuyButtonPreference`, deleted with its layouts, the step
+  drawables and styles): two surfaces describing one next step. **"Set up
+  backup" is ONE flow**: it creates the recovery code (the "I've saved
+  it" gate unchanged) and Done goes straight on to "Where to back up"
+  (`showCodeDialog`'s `onDone`); with a code already present it opens
+  the chooser directly. So the user never sees step numbers, and a user
+  who backed out of the chooser gets the same button next time. Don't
+  bring a roadmap or a second button row back. The card states no last
+  seen totals any more (the lost state is the title, the remedy and its
+  button). There is no quota, meter or chip: the folder is the user's own
+  storage. `mReachable` defaults TRUE so a cold bind never flashes the
+  lost state; the card binds `lastStatus()` first, then the fresh read.
+- **The card's button shows ONLY while a step is owed, and the FOLDER is
+  a ROW** (`applyCardAction` / `applyFolderRow`, 2026-10-13, the
+  maintainer's "open folder or change folder is still confusing for
+  cloud"): no key or no folder → "Set up backup", folder lost → "Choose
+  the folder again" / "Reconnect", healthy → no button. A button stayed as
   an outlined "Change folder" for one release and that was the screen's
   one visible action on a healthy backup: a verb with no object, which
   asked "change it to what, from what?". The answer is the **"Backup
@@ -7937,10 +7927,7 @@ children — the card edges do the grouping).
   check that fails a working folder is worse than none. The adopt runs in
   the manager, so a pick lands even if the user left the screen mid-check. The setup copy
   (`cloud_backup_setup_message`) names the kinds of places too, so the
-  first pick is steered before the chooser opens; roadmap step ②
-  (`folder_backup_step_folder`) is "Choose where to back up", the sheet's
-  own title, with no examples (it named Dropbox, which the kind-row rule
-  above excludes, and wrapped on a phone). The two folders stay as they are: list recovery for a same-phone
+  first pick is steered before the chooser opens. The two folders stay as they are: list recovery for a same-phone
   reinstall vs file copies elsewhere are different jobs, and renaming the
   mirror's folder buys nothing the guard doesn't.
 - **The folder picker lists ONLY providers that declare
@@ -7970,9 +7957,9 @@ children — the card edges do the grouping).
   taps "Cloud storage" simply does not find Proton under ☰, and the write
   check never runs because there was nothing to pick. The diagnostic for the next such report is
   the Import-picker test above.
-- **The KEY-FIRST GATE**: until a recovery code exists the CTA reads "Create
-  recovery code" (not choose-a-folder), the Backups row is hidden and the
-  Bookmarks switch is disabled — a folder can only be chosen once there is
+- **The KEY-FIRST GATE**: "Set up backup" creates the recovery code before
+  it opens the place chooser, and until one exists the Backups row is
+  hidden and the Bookmarks switch is disabled — a folder can only be chosen once there is
   a key to encrypt into it with. A code, once created, forces the "I've
   saved it" checkbox before Done (non-cancelable in create mode).
 - **Adopting a code works in BOTH key states** — post-key the row's summary

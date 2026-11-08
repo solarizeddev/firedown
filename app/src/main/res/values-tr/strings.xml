@@ -637,7 +637,6 @@
         <item quantity="one">%d dosya</item>
         <item quantity="other">%d dosya</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Yedeklendi. Klasöre erişilemediği sürece boyut bilinmiyor</string>
     <string name="settings_cloud_backup_active">Aktarım sürüyor…</string>
     <string name="settings_cloud_backup_files_summary">Yedeklediklerinizi görüntüleyin ve geri yükleyin</string>
 
@@ -661,7 +660,6 @@
     <string name="folder_backup_hero_on">%1$s üzerinde</string>
     <string name="folder_backup_lost_title">Yedekleme klasörüne erişilemiyor</string>
     <string name="folder_backup_lost_body">Klasör taşınmış, silinmiş veya oturumu kapatılmış olabilir. Yedeklemeye devam etmek için yeniden seçin. Bu telefondaki hiçbir şey etkilenmez.</string>
-    <string name="folder_backup_lost_seen">Son görülme: %1$s</string>
     <string name="folder_backup_choose_cta">Yedekleme klasörü seç</string>
     <string name="folder_backup_pick_title">Nereye yedeklensin</string>
     <string name="folder_backup_pick_unavailable">Bu telefonda klasör seçici yok</string>
@@ -757,7 +755,6 @@
     <string name="folder_backup_guard_message">Firedown indirmelerinizi zaten %1$s içinde tutuyor. Oradaki bir yedek telefonla birlikte kaybolur. Bunun yerine bir bulut uygulamasında veya SD kartta bir klasör seçin.</string>
     <string name="folder_backup_guard_choose_other">Başkasını seç</string>
     <string name="folder_backup_guard_use_anyway">Yine de kullan</string>
-    <string name="folder_backup_step_folder">Nereye yedekleneceğini seçin</string>
     <string name="folder_backup_rechoose_cta">Klasörü yeniden seç</string>
     <string name="folder_backup_folder_set">Yedekleme klasörü: %1$s</string>
     <string name="folder_backup_header_on">%1$s üzerinde Firedown Backup</string>
@@ -810,11 +807,13 @@
         <item quantity="one">Seçilen dosyalardan %d tanesi şu anda geri yükleniyor. Kaldırmak bu geri yüklemeyi iptal eder.</item>
         <item quantity="other">Seçilen dosyalardan %d tanesi şu anda geri yükleniyor. Kaldırmak bu geri yüklemeleri iptal eder.</item>
     </plurals>
-    <string name="cloud_status_backed_up">yedeklendi</string>
     <string name="cloud_backup_header_encrypted">uçtan uca şifreli</string>
     <string name="cloud_status_empty_title">Henüz yedeklenen bir şey yok</string>
+    <string name="backup_hero_setup_title">İndirmelerinizi yedekleyin</string>
+    <string name="backup_hero_setup_body">Bu telefonda şifrelenir, sonra seçtiğiniz yere kaydedilir.</string>
+    <string name="backup_hero_setup_cta">Yedeklemeyi ayarla</string>
+    <string name="backup_hero_size">%1$s yedeklendi</string>
     <string name="cloud_status_empty_body">Tamamlanmış herhangi bir indirmeyi ⋮ menüsünden yedekleyin.</string>
-    <string name="settings_sync_create_title">Kurtarma kodu oluştur</string>
     <string name="settings_sync_needs_key">Önce bir kurtarma kodu oluşturun veya girin</string>
     <string name="settings_sync_link_title">Kurtarma kodum var</string>
     <string name="settings_sync_link_summary">Başka bir cihazın kodunu kullanın, sonra onun yedekleme klasörünü seçin</string>

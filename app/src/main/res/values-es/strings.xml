@@ -736,7 +736,6 @@
         <item quantity="one">%d archivo</item>
         <item quantity="other">%d archivos</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Copia hecha. Tamaño desconocido mientras la carpeta no esté accesible</string>
     <string name="settings_cloud_backup_active">Transferencia en curso…</string>
     <string name="settings_cloud_backup_files_summary">Consulta y restaura lo que has respaldado</string>
 
@@ -760,7 +759,6 @@
     <string name="folder_backup_hero_on">En %1$s</string>
     <string name="folder_backup_lost_title">No se puede acceder a tu carpeta de copia de seguridad</string>
     <string name="folder_backup_lost_body">Puede que la carpeta se haya movido, eliminado o cerrado sesión. Elígela de nuevo para seguir haciendo copias. Nada en este teléfono se ve afectado.</string>
-    <string name="folder_backup_lost_seen">Última vez: %1$s</string>
     <string name="folder_backup_choose_cta">Elegir carpeta de copia de seguridad</string>
     <string name="folder_backup_pick_title">Dónde hacer la copia</string>
     <string name="folder_backup_pick_unavailable">Este teléfono no tiene un selector de carpetas</string>
@@ -855,7 +853,6 @@
     <string name="folder_backup_guard_message">Firedown ya guarda tus descargas en %1$s. Una copia ahí se pierde con el teléfono. Elige en su lugar una carpeta en una app de nube o en una tarjeta SD.</string>
     <string name="folder_backup_guard_choose_other">Elegir otra</string>
     <string name="folder_backup_guard_use_anyway">Usarla igualmente</string>
-    <string name="folder_backup_step_folder">Elige dónde hacer la copia</string>
     <string name="folder_backup_rechoose_cta">Elegir la carpeta de nuevo</string>
     <string name="folder_backup_folder_set">Carpeta de copia de seguridad: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup en %1$s</string>
@@ -908,11 +905,13 @@
         <item quantity="one">%d de los archivos seleccionados se está restaurando ahora mismo: al quitarlo se cancelará esa restauración.</item>
         <item quantity="other">%d de los archivos seleccionados se están restaurando ahora mismo: al quitarlos se cancelarán esas restauraciones.</item>
     </plurals>
-    <string name="cloud_status_backed_up">respaldado</string>
     <string name="cloud_backup_header_encrypted">cifrado de extremo a extremo</string>
     <string name="cloud_status_empty_title">Aún no hay nada respaldado</string>
+    <string name="backup_hero_setup_title">Respalda tus descargas</string>
+    <string name="backup_hero_setup_body">Cifradas en este teléfono y guardadas donde tú elijas.</string>
+    <string name="backup_hero_setup_cta">Configurar copia de seguridad</string>
+    <string name="backup_hero_size">%1$s respaldados</string>
     <string name="cloud_status_empty_body">Respalda cualquier descarga terminada desde su menú ⋮.</string>
-    <string name="settings_sync_create_title">Crear código de recuperación</string>
     <string name="settings_sync_needs_key">Primero crea o introduce un código de recuperación</string>
     <string name="settings_sync_link_title">Tengo un código de recuperación</string>
     <string name="settings_sync_link_summary">Usa el código de otro dispositivo y luego elige su carpeta de copia de seguridad</string>

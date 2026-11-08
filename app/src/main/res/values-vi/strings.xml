@@ -587,9 +587,12 @@
     <plurals name="cloud_restore_started_many">
         <item quantity="other">Đang khôi phục %d tệp…</item>
     </plurals>
-    <string name="cloud_status_backed_up">đã sao lưu</string>
     <string name="cloud_status_empty_body">Sao lưu một tải xuống đã hoàn tất từ menu ⋮ của nó.</string>
     <string name="cloud_status_empty_title">Chưa sao lưu gì</string>
+    <string name="backup_hero_setup_title">Sao lưu các tải xuống của bạn</string>
+    <string name="backup_hero_setup_body">Được mã hóa trên điện thoại này, rồi lưu ở nơi bạn chọn.</string>
+    <string name="backup_hero_setup_cta">Thiết lập sao lưu</string>
+    <string name="backup_hero_size">Đã sao lưu %1$s</string>
     <string name="compress">Nén</string>
     <string name="contextmenu_snackbar_too_large">Quá lớn để sao chép hoặc chia sẻ</string>
     <string name="crash_sheet_send">Gửi báo cáo</string>
@@ -651,7 +654,6 @@
     <string name="folder_backup_lost_notif_text">Firedown không truy cập được %1$s. Mở Sao lưu để chọn lại thư mục.</string>
     <string name="folder_backup_lost_notif_text_noname">Firedown không truy cập được thư mục sao lưu của bạn. Mở Sao lưu để chọn lại.</string>
     <string name="folder_backup_lost_notif_title">Không truy cập được thư mục sao lưu</string>
-    <string name="folder_backup_lost_seen">Lần cuối thấy: %1$s</string>
     <string name="folder_backup_lost_title">Không truy cập được thư mục sao lưu</string>
     <string name="folder_backup_pick_title">Nơi sao lưu</string>
     <string name="folder_backup_pick_unavailable">Điện thoại này không có trình chọn thư mục</string>
@@ -676,7 +678,6 @@
     <string name="folder_backup_state_lost">Không truy cập được thư mục</string>
     <string name="folder_backup_state_not_set_up">Chưa thiết lập</string>
     <string name="folder_backup_state_write">Ghi thất bại</string>
-    <string name="folder_backup_step_folder">Chọn nơi sao lưu</string>
     <string name="folder_backup_transfer_file">Không thể đọc tệp. Tệp có thể đã bị xóa hoặc di chuyển</string>
     <string name="folder_backup_transfer_lost">Không truy cập được thư mục sao lưu. Hãy chọn lại trong Sao lưu</string>
     <string name="folder_backup_transfer_not_set_up">Chưa thiết lập sao lưu. Hãy hoàn tất thiết lập trong Sao lưu</string>
@@ -888,7 +889,6 @@
     </plurals>
     <string name="settings_cloud_backup_files_summary">Xem và khôi phục những gì bạn đã sao lưu</string>
     <string name="settings_cloud_backup_title">Sao lưu</string>
-    <string name="settings_cloud_backup_usage_unavailable">Đã sao lưu. Chưa rõ dung lượng khi không truy cập được thư mục</string>
     <string name="settings_cloud_delete_summary">Xóa vĩnh viễn dấu trang hoặc tệp đã sao lưu</string>
     <string name="settings_cloud_delete_title">Xóa dữ liệu sao lưu</string>
     <string name="settings_direct_share_summary">Cài đặt mạng để gửi tệp giữa các thiết bị</string>
@@ -983,7 +983,6 @@
     <string name="settings_sync_code_qr_hint">Quét mã này từ thiết bị khác của bạn, rồi chọn cùng thư mục sao lưu trên thiết bị đó.</string>
     <string name="settings_sync_code_save_file">Lưu vào tệp</string>
     <string name="settings_sync_code_show_qr">Hiện mã QR</string>
-    <string name="settings_sync_create_title">Tạo mã khôi phục</string>
     <string name="settings_sync_link_action">Khôi phục</string>
     <string name="settings_sync_link_bad">Mã khôi phục này có vẻ không đúng</string>
     <string name="settings_sync_link_dialog_message">Dán mã từ thiết bị khác của bạn. Bản sao lưu của thiết bị đó sẽ đọc được ở đây khi thiết bị này cũng dùng cùng thư mục sao lưu. Đồng bộ dấu trang vẫn tắt.</string>

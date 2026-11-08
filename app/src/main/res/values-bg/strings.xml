@@ -550,7 +550,6 @@
         <item quantity="one">%d файл</item>
         <item quantity="other">%d файла</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Архивирано. Размерът е неизвестен, докато папката е недостъпна</string>
     <string name="settings_cloud_backup_active">Тече прехвърляне…</string>
     <string name="settings_cloud_backup_files_summary">Преглед и възстановяване на това, което сте архивирали</string>
 
@@ -574,7 +573,6 @@
     <string name="folder_backup_hero_on">В %1$s</string>
     <string name="folder_backup_lost_title">Папката за архивиране е недостъпна</string>
     <string name="folder_backup_lost_body">Папката може да е била преместена, изтрита или излязла от профила. Изберете я отново, за да продължите архивирането. Нищо на този телефон не е засегнато.</string>
-    <string name="folder_backup_lost_seen">Последно: %1$s</string>
     <string name="folder_backup_choose_cta">Избор на папка за архивиране</string>
     <string name="folder_backup_pick_title">Къде да се архивира</string>
     <string name="folder_backup_pick_unavailable">На този телефон няма избор на папка</string>
@@ -674,7 +672,6 @@
     <string name="folder_backup_guard_message">Firedown вече пази изтеглянията ви в %1$s. Архив там се губи заедно с телефона. Вместо това изберете папка в облачно приложение или на SD карта.</string>
     <string name="folder_backup_guard_choose_other">Избери друга</string>
     <string name="folder_backup_guard_use_anyway">Използвай я все пак</string>
-    <string name="folder_backup_step_folder">Изберете къде да се архивира</string>
     <string name="folder_backup_rechoose_cta">Изберете папката отново</string>
     <string name="folder_backup_folder_set">Папка за архивиране: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup в %1$s</string>
@@ -727,11 +724,13 @@
         <item quantity="one">%d от избраните файлове се възстановява в момента. Премахването ще отмени възстановяването.</item>
         <item quantity="other">%d от избраните файлове се възстановяват в момента. Премахването ще отмени възстановяванията.</item>
     </plurals>
-    <string name="cloud_status_backed_up">архивирано</string>
     <string name="cloud_backup_header_encrypted">шифровано от край до край</string>
     <string name="cloud_status_empty_title">Все още няма архивирани файлове</string>
+    <string name="backup_hero_setup_title">Архивирайте изтеглянията си</string>
+    <string name="backup_hero_setup_body">Шифровани на този телефон, после запазени където изберете.</string>
+    <string name="backup_hero_setup_cta">Настройване на архивиране</string>
+    <string name="backup_hero_size">%1$s архивирани</string>
     <string name="cloud_status_empty_body">Архивирайте което и да е завършено изтегляне от менюто му ⋮.</string>
-    <string name="settings_sync_create_title">Създаване на код за възстановяване</string>
     <string name="settings_sync_needs_key">Първо създайте или въведете код за възстановяване</string>
     <string name="settings_sync_link_title">Имам код за възстановяване</string>
     <string name="settings_sync_link_summary">Използвайте кода на друго устройство, после изберете неговата папка за архивиране</string>

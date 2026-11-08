@@ -726,7 +726,6 @@
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="other">%d 件のファイル</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">バックアップ済み。フォルダーに接続できない間はサイズ不明</string>
     <string name="settings_cloud_backup_active">転送中…</string>
     <string name="settings_cloud_backup_files_summary">バックアップした内容を表示・復元</string>
 
@@ -750,7 +749,6 @@
     <string name="folder_backup_hero_on">%1$s 上</string>
     <string name="folder_backup_lost_title">バックアップフォルダーに接続できません</string>
     <string name="folder_backup_lost_body">フォルダーが移動・削除されたか、サインアウトされた可能性があります。バックアップを続けるには選び直してください。この端末のデータには影響しません。</string>
-    <string name="folder_backup_lost_seen">最終確認: %1$s</string>
     <string name="folder_backup_choose_cta">バックアップフォルダーを選択</string>
     <string name="folder_backup_pick_title">バックアップ先</string>
     <string name="folder_backup_pick_unavailable">この端末にはフォルダー選択画面がありません</string>
@@ -845,7 +843,6 @@
     <string name="folder_backup_guard_message">Firedown はすでに %1$s にダウンロードを保存しています。そこへのバックアップは端末と一緒に失われます。代わりにクラウドアプリか SD カードのフォルダーを選んでください。</string>
     <string name="folder_backup_guard_choose_other">別のフォルダーを選ぶ</string>
     <string name="folder_backup_guard_use_anyway">このまま使う</string>
-    <string name="folder_backup_step_folder">バックアップ先を選ぶ</string>
     <string name="folder_backup_rechoose_cta">フォルダーを選び直す</string>
     <string name="folder_backup_folder_set">バックアップフォルダー: %1$s</string>
     <string name="folder_backup_header_on">%1$s 上の Firedown Backup</string>
@@ -898,11 +895,13 @@
         <item quantity="one">選択したファイルのうち %d 件は現在復元中です。削除するとその復元は取り消されます。</item>
         <item quantity="other">選択したファイルのうち %d 件は現在復元中です。削除するとそれらの復元は取り消されます。</item>
     </plurals>
-    <string name="cloud_status_backed_up">バックアップ済み</string>
     <string name="cloud_backup_header_encrypted">エンドツーエンド暗号化</string>
     <string name="cloud_status_empty_title">まだ何もバックアップされていません</string>
+    <string name="backup_hero_setup_title">ダウンロードをバックアップ</string>
+    <string name="backup_hero_setup_body">この端末で暗号化し、選んだ場所に保存します。</string>
+    <string name="backup_hero_setup_cta">バックアップを設定</string>
+    <string name="backup_hero_size">%1$s バックアップ済み</string>
     <string name="cloud_status_empty_body">完了したダウンロードの ⋮ メニューからバックアップできます。</string>
-    <string name="settings_sync_create_title">リカバリーコードを作成</string>
     <string name="settings_sync_needs_key">先にリカバリーコードを作成または入力してください</string>
     <string name="settings_sync_link_title">リカバリーコードを持っています</string>
     <string name="settings_sync_link_summary">他の端末のコードを使い、そのバックアップフォルダーを選ぶ</string>

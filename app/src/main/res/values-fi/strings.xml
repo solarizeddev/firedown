@@ -595,7 +595,6 @@
         <item quantity="one">%d tiedosto</item>
         <item quantity="other">%d tiedostoa</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Varmuuskopioitu. Koko ei ole tiedossa, kun kansio ei ole tavoitettavissa</string>
     <string name="settings_cloud_backup_active">Siirto käynnissä…</string>
     <string name="settings_cloud_backup_files_summary">Tarkastele ja palauta varmuuskopioimasi tiedostot</string>
 
@@ -619,7 +618,6 @@
     <string name="folder_backup_hero_on">Kohteessa %1$s</string>
     <string name="folder_backup_lost_title">Varmuuskopiokansiota ei tavoiteta</string>
     <string name="folder_backup_lost_body">Kansio on ehkä siirretty, poistettu tai kirjauduttu ulos. Valitse se uudelleen jatkaaksesi varmuuskopiointia. Tähän puhelimeen tämä ei vaikuta.</string>
-    <string name="folder_backup_lost_seen">Viimeksi nähty: %1$s</string>
     <string name="folder_backup_choose_cta">Valitse varmuuskopiokansio</string>
     <string name="folder_backup_pick_title">Minne varmuuskopioidaan</string>
     <string name="folder_backup_pick_unavailable">Tässä puhelimessa ei ole kansiovalitsinta</string>
@@ -715,7 +713,6 @@
     <string name="folder_backup_guard_message">Firedown tallentaa latauksesi jo kansioon %1$s. Sinne tehty varmuuskopio katoaa puhelimen mukana. Valitse sen sijaan kansio pilvisovelluksesta tai SD-kortilta.</string>
     <string name="folder_backup_guard_choose_other">Valitse toinen</string>
     <string name="folder_backup_guard_use_anyway">Käytä silti</string>
-    <string name="folder_backup_step_folder">Valitse, minne varmuuskopioidaan</string>
     <string name="folder_backup_rechoose_cta">Valitse kansio uudelleen</string>
     <string name="folder_backup_folder_set">Varmuuskopiokansio: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup kohteessa %1$s</string>
@@ -768,11 +765,13 @@
         <item quantity="one">%d valituista tiedostoista palautetaan parhaillaan. Poistaminen peruuttaa palautuksen.</item>
         <item quantity="other">%d valituista tiedostoista palautetaan parhaillaan. Poistaminen peruuttaa palautukset.</item>
     </plurals>
-    <string name="cloud_status_backed_up">varmuuskopioitu</string>
     <string name="cloud_backup_header_encrypted">päästä päähän salattu</string>
     <string name="cloud_status_empty_title">Ei vielä varmuuskopioita</string>
+    <string name="backup_hero_setup_title">Varmuuskopioi lataukset</string>
+    <string name="backup_hero_setup_body">Salataan tässä puhelimessa ja tallennetaan valitsemaasi paikkaan.</string>
+    <string name="backup_hero_setup_cta">Ota varmuuskopiointi käyttöön</string>
+    <string name="backup_hero_size">%1$s varmuuskopioitu</string>
     <string name="cloud_status_empty_body">Varmuuskopioi mikä tahansa valmis lataus sen ⋮-valikosta.</string>
-    <string name="settings_sync_create_title">Luo palautuskoodi</string>
     <string name="settings_sync_needs_key">Luo tai syötä ensin palautuskoodi</string>
     <string name="settings_sync_link_title">Minulla on palautuskoodi</string>
     <string name="settings_sync_link_summary">Käytä toisen laitteen koodia ja valitse sitten sen varmuuskopiokansio</string>

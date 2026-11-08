@@ -547,9 +547,12 @@
     <plurals name="cloud_restore_started_many">
         <item quantity="other">Memulihkan %d berkas…</item>
     </plurals>
-    <string name="cloud_status_backed_up">dicadangkan</string>
     <string name="cloud_status_empty_body">Cadangkan unduhan yang sudah selesai dari menu ⋮-nya.</string>
     <string name="cloud_status_empty_title">Belum ada yang dicadangkan</string>
+    <string name="backup_hero_setup_title">Cadangkan unduhan Anda</string>
+    <string name="backup_hero_setup_body">Dienkripsi di ponsel ini, lalu disimpan di tempat pilihan Anda.</string>
+    <string name="backup_hero_setup_cta">Siapkan pencadangan</string>
+    <string name="backup_hero_size">%1$s dicadangkan</string>
     <string name="compress">Kompres</string>
     <string name="contextmenu_snackbar_too_large">Terlalu besar untuk disalin atau dibagikan</string>
     <string name="crash_sheet_send">Kirim laporan</string>
@@ -611,7 +614,6 @@
     <string name="folder_backup_lost_notif_text">Firedown tidak dapat menjangkau %1$s. Buka Cadangan untuk memilih folder lagi.</string>
     <string name="folder_backup_lost_notif_text_noname">Firedown tidak dapat menjangkau folder cadangan Anda. Buka Cadangan untuk memilihnya lagi.</string>
     <string name="folder_backup_lost_notif_title">Folder cadangan tidak dapat dijangkau</string>
-    <string name="folder_backup_lost_seen">Terakhir terlihat: %1$s</string>
     <string name="folder_backup_lost_title">Tidak dapat menjangkau folder cadangan Anda</string>
     <string name="folder_backup_pick_title">Tujuan cadangan</string>
     <string name="folder_backup_pick_unavailable">Tidak ada pemilih folder di ponsel ini</string>
@@ -636,7 +638,6 @@
     <string name="folder_backup_state_lost">Folder tidak terjangkau</string>
     <string name="folder_backup_state_not_set_up">Belum disiapkan</string>
     <string name="folder_backup_state_write">Gagal menulis</string>
-    <string name="folder_backup_step_folder">Pilih tujuan cadangan</string>
     <string name="folder_backup_transfer_file">Tidak dapat membaca berkas. Berkas mungkin telah dihapus atau dipindahkan</string>
     <string name="folder_backup_transfer_lost">Tidak dapat menjangkau folder cadangan. Pilih lagi di Cadangan</string>
     <string name="folder_backup_transfer_not_set_up">Cadangan belum disiapkan. Selesaikan penyiapan di Cadangan</string>
@@ -853,7 +854,6 @@
     </plurals>
     <string name="settings_cloud_backup_files_summary">Lihat dan pulihkan yang telah Anda cadangkan</string>
     <string name="settings_cloud_backup_title">Cadangan</string>
-    <string name="settings_cloud_backup_usage_unavailable">Dicadangkan. Ukuran tidak diketahui selama folder tidak dapat dijangkau</string>
     <string name="settings_cloud_delete_summary">Markah atau berkas cadangan, secara permanen</string>
     <string name="settings_cloud_delete_title">Hapus data cadangan</string>
     <string name="settings_direct_share_summary">Setelan jaringan untuk mengirim berkas antarperangkat</string>
@@ -958,7 +958,6 @@
     <string name="settings_sync_code_show_qr">Tampilkan kode QR</string>
     <string name="settings_sync_code_unavailable">Kode pemulihan tidak tersedia</string>
     <string name="settings_sync_code_warning">Kode pemulihan ini adalah satu-satunya kunci untuk markah tersinkronisasi Anda. Simpan di pengelola kata sandi atau tempat aman lain. Kode ini tidak dapat dipulihkan jika hilang.</string>
-    <string name="settings_sync_create_title">Buat kode pemulihan</string>
     <string name="settings_sync_delete_action">Hapus</string>
     <string name="settings_sync_delete_done">Data Anda telah dihapus dari server</string>
     <string name="settings_sync_delete_failed">Tidak dapat menghapus. Periksa koneksi Anda dan coba lagi</string>

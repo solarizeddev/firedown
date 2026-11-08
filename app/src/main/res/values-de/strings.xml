@@ -732,7 +732,6 @@
         <item quantity="one">%d Datei</item>
         <item quantity="other">%d Dateien</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Gesichert. Größe unbekannt, solange der Ordner nicht erreichbar ist</string>
     <string name="settings_cloud_backup_active">Übertragung läuft…</string>
     <string name="settings_cloud_backup_files_summary">Gesicherte Dateien ansehen und wiederherstellen</string>
 
@@ -756,7 +755,6 @@
     <string name="folder_backup_hero_on">Auf %1$s</string>
     <string name="folder_backup_lost_title">Backup-Ordner nicht erreichbar</string>
     <string name="folder_backup_lost_body">Der Ordner wurde vielleicht verschoben, gelöscht oder abgemeldet. Wähle ihn erneut, um weiter zu sichern. Auf diesem Handy ändert sich nichts.</string>
-    <string name="folder_backup_lost_seen">Zuletzt gesehen: %1$s</string>
     <string name="folder_backup_choose_cta">Backup-Ordner wählen</string>
     <string name="folder_backup_pick_title">Wohin sichern</string>
     <string name="folder_backup_pick_unavailable">Auf diesem Handy ist keine Ordnerauswahl verfügbar</string>
@@ -851,7 +849,6 @@
     <string name="folder_backup_guard_message">Firedown speichert deine Downloads bereits in %1$s. Eine Sicherung dort geht mit dem Handy verloren. Wähle stattdessen einen Ordner in einer Cloud-App oder auf einer SD-Karte.</string>
     <string name="folder_backup_guard_choose_other">Anderen wählen</string>
     <string name="folder_backup_guard_use_anyway">Trotzdem verwenden</string>
-    <string name="folder_backup_step_folder">Wählen, wohin gesichert wird</string>
     <string name="folder_backup_rechoose_cta">Ordner erneut wählen</string>
     <string name="folder_backup_folder_set">Backup-Ordner: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup auf %1$s</string>
@@ -904,11 +901,13 @@
         <item quantity="one">%d der ausgewählten Dateien wird gerade wiederhergestellt. Beim Entfernen wird das abgebrochen.</item>
         <item quantity="other">%d der ausgewählten Dateien werden gerade wiederhergestellt. Beim Entfernen wird das abgebrochen.</item>
     </plurals>
-    <string name="cloud_status_backed_up">gesichert</string>
     <string name="cloud_backup_header_encrypted">Ende-zu-Ende-verschlüsselt</string>
     <string name="cloud_status_empty_title">Noch nichts gesichert</string>
+    <string name="backup_hero_setup_title">Sichere deine Downloads</string>
+    <string name="backup_hero_setup_body">Auf diesem Handy verschlüsselt, dann dort gespeichert, wo du willst.</string>
+    <string name="backup_hero_setup_cta">Backup einrichten</string>
+    <string name="backup_hero_size">%1$s gesichert</string>
     <string name="cloud_status_empty_body">Sichere jeden fertigen Download über sein ⋮-Menü.</string>
-    <string name="settings_sync_create_title">Wiederherstellungscode erstellen</string>
     <string name="settings_sync_needs_key">Zuerst einen Wiederherstellungscode erstellen oder eingeben</string>
     <string name="settings_sync_link_title">Ich habe einen Wiederherstellungscode</string>
     <string name="settings_sync_link_summary">Den Code eines anderen Geräts nutzen, dann dessen Backup-Ordner wählen</string>

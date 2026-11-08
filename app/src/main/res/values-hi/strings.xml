@@ -562,7 +562,6 @@
         <item quantity="one">%d फ़ाइल</item>
         <item quantity="other">%d फ़ाइलें</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">बैकअप हो चुका है। फ़ोल्डर उपलब्ध न होने तक आकार अज्ञात</string>
     <string name="settings_cloud_backup_active">ट्रांसफ़र जारी है…</string>
     <string name="settings_cloud_backup_files_summary">अपने बैकअप देखें और पुनर्स्थापित करें</string>
 
@@ -586,7 +585,6 @@
     <string name="folder_backup_hero_on">%1$s पर</string>
     <string name="folder_backup_lost_title">बैकअप फ़ोल्डर तक नहीं पहुँच पा रहे</string>
     <string name="folder_backup_lost_body">फ़ोल्डर शायद हटाया, मिटाया या साइन आउट कर दिया गया है। बैकअप जारी रखने के लिए इसे फिर से चुनें। इस फ़ोन पर कुछ भी प्रभावित नहीं होता।</string>
-    <string name="folder_backup_lost_seen">आख़िरी बार: %1$s</string>
     <string name="folder_backup_choose_cta">बैकअप फ़ोल्डर चुनें</string>
     <string name="folder_backup_pick_title">बैकअप कहाँ लें</string>
     <string name="folder_backup_pick_unavailable">इस फ़ोन पर कोई फ़ोल्डर चयनकर्ता उपलब्ध नहीं है</string>
@@ -685,7 +683,6 @@
     <string name="folder_backup_guard_message">Firedown आपके डाउनलोड पहले से %1$s में रखता है। वहाँ का बैकअप फ़ोन के साथ ही खो जाता है। इसके बजाय किसी क्लाउड ऐप या SD कार्ड का फ़ोल्डर चुनें।</string>
     <string name="folder_backup_guard_choose_other">दूसरा चुनें</string>
     <string name="folder_backup_guard_use_anyway">फिर भी इस्तेमाल करें</string>
-    <string name="folder_backup_step_folder">चुनें कि बैकअप कहाँ लें</string>
     <string name="folder_backup_rechoose_cta">फ़ोल्डर फिर से चुनें</string>
     <string name="folder_backup_folder_set">बैकअप फ़ोल्डर: %1$s</string>
     <string name="folder_backup_header_on">%1$s पर Firedown Backup</string>
@@ -738,11 +735,13 @@
         <item quantity="one">चुनी गई फ़ाइलों में से %d अभी पुनर्स्थापित हो रही है। हटाने पर वह पुनर्स्थापना रद्द हो जाएगी।</item>
         <item quantity="other">चुनी गई फ़ाइलों में से %d अभी पुनर्स्थापित हो रही हैं। हटाने पर वे पुनर्स्थापनाएँ रद्द हो जाएँगी।</item>
     </plurals>
-    <string name="cloud_status_backed_up">बैकअप हुआ</string>
     <string name="cloud_backup_header_encrypted">एंड-टू-एंड एन्क्रिप्टेड</string>
     <string name="cloud_status_empty_title">अभी तक कुछ बैकअप नहीं हुआ</string>
+    <string name="backup_hero_setup_title">अपने डाउनलोड का बैकअप लें</string>
+    <string name="backup_hero_setup_body">इस फ़ोन पर एन्क्रिप्ट होकर आपकी चुनी जगह पर सहेजे जाते हैं।</string>
+    <string name="backup_hero_setup_cta">बैकअप सेट करें</string>
+    <string name="backup_hero_size">%1$s का बैकअप हुआ</string>
     <string name="cloud_status_empty_body">किसी भी पूर्ण डाउनलोड को उसके ⋮ मेनू से बैकअप करें।</string>
-    <string name="settings_sync_create_title">रिकवरी कोड बनाएँ</string>
     <string name="settings_sync_needs_key">पहले रिकवरी कोड बनाएँ या दर्ज करें</string>
     <string name="settings_sync_link_title">मेरे पास एक रिकवरी कोड है</string>
     <string name="settings_sync_link_summary">दूसरे डिवाइस का कोड इस्तेमाल करें, फिर उसका बैकअप फ़ोल्डर चुनें</string>

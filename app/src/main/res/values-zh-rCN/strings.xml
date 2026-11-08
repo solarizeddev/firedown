@@ -726,7 +726,6 @@
     <plurals name="settings_cloud_backup_file_count">
         <item quantity="other">%d 个文件</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">已备份。文件夹无法访问时大小未知</string>
     <string name="settings_cloud_backup_active">传输进行中…</string>
     <string name="settings_cloud_backup_files_summary">查看并恢复你已备份的内容</string>
 
@@ -750,7 +749,6 @@
     <string name="folder_backup_hero_on">位于 %1$s</string>
     <string name="folder_backup_lost_title">无法访问备份文件夹</string>
     <string name="folder_backup_lost_body">该文件夹可能已被移动、删除或退出登录。请重新选择以继续备份。本机上的内容不受影响。</string>
-    <string name="folder_backup_lost_seen">上次读取：%1$s</string>
     <string name="folder_backup_choose_cta">选择备份文件夹</string>
     <string name="folder_backup_pick_title">备份到哪里</string>
     <string name="folder_backup_pick_unavailable">这部手机没有文件夹选择器</string>
@@ -845,7 +843,6 @@
     <string name="folder_backup_guard_message">Firedown 已经把你的下载保存在 %1$s。备份到那里会随手机一起丢失。请改为选择云应用或 SD 卡中的文件夹。</string>
     <string name="folder_backup_guard_choose_other">另选一个</string>
     <string name="folder_backup_guard_use_anyway">仍然使用</string>
-    <string name="folder_backup_step_folder">选择备份到哪里</string>
     <string name="folder_backup_rechoose_cta">重新选择文件夹</string>
     <string name="folder_backup_folder_set">备份文件夹：%1$s</string>
     <string name="folder_backup_header_on">%1$s 上的 Firedown Backup</string>
@@ -898,11 +895,13 @@
         <item quantity="one">所选文件中有 %d 个正在恢复。移除会取消该恢复。</item>
         <item quantity="other">所选文件中有 %d 个正在恢复。移除会取消这些恢复。</item>
     </plurals>
-    <string name="cloud_status_backed_up">已备份</string>
     <string name="cloud_backup_header_encrypted">端到端加密</string>
     <string name="cloud_status_empty_title">还没有任何备份</string>
+    <string name="backup_hero_setup_title">备份你的下载</string>
+    <string name="backup_hero_setup_body">在本机上加密，然后保存到你选择的位置。</string>
+    <string name="backup_hero_setup_cta">设置备份</string>
+    <string name="backup_hero_size">已备份 %1$s</string>
     <string name="cloud_status_empty_body">在任意已完成下载的 ⋮ 菜单中即可备份。</string>
-    <string name="settings_sync_create_title">创建恢复代码</string>
     <string name="settings_sync_needs_key">请先创建或输入恢复代码</string>
     <string name="settings_sync_link_title">我有恢复码</string>
     <string name="settings_sync_link_summary">使用另一台设备的恢复码，然后选择它的备份文件夹</string>

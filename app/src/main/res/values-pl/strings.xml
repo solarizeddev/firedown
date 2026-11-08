@@ -647,7 +647,6 @@
         <item quantity="many">%d plików</item>
         <item quantity="other">%d pliku</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Zapisano w kopii. Rozmiar nieznany, dopóki folder jest niedostępny</string>
     <string name="settings_cloud_backup_active">Transfer w toku…</string>
     <string name="settings_cloud_backup_files_summary">Wyświetl i przywróć to, czego kopię zapasową utworzono</string>
 
@@ -671,7 +670,6 @@
     <string name="folder_backup_hero_on">W %1$s</string>
     <string name="folder_backup_lost_title">Brak dostępu do folderu kopii zapasowej</string>
     <string name="folder_backup_lost_body">Folder mógł zostać przeniesiony, usunięty lub wylogowany. Wybierz go ponownie, aby dalej tworzyć kopie. Nic na tym telefonie nie ucierpi.</string>
-    <string name="folder_backup_lost_seen">Ostatnio: %1$s</string>
     <string name="folder_backup_choose_cta">Wybierz folder kopii zapasowej</string>
     <string name="folder_backup_pick_title">Gdzie zapisać kopię</string>
     <string name="folder_backup_pick_unavailable">Ten telefon nie ma selektora folderów</string>
@@ -767,7 +765,6 @@
     <string name="folder_backup_guard_message">Firedown już przechowuje pobrane pliki w %1$s. Kopia zapasowa tam przepada razem z telefonem. Wybierz zamiast tego folder w aplikacji chmurowej lub na karcie SD.</string>
     <string name="folder_backup_guard_choose_other">Wybierz inny</string>
     <string name="folder_backup_guard_use_anyway">Użyj mimo to</string>
-    <string name="folder_backup_step_folder">Wybierz, gdzie zapisać kopię</string>
     <string name="folder_backup_rechoose_cta">Wybierz folder ponownie</string>
     <string name="folder_backup_folder_set">Folder kopii zapasowej: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup w %1$s</string>
@@ -820,11 +817,13 @@
         <item quantity="one">%d z wybranych plików jest właśnie przywracany. Usunięcie anuluje to przywracanie.</item>
         <item quantity="other">%d z wybranych plików jest właśnie przywracanych. Usunięcie anuluje te przywracania.</item>
     </plurals>
-    <string name="cloud_status_backed_up">w kopii zapasowej</string>
     <string name="cloud_backup_header_encrypted">szyfrowane end-to-end</string>
     <string name="cloud_status_empty_title">Nie ma jeszcze kopii zapasowych</string>
+    <string name="backup_hero_setup_title">Utwórz kopię zapasową pobrań</string>
+    <string name="backup_hero_setup_body">Zaszyfrowane na tym telefonie, potem zapisane tam, gdzie wybierzesz.</string>
+    <string name="backup_hero_setup_cta">Skonfiguruj kopię zapasową</string>
+    <string name="backup_hero_size">%1$s w kopii zapasowej</string>
     <string name="cloud_status_empty_body">Utwórz kopię dowolnego ukończonego pobrania z jego menu ⋮.</string>
-    <string name="settings_sync_create_title">Utwórz kod odzyskiwania</string>
     <string name="settings_sync_needs_key">Najpierw utwórz lub wprowadź kod odzyskiwania</string>
     <string name="settings_sync_link_title">Mam kod odzyskiwania</string>
     <string name="settings_sync_link_summary">Użyj kodu innego urządzenia, a potem wybierz jego folder kopii zapasowej</string>

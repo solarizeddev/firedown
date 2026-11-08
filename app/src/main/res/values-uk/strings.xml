@@ -576,7 +576,6 @@
         <item quantity="many">%d файлів</item>
         <item quantity="other">%d файлу</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Збережено. Розмір невідомий, поки тека недоступна</string>
     <string name="settings_cloud_backup_active">Передавання триває…</string>
     <string name="settings_cloud_backup_files_summary">Переглядайте та відновлюйте збережене</string>
 
@@ -600,7 +599,6 @@
     <string name="folder_backup_hero_on">У %1$s</string>
     <string name="folder_backup_lost_title">Тека резервної копії недоступна</string>
     <string name="folder_backup_lost_body">Теку могли перемістити, видалити або від неї вийшли. Виберіть її знову, щоб продовжити резервне копіювання. На цьому телефоні нічого не змінюється.</string>
-    <string name="folder_backup_lost_seen">Востаннє: %1$s</string>
     <string name="folder_backup_choose_cta">Вибрати теку резервної копії</string>
     <string name="folder_backup_pick_title">Куди зберігати копію</string>
     <string name="folder_backup_pick_unavailable">На цьому телефоні немає вибору теки</string>
@@ -696,7 +694,6 @@
     <string name="folder_backup_guard_message">Firedown уже зберігає ваші завантаження в %1$s. Резервна копія там втрачається разом із телефоном. Натомість виберіть теку в хмарному застосунку або на SD-картці.</string>
     <string name="folder_backup_guard_choose_other">Вибрати іншу</string>
     <string name="folder_backup_guard_use_anyway">Усе одно використати</string>
-    <string name="folder_backup_step_folder">Виберіть, куди зберігати копію</string>
     <string name="folder_backup_rechoose_cta">Вибрати теку знову</string>
     <string name="folder_backup_folder_set">Тека резервної копії: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup у %1$s</string>
@@ -749,11 +746,13 @@
         <item quantity="one">%d з вибраних файлів зараз відновлюється. Вилучення скасує це відновлення.</item>
         <item quantity="other">%d з вибраних файлів зараз відновлюються. Вилучення скасує ці відновлення.</item>
     </plurals>
-    <string name="cloud_status_backed_up">у резервній копії</string>
     <string name="cloud_backup_header_encrypted">наскрізне шифрування</string>
     <string name="cloud_status_empty_title">Поки нічого не збережено</string>
+    <string name="backup_hero_setup_title">Створіть резервну копію завантажень</string>
+    <string name="backup_hero_setup_body">Шифруються на цьому телефоні й зберігаються там, де ви оберете.</string>
+    <string name="backup_hero_setup_cta">Налаштувати резервне копіювання</string>
+    <string name="backup_hero_size">%1$s у резервній копії</string>
     <string name="cloud_status_empty_body">Створіть резервну копію будь-якого завершеного завантаження через його меню ⋮.</string>
-    <string name="settings_sync_create_title">Створити код відновлення</string>
     <string name="settings_sync_needs_key">Спочатку створіть або введіть код відновлення</string>
     <string name="settings_sync_link_title">У мене є код відновлення</string>
     <string name="settings_sync_link_summary">Використайте код іншого пристрою, потім виберіть його теку резервної копії</string>

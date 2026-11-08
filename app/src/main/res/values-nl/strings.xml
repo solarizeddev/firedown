@@ -637,7 +637,6 @@
         <item quantity="one">%d bestand</item>
         <item quantity="other">%d bestanden</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Geback-upt. Grootte onbekend zolang de map onbereikbaar is</string>
     <string name="settings_cloud_backup_active">Overdracht bezig…</string>
     <string name="settings_cloud_backup_files_summary">Bekijk en herstel wat je hebt geback-upt</string>
 
@@ -661,7 +660,6 @@
     <string name="folder_backup_hero_on">Op %1$s</string>
     <string name="folder_backup_lost_title">Je back-upmap is onbereikbaar</string>
     <string name="folder_backup_lost_body">De map is mogelijk verplaatst, verwijderd of uitgelogd. Kies hem opnieuw om door te gaan met back-ups. Niets op deze telefoon wordt beïnvloed.</string>
-    <string name="folder_backup_lost_seen">Laatst gezien: %1$s</string>
     <string name="folder_backup_choose_cta">Back-upmap kiezen</string>
     <string name="folder_backup_pick_title">Waar back-uppen</string>
     <string name="folder_backup_pick_unavailable">Deze telefoon heeft geen mapkiezer</string>
@@ -757,7 +755,6 @@
     <string name="folder_backup_guard_message">Firedown bewaart je downloads al in %1$s. Een back-up daar gaat met de telefoon verloren. Kies in plaats daarvan een map in een cloud-app of op een SD-kaart.</string>
     <string name="folder_backup_guard_choose_other">Andere kiezen</string>
     <string name="folder_backup_guard_use_anyway">Toch gebruiken</string>
-    <string name="folder_backup_step_folder">Kies waar je een back-up maakt</string>
     <string name="folder_backup_rechoose_cta">Map opnieuw kiezen</string>
     <string name="folder_backup_folder_set">Back-upmap: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup op %1$s</string>
@@ -810,11 +807,13 @@
         <item quantity="one">%d van de geselecteerde bestanden wordt nu hersteld. Verwijderen annuleert dat herstel.</item>
         <item quantity="other">%d van de geselecteerde bestanden worden nu hersteld. Verwijderen annuleert die herstelbewerkingen.</item>
     </plurals>
-    <string name="cloud_status_backed_up">geback-upt</string>
     <string name="cloud_backup_header_encrypted">end-to-end versleuteld</string>
     <string name="cloud_status_empty_title">Nog niets geback-upt</string>
+    <string name="backup_hero_setup_title">Maak een back-up van je downloads</string>
+    <string name="backup_hero_setup_body">Versleuteld op deze telefoon, daarna opgeslagen waar jij kiest.</string>
+    <string name="backup_hero_setup_cta">Back-up instellen</string>
+    <string name="backup_hero_size">%1$s geback-upt</string>
     <string name="cloud_status_empty_body">Back-up elke voltooide download via het ⋮-menu.</string>
-    <string name="settings_sync_create_title">Herstelcode aanmaken</string>
     <string name="settings_sync_needs_key">Maak eerst een herstelcode aan of voer er een in</string>
     <string name="settings_sync_link_title">Ik heb een herstelcode</string>
     <string name="settings_sync_link_summary">Gebruik de code van een ander apparaat en kies daarna zijn back-upmap</string>

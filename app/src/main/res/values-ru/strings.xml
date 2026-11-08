@@ -649,7 +649,6 @@
         <item quantity="many">%d файлов</item>
         <item quantity="other">%d файла</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Сохранено. Размер неизвестен, пока папка недоступна</string>
     <string name="settings_cloud_backup_active">Идёт передача…</string>
     <string name="settings_cloud_backup_files_summary">Просмотр и восстановление сохранённого</string>
 
@@ -673,7 +672,6 @@
     <string name="folder_backup_hero_on">В %1$s</string>
     <string name="folder_backup_lost_title">Папка резервной копии недоступна</string>
     <string name="folder_backup_lost_body">Папка могла быть перемещена, удалена или отключена. Выберите её заново, чтобы продолжить резервное копирование. На этом телефоне ничего не затронуто.</string>
-    <string name="folder_backup_lost_seen">Последний раз: %1$s</string>
     <string name="folder_backup_choose_cta">Выбрать папку резервной копии</string>
     <string name="folder_backup_pick_title">Куда сохранять копию</string>
     <string name="folder_backup_pick_unavailable">На этом телефоне нет выбора папки</string>
@@ -769,7 +767,6 @@
     <string name="folder_backup_guard_message">Firedown уже хранит ваши загрузки в %1$s. Резервная копия там теряется вместе с телефоном. Выберите вместо этого папку в облачном приложении или на SD-карте.</string>
     <string name="folder_backup_guard_choose_other">Выбрать другую</string>
     <string name="folder_backup_guard_use_anyway">Всё равно использовать</string>
-    <string name="folder_backup_step_folder">Выберите, куда сохранять копию</string>
     <string name="folder_backup_rechoose_cta">Выбрать папку заново</string>
     <string name="folder_backup_folder_set">Папка резервной копии: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup в %1$s</string>
@@ -822,11 +819,13 @@
         <item quantity="one">%d из выбранных файлов сейчас восстанавливается. Удаление отменит восстановление.</item>
         <item quantity="other">%d из выбранных файлов сейчас восстанавливаются. Удаление отменит эти восстановления.</item>
     </plurals>
-    <string name="cloud_status_backed_up">в резервной копии</string>
     <string name="cloud_backup_header_encrypted">сквозное шифрование</string>
     <string name="cloud_status_empty_title">Пока ничего не сохранено</string>
+    <string name="backup_hero_setup_title">Создайте резервную копию загрузок</string>
+    <string name="backup_hero_setup_body">Шифруются на этом телефоне и сохраняются там, где вы выберете.</string>
+    <string name="backup_hero_setup_cta">Настроить резервное копирование</string>
+    <string name="backup_hero_size">%1$s в резервной копии</string>
     <string name="cloud_status_empty_body">Создайте резервную копию любой завершённой загрузки через её меню ⋮.</string>
-    <string name="settings_sync_create_title">Создать код восстановления</string>
     <string name="settings_sync_needs_key">Сначала создайте или введите код восстановления</string>
     <string name="settings_sync_link_title">У меня есть код восстановления</string>
     <string name="settings_sync_link_summary">Используйте код другого устройства, затем выберите его папку резервной копии</string>

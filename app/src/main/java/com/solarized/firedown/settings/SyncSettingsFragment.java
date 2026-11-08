@@ -79,11 +79,10 @@ import dagger.hilt.android.AndroidEntryPoint;
  * the app encrypts into it and reads back from it, and no Firedown server is
  * involved (the hosted service this replaced is gone — see CLAUDE.md).
  *
- * <p>Top to bottom: the {@link CloudStatusPreference} status hero (whose
- * not-set-up state is the three-step onboarding roadmap), the MORPHING filled
- * CTA — "Create recovery code" pre-key, "Choose backup folder" with a key but
- * no folder, "Choose the folder again" when the folder stopped answering, and
- * GONE once the backup is healthy — the adopt-a-code door, the "Backup
+ * <p>Top to bottom: the {@link CloudStatusPreference} status card (Signal's
+ * shape, with its one button inside: "Set up backup" until a code and a
+ * folder exist, "Choose the folder again" / "Reconnect" when the folder
+ * stopped answering, none on a healthy backup), the adopt-a-code door, the "Backup
  * folder" row (where it is: "Google Drive › Backups"; tap = change it), the
  * Backups row, one secondary inline Bookmarks switch, the shared recovery
  * code behind a device-auth gate, the website's how-it-works page, and LAST
@@ -96,8 +95,8 @@ import dagger.hilt.android.AndroidEntryPoint;
  * re-entering the screen never flashes the empty state while the folder
  * round-trip is in flight. The one fact the cached snapshot cannot carry is a
  * LOST folder (the cache keeps only successful reads), so the fragment keeps
- * the latest loaded status itself ({@link #mLastLoaded}) and the CTA follows
- * it.
+ * the latest loaded status itself ({@link #mLastLoaded}) and the card's
+ * button follows it.
  */
 @AndroidEntryPoint
 public class SyncSettingsFragment extends BasePreferenceFragment
@@ -113,7 +112,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     CloudBackupManager mCloudBackup;
 
     private CloudStatusPreference mStatus;
-    private CloudBuyButtonPreference mCta;
     private Preference mFiles;
     /** "Backup folder" — WHERE as the summary, tap = change (changeFolder). */
     private Preference mFolderRow;
@@ -258,7 +256,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         setPreferencesFromResource(R.xml.settings_sync, rootKey);
 
         mStatus = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_STATUS);
-        mCta = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_CTA);
         mFiles = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FILES);
         mFolderRow = findPreference(Preferences.SETTINGS_CLOUD_BACKUP_FOLDER);
         mDeleteDoor = findPreference(Preferences.SETTINGS_CLOUD_DELETE);
@@ -269,9 +266,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         mKeyGroup = findPreference(Preferences.SETTINGS_CLOUD_GROUP_KEY);
         mUseGroup = findPreference(Preferences.SETTINGS_CLOUD_GROUP_USE);
 
-        if (mCta != null) {
-            mCta.setOnPreferenceClickListener(this);
-        }
         if (mFiles != null) {
             mFiles.setOnPreferenceClickListener(this);
         }
@@ -333,21 +327,6 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     public boolean onPreferenceClick(Preference preference) {
         String key = preference.getKey();
         switch (key) {
-            case Preferences.SETTINGS_CLOUD_BACKUP_CTA -> {
-                // The MORPHING CTA: the next onboarding step. Pre-key it reads
-                // "Create recovery code" and runs the create flow (mandatory
-                // "I've saved it" gate); with a key the other labels — choose,
-                // choose again — open the "Where to back up" chooser, and
-                // "Reconnect" (a WebDAV server or an S3 bucket that stopped
-                // answering) opens its sign-in page, prefilled from it.
-                if (!mCloudBackup.hasAccount()) {
-                    createCode();
-                } else if (mCloudBackup.usesServer() && mCloudBackup.hasFolder()) {
-                    openServer();
-                } else {
-                    showPlaceChooser();
-                }
-            }
             case Preferences.SETTINGS_CLOUD_BACKUP_FOLDER -> changeFolder();
             case Preferences.SETTINGS_CLOUD_BACKUP_FILES ->
                     NavigationUtils.navigateSafe(mNavController, R.id.action_sync_to_files);
@@ -363,7 +342,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     /**
      * Reflects persisted state into every section. The KEY is the account
      * gateway: a recovery code must exist before EITHER feature can be used, so
-     * pre-key the CTA morphs to "Create recovery code", the Backups row is
+     * "Set up backup" creates one before the place chooser, the Backups row is
      * hidden and the Bookmarks switch is disabled — the folder can only be
      * chosen once there is a key to encrypt into it with.
      */
@@ -391,7 +370,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         // Group order follows the account's LIFE STAGE. The XML order (the
         // KEY group — Recovery code + the adopt door — above the USE group)
         // is the ONBOARDING shape: the adopt door is the second way in, so it
-        // belongs right under the create-CTA while there is nothing else to
+        // belongs right under the setup card while there is nothing else to
         // reach. Once the backup is SET UP the priorities invert: Backups is
         // the daily-use row of the whole screen and the key rows once-ever
         // actions, so the USE group (Backups + Sync bookmarks) swaps above the
@@ -432,17 +411,15 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     /**
      * Binds the status hero: the last cached snapshot FIRST (synchronous — no
      * flash of the empty state on re-entry), then the fresh {@link
-     * CloudBackupManager#loadStatus} result updates it in place. The CTA
-     * follows the same two-phase bind, because its label depends on whether
-     * the folder answered ({@link #applyCta}).
+     * CloudBackupManager#loadStatus} result updates it in place. The card's
+     * button follows the same two-phase bind, because it depends on whether
+     * the folder answered ({@link #applyCardAction}).
      */
     private void updateStatusHero(boolean hasKey, boolean hasFolder, boolean setUp) {
         if (mStatus == null) {
             return;
         }
         mStatus.setActive(mTransferActive);
-        mStatus.setHasKey(hasKey);       // roadmap step ① check-off
-        mStatus.setHasFolder(hasFolder); // roadmap step ② check-off
         mStatus.setPlace(mCloudBackup.place());
         mStatus.setProvider(mCloudBackup.locationLabel());
         applyFolderRow(hasKey && hasFolder);
@@ -457,7 +434,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             mStatus.setUsage(mCloudBackup.lastKnownFileCount(),
                     mCloudBackup.lastKnownTotalBytes());
         }
-        applyCta(hasKey, hasFolder, setUp, known);
+        applyCardAction(hasKey, hasFolder, setUp, known);
         if (!setUp) {
             return;
         }
@@ -475,7 +452,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             // the row can say "Google Drive › Backups" from here on.
             mStatus.setProvider(status.location);
             applyFolderRow(mCloudBackup.hasAccount() && mCloudBackup.hasFolder());
-            applyCta(mCloudBackup.hasAccount(), mCloudBackup.hasFolder(),
+            applyCardAction(mCloudBackup.hasAccount(), mCloudBackup.hasFolder(),
                     status.setUp, status);
         });
     }
@@ -487,7 +464,7 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * change it. Shown once a KEY and a folder exist, in every folder state:
      * a lost folder still has a name worth stating, and the row's tap confirms
      * before the chooser whenever the folder holds files. Gated on the key
-     * like the CTA (a restored install can carry a folder URI with no code;
+     * like the card's button (a restored install can carry a folder URI with no code;
      * the key-first gate must hold on this door too).
      */
     /** Which kind of place the folder row's glyph shows now (null = the
@@ -544,42 +521,43 @@ public class SyncSettingsFragment extends BasePreferenceFragment
     }
 
     /**
-     * The MORPHING CTA shows the next step while one is OWED — no key yet
-     * ("Create recovery code"), no folder yet ("Choose backup folder"), or a
-     * folder that stopped answering ("Choose the folder again") — FILLED
-     * (see {@link CloudBuyButtonPreference}), and is HIDDEN once the backup
-     * is set up and the folder answers. It used to stay as an outlined
-     * "Change folder" there, and that was the screen's one visible action on
-     * a healthy backup: a verb with nothing it pointed at, which asked "change
-     * it to what, from what?" (the maintainer's "open folder or change folder
-     * is confusing"). The folder row answers that by stating the folder and
-     * carrying the change; a backup that needs nothing shows no button.
+     * The status card's one button, shown only while a step is owed: "Set up
+     * backup" until a key AND a folder exist (it creates the code, then goes
+     * straight on to "Where to back up" — the user sees one step, not the
+     * numbered roadmap this replaced), and "Choose the folder again" /
+     * "Reconnect" when the folder stopped answering. A healthy backup shows
+     * no button; the "Backup folder" row carries the change.
      */
-    private void applyCta(boolean hasKey, boolean hasFolder, boolean setUp,
-                          @Nullable CloudBackupManager.Status status) {
-        if (mCta == null) {
+    private void applyCardAction(boolean hasKey, boolean hasFolder, boolean setUp,
+                                 @Nullable CloudBackupManager.Status status) {
+        if (mStatus == null) {
             return;
         }
         boolean lost = setUp && status != null && status.setUp && !status.reachable;
-        int title;
-        if (!hasKey) {
-            title = R.string.settings_sync_create_title;
-        } else if (!hasFolder) {
-            title = R.string.folder_backup_choose_cta;
+        if (!hasKey || !hasFolder) {
+            mStatus.setAction(R.string.backup_hero_setup_cta, this::setUpBackup);
         } else if (lost) {
-            title = mCloudBackup.usesServer()
-                    ? R.string.webdav_reconnect_cta : R.string.folder_backup_rechoose_cta;
+            boolean server = mCloudBackup.usesServer();
+            mStatus.setAction(server
+                            ? R.string.webdav_reconnect_cta : R.string.folder_backup_rechoose_cta,
+                    server ? this::openServer : this::showPlaceChooser);
         } else {
-            mCta.setVisible(false);
-            return;
+            mStatus.setAction(0, null);
         }
-        mCta.setTitle(title);
-        mCta.setEmphasized(true);
-        mCta.setVisible(true);
     }
 
-    /** The Backups row (+ the backed-up-files erasure) waits for set-up; the
-     *  CTA above it is governed by the key gate alone. */
+    /** "Set up backup": the recovery code first (with its "I've saved it"
+     *  gate), then the place chooser; with a code already there, the chooser
+     *  alone. */
+    private void setUpBackup() {
+        if (!mCloudBackup.hasAccount()) {
+            createCode();
+        } else {
+            showPlaceChooser();
+        }
+    }
+
+    /** The Backups row (+ the backed-up-files erasure) waits for set-up. */
     private void applyManageVisibility(boolean show) {
         if (mFiles != null) {
             mFiles.setVisible(show);
@@ -857,9 +835,10 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * "I have a recovery code"). Mints the shared key WITHOUT enabling any feature
      * ({@link SyncManager#createRecoveryCode}), then shows it behind the MANDATORY
      * saved-gate: the dialog's Done stays disabled until the user checks "I've
-     * saved it", so a key can't be created and forgotten. On dismiss the rows
-     * re-evaluate ({@link #updateState}) — the CTA morphs to "Choose backup
-     * folder" and bookmarks enable now that a key exists. Guarded on
+     * saved it", so a key can't be created and forgotten. Done goes straight
+     * on to "Where to back up" when no folder is chosen yet, so "Set up
+     * backup" reads as one flow; the rows re-evaluate ({@link #updateState})
+     * and bookmarks enable now that a key exists. Guarded on
      * {@link SyncManager#hasCode()} so a stray tap can never overwrite an
      * existing key.
      */
@@ -870,7 +849,12 @@ public class SyncSettingsFragment extends BasePreferenceFragment
         }
         mSyncManager.createRecoveryCode(grouped -> {
             if (isAdded()) {
-                showCodeDialog(grouped, true);
+                showCodeDialog(grouped, true, () -> {
+                    updateState();
+                    if (!mCloudBackup.hasFolder()) {
+                        showPlaceChooser();
+                    }
+                });
                 updateState();
             }
         });
@@ -1116,6 +1100,12 @@ public class SyncSettingsFragment extends BasePreferenceFragment
      * the create mode so Done (post-check) is the only exit, not a stray outside-tap.
      */
     private void showCodeDialog(@Nullable String grouped, boolean requireSaved) {
+        showCodeDialog(grouped, requireSaved, null);
+    }
+
+    /** {@code onDone} runs after Done closes the dialog (create mode). */
+    private void showCodeDialog(@Nullable String grouped, boolean requireSaved,
+                                @Nullable Runnable onDone) {
         if (grouped == null) {
             snackbar(getString(R.string.settings_sync_code_unavailable));
             return;
@@ -1162,6 +1152,12 @@ public class SyncSettingsFragment extends BasePreferenceFragment
             Button done = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             done.setEnabled(false);
             savedCheck.setOnCheckedChangeListener((b, checked) -> done.setEnabled(checked));
+            done.setOnClickListener(v -> {
+                dialog.dismiss();
+                if (onDone != null && isAdded()) {
+                    onDone.run();
+                }
+            });
         }
     }
 

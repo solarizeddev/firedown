@@ -736,7 +736,6 @@
         <item quantity="one">%d fichier</item>
         <item quantity="other">%d fichiers</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Sauvegardé. Taille inconnue tant que le dossier est inaccessible</string>
     <string name="settings_cloud_backup_active">Transfert en cours…</string>
     <string name="settings_cloud_backup_files_summary">Consultez et restaurez ce que vous avez sauvegardé</string>
 
@@ -760,7 +759,6 @@
     <string name="folder_backup_hero_on">Sur %1$s</string>
     <string name="folder_backup_lost_title">Dossier de sauvegarde inaccessible</string>
     <string name="folder_backup_lost_body">Le dossier a peut-être été déplacé, supprimé ou déconnecté. Choisissez-le à nouveau pour continuer à sauvegarder. Rien sur ce téléphone n\'est affecté.</string>
-    <string name="folder_backup_lost_seen">Dernier état : %1$s</string>
     <string name="folder_backup_choose_cta">Choisir le dossier de sauvegarde</string>
     <string name="folder_backup_pick_title">Où sauvegarder</string>
     <string name="folder_backup_pick_unavailable">Aucun sélecteur de dossier n\'est disponible sur ce téléphone</string>
@@ -855,7 +853,6 @@
     <string name="folder_backup_guard_message">Firedown garde déjà vos téléchargements dans %1$s. Une sauvegarde à cet endroit est perdue avec le téléphone. Choisissez plutôt un dossier dans une appli cloud ou sur une carte SD.</string>
     <string name="folder_backup_guard_choose_other">En choisir un autre</string>
     <string name="folder_backup_guard_use_anyway">L\'utiliser quand même</string>
-    <string name="folder_backup_step_folder">Choisissez où sauvegarder</string>
     <string name="folder_backup_rechoose_cta">Choisir à nouveau le dossier</string>
     <string name="folder_backup_folder_set">Dossier de sauvegarde : %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup sur %1$s</string>
@@ -908,11 +905,13 @@
         <item quantity="one">%d des fichiers sélectionnés est en cours de restauration : le supprimer annulera cette restauration.</item>
         <item quantity="other">%d des fichiers sélectionnés sont en cours de restauration : les supprimer annulera ces restaurations.</item>
     </plurals>
-    <string name="cloud_status_backed_up">sauvegardé</string>
     <string name="cloud_backup_header_encrypted">chiffré de bout en bout</string>
     <string name="cloud_status_empty_title">Rien de sauvegardé pour l\'instant</string>
+    <string name="backup_hero_setup_title">Sauvegardez vos téléchargements</string>
+    <string name="backup_hero_setup_body">Chiffrés sur ce téléphone, puis enregistrés où vous voulez.</string>
+    <string name="backup_hero_setup_cta">Configurer la sauvegarde</string>
+    <string name="backup_hero_size">%1$s sauvegardés</string>
     <string name="cloud_status_empty_body">Sauvegardez n\'importe quel téléchargement terminé depuis son menu ⋮.</string>
-    <string name="settings_sync_create_title">Créer un code de récupération</string>
     <string name="settings_sync_needs_key">Créez ou saisissez d\'abord un code de récupération</string>
     <string name="settings_sync_link_title">J\'ai un code de récupération</string>
     <string name="settings_sync_link_summary">Utilisez le code d\'un autre appareil, puis choisissez son dossier de sauvegarde</string>

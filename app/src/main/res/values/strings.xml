@@ -240,9 +240,6 @@
     <string name="settings_sync_never_synced">On. Not synced yet</string>
     <string name="settings_sync_last_synced">On. Last synced %1$s</string>
     <string name="settings_sync_restore_action">Restore</string>
-    <!-- Account-level Create / "I have a recovery code" pair (Backup screen, no-key state).
-         The key is the gateway: bookmarks + downloads backup stay disabled until one exists. -->
-    <string name="settings_sync_create_title">Create recovery code</string>
     <!-- Disabled-row summary shown on Bookmarks + Downloads backup until a key exists. -->
     <string name="settings_sync_needs_key">Create or enter a recovery code first</string>
     <string name="settings_sync_link_title">I have a recovery code</string>
@@ -317,14 +314,19 @@
         <item quantity="one">%d file</item>
         <item quantity="other">%d files</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Backed up. Size unknown while the folder is unreachable</string>
     <string name="settings_cloud_backup_active">Transfer in progress…</string>
-    <!-- unit label beside the big size, e.g. "1.2 GB  backed up" -->
-    <string name="cloud_status_backed_up">backed up</string>
     <string name="cloud_backup_header_encrypted">encrypted end-to-end</string>
     <!-- Content description for the small cloud badge on a Downloads row that's backed up. -->
     <string name="cloud_backed_up_desc">Backed up</string>
     <string name="cloud_status_empty_title">Nothing backed up yet</string>
+    <!-- The Backup screen's status card while no backup is set up (the Signal
+         shape: a title, one line, one button). The button creates the
+         recovery code and goes straight on to choosing where to back up. -->
+    <string name="backup_hero_setup_title">Back up your downloads</string>
+    <string name="backup_hero_setup_body">Encrypted on this phone, then saved where you choose.</string>
+    <string name="backup_hero_setup_cta">Set up backup</string>
+    <!-- The status card's title once files are backed up: %1$s is a size, "854 MB". -->
+    <string name="backup_hero_size">%1$s backed up</string>
     <string name="cloud_status_empty_body">Back up a finished download from its ⋮ menu.</string>
     <string name="settings_cloud_backup_files_summary">View and restore what you\'ve backed up</string>
 
@@ -349,7 +351,6 @@
     <string name="folder_backup_hero_on">On %1$s</string>
     <string name="folder_backup_lost_title">Can\'t reach your backup folder</string>
     <string name="folder_backup_lost_body">The folder may have been moved, deleted or signed out. Choose it again to keep backing up. Nothing on this phone is affected.</string>
-    <string name="folder_backup_lost_seen">Last seen: %1$s</string>
     <string name="folder_backup_choose_cta">Choose backup folder</string>
     <string name="folder_backup_pick_title">Where to back up</string>
     <string name="folder_backup_pick_unavailable">No folder picker is available on this phone</string>
@@ -456,7 +457,6 @@
     <string name="folder_backup_guard_message">Firedown already keeps your downloads in %1$s. A backup there is lost with the phone. Choose a folder on a cloud app or an SD card instead.</string>
     <string name="folder_backup_guard_choose_other">Choose another</string>
     <string name="folder_backup_guard_use_anyway">Use it anyway</string>
-    <string name="folder_backup_step_folder">Choose where to back up</string>
     <string name="folder_backup_rechoose_cta">Choose the folder again</string>
     <string name="folder_backup_folder_set">Backup folder: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup on %1$s</string>

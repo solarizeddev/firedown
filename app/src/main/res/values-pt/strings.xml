@@ -641,7 +641,6 @@
         <item quantity="one">%d arquivo</item>
         <item quantity="other">%d arquivos</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Backup feito. Tamanho desconhecido enquanto a pasta estiver inacessível</string>
     <string name="settings_cloud_backup_active">Transferência em andamento…</string>
     <string name="settings_cloud_backup_files_summary">Veja e restaure o que você salvou em backup</string>
 
@@ -665,7 +664,6 @@
     <string name="folder_backup_hero_on">Em %1$s</string>
     <string name="folder_backup_lost_title">Não é possível acessar a pasta de backup</string>
     <string name="folder_backup_lost_body">A pasta pode ter sido movida, excluída ou desconectada. Escolha-a novamente para continuar fazendo backup. Nada neste telefone é afetado.</string>
-    <string name="folder_backup_lost_seen">Visto pela última vez: %1$s</string>
     <string name="folder_backup_choose_cta">Escolher pasta de backup</string>
     <string name="folder_backup_pick_title">Onde fazer o backup</string>
     <string name="folder_backup_pick_unavailable">Este celular não tem um seletor de pastas</string>
@@ -761,7 +759,6 @@
     <string name="folder_backup_guard_message">O Firedown já guarda seus downloads em %1$s. Um backup ali se perde junto com o celular. Escolha em vez disso uma pasta em um app de nuvem ou em um cartão SD.</string>
     <string name="folder_backup_guard_choose_other">Escolher outra</string>
     <string name="folder_backup_guard_use_anyway">Usar mesmo assim</string>
-    <string name="folder_backup_step_folder">Escolha onde fazer o backup</string>
     <string name="folder_backup_rechoose_cta">Escolher a pasta novamente</string>
     <string name="folder_backup_folder_set">Pasta de backup: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup em %1$s</string>
@@ -814,11 +811,13 @@
         <item quantity="one">%d dos arquivos selecionados está sendo restaurado agora. Removê-lo cancela essa restauração.</item>
         <item quantity="other">%d dos arquivos selecionados estão sendo restaurados agora. Removê-los cancela essas restaurações.</item>
     </plurals>
-    <string name="cloud_status_backed_up">em backup</string>
     <string name="cloud_backup_header_encrypted">criptografado de ponta a ponta</string>
     <string name="cloud_status_empty_title">Nada em backup ainda</string>
+    <string name="backup_hero_setup_title">Faça backup dos seus downloads</string>
+    <string name="backup_hero_setup_body">Criptografados neste telefone e salvos onde você escolher.</string>
+    <string name="backup_hero_setup_cta">Configurar backup</string>
+    <string name="backup_hero_size">%1$s em backup</string>
     <string name="cloud_status_empty_body">Faça backup de qualquer download concluído pelo menu ⋮ dele.</string>
-    <string name="settings_sync_create_title">Criar código de recuperação</string>
     <string name="settings_sync_needs_key">Primeiro crie ou insira um código de recuperação</string>
     <string name="settings_sync_link_title">Tenho um código de recuperação</string>
     <string name="settings_sync_link_summary">Use o código de outro dispositivo e depois escolha a pasta de backup dele</string>

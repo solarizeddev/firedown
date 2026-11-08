@@ -608,7 +608,6 @@
         <item quantity="many">%d souboru</item>
         <item quantity="other">%d souborů</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Zálohováno. Velikost není známa, dokud je složka nedostupná</string>
     <string name="settings_cloud_backup_active">Probíhá přenos…</string>
     <string name="settings_cloud_backup_files_summary">Zobrazte a obnovte to, co jste zálohovali</string>
 
@@ -632,7 +631,6 @@
     <string name="folder_backup_hero_on">V %1$s</string>
     <string name="folder_backup_lost_title">Složka zálohy je nedostupná</string>
     <string name="folder_backup_lost_body">Složka mohla být přesunuta, smazána nebo odhlášena. Vyberte ji znovu a zálohování bude pokračovat. Nic v tomto telefonu to neovlivní.</string>
-    <string name="folder_backup_lost_seen">Naposledy: %1$s</string>
     <string name="folder_backup_choose_cta">Vybrat složku zálohy</string>
     <string name="folder_backup_pick_title">Kam zálohovat</string>
     <string name="folder_backup_pick_unavailable">V tomto telefonu není k dispozici výběr složky</string>
@@ -728,7 +726,6 @@
     <string name="folder_backup_guard_message">Firedown už ukládá vaše stažené soubory do %1$s. Záloha tam se ztratí spolu s telefonem. Zvolte místo toho složku v cloudové aplikaci nebo na SD kartě.</string>
     <string name="folder_backup_guard_choose_other">Zvolit jinou</string>
     <string name="folder_backup_guard_use_anyway">Přesto použít</string>
-    <string name="folder_backup_step_folder">Zvolte, kam zálohovat</string>
     <string name="folder_backup_rechoose_cta">Vybrat složku znovu</string>
     <string name="folder_backup_folder_set">Složka zálohy: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup v %1$s</string>
@@ -781,11 +778,13 @@
         <item quantity="one">%d z vybraných souborů se právě obnovuje. Odebrání obnovení zruší.</item>
         <item quantity="other">%d z vybraných souborů se právě obnovuje. Odebrání tato obnovení zruší.</item>
     </plurals>
-    <string name="cloud_status_backed_up">zálohováno</string>
     <string name="cloud_backup_header_encrypted">šifrováno end-to-end</string>
     <string name="cloud_status_empty_title">Zatím nic nezálohováno</string>
+    <string name="backup_hero_setup_title">Zálohujte svá stažení</string>
+    <string name="backup_hero_setup_body">Zašifrováno v tomto telefonu, pak uloženo tam, kam zvolíte.</string>
+    <string name="backup_hero_setup_cta">Nastavit zálohování</string>
+    <string name="backup_hero_size">%1$s zálohováno</string>
     <string name="cloud_status_empty_body">Zálohujte kterékoli dokončené stažení z jeho nabídky ⋮.</string>
-    <string name="settings_sync_create_title">Vytvořit kód pro obnovení</string>
     <string name="settings_sync_needs_key">Nejprve vytvořte nebo zadejte kód pro obnovení</string>
     <string name="settings_sync_link_title">Mám kód pro obnovení</string>
     <string name="settings_sync_link_summary">Použijte kód jiného zařízení a pak vyberte jeho složku zálohy</string>
