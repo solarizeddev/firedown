@@ -436,12 +436,23 @@ public class BrowserPipDeviceTest {
 
         assertTrue("the notification did not open Downloads. " + describe(browser, tab),
                 waitUntil(() -> mRecorder.resumed(DownloadsActivity.class) != null, WAIT_MS));
+        // The first Downloads resumes inside the window, before the expand:
+        // the decision comes later, when the window has expanded and the
+        // browser stops behind Downloads (on the A42 seconds later, after
+        // Downloads was recreated for the full size). Wait for that, or the
+        // checks below run before anything was decided.
+        assertTrue("the window did not expand under Downloads. " + describe(browser, tab),
+                waitUntil(() -> mRecorder.stage(browser) == Stage.STOPPED
+                        && !onMain(browser::isInPictureInPictureMode)
+                        && mRecorder.resumed(DownloadsActivity.class) != null, WAIT_MS));
         // Past the moment a mode exit while stopped is judged.
         SystemClock.sleep(PipSession.STOPPED_EXIT_SETTLE_MS + 2_000);
         assertTrue("the browser was closed under Downloads. " + describe(browser, tab),
                 mRecorder.stage(browser) != Stage.DESTROYED);
         assertTrue("the video stopped when Downloads opened over it. " + describe(browser, tab),
                 mMedia.isPlaying(tab.getEntityId()));
+        assertTrue("the page left fullscreen when Downloads opened over it. " + describe(browser, tab),
+                tab.isFullScreen());
         assertNotNull("the private tabs were deleted. " + describe(browser, tab),
                 onMain(() -> mPrivateTabs.getGeckoState(mPrivateTab.getEntityId())));
     }

@@ -13214,7 +13214,10 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   the started count says: the expand recreates the new screen for the
   full size, so for a moment no other screen is started when the browser
   stops (the second device run read that as a close and paused the
-  video). That reading is provisional: a FINISHING destroy within 5 s of it
+  video). Residual: if the launcher start fails and the window stays
+  small with the screen inside it, a close more than 5 s after the
+  browser stopped behind that screen is not caught (the video goes on,
+  the private tabs go with the task), the 5 s bound below. That reading is provisional: a FINISHING destroy within 5 s of it
   is a close after all (Downloads shown in a task of its own, the window
   floating over it, then closed with X — the system removes the browser's
   task). **Closing removes the task, which FINISHES the browser** on AOSP:
@@ -13285,7 +13288,10 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   above (Downloads stuck in the window, a dark-mode recreate read as a
   close), t10 waited too briefly for the unlock. On the rerun t08 found a
   third: the expand recreated Downloads and the browser's stop counted no
-  started screen (now reported from BaseActivity, see above).
+  started screen (now reported from BaseActivity, see above). t08 now
+  waits for the browser to stop with the window gone before it checks
+  (the first Downloads resumes inside the window, before anything is
+  decided) and checks fullscreen too.
   Not covered on a device: a content crash in PiP.
 
 ### Subtitles in the local player — side-loaded downloads, one sheet, add a file
