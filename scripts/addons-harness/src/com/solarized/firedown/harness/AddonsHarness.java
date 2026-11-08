@@ -438,6 +438,18 @@ public final class AddonsHarness {
         check("perm: one site is not all sites",
                 !AddonPermissions.grantsAllSites(null, Collections.singletonList("https://example.com/*")));
 
+        check("perm: an update adding only silent permissions asks nothing",
+                AddonPermissions.asksNothing(Arrays.asList("publicSuffix", "storage"),
+                        Collections.emptyList(), Collections.singletonList("none")));
+        check("perm: empty lists ask nothing",
+                AddonPermissions.asksNothing(null, null, null));
+        check("perm: a prompted API asks something",
+                !AddonPermissions.asksNothing(Collections.singletonList("tabs"), null, null));
+        check("perm: a new site asks something",
+                !AddonPermissions.asksNothing(null, Collections.singletonList("https://example.com/*"), null));
+        check("perm: declared data collection asks something",
+                !AddonPermissions.asksNothing(null, null, Collections.singletonList("browsingActivity")));
+
         List<AddonPermissions.Line> some = AddonPermissions.describe(null,
                 Arrays.asList("https://*.example.com/*", "https://www.youtube.com/*",
                         "https://www.youtube.com:443/watch*", "https://m.youtube.com/*"));

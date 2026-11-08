@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   The trailing slot of a CatalogPreference row (an add-on in Mozilla's
-  list): a bare "+" in the brand ink, Firefox for Android's shape, which
-  the BusyPreference spinner replaces while the add-on installs. Not a
-  filled button: the catalog lists many rows, and the screen's one filled
-  button is the installed add-on whose update waits (ReviewPreference).
+  list): a bare grey "+", Firefox for Android's shape, which the
+  BusyPreference spinner replaces while the add-on installs. Grey, not
+  coral: the brand coral is 2.2:1 on the light card, and the screen's one
+  coral control is the installed add-on whose update waits
+  (ReviewPreference). The -8dp end margin puts the glyph 20dp from the
+  card's edge (the 48dp target is 12dp wider than its glyph on each
+  side); CatalogPreference lets the button draw past the widget frame.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="-8dp">
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/preference_action"
@@ -29,7 +33,7 @@
         app:iconGravity="textStart"
         app:iconPadding="0dp"
         app:iconSize="24dp"
-        app:iconTint="?attr/brandInk" />
+        app:iconTint="?attr/colorOnSurfaceVariant" />
 
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/preference_busy"

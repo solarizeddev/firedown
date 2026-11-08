@@ -142,6 +142,19 @@ public final class AddonPermissions {
         return out;
     }
 
+    /**
+     * True when a prompt for these permissions would show the user nothing:
+     * no site, no API Firefox asks about, no declared data collection. An
+     * update like that is installed without asking, as in Firefox (an
+     * update adding only {@code publicSuffix} reached us with lists that
+     * read as nothing).
+     */
+    public static boolean asksNothing(@Nullable Collection<String> permissions,
+                                      @Nullable Collection<String> origins,
+                                      @Nullable Collection<String> dataCollection) {
+        return describe(permissions, origins).isEmpty() && dataCollection(dataCollection).isEmpty();
+    }
+
     static boolean isOriginPattern(@NonNull String value) {
         return "<all_urls>".equals(value) || value.contains("://");
     }

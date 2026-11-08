@@ -121,4 +121,5 @@ mutant legacynotify AddonUpdateReviews 's/new Entry("", false, true)/new Entry("
 mutant legacyrearm AddonUpdateReviews 's/if (entry.version.isEmpty()) {/if (false) {/'
 mutant dailyrecheck AddonUpdateReviews 's/return now < lastRecheck || now - lastRecheck >= RECHECK_INTERVAL_MS;/return true;/'
 mutant trustnull AddonUpdateReviews 's/        if (validatedNetwork) {/        if (true) {/'
+mutant asksapi AddonPermissions 's/return describe(permissions, origins).isEmpty() \&\& /return /'
 exit $status

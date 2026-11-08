@@ -102,6 +102,7 @@ public class AddonManager {
     private static final String PREF_UPDATE_REVIEWS = "com.solarized.firedown.addons.update.reviews";
     /** When a background check last looked again at add-ons whose update waits. */
     private static final String PREF_REVIEW_RECHECK = "com.solarized.firedown.addons.update.review.recheck";
+    private static final String PREF_SILENT_UPDATE_RECHECK = "com.solarized.firedown.addons.update.review.silent";
     private static final long UPDATE_INTERVAL_MS = TimeUnit.DAYS.toMillis(1);
     /** While the app runs, whether a check is due is looked at this often (uptime: a sleeping phone is not woken). */
     private static final long UPDATE_POLL_MS = TimeUnit.HOURS.toMillis(1);
@@ -375,6 +376,11 @@ public class AddonManager {
         mComponents = components;
         mHeavyExecutor = heavyExecutor;
         mReviews = loadReviews();
+        if (!mLocalPrefs.getBoolean(PREF_SILENT_UPDATE_RECHECK, false)) {
+            // Builds before asksNothing marked updates that ask nothing as
+            // waiting; the next check looks at them again instead of a week on.
+            mLocalPrefs.edit().remove(PREF_REVIEW_RECHECK).putBoolean(PREF_SILENT_UPDATE_RECHECK, true).apply();
+        }
         // Built with its value: the singleton may be made off the main thread.
         mUpdateAttention = new MutableLiveData<>(mReviews.attention());
     }
@@ -1713,6 +1719,14 @@ public class AddonManager {
                 @NonNull WebExtension extension, @NonNull String[] newPermissions,
                 @NonNull String[] newOrigins, @NonNull String[] newDataCollectionPermissions) {
             GeckoResult<AllowOrDeny> result = new GeckoResult<>();
+            if (AddonPermissions.asksNothing(list(newPermissions), list(newOrigins),
+                    list(newDataCollectionPermissions))) {
+                // Nothing a question could show (Firefox installs these
+                // updates too): refusing it marked the add-on as waiting for
+                // a review whose sheet would list nothing.
+                result.complete(AllowOrDeny.ALLOW);
+                return result;
+            }
             if (!mInteractiveUpdates.contains(extension.id)) {
                 // Gecko passes the NEW version here (AddonManager.sys.mjs
                 // updatePromptHandler: info.addon), so a later update that
