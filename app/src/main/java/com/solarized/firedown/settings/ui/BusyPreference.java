@@ -89,12 +89,22 @@ public class BusyPreference extends Preference {
                     summary.setTag(R.id.summary_lead_clamp, clamp);
                     summary.addOnLayoutChangeListener(clamp);
                 }
+                // A rebind of the same text keeps the limit the last layout
+                // found (icons, busy toggles and neighbour changes rebind
+                // rows often): resetting it would draw a wrapped lead one
+                // line short for a frame and shift every row below it.
+                // New text starts at one lead line; its first layout corrects it.
+                boolean same = clamp.sizedFor(mSummaryMaxLines, mSummaryLead, summary.getText());
                 clamp.set(mSummaryMaxLines, mSummaryLead);
-                // One lead line is the usual case; the first layout corrects it.
-                summary.setMaxLines(mSummaryMaxLines + 1);
+                if (!same) {
+                    summary.setMaxLines(mSummaryMaxLines + 1);
+                }
             } else {
                 if (clamp != null) {
+                    // This limit is not the clamp's: the next lead bind
+                    // works its own out again (a row back from "Installing…").
                     clamp.set(mSummaryMaxLines, 0);
+                    clamp.forgetSize();
                 }
                 summary.setMaxLines(mSummaryMaxLines);
             }
@@ -116,6 +126,11 @@ public class BusyPreference extends Preference {
         private final TextView mView;
         private int mLines;
         private int mLead;
+        /** The (lines, lead, text) the limit was last worked out for. */
+        private int mSizedLines;
+        private int mSizedLead;
+        @Nullable
+        private String mSizedText;
 
         LeadClamp(@NonNull TextView view) {
             mView = view;
@@ -124,6 +139,15 @@ public class BusyPreference extends Preference {
         void set(int lines, int lead) {
             mLines = lines;
             mLead = lead;
+        }
+
+        void forgetSize() {
+            mSizedText = null;
+        }
+
+        boolean sizedFor(int lines, int lead, @Nullable CharSequence text) {
+            return mSizedText != null && text != null && mSizedLines == lines
+                    && mSizedLead == lead && mSizedText.contentEquals(text);
         }
 
         @Override
@@ -138,6 +162,9 @@ public class BusyPreference extends Preference {
                 return;
             }
             int wanted = layout.getLineForOffset(mLead - 1) + 1 + mLines;
+            mSizedLines = mLines;
+            mSizedLead = mLead;
+            mSizedText = text.toString();
             if (mView.getMaxLines() != wanted) {
                 int lead = mLead;
                 mView.post(() -> {
