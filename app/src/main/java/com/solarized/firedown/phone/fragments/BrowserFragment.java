@@ -176,6 +176,16 @@ public class BrowserFragment extends BaseBrowserFragment
 
     /** The page left fullscreen inside a PiP window; applied when it ends. */
     private boolean mFullScreenExitDeferred;
+    /**
+     * The fullscreen layout is on (bars GONE, the page edge to edge). Kept
+     * apart from mUiState: a session attached inside a PiP window (a crashed
+     * page reopened) moves the state to BROWSING while the bars stay hidden
+     * until the window leaves PiP.
+     */
+    private boolean mChromeHidden;
+    /** The tab whose video went to the PiP window. */
+    @Nullable
+    private GeckoState mPipTab;
 
     // ── Toolbar scroll policy (Fenix ToolbarBehaviorController equivalent) ───────────────────────
     //
@@ -1908,6 +1918,7 @@ public class BrowserFragment extends BaseBrowserFragment
      * the transient chrome laid over the page goes.
      */
     public void onPictureInPictureEntered() {
+        mPipTab = peekCurrentGeckoState();
         if (mFullScreenHint != null) {
             mFullScreenHint.dismiss();
             mFullScreenHint = null;
@@ -1926,7 +1937,7 @@ public class BrowserFragment extends BaseBrowserFragment
         }
         mFullScreenExitDeferred = false;
         GeckoState current = peekCurrentGeckoState();
-        if (mUiState == UiState.FULL_SCREEN && (current == null || !current.isFullScreen())) {
+        if (mChromeHidden && (current == null || !current.isFullScreen())) {
             leaveFullScreenUi();
         }
     }
@@ -1966,13 +1977,21 @@ public class BrowserFragment extends BaseBrowserFragment
      */
     public void onPictureInPictureDismissed() {
         GeckoState current = peekCurrentGeckoState();
-        if (current == null) {
+        // The tab that went to the window, which a page's new window may have
+        // replaced on screen meanwhile.
+        GeckoState pipTab = mPipTab != null ? mPipTab : current;
+        mPipTab = null;
+        if (pipTab == null) {
             return;
         }
-        mGeckoMediaController.pause(current.getEntityId());
-        if (current.isFullScreen()) {
-            current.exitFullScreen();
-        } else {
+        mGeckoMediaController.pause(pipTab.getEntityId());
+        boolean exitPending = pipTab == current && pipTab.isFullScreen();
+        if (pipTab.isFullScreen()) {
+            pipTab.exitFullScreen();
+        }
+        // Gecko's exit brings the chrome back through onFullScreen; otherwise
+        // it comes back here.
+        if (!exitPending) {
             onPictureInPictureLeft();
         }
     }
@@ -3393,6 +3412,18 @@ public class BrowserFragment extends BaseBrowserFragment
         // Every attach, the plain tab switch included (an open session skips
         // applyOpenUriUi): the window's cutout mode is the tab's own.
         applyViewportFit(geckoState.getViewportFit());
+        // A page still in fullscreen attached to a new view (the activity was
+        // recreated: dark mode, locale, inside a PiP window or not): Gecko
+        // sends no second fullscreen event, so the layout is put back here.
+        if (wasOpen && geckoState.isFullScreen() && !mChromeHidden) {
+            if (mUiState == UiState.SEARCH) {
+                exitSearch();
+            }
+            final View decorView = mActivity.getWindow().getDecorView();
+            expandBrowserView();
+            enterFullScreen(decorView);
+            applySystemBars(mActivity.getWindow(), decorView, true);
+        }
         // A tab switched onto while it was in the background may hold a DRM
         // answer the switch has since changed, or a notice that waited for
         // it (applyOpenUriUi covers the tabs that load here). Not for a tab
@@ -3743,6 +3774,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // Only the toolbar is force-collapsed; the bottom bar is slaved to it
         // (BottomNavigationBehavior) and both are GONE for the whole fullscreen
         // stay anyway — visibility is what hides them, translation is bookkeeping.
+        mChromeHidden = true;
         mGeckoToolbar.forceCollapse();
         mGeckoToolbar.setVisibility(View.GONE);
         mBottomNavigationBar.setVisibility(View.GONE);
@@ -3764,6 +3796,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // Both bars VISIBLE first, then expand the toolbar — the bottom bar re-syncs from
         // the toolbar's translation on its layout pass (BottomNavigationBehavior.onLayoutChild)
         // and follows the expand animation frame-by-frame.
+        mChromeHidden = false;
         mGeckoToolbar.setVisibility(View.VISIBLE);
         mBottomNavigationBar.setVisibility(View.VISIBLE);
         mGeckoToolbar.forceExpand();

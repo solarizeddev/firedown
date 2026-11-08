@@ -26,6 +26,10 @@ package com.solarized.firedown.phone;
  *       then onStart and onResume. Indistinguishable from the stop-first
  *       close at the mode change, so that one is decided a moment later:
  *       an onStart in between makes it an expand.</li>
+ *   <li>Another Firedown screen opened over it (a download notification):
+ *       the task leaves PiP and the browser stops behind the new screen
+ *       with no onResume. Not a close: the video keeps playing as audio,
+ *       as when the app is left without PiP.</li>
  * </ul>
  */
 public final class PipSession {
@@ -45,7 +49,7 @@ public final class PipSession {
      * read as a close. The bring-back delivers onStart in the same or the
      * next transaction; the close never does.
      */
-    public static final long STOPPED_EXIT_SETTLE_MS = 500L;
+    public static final long STOPPED_EXIT_SETTLE_MS = 2_000L;
 
     private boolean mLeavingForOwnStart;
     private boolean mInPipStay;
@@ -104,10 +108,16 @@ public final class PipSession {
     /**
      * The settle delay after a mode exit while stopped has passed.
      *
+     * @param otherScreenStarted another screen of the app is started (the
+     *                           window was expanded under it)
      * @return true when it was a close
      */
-    public boolean settleStoppedExit(long nowMs) {
+    public boolean settleStoppedExit(boolean otherScreenStarted, long nowMs) {
         if (!mStoppedExitPending) {
+            return false;
+        }
+        if (otherScreenStarted) {
+            endStay();
             return false;
         }
         return dismiss(nowMs);
@@ -123,7 +133,9 @@ public final class PipSession {
     }
 
     public void onResume() {
-        mLeavingForOwnStart = false;
+        // Not the own-start flag: a start made INSIDE onResume (the lock
+        // screen) must still keep the pause it causes out of PiP. onPause
+        // clears it, and onUserLeaveHint runs before onPause.
         mInPipStay = false;
         mTeardown = false;
         mStoppedExitPending = false;
@@ -136,12 +148,19 @@ public final class PipSession {
     }
 
     /**
-     * @param inPip        the activity still reports PiP mode
-     * @param interactive  the display is on
+     * @param inPip              the activity still reports PiP mode
+     * @param interactive        the display is on
+     * @param otherScreenStarted another screen of the app is started: the
+     *                           window was expanded under it
      * @return true when this stop is a close
      */
-    public boolean onStop(boolean inPip, boolean interactive, long nowMs) {
+    public boolean onStop(boolean inPip, boolean interactive, boolean otherScreenStarted,
+                          long nowMs) {
         if (!mInPipStay) {
+            return false;
+        }
+        if (!inPip && otherScreenStarted) {
+            endStay();
             return false;
         }
         if (PipPolicy.dismissedAtStop(mTeardown, inPip, interactive)) {
@@ -156,8 +175,8 @@ public final class PipSession {
      *
      * @return true when it was a close
      */
-    public boolean onDestroy(long nowMs) {
-        return settleStoppedExit(nowMs);
+    public boolean onDestroy(boolean otherScreenStarted, long nowMs) {
+        return settleStoppedExit(otherScreenStarted, nowMs);
     }
 
     // ── queries ─────────────────────────────────────────────────────────────
@@ -177,6 +196,12 @@ public final class PipSession {
 
     boolean inPipStay() {
         return mInPipStay;
+    }
+
+    private void endStay() {
+        mInPipStay = false;
+        mTeardown = false;
+        mStoppedExitPending = false;
     }
 
     private boolean dismiss(long nowMs) {

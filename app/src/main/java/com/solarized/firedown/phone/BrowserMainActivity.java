@@ -20,6 +20,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.solarized.firedown.ApplicationLifeCycleHandler;
 import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.R;
 import com.solarized.firedown.UpdatePromptPolicy;
@@ -56,13 +57,17 @@ public class BrowserMainActivity extends BaseActivity {
     /** Decides a mode exit that arrived while stopped (see PipSession). */
     private final Handler mPipHandler = new Handler(Looper.getMainLooper());
     private final Runnable mSettleStoppedExit = () -> {
-        if (!isDestroyed() && mPip.settleStoppedExit(SystemClock.uptimeMillis())) {
+        if (!isDestroyed() && mPip.settleStoppedExit(
+                ApplicationLifeCycleHandler.otherScreenStarted(), SystemClock.uptimeMillis())) {
             pipDismissed();
         }
     };
 
     /** values-sw600dp/sw720dp bucket the activity was created with. */
     private int mWidthBucket;
+
+    /** Created inside a PiP window: the bucket is read at the first resume. */
+    private static final int WIDTH_BUCKET_UNKNOWN = -1;
 
 
     @Override
@@ -79,8 +84,15 @@ public class BrowserMainActivity extends BaseActivity {
         GeckoRuntime sGeckoRuntime = mGeckoRuntimeHelper.getGeckoRuntime();
         sGeckoRuntime.setDelegate(() -> mKillProcessOnDestroy = true);
 
-        mWidthBucket = PipPolicy.widthBucket(
-                getResources().getConfiguration().smallestScreenWidthDp);
+        // Recreated while in a PiP window (dark mode, locale): the stay goes
+        // on, and the resource bucket is taken once out of the window.
+        if (isInPictureInPictureMode()) {
+            mPip.enteredPip();
+            mWidthBucket = WIDTH_BUCKET_UNKNOWN;
+        } else {
+            mWidthBucket = PipPolicy.widthBucket(
+                    getResources().getConfiguration().smallestScreenWidthDp);
+        }
 
         setContentView(R.layout.actvity_main);
         mActivityContentFrame = findViewById(R.id.content_frame);
@@ -137,6 +149,10 @@ public class BrowserMainActivity extends BaseActivity {
     @Override
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();
+        // Never a video floating beside the app's lock screen.
+        if (mAppLock.isLocked()) {
+            return;
+        }
         BrowserFragment fragment = browserFragment();
         if (fragment == null
                 || !fragment.wantsPictureInPicture(mPip.leavingForOwnStart(), isInPictureInPictureMode())) {
@@ -196,6 +212,10 @@ public class BrowserMainActivity extends BaseActivity {
         // page (a bucket change while in PiP, an unfold, is the residual).
         mPipHandler.removeCallbacks(mSettleStoppedExit);
         mPip.onResume();
+        if (mWidthBucket == WIDTH_BUCKET_UNKNOWN && !isInPictureInPictureMode()) {
+            mWidthBucket = PipPolicy.widthBucket(
+                    getResources().getConfiguration().smallestScreenWidthDp);
+        }
     }
 
     @Override
@@ -228,7 +248,8 @@ public class BrowserMainActivity extends BaseActivity {
     protected void onStop() {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         boolean interactive = pm == null || pm.isInteractive();
-        if (mPip.onStop(isInPictureInPictureMode(), interactive, SystemClock.uptimeMillis())) {
+        if (mPip.onStop(isInPictureInPictureMode(), interactive,
+                ApplicationLifeCycleHandler.otherScreenStarted(), SystemClock.uptimeMillis())) {
             pipDismissed();
         }
         super.onStop();
@@ -249,7 +270,8 @@ public class BrowserMainActivity extends BaseActivity {
         if (mPip.holdsRecreate(isInPictureInPictureMode())) {
             return;
         }
-        if (PipPolicy.widthBucket(config.smallestScreenWidthDp) != mWidthBucket) {
+        if (mWidthBucket != WIDTH_BUCKET_UNKNOWN
+                && PipPolicy.widthBucket(config.smallestScreenWidthDp) != mWidthBucket) {
             recreate();
         }
     }
@@ -281,7 +303,8 @@ public class BrowserMainActivity extends BaseActivity {
         mPipHandler.removeCallbacks(mSettleStoppedExit);
         // A mode exit still settling: the ROMs that stop before reporting a
         // close destroy right after it.
-        if (mPip.onDestroy(SystemClock.uptimeMillis())) {
+        if (mPip.onDestroy(ApplicationLifeCycleHandler.otherScreenStarted(),
+                SystemClock.uptimeMillis())) {
             pipDismissed();
         }
         if (mKillProcessOnDestroy) {

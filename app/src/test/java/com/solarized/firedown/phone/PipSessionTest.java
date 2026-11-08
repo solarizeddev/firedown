@@ -31,6 +31,8 @@ public class PipSessionTest {
         long settleAt = -1;
         int closes;
         boolean destroyed;
+        /** Another Firedown screen is started over the browser (a notification opened it). */
+        boolean otherScreen;
         /** What ApplicationLifeCycleHandler decided at a finishing destroy. */
         Boolean privateTabsKept;
 
@@ -67,14 +69,14 @@ public class PipSessionTest {
 
         void stop() {
             state = PipSession.State.STOPPED;
-            if (pip.onStop(inPip, screenOn, now)) {
+            if (pip.onStop(inPip, screenOn, otherScreen, now)) {
                 closes++;
             }
         }
 
         void destroy(boolean finishing) {
             settleAt = -1;
-            if (pip.onDestroy(now)) {
+            if (pip.onDestroy(otherScreen, now)) {
                 closes++;
             }
             if (finishing) {
@@ -87,7 +89,7 @@ public class PipSessionTest {
             now += ms;
             if (settleAt >= 0 && now >= settleAt) {
                 settleAt = -1;
-                if (!destroyed && pip.settleStoppedExit(now)) {
+                if (!destroyed && pip.settleStoppedExit(otherScreen, now)) {
                     closes++;
                 }
             }
@@ -181,13 +183,26 @@ public class PipSessionTest {
 
     @Test
     public void romThatStopsBeforeReportingTheClose() {
-        // onStop already reports "not in PiP", the mode change follows while
-        // stopped, then the destroy comes at once.
+        // onStop still reports PiP (the flag flips only inside the mode
+        // callback): closed at the stop; the late mode change and the
+        // destroy add nothing.
         Device d = new Device();
         d.homeToPip();
-        d.inPip = false;
         d.stop();
-        assertEquals("not decided at the stop", 0, d.closes);
+        assertEquals(1, d.closes);
+        d.modeChanged(false);
+        d.advance(10_000);
+        d.destroy(true);
+        assertEquals(1, d.closes);
+    }
+
+    @Test
+    public void windowRemovedWhileTheScreenWasOffThenTaskDestroyed() {
+        // The system removes the window and the task while stopped: decided
+        // at the destroy, before the lifecycle handler reads the close.
+        Device d = new Device();
+        d.homeToPip();
+        d.screenOff();
         d.modeChanged(false);
         d.destroy(true);
         assertEquals(1, d.closes);
@@ -195,11 +210,22 @@ public class PipSessionTest {
     }
 
     @Test
-    public void romThatStopsBeforeReportingTheCloseAndKeepsTheActivity() {
+    public void samsungDragDismissFollowedByAModeChangeClosesOnce() {
         Device d = new Device();
         d.homeToPip();
-        d.inPip = false;
         d.stop();
+        d.modeChanged(false);
+        d.destroy(false);
+        assertEquals(1, d.closes);
+    }
+
+    @Test
+    public void systemRemovedTheWindowWhileTheScreenWasOff() {
+        // Screen off in PiP (not a close), then the window goes while still
+        // stopped and nothing brings the app back: closed once settled.
+        Device d = new Device();
+        d.homeToPip();
+        d.screenOff();
         d.modeChanged(false);
         d.advance(PipSession.STOPPED_EXIT_SETTLE_MS - 1);
         assertEquals("still settling", 0, d.closes);
@@ -269,6 +295,83 @@ public class PipSessionTest {
         d.resume();
         d.advance(10_000);
         assertEquals(0, d.closes);
+    }
+
+    @Test
+    public void broughtBackWithAStartLaterThanHalfASecondIsNotAClose() {
+        Device d = new Device();
+        d.homeToPip();
+        d.screenOff();
+        d.screenOn = true;
+        d.modeChanged(false);
+        d.advance(1_500);
+        d.start();
+        d.resume();
+        d.advance(10_000);
+        assertEquals(0, d.closes);
+    }
+
+    @Test
+    public void notificationOpeningAnotherScreenIsNotAClose() {
+        // A download notification opens Downloads into the task: the window
+        // expands, Downloads starts, the browser stops behind it unresumed.
+        Device d = new Device();
+        d.homeToPip();
+        d.modeChanged(false);
+        d.otherScreen = true;
+        d.stop();
+        d.advance(10_000);
+        assertEquals(0, d.closes);
+        assertFalse(d.pip.inPipStay());
+        // Back from Downloads to the browser, then Home again: PiP again.
+        d.otherScreen = false;
+        d.start();
+        d.resume();
+        d.homeToPip();
+        d.closeAosp();
+        assertEquals(1, d.closes);
+    }
+
+    @Test
+    public void notificationWhileTheScreenWasOffIsNotAClose() {
+        Device d = new Device();
+        d.homeToPip();
+        d.screenOff();
+        d.screenOn = true;
+        d.modeChanged(false);
+        d.otherScreen = true;
+        d.advance(10_000);
+        assertEquals(0, d.closes);
+        d.destroy(true);
+        assertEquals(0, d.closes);
+        assertEquals(Boolean.FALSE, d.privateTabsKept);
+    }
+
+    @Test
+    public void lockScreenStartedInsideOnResumeKeepsThePauseOutOfPip() {
+        // The app lock starts LockActivity from onActivityResumed, i.e. inside
+        // super.onResume(); the browser's own onResume runs after it.
+        PipSession pip = new PipSession();
+        pip.ownStartBegan();
+        pip.onResume();
+        assertFalse(PipPolicy.browserShouldEnter(true, true, true, pip.leavingForOwnStart(), false));
+        pip.onPause();
+        assertTrue(PipPolicy.browserShouldEnter(true, true, true, pip.leavingForOwnStart(), false));
+    }
+
+    @Test
+    public void recreatedInsidePipKeepsTheStay() {
+        // Dark mode or locale changes while in PiP: a new activity, a new
+        // PipSession, which onCreate seeds from isInPictureInPictureMode().
+        Device d = new Device();
+        d.homeToPip();
+        Device again = new Device();
+        again.state = PipSession.State.STARTED;
+        again.inPip = true;
+        again.pip.enteredPip();
+        again.closeAosp();
+        assertEquals(1, again.closes);
+        assertEquals(Boolean.TRUE, again.privateTabsKept);
     }
 
     @Test
@@ -439,7 +542,7 @@ public class PipSessionTest {
             long lastCloseAt = Long.MIN_VALUE / 2;
             for (int step = 0; step < 40 && !d.destroyed; step++) {
                 int before = d.closes;
-                int pick = random.nextInt(11);
+                int pick = random.nextInt(12);
                 switch (pick) {
                     case 0:
                         if (d.state == PipSession.State.RESUMED && !d.inPip) {
@@ -504,6 +607,18 @@ public class PipSessionTest {
                         if (d.state == PipSession.State.RESUMED && !d.inPip) {
                             d.pause();
                             d.stop();
+                        }
+                        break;
+                    case 10:
+                        if (d.inPip && d.state == PipSession.State.STARTED && d.screenOn) {
+                            // a notification opens another Firedown screen
+                            d.modeChanged(false);
+                            d.otherScreen = true;
+                            d.stop();
+                            stayOpen = false;
+                            assertEquals("another screen never closes", before, d.closes);
+                            d.advance(5_000);
+                            d.otherScreen = false;
                         }
                         break;
                     default:

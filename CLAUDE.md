@@ -12949,7 +12949,9 @@ window; any other page keeps playing only its audio through
 `GeckoMediaPlaybackService`, as before (the reporter's own split, and
 Firefox for Android's rule: android-components' PictureInPictureFeature
 enters on Home only when the selected tab is fullscreen AND its media
-plays). The decisions are `phone/PipPolicy` (pure, `PipPolicyTest`); the
+plays). The decisions are `phone/PipPolicy` (pure, `PipPolicyTest`) and
+the lifecycle bookkeeping `phone/PipSession` (pure, `PipSessionTest`: every
+callback ordering devices deliver, plus 20 000 random sequences); the
 wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
 
 - **Entry is `onUserLeaveHint`, gated by `PipPolicy.browserShouldEnter`**:
@@ -12959,10 +12961,13 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   FULL_SCREEN (the toolbar-hiding pseudo fullscreen does not count), THAT
   tab plays (`GeckoMediaController.isPlaying(int)`, not the global
   `isPlaying()`), and the app did not start another screen itself
-  (`mLeavingForOwnStart`, set in the `startActivityForResult` /
+  (`PipSession.leavingForOwnStart`, set in the `startActivityForResult` /
   `startIntentSenderForResult` overrides every start funnels through,
-  cleared on a throw, onPause and onResume: onUserLeaveHint also fires for
-  "Open in app" or the file picker). No `setAutoEnterEnabled` (Android
+  cleared on a throw and on onPause, NOT on onResume: onUserLeaveHint also
+  fires for "Open in app" or the file picker, and the app lock starts
+  LockActivity from inside `super.onResume()` — clearing it in onResume
+  put the fullscreen video in a PiP window beside the lock screen; a
+  locked app never enters PiP either). No `setAutoEnterEnabled` (Android
   12+): a stale true would PiP a plain page on swipe-home; it is the
   follow-up for a smoother gesture-nav animation, with the flag refreshed
   on every fullscreen, play/pause and tab change. No custom RemoteActions:
@@ -12976,7 +12981,12 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   never in PiP or on its way out. NOT in onResume: the resources can still
   carry the PiP window's size there, and a recreate mid-expand loses the
   fullscreen page. Residual: unfolding a foldable while in PiP keeps the
-  phone resources until the next recreate.
+  phone resources until the next recreate. **A recreate inside PiP**
+  (dark mode, locale: not handled config changes) keeps the stay
+  (`onCreate` seeds `PipSession` from `isInPictureInPictureMode()`, the
+  bucket is read at the first resume out of the window), and an open tab
+  still in DOM fullscreen attached to a new view gets the fullscreen layout
+  back in `setGeckoViewSession` (Gecko sends no second fullscreen event).
 - **Aspect** comes from `MediaSession.Delegate.onFullscreen`'s element
   metadata, stored per tab and ungated (`GeckoState.setMediaFullScreenSize`)
   and clamped by `PipPolicy.aspect` — the one clamp, which `PlayerActivity`
@@ -12988,24 +12998,42 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   (`showPendingDownload` from onResume; one-shot per response), a
   page-fired app link is dropped (Gecko already refused it), the fullscreen
   hint snackbar, DRM tip and translate card are dismissed on entry, and the
-  DRM notice already waits for a resume. **The page leaving fullscreen in
-  PiP (a video ending) is deferred** (`mFullScreenExitDeferred`): the
-  chrome would be drawn inside the window; it is applied when the window
-  leaves PiP.
+  DRM notice already waits for a resume; the fullscreen hint, a new
+  translate card and the crash-loop snackbar are never shown in PiP. **The
+  page leaving fullscreen in PiP (a video ending, a crash or kill of the
+  tab, another tab put on screen) is deferred** (`mFullScreenExitDeferred`):
+  the chrome would be drawn inside the window; it is applied when the
+  window leaves PiP, keyed on `mChromeHidden` (the layout actually hidden),
+  never on `mUiState` — a session attached in PiP (a crashed page reopened)
+  moves the state to BROWSING with the bars still GONE, and a state test
+  left them gone for good. A crash or kill of a fullscreen tab clears the
+  entity's fullscreen flag at the data layer (Gecko sends no exit for a
+  dead document) and gives the chrome back (`pageLostFullScreen`).
 - **Expand returns to the fullscreen video** (onResume re-hides the system
   bars). Firefox for Android exits fullscreen on every PiP exit; here only
   on a close.
 - **Close (X, or dragged off) ends the video**, the file player's contract:
-  the tab's media pauses and the page leaves fullscreen. Detection is
-  `PipPolicy.dismissedAtStop` / `dismissedAtModeExit`: a mode exit with the
-  activity already stopped, a mode exit followed by onStop with no resume
-  (`mPipTeardown`), or onStop still in PiP with the display ON (Samsung's
-  drag-dismiss, which reports no mode change first). Screen off in PiP is
-  not a close; the audio goes on. **Closing removes the task, which
-  FINISHES the browser** on AOSP: `wasClosedFromPip()` keeps
-  `ApplicationLifeCycleHandler.onActivityDestroyed` from deleting the
-  private tabs (the finishing rule is for leaving the browser, not for
-  closing a video window); the playback service still stops.
+  the media of the tab that went to the window pauses (`mPipTab`: a
+  page's new window may be on screen by then) and the page leaves
+  fullscreen. Detection (`PipSession`): a mode exit followed by onStop with
+  no resume (the teardown flag), or onStop still in PiP with the display
+  ON (Samsung's drag-dismiss, which reports no mode change first). Screen
+  off in PiP is not a close; the audio goes on. **A mode exit while
+  stopped is decided 2 s later** (a posted settle, or the destroy if it
+  comes first): screen off in PiP, then the app opened from a notification
+  or the lock screen, delivers exactly that, followed by onStart — an
+  expand, not a close (it paused the video when read at once). **Another
+  Firedown screen started over it is not a close either**
+  (`ApplicationLifeCycleHandler.otherScreenStarted()`, a count of started
+  non-browser activities): a download notification opens Downloads into
+  the pinned task, the window expands and the browser stops behind it
+  unresumed; the video goes on as audio, as when the app is left without
+  PiP. **Closing removes the task, which FINISHES the browser** on AOSP:
+  `wasClosedFromPip()` keeps `ApplicationLifeCycleHandler.onActivityDestroyed`
+  from deleting the private tabs (the finishing rule is for leaving the
+  browser, not for closing a video window), only within 5 s of the close
+  (a ROM that keeps the activity and is swiped from recents later still
+  deletes them); the playback service still stops.
 - **Another tab put on screen while fullscreen** (a link from another app,
   which also expands the window): `setGeckoViewSession` exits the old tab's
   DOM fullscreen, restores the chrome and resets the orientation itself,
@@ -13013,7 +13041,12 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   gated out — `MediaSession.Delegate.onFullscreen`'s orientation notify is
   gated on the current tab now (a background tab's video used to rotate
   the visible one).
-- Verify: `PipPolicyTest` (JVM), `sh scripts/prompt-harness/run.sh`, and on
+- Verify: `PipPolicyTest` + `PipSessionTest` (JVM; ten planted bugs each
+  fail the latter: a stopped exit closing at once, onStart not cancelling
+  it, no time bound, screen off read as a close, the teardown ignored, the
+  destroy not settling, onResume clearing the own start, another screen
+  ignored at the stop or the settle, a 500 ms settle),
+  `sh scripts/prompt-harness/run.sh`, and on
   a device `phone/BrowserPipDeviceTest` (a loopback page whose `<video>`
   goes fullscreen and plays on a real `input tap`; Home → PiP with the same
   activity instance and no toolbar; expand → still fullscreen and playing;
@@ -13021,7 +13054,10 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   fullscreen, a private tab kept — skipped where the system UI offers no
   dismiss; a video not fullscreen → no PiP, audio on; an `alert()` fired
   when the viewport shrinks into the window → answered, no dialog). Written
-  for #311; not run on a device at write time.
+  for #311; not run on a device at write time. Not covered on a device:
+  the app lock with PiP, a content crash in PiP, a download notification
+  tapped while in PiP, the expand from the launcher icon (the test uses
+  `am start`).
 
 ### Subtitles in the local player — side-loaded downloads, one sheet, add a file
 
