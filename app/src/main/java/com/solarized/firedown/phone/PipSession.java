@@ -26,10 +26,14 @@ package com.solarized.firedown.phone;
  *       then onStart and onResume. Indistinguishable from the stop-first
  *       close at the mode change, so that one is decided a moment later:
  *       an onStart in between makes it an expand.</li>
+ *   <li>Recreated in the window (dark mode, locale): stop and destroy with
+ *       isChangingConfigurations, then a new instance passes through
+ *       onCreate, onStart, onResume and onPause, still in the window.</li>
  *   <li>Another Firedown screen opened over it (a download notification):
- *       the task leaves PiP and the browser stops behind the new screen
- *       with no onResume. Not a close: the video keeps playing as audio,
- *       as when the app is left without PiP.</li>
+ *       the screen lands in the window's task, which BaseActivity then
+ *       brings to the front (the system expands the window), and the
+ *       browser stops behind it with no onResume. Not a close: the video
+ *       keeps playing as audio, as when the app is left without PiP.</li>
  * </ul>
  */
 public final class PipSession {
@@ -58,6 +62,12 @@ public final class PipSession {
     private boolean mClosedFromPip;
     private long mClosedAtMs;
     /**
+     * Recreated inside the window (dark mode, locale): the new instance
+     * passes through onResume on its way back to paused in the window, and
+     * that resume is not an expand.
+     */
+    private boolean mResumeInWindow;
+    /**
      * When a stay last ended under another of the app's screens, or -1. Only
      * provisional: if the browser is FINISHED right after, the window was
      * closed over a Firedown screen in another task, not expanded under one.
@@ -82,6 +92,15 @@ public final class PipSession {
 
     // ── mode changes ────────────────────────────────────────────────────────
 
+    /**
+     * A new instance created inside the window (a configuration change the
+     * activity does not handle): the stay goes on.
+     */
+    public void recreatedInPip() {
+        enteredPip();
+        mResumeInWindow = true;
+    }
+
     /** The activity entered PiP. */
     public void enteredPip() {
         mEndedUnderScreenAtMs = -1;
@@ -97,6 +116,7 @@ public final class PipSession {
      * @return true when the caller must schedule {@link #settleStoppedExit}
      */
     public boolean leftPip(State state) {
+        mResumeInWindow = false;
         if (!mInPipStay) {
             return false;
         }
@@ -108,7 +128,11 @@ public final class PipSession {
             // Expand (onResume follows) or a close on its way to onStop.
             mTeardown = true;
         }
-        // RESUMED: a ROM that resumed before reporting the change expanded.
+        if (state == State.RESUMED) {
+            // A ROM that resumed before reporting the change expanded.
+            mInPipStay = false;
+            mTeardown = false;
+        }
         return false;
     }
 
@@ -145,15 +169,21 @@ public final class PipSession {
         // Not the own-start flag: a start made INSIDE onResume (the lock
         // screen) must still keep the pause it causes out of PiP. onPause
         // clears it, and onUserLeaveHint runs before onPause.
-        mInPipStay = false;
-        mTeardown = false;
         mStoppedExitPending = false;
         mClosedFromPip = false;
+        if (mResumeInWindow) {
+            // A recreated instance on its way back to paused in the window.
+            mResumeInWindow = false;
+            return;
+        }
+        mInPipStay = false;
+        mTeardown = false;
     }
 
     public void onPause() {
         // onUserLeaveHint runs before onPause: an own start is one leave.
         mLeavingForOwnStart = false;
+        mResumeInWindow = false;
     }
 
     /**
@@ -161,11 +191,13 @@ public final class PipSession {
      * @param interactive        the display is on
      * @param otherScreenStarted another screen of the app is started: the
      *                           window was expanded under it
+     * @param changingConfigurations the activity is being recreated (dark
+     *                           mode, locale): its stop is not the user's
      * @return true when this stop is a close
      */
     public boolean onStop(boolean inPip, boolean interactive, boolean otherScreenStarted,
-                          long nowMs) {
-        if (!mInPipStay) {
+                          boolean changingConfigurations, long nowMs) {
+        if (changingConfigurations || !mInPipStay) {
             return false;
         }
         if (!inPip && otherScreenStarted) {
@@ -185,9 +217,17 @@ public final class PipSession {
      * closed while a Firedown screen showed in another task, and the system
      * removed the browser's task.
      *
+     * A destroy for a recreate decides nothing: the new instance takes the
+     * stay over from the saved state.
+     *
      * @return true when it was a close
      */
-    public boolean onDestroy(boolean finishing, boolean otherScreenStarted, long nowMs) {
+    public boolean onDestroy(boolean finishing, boolean otherScreenStarted,
+                             boolean changingConfigurations, long nowMs) {
+        if (changingConfigurations) {
+            mStoppedExitPending = false;
+            return false;
+        }
         if (finishing && mEndedUnderScreenAtMs >= 0
                 && nowMs - mEndedUnderScreenAtMs >= 0
                 && nowMs - mEndedUnderScreenAtMs < CLOSED_WINDOW_MS) {

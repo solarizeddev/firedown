@@ -50,6 +50,7 @@ import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.manager.tasks.TaskManager;
 import com.solarized.firedown.phone.BrowserMainActivity;
 import com.solarized.firedown.phone.DownloadsActivity;
+import com.solarized.firedown.phone.LauncherActivity;
 import com.solarized.firedown.phone.dialogs.AddonPromptSheetDialogFragment;
 import com.solarized.firedown.phone.fragments.BaseFocusFragment;
 import com.solarized.firedown.utils.BuildUtils;
@@ -566,6 +567,35 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
             return;
         }
         UpdateAvailableSheet.showIfReady(this, getSupportFragmentManager(), updatePromptPlace(), false);
+    }
+
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        leavePipWindowIfOpenedInIt();
+    }
+
+    /**
+     * Opened from outside (a notification) while the browser shows a video
+     * in a PiP window: Android puts this screen in the window's task, inside
+     * the small window, paused, and does not expand it. The icon's own start
+     * brings that task to the front, which the system answers by expanding
+     * the window (the same as tapping the icon).
+     */
+    private void leavePipWindowIfOpenedInIt() {
+        if (this instanceof BrowserMainActivity || !BrowserMainActivity.isPipTask(getTaskId())) {
+            return;
+        }
+        getWindow().getDecorView().post(() -> {
+            if (isFinishing() || isDestroyed() || !BrowserMainActivity.isPipTask(getTaskId())) {
+                return;
+            }
+            try {
+                startActivity(LauncherActivity.openAppIntent(this));
+            } catch (ActivityNotFoundException | SecurityException ignored) {
+                // Nothing else brings the window back: the screen stays in it.
+            }
+        });
     }
 
     @Override

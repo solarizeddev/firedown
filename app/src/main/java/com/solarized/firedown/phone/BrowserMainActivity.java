@@ -68,6 +68,18 @@ public class BrowserMainActivity extends BaseActivity {
 
     private static final String STATE_IN_PIP_STAY = "firedown.pip.stay";
 
+    /** The task the browser's PiP window shows, or -1 (main thread). */
+    private static int sPipTaskId = -1;
+
+    /**
+     * Whether a task is the one in the browser's PiP window. Another of the
+     * app's screens opened from outside (a notification) lands in that task,
+     * inside the small window, and must bring it back to full screen.
+     */
+    public static boolean isPipTask(int taskId) {
+        return taskId != -1 && taskId == sPipTaskId;
+    }
+
     /** Created inside a PiP window: the bucket is read at the first resume. */
     private static final int WIDTH_BUCKET_UNKNOWN = -1;
 
@@ -93,7 +105,8 @@ public class BrowserMainActivity extends BaseActivity {
         boolean recreatedInPip = savedInstanceState != null
                 && savedInstanceState.getBoolean(STATE_IN_PIP_STAY, false);
         if (recreatedInPip || isInPictureInPictureMode()) {
-            mPip.enteredPip();
+            mPip.recreatedInPip();
+            sPipTaskId = getTaskId();
             mWidthBucket = WIDTH_BUCKET_UNKNOWN;
         } else {
             mWidthBucket = PipPolicy.widthBucket(
@@ -183,12 +196,14 @@ public class BrowserMainActivity extends BaseActivity {
         BrowserFragment fragment = browserFragment();
         if (isInPictureInPictureMode) {
             mPipHandler.removeCallbacks(mSettleStoppedExit);
+            sPipTaskId = getTaskId();
             mPip.enteredPip();
             if (fragment != null) {
                 fragment.onPictureInPictureEntered();
             }
             return;
         }
+        sPipTaskId = -1;
         if (mPip.leftPip(lifecycleState())) {
             mPipHandler.removeCallbacks(mSettleStoppedExit);
             mPipHandler.postDelayed(mSettleStoppedExit, PipSession.STOPPED_EXIT_SETTLE_MS);
@@ -254,8 +269,11 @@ public class BrowserMainActivity extends BaseActivity {
     protected void onStop() {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         boolean interactive = pm == null || pm.isInteractive();
+        // A recreate in the window (dark mode) stops it with the screen on,
+        // like Samsung's drag-to-dismiss: isChangingConfigurations tells them apart.
         if (mPip.onStop(isInPictureInPictureMode(), interactive,
-                ApplicationLifeCycleHandler.otherScreenStarted(), SystemClock.uptimeMillis())) {
+                ApplicationLifeCycleHandler.otherScreenStarted(), isChangingConfigurations(),
+                SystemClock.uptimeMillis())) {
             pipDismissed();
         }
         super.onStop();
@@ -264,7 +282,10 @@ public class BrowserMainActivity extends BaseActivity {
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean(STATE_IN_PIP_STAY, mPip.inPipStay());
+        // The window itself, not the stay: a stay can outlive the window
+        // (a mode exit not yet settled), and the new instance must not
+        // think it floats.
+        outState.putBoolean(STATE_IN_PIP_STAY, isInPictureInPictureMode());
     }
 
     @Override
@@ -316,8 +337,11 @@ public class BrowserMainActivity extends BaseActivity {
         // A mode exit still settling: the ROMs that stop before reporting a
         // close destroy right after it.
         if (mPip.onDestroy(isFinishing(), ApplicationLifeCycleHandler.otherScreenStarted(),
-                SystemClock.uptimeMillis())) {
+                isChangingConfigurations(), SystemClock.uptimeMillis())) {
             pipDismissed();
+        }
+        if (sPipTaskId == getTaskId()) {
+            sPipTaskId = -1;
         }
         if (mKillProcessOnDestroy) {
             Process.killProcess(Process.myPid());

@@ -23,7 +23,8 @@ public class PipSessionTest {
 
     /** A model of the activity: its state, its PiP mode, a clock, one posted runnable. */
     private static final class Device {
-        final PipSession pip = new PipSession();
+        /** Replaced by a recreate, as the activity is. */
+        PipSession pip = new PipSession();
         PipSession.State state = PipSession.State.RESUMED;
         boolean inPip;
         boolean screenOn = true;
@@ -69,20 +70,56 @@ public class PipSessionTest {
 
         void stop() {
             state = PipSession.State.STOPPED;
-            if (pip.onStop(inPip, screenOn, otherScreen, now)) {
+            if (pip.onStop(inPip, screenOn, otherScreen, false, now)) {
                 closes++;
             }
         }
 
         void destroy(boolean finishing) {
             settleAt = -1;
-            if (pip.onDestroy(finishing, otherScreen, now)) {
+            if (pip.onDestroy(finishing, otherScreen, false, now)) {
                 closes++;
             }
             if (finishing) {
                 privateTabsKept = pip.wasClosedFromPip(now);
             }
             destroyed = true;
+        }
+
+        /**
+         * A configuration the activity does not handle (dark mode, locale):
+         * the old instance stops and is destroyed changing configurations,
+         * the new one is seeded from the saved stay, then passes through
+         * onStart, onResume and onPause back to where the old one was.
+         */
+        void relaunch() {
+            PipSession.State was = state;
+            if (state == PipSession.State.RESUMED) {
+                pause();
+            }
+            if (state == PipSession.State.STARTED) {
+                state = PipSession.State.STOPPED;
+                if (pip.onStop(inPip, screenOn, otherScreen, true, now)) {
+                    closes++;
+                }
+            }
+            settleAt = -1;
+            if (pip.onDestroy(false, otherScreen, true, now)) {
+                closes++;
+            }
+            // The activity saves whether it is in the window.
+            pip = new PipSession();
+            if (inPip) {
+                pip.recreatedInPip();
+            }
+            if (was == PipSession.State.STOPPED) {
+                return;
+            }
+            start();
+            resume();
+            if (was == PipSession.State.STARTED) {
+                pause();
+            }
         }
 
         /** Moves the clock; the posted settle runs at its own due time. */
@@ -552,6 +589,119 @@ public class PipSessionTest {
         assertTrue("a stopped exit settling", d.pip.holdsRecreate(false));
     }
 
+    // ── recreated in the window (dark mode, locale) ─────────────────────────
+
+    @Test
+    public void recreateInTheWindowIsNotACloseAndACloseAfterItStillEndsTheVideo() {
+        Device d = new Device();
+        d.homeToPip();
+        d.relaunch();
+        assertEquals("a recreate in the window is not a close", 0, d.closes);
+        assertTrue("the stay goes on after a recreate", d.pip.inPipStay());
+        d.advance(10_000);
+        d.dragDismissSamsung();
+        assertEquals("a close after the recreate ends the video", 1, d.closes);
+    }
+
+    @Test
+    public void recreateInTheWindowThenAospClose() {
+        Device d = new Device();
+        d.homeToPip();
+        d.relaunch();
+        d.closeAosp();
+        assertEquals(1, d.closes);
+        assertEquals(Boolean.TRUE, d.privateTabsKept);
+    }
+
+    @Test
+    public void recreateInTheWindowThenExpandThenHomeWithoutPip() {
+        Device d = new Device();
+        d.homeToPip();
+        d.relaunch();
+        d.expand();
+        assertFalse("expanded: the stay is over", d.pip.inPipStay());
+        d.pause();
+        d.stop();      // Home later with the video paused: no PiP
+        d.advance(10_000);
+        assertEquals(0, d.closes);
+    }
+
+    @Test
+    public void recreateInTheWindowThenExpandOnAResumeFirstRom() {
+        Device d = new Device();
+        d.homeToPip();
+        d.relaunch();
+        d.expandResumeFirst();
+        assertFalse(d.pip.inPipStay());
+        d.pause();
+        d.stop();
+        assertEquals(0, d.closes);
+    }
+
+    @Test
+    public void recreateWithTheScreenOffInTheWindow() {
+        Device d = new Device();
+        d.homeToPip();
+        d.screenOff();
+        d.relaunch();
+        d.advance(10_000);
+        assertEquals(0, d.closes);
+        d.screenOnUnlock();
+        d.pause();   // back to paused in the window
+        assertTrue(d.pip.inPipStay());
+        d.dragDismissSamsung();
+        assertEquals(1, d.closes);
+    }
+
+    @Test
+    public void broughtBackWhileStoppedThenRecreatedBeforeStartIsNotAClose() {
+        // Screen off in the window, the app brought back from the lock
+        // screen, and a recreate (dark mode at unlock) before onStart.
+        Device d = new Device();
+        d.homeToPip();
+        d.screenOff();
+        d.modeChanged(false);
+        d.relaunch();
+        d.screenOn = true;
+        d.start();
+        d.resume();
+        d.advance(10_000);
+        assertEquals(0, d.closes);
+        assertFalse(d.pip.inPipStay());
+    }
+
+    @Test
+    public void recreatedThenExpandedBeforeItsTransitPause() {
+        // The window is expanded while the new instance passes through
+        // onResume: the mode change arrives resumed and ends the stay.
+        Device d = new Device();
+        d.homeToPip();
+        d.state = PipSession.State.STOPPED;
+        assertFalse(d.pip.onStop(true, true, false, true, d.now));
+        assertFalse(d.pip.onDestroy(false, false, true, d.now));
+        d.pip = new PipSession();
+        d.pip.recreatedInPip();
+        d.start();
+        d.resume();
+        d.modeChanged(false);
+        assertFalse("expanded: the stay is over", d.pip.inPipStay());
+        d.pause();
+        d.stop();
+        d.advance(10_000);
+        assertEquals(0, d.closes);
+    }
+
+    @Test
+    public void aRecreateOutsideAWindowLeavesNoStayBehind() {
+        Device d = new Device();
+        d.relaunch();
+        assertFalse(d.pip.inPipStay());
+        d.pause();
+        d.stop();
+        d.advance(10_000);
+        assertEquals(0, d.closes);
+    }
+
     // ── random sequences ─────────────────────────────────────────────────────
 
     /**
@@ -570,7 +720,7 @@ public class PipSessionTest {
             long lastCloseAt = Long.MIN_VALUE / 2;
             for (int step = 0; step < 40 && !d.destroyed; step++) {
                 int before = d.closes;
-                int pick = random.nextInt(12);
+                int pick = random.nextInt(13);
                 switch (pick) {
                     case 0:
                         if (d.state == PipSession.State.RESUMED && !d.inPip) {
@@ -647,6 +797,12 @@ public class PipSessionTest {
                             assertEquals("another screen never closes", before, d.closes);
                             d.advance(5_000);
                             d.otherScreen = false;
+                        }
+                        break;
+                    case 11:
+                        if (d.inPip) {
+                            d.relaunch();
+                            assertEquals("a recreate never closes", before, d.closes);
                         }
                         break;
                     default:

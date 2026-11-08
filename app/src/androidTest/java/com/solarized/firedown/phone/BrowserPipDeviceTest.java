@@ -116,17 +116,17 @@ import dagger.hilt.android.EntryPointAccessors;
  * <p>What a case needs, else it is skipped: the lock cases a screen lock on
  * the phone, the notification case Firedown's notifications allowed. The
  * screen-off case runs LAST: on a phone with a screen lock that locks at
- * once it can only unlock again with the PIN passed as
- * {@code -Pandroid.testInstrumentationRunnerArguments.pin=<PIN>}; without
- * it the case fails and the phone stays locked.
+ * once, unlock it when it asks (the case waits a minute), or pass the PIN as
+ * {@code -Pandroid.testInstrumentationRunnerArguments.pin=<PIN>}.
  *
  * <pre>
  * ./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.phone.BrowserPipDeviceTest
  * </pre>
  *
- * Written for issue #311. t01–t05 green on SM-A426B (Android 12); their
- * first run failed the expand only because the shell start standing for the
- * icon lacked RESET_TASK_IF_NEEDED. t06–t10 not yet run on a device.
+ * Written for issue #311. On SM-A426B (Android 12): t01–t07 green. The
+ * first run of t08 found Downloads opened INSIDE the PiP window (fixed in
+ * BaseActivity), t09 a dark-mode recreate read as a close (fixed in
+ * PipSession); t10 waited too briefly for the person to unlock.
  */
 @RunWith(AndroidJUnit4.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -507,8 +507,9 @@ public class BrowserPipDeviceTest {
             assertTrue("the page left fullscreen with the screen off. " + describe(browser, tab),
                     tab.isFullScreen());
 
-            assertTrue("the phone locked when the screen went off and could not be unlocked: "
-                            + "pass the PIN as -Pandroid.testInstrumentationRunnerArguments.pin=<PIN>",
+            assertTrue("the phone locked when the screen went off and nobody unlocked it within a "
+                            + "minute: unlock it when it asks, or pass the PIN as "
+                            + "-Pandroid.testInstrumentationRunnerArguments.pin=<PIN>",
                     wakeAndUnlock());
             SystemClock.sleep(SETTLE_MS * 2);
             assertTrue("the window was gone once the screen was back. " + describe(browser, tab),
@@ -688,7 +689,8 @@ public class BrowserPipDeviceTest {
         }
         String pin = InstrumentationRegistry.getArguments().getString("pin");
         if (pin == null || !pin.matches("[0-9A-Za-z]+")) {
-            return false;
+            // A person at the phone unlocks it.
+            return waitUntil(() -> !keyguard.isKeyguardLocked(), 60_000);
         }
         shell("wm dismiss-keyguard");
         SystemClock.sleep(SETTLE_MS);
