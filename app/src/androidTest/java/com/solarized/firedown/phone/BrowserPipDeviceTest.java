@@ -11,17 +11,25 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.KeyguardManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
+import android.os.PowerManager;
 import android.os.SystemClock;
+import android.service.notification.StatusBarNotification;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 
+import androidx.biometric.BiometricManager;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -32,22 +40,36 @@ import androidx.test.runner.lifecycle.ActivityLifecycleMonitor;
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
 import androidx.test.runner.lifecycle.Stage;
 
+import com.solarized.firedown.App;
+import com.solarized.firedown.IntentActions;
+import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.di.RepositoryEntryPoint;
+import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
+import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.data.repository.IncognitoStateRepository;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.geckoview.media.GeckoMediaController;
+import com.solarized.firedown.manager.DownloadEngineStressTest;
+import com.solarized.firedown.manager.DownloadIntents;
+import com.solarized.firedown.manager.DownloadRequest;
+import com.solarized.firedown.manager.RunnableManager;
+import com.solarized.firedown.manager.UrlType;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -60,12 +82,14 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 
 import dagger.hilt.android.EntryPointAccessors;
 
@@ -83,20 +107,42 @@ import dagger.hilt.android.EntryPointAccessors;
  * whose system UI does not offer them skips those cases. The app icon is
  * the launcher's own start, flags included.
  *
+ * <p>Also: the app lock due while the video floats (the lock screen, never a
+ * window beside it), a download's notification tapped (Downloads opens, the
+ * video goes on as audio), dark mode switched in the window (a recreate
+ * keeps the stay, closing still ends the video), and the screen switched
+ * off and on in the window (not a close).
+ *
+ * <p>What a case needs, else it is skipped: the lock cases a screen lock on
+ * the phone, the notification case Firedown's notifications allowed. The
+ * screen-off case runs LAST: on a phone with a screen lock that locks at
+ * once it can only unlock again with the PIN passed as
+ * {@code -Pandroid.testInstrumentationRunnerArguments.pin=<PIN>}; without
+ * it the case fails and the phone stays locked.
+ *
  * <pre>
  * ./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.phone.BrowserPipDeviceTest
  * </pre>
  *
- * Written for issue #311. Green on SM-A426B (Android 12). Its first run
- * failed the expand only because the shell start standing for the icon
- * lacked RESET_TASK_IF_NEEDED.
+ * Written for issue #311. t01–t05 green on SM-A426B (Android 12); their
+ * first run failed the expand only because the shell start standing for the
+ * icon lacked RESET_TASK_IF_NEEDED. t06–t10 not yet run on a device.
  */
 @RunWith(AndroidJUnit4.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class BrowserPipDeviceTest {
 
     private static final String BROWSER = "com.solarized.firedown.phone.BrowserMainActivity";
     private static final long WAIT_MS = 20_000;
     private static final long SETTLE_MS = 1_500;
+    private static final String ICON_START = "am start -a android.intent.action.MAIN"
+            + " -c android.intent.category.LAUNCHER -f 0x10200000 -n ";
+    private static final String[] LOCK_KEYS = {
+            Preferences.SETTINGS_APP_LOCK,
+            Preferences.SETTINGS_APP_LOCK_TIME,
+            Preferences.SETTINGS_APP_LOCK_UPDATE_TIME,
+            Preferences.SETTINGS_APP_LOCK_REQUIRED,
+    };
 
     private Instrumentation mInstrumentation;
     private Context mApp;
@@ -106,8 +152,11 @@ public class BrowserPipDeviceTest {
     private IncognitoStateRepository mPrivateTabs;
     private GeckoState mPrivateTab;
     private GeckoMediaController mMedia;
-    private Boolean mSavedLock;
+    private final Map<String, Object> mSavedLock = new HashMap<>();
     private PageServer mServer;
+    private DownloadEngineStressTest.ByteServer mByteServer;
+    private final List<String> mDownloadUrls = new ArrayList<>();
+    private final List<Integer> mNotificationIds = new ArrayList<>();
     private final Recorder mRecorder = new Recorder();
 
     @Before
@@ -129,8 +178,12 @@ public class BrowserPipDeviceTest {
         assertTrue("the phone is locked: unlock it before running this test",
                 waitUntil(() -> !keyguard.isKeyguardLocked(), 3_000));
         // The user's app lock would put a lock screen over the expand.
-        mSavedLock = mPrefs.contains(Preferences.SETTINGS_APP_LOCK)
-                ? mPrefs.getBoolean(Preferences.SETTINGS_APP_LOCK, false) : null;
+        Map<String, ?> all = mPrefs.getAll();
+        for (String key : LOCK_KEYS) {
+            if (all.containsKey(key)) {
+                mSavedLock.put(key, all.get(key));
+            }
+        }
         mPrefs.edit().putBoolean(Preferences.SETTINGS_APP_LOCK, false).commit();
 
         finishStrayActivities();
@@ -167,15 +220,22 @@ public class BrowserPipDeviceTest {
                     return null;
                 });
             }
+            deleteDownloads();
+            NotificationManager nm = mApp.getSystemService(NotificationManager.class);
+            for (int id : mNotificationIds) {
+                nm.cancel(id);
+            }
         } finally {
             ActivityLifecycleMonitorRegistry.getInstance().removeLifecycleCallback(mRecorder);
-            if (mSavedLock == null) {
-                mPrefs.edit().remove(Preferences.SETTINGS_APP_LOCK).commit();
-            } else {
-                mPrefs.edit().putBoolean(Preferences.SETTINGS_APP_LOCK, mSavedLock).commit();
-            }
+            restoreLock();
             if (mServer != null) {
                 mServer.stop();
+            }
+            if (mByteServer != null) {
+                try {
+                    mByteServer.stop();
+                } catch (IOException ignored) {
+                }
             }
         }
     }
@@ -184,7 +244,7 @@ public class BrowserPipDeviceTest {
 
     /** The report: fullscreen video, Home → a PiP window, not audio alone. */
     @Test
-    public void fullscreenVideoGoesToPipOnHomeAndExpandsBackToFullscreen() {
+    public void t01_fullscreenVideoGoesToPipOnHomeAndExpandsBackToFullscreen() {
         BrowserMainActivity browser = openPage("/");
         GeckoState tab = playFullscreen();
         goHomeIntoPip(browser, tab);
@@ -204,14 +264,12 @@ public class BrowserPipDeviceTest {
      * gone).
      */
     @Test
-    public void appIconExpandsThePipWindow() {
+    public void t02_appIconExpandsThePipWindow() {
         BrowserMainActivity browser = openPage("/");
         GeckoState tab = playFullscreen();
         goHomeIntoPip(browser, tab);
 
-        String answer = shell("am start -W -a android.intent.action.MAIN"
-                + " -c android.intent.category.LAUNCHER -f 0x10200000 -n "
-                + mPkg + "/com.solarized.firedown.phone.BrowserActivity");
+        String answer = shell(iconStart(true));
         assertExpandedToFullscreen(browser, tab, "the app icon (am start said: "
                 + answer.trim().replace('\n', ' ') + ")");
     }
@@ -243,39 +301,17 @@ public class BrowserPipDeviceTest {
 
     /** Closing the window ends the video: paused, page out of fullscreen. */
     @Test
-    public void closingThePipWindowPausesAndLeavesFullscreen() {
+    public void t03_closingThePipWindowPausesAndLeavesFullscreen() {
         BrowserMainActivity browser = openPage("/");
-        // A private tab open meanwhile: closing the window removes the task
-        // and finishes the browser on most devices, which must not end
-        // private browsing.
-        mPrivateTab = onMain(() -> {
-            GeckoStateEntity entity = new GeckoStateEntity(false, mServer.url("/?private=1"));
-            entity.setIncognito(true);
-            GeckoState state = new GeckoState(entity);
-            mPrivateTabs.setGeckoState(state, false);
-            return state;
-        });
+        openPrivateTab();
         GeckoState tab = playFullscreen();
-        shell("input keyevent KEYCODE_HOME");
-        assertTrue("the browser never entered PiP. " + describe(browser, tab),
-                waitUntil(() -> onMain(browser::isInPictureInPictureMode), WAIT_MS));
-        SystemClock.sleep(SETTLE_MS);
-
-        assumeTrue("this system UI offers no accessibility dismiss on the PiP window",
-                actOnPipWindow(AccessibilityNodeInfo.ACTION_DISMISS));
-        assertTrue("the video kept playing after the window was closed. " + describe(browser, tab),
-                waitUntil(() -> !mMedia.isPlaying(tab.getEntityId()), WAIT_MS));
-        assertTrue("the page stayed fullscreen after the window was closed. " + describe(browser, tab),
-                waitUntil(() -> !tab.isFullScreen(), WAIT_MS));
-        assertFalse("the browser is still in PiP", onMain(browser::isInPictureInPictureMode));
-        SystemClock.sleep(SETTLE_MS);
-        assertNotNull("closing the PiP window deleted the private tabs. " + describe(browser, tab),
-                onMain(() -> mPrivateTabs.getGeckoState(mPrivateTab.getEntityId())));
+        goHomeIntoPip(browser, tab);
+        closeAndAssertEnded(browser, tab);
     }
 
     /** The reporter's other case: not fullscreen → audio only, as before. */
     @Test
-    public void videoNotFullscreenKeepsPlayingWithoutPip() {
+    public void t04_videoNotFullscreenKeepsPlayingWithoutPip() {
         BrowserMainActivity browser = openPage("/?inline=1");
         tap();
         GeckoState tab = currentTab();
@@ -296,7 +332,7 @@ public class BrowserPipDeviceTest {
      * small window, and the page is answered at once (its script goes on).
      */
     @Test
-    public void alertInThePipWindowIsAnsweredWithoutADialog() {
+    public void t05_alertInThePipWindowIsAnsweredWithoutADialog() {
         BrowserMainActivity browser = openPage("/?alert=1");
         GeckoState tab = playFullscreen();
         shell("input keyevent KEYCODE_HOME");
@@ -311,6 +347,185 @@ public class BrowserPipDeviceTest {
         assertFalse("a dialog opened in the PiP window", tab.isPromptDisplaying());
         assertEquals("a sheet opened in the PiP window", "", onMain(() -> dialogsIn(
                 browser.getSupportFragmentManager())));
+    }
+
+    /**
+     * The lock comes due while the video floats (its timeout passed), and the
+     * window is expanded: the lock screen covers the app, and the video does
+     * not go back into a window beside it (the lock screen is started from
+     * inside the browser's onResume, which pauses it again).
+     */
+    @Test
+    public void t06_lockDueWhenTheWindowExpandsShowsTheLockScreen() {
+        assumeScreenLock();
+        BrowserMainActivity browser = openPage("/");
+        GeckoState tab = playFullscreen();
+        goHomeIntoPip(browser, tab);
+
+        lockDue();
+        assumeTrue("this system UI offers no accessibility expand on the PiP window",
+                actOnPipWindow(AccessibilityNodeInfo.ACTION_EXPAND));
+        assertTrue("no lock screen after expanding a locked app. " + describe(browser, tab),
+                waitUntil(() -> mRecorder.resumed(LockActivity.class) != null, WAIT_MS));
+        SystemClock.sleep(SETTLE_MS * 2);
+        assertFalse("the video went back into a window beside the lock screen. " + describe(browser, tab),
+                onMain(browser::isInPictureInPictureMode));
+        assertTrue("the browser is on screen over its lock. " + describe(browser, tab),
+                mRecorder.stage(browser) != Stage.RESUMED);
+        assertNotNull("the lock screen went away by itself. " + describe(browser, tab),
+                mRecorder.resumed(LockActivity.class));
+    }
+
+    /** A locked app never leaves the screen into a PiP window. */
+    @Test
+    public void t07_lockDueWhenLeavingKeepsTheVideoOutOfAWindow() {
+        assumeScreenLock();
+        BrowserMainActivity browser = openPage("/");
+        GeckoState tab = playFullscreen();
+        // Due while on screen (the lock is judged when a screen resumes).
+        lockDue();
+        shell("input keyevent KEYCODE_HOME");
+        assertTrue("the browser never stopped. " + describe(browser, tab),
+                waitUntil(() -> mRecorder.stage(browser) == Stage.STOPPED, WAIT_MS));
+        SystemClock.sleep(SETTLE_MS);
+        assertFalse("a locked app went into a PiP window. " + describe(browser, tab),
+                onMain(browser::isInPictureInPictureMode));
+    }
+
+    /**
+     * A finished download's notification tapped while the video floats:
+     * Downloads opens, and the video goes on as audio (the window expanding
+     * under another Firedown screen is not a close).
+     */
+    @Test
+    public void t08_downloadNotificationOpensDownloadsAndTheVideoGoesOn() throws Exception {
+        assumeTrue("allow Firedown's notifications to run this test",
+                NotificationManagerCompat.from(mApp).areNotificationsEnabled());
+        NotificationChannel channel = mApp.getSystemService(NotificationManager.class)
+                .getNotificationChannel(App.DOWNLOADS_NOTIFICATION_ID);
+        assumeTrue("turn on Firedown's Downloads notifications to run this test",
+                channel == null || channel.getImportance() != NotificationManager.IMPORTANCE_NONE);
+        BrowserMainActivity browser = openPage("/");
+        openPrivateTab();
+        GeckoState tab = playFullscreen();
+        goHomeIntoPip(browser, tab);
+
+        String name = "pip-" + System.nanoTime() + ".bin";
+        mByteServer = new DownloadEngineStressTest.ByteServer();
+        mByteServer.start();
+        String url = mByteServer.base() + "/pip.bin?size=65536&delay=0&name=" + name;
+        mDownloadUrls.add(url);
+        DownloadIntents.start(mApp, new DownloadRequest.Builder(url)
+                .name(name)
+                .mimeType("application/octet-stream")
+                .fileType(UrlType.FILE.getValue())
+                .build());
+        DownloadDataRepository repo = EntryPointAccessors.fromApplication(mApp, RepositoryEntryPoint.class)
+                .getDownloadDataRepository();
+        assertTrue("the download never finished", waitUntil(() -> {
+            for (DownloadEntity e : repo.getAllRawList()) {
+                if (url.equals(e.getFileUrl()) && e.getFileStatus() == Download.FINISHED) {
+                    return true;
+                }
+            }
+            return false;
+        }, 90_000));
+        StatusBarNotification finished = awaitNotification(sbn -> name.contentEquals(titleOf(sbn)));
+        mNotificationIds.add(finished.getId());
+        finished.getNotification().contentIntent.send();
+
+        assertTrue("the notification did not open Downloads. " + describe(browser, tab),
+                waitUntil(() -> mRecorder.resumed(DownloadsActivity.class) != null, WAIT_MS));
+        // Past the moment a mode exit while stopped is judged.
+        SystemClock.sleep(PipSession.STOPPED_EXIT_SETTLE_MS + 2_000);
+        assertTrue("the browser was closed under Downloads. " + describe(browser, tab),
+                mRecorder.stage(browser) != Stage.DESTROYED);
+        assertTrue("the video stopped when Downloads opened over it. " + describe(browser, tab),
+                mMedia.isPlaying(tab.getEntityId()));
+        assertNotNull("the private tabs were deleted. " + describe(browser, tab),
+                onMain(() -> mPrivateTabs.getGeckoState(mPrivateTab.getEntityId())));
+    }
+
+    /**
+     * Dark mode switched while the video floats: the activity is recreated
+     * in the window and keeps it (no chrome, still fullscreen and playing),
+     * and closing the window afterwards still ends the video and keeps the
+     * private tabs.
+     */
+    @Test
+    public void t09_darkModeInThePipWindowThenClose() {
+        BrowserMainActivity first = openPage("/");
+        openPrivateTab();
+        GeckoState tab = playFullscreen();
+        goHomeIntoPip(first, tab);
+
+        String mode = nightMode();
+        assumeTrue("cannot read the system dark mode setting: " + mode, !mode.isEmpty());
+        try {
+            shell("cmd uimode night " + ("yes".equals(mode) ? "no" : "yes"));
+            SystemClock.sleep(SETTLE_MS * 2);
+            BrowserMainActivity browser = latestBrowser();
+            assertNotNull("no browser after the dark mode switch. " + mRecorder, browser);
+            assertTrue("the browser left PiP on the dark mode switch. " + describe(browser, tab),
+                    waitUntil(() -> onMain(browser::isInPictureInPictureMode), WAIT_MS));
+            assertTrue("the page left fullscreen on the dark mode switch. " + describe(browser, tab),
+                    tab.isFullScreen());
+            assertTrue("the video stopped on the dark mode switch. " + describe(browser, tab),
+                    mMedia.isPlaying(tab.getEntityId()));
+            assertFalse("the toolbar shows in the PiP window after the switch",
+                    viewShown(browser, R.id.toolbar_layout));
+            closeAndAssertEnded(browser, tab);
+        } finally {
+            shell("cmd uimode night " + mode);
+        }
+    }
+
+    /**
+     * The screen switched off while the video floats is not a close: the
+     * video goes on, the window is still there when the phone is back, and
+     * the icon then expands it to the fullscreen video. Runs last: see the
+     * class comment about phones that lock at once.
+     */
+    @Test
+    public void t10_screenOffInThePipWindowIsNotAClose() {
+        BrowserMainActivity browser = openPage("/");
+        GeckoState tab = playFullscreen();
+        goHomeIntoPip(browser, tab);
+
+        String lockAfter = shell("settings get secure lock_screen_lock_after_timeout").trim();
+        try {
+            // Keep a screen lock from locking at once where the phone allows it.
+            shell("settings put secure lock_screen_lock_after_timeout 1800000");
+            PowerManager power = mApp.getSystemService(PowerManager.class);
+            shell("input keyevent KEYCODE_SLEEP");
+            assertTrue("the screen never went off", waitUntil(() -> !power.isInteractive(), WAIT_MS));
+            assertTrue("the browser never stopped with the screen off. " + describe(browser, tab),
+                    waitUntil(() -> mRecorder.stage(browser) == Stage.STOPPED, WAIT_MS));
+            SystemClock.sleep(PipSession.STOPPED_EXIT_SETTLE_MS + 2_000);
+            assertTrue("the video stopped with the screen off. " + describe(browser, tab),
+                    mMedia.isPlaying(tab.getEntityId()));
+            assertTrue("the page left fullscreen with the screen off. " + describe(browser, tab),
+                    tab.isFullScreen());
+
+            assertTrue("the phone locked when the screen went off and could not be unlocked: "
+                            + "pass the PIN as -Pandroid.testInstrumentationRunnerArguments.pin=<PIN>",
+                    wakeAndUnlock());
+            SystemClock.sleep(SETTLE_MS * 2);
+            assertTrue("the window was gone once the screen was back. " + describe(browser, tab),
+                    onMain(browser::isInPictureInPictureMode));
+            assertTrue("the video stopped once the screen was back. " + describe(browser, tab),
+                    mMedia.isPlaying(tab.getEntityId()));
+
+            shell(iconStart(true));
+            assertExpandedToFullscreen(browser, tab, "the app icon after the screen came back");
+        } finally {
+            if ("null".equals(lockAfter) || lockAfter.isEmpty()) {
+                shell("settings delete secure lock_screen_lock_after_timeout");
+            } else {
+                shell("settings put secure lock_screen_lock_after_timeout " + lockAfter);
+            }
+            shell("input keyevent KEYCODE_WAKEUP");
+        }
     }
 
     // ── Driving the app ─────────────────────────────────────────────────────
@@ -374,6 +589,171 @@ public class BrowserPipDeviceTest {
             SystemClock.sleep(250);
         }
         return false;
+    }
+
+    private String iconStart(boolean wait) {
+        return ICON_START.replace("am start ", wait ? "am start -W " : "am start ")
+                + mPkg + "/com.solarized.firedown.phone.BrowserActivity";
+    }
+
+    /**
+     * A private tab open meanwhile: closing the window removes the task and
+     * finishes the browser on most devices, which must not end private
+     * browsing.
+     */
+    private void openPrivateTab() {
+        mPrivateTab = onMain(() -> {
+            GeckoStateEntity entity = new GeckoStateEntity(false, mServer.url("/?private=1"));
+            entity.setIncognito(true);
+            GeckoState state = new GeckoState(entity);
+            mPrivateTabs.setGeckoState(state, false);
+            return state;
+        });
+    }
+
+    /** Closing the window ends the video: paused, out of fullscreen, private tabs kept. */
+    private void closeAndAssertEnded(BrowserMainActivity browser, GeckoState tab) {
+        assumeTrue("this system UI offers no accessibility dismiss on the PiP window",
+                actOnPipWindow(AccessibilityNodeInfo.ACTION_DISMISS));
+        assertTrue("the video kept playing after the window was closed. " + describe(browser, tab),
+                waitUntil(() -> !mMedia.isPlaying(tab.getEntityId()), WAIT_MS));
+        assertTrue("the page stayed fullscreen after the window was closed. " + describe(browser, tab),
+                waitUntil(() -> !tab.isFullScreen(), WAIT_MS));
+        assertFalse("the browser is still in PiP", onMain(browser::isInPictureInPictureMode));
+        SystemClock.sleep(SETTLE_MS);
+        assertNotNull("closing the PiP window deleted the private tabs. " + describe(browser, tab),
+                onMain(() -> mPrivateTabs.getGeckoState(mPrivateTab.getEntityId())));
+    }
+
+    /** The newest browser that is not destroyed (a recreate makes a new one). */
+    private BrowserMainActivity latestBrowser() {
+        List<BrowserMainActivity> all = mRecorder.created(BrowserMainActivity.class);
+        for (int i = all.size() - 1; i >= 0; i--) {
+            if (mRecorder.stage(all.get(i)) != Stage.DESTROYED) {
+                return all.get(i);
+            }
+        }
+        return null;
+    }
+
+    /** "yes", "no", "auto" or "custom"; empty when the shell does not say. */
+    private static String nightMode() {
+        String out = shell("cmd uimode night").trim();
+        int colon = out.lastIndexOf(':');
+        String mode = colon < 0 ? "" : out.substring(colon + 1).trim();
+        return mode.matches("yes|no|auto|custom") ? mode : "";
+    }
+
+    private void assumeScreenLock() {
+        int can = BiometricManager.from(mApp).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG
+                | BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+        assumeTrue("the app lock needs a screen lock set on the phone",
+                can == BiometricManager.BIOMETRIC_SUCCESS);
+    }
+
+    /** App lock on and its timeout long past: the next screen to resume is locked. */
+    private void lockDue() {
+        mPrefs.edit()
+                .putBoolean(Preferences.SETTINGS_APP_LOCK, true)
+                .putString(Preferences.SETTINGS_APP_LOCK_TIME, "300000")
+                .putBoolean(Preferences.SETTINGS_APP_LOCK_REQUIRED, true)
+                .putLong(Preferences.SETTINGS_APP_LOCK_UPDATE_TIME, 0)
+                .commit();
+    }
+
+    private void restoreLock() {
+        SharedPreferences.Editor edit = mPrefs.edit();
+        for (String key : LOCK_KEYS) {
+            Object value = mSavedLock.get(key);
+            if (value == null) {
+                edit.remove(key);
+            } else if (value instanceof Boolean) {
+                edit.putBoolean(key, (Boolean) value);
+            } else if (value instanceof Long) {
+                edit.putLong(key, (Long) value);
+            } else if (value instanceof String) {
+                edit.putString(key, (String) value);
+            }
+        }
+        edit.commit();
+    }
+
+    /** Screen on and keyguard gone; with a secure lock, the PIN argument types it. */
+    private boolean wakeAndUnlock() {
+        KeyguardManager keyguard = mApp.getSystemService(KeyguardManager.class);
+        shell("input keyevent KEYCODE_WAKEUP");
+        shell("wm dismiss-keyguard");
+        if (waitUntil(() -> !keyguard.isKeyguardLocked(), 3_000)) {
+            return true;
+        }
+        String pin = InstrumentationRegistry.getArguments().getString("pin");
+        if (pin == null || !pin.matches("[0-9A-Za-z]+")) {
+            return false;
+        }
+        shell("wm dismiss-keyguard");
+        SystemClock.sleep(SETTLE_MS);
+        shell("input text " + pin);
+        shell("input keyevent KEYCODE_ENTER");
+        return waitUntil(() -> !keyguard.isKeyguardLocked(), 5_000);
+    }
+
+    private StatusBarNotification awaitNotification(Predicate<StatusBarNotification> match) {
+        AtomicReference<StatusBarNotification> found = new AtomicReference<>();
+        NotificationManager nm = mApp.getSystemService(NotificationManager.class);
+        assertTrue("no finished-download notification", waitUntil(() -> {
+            for (StatusBarNotification sbn : nm.getActiveNotifications()) {
+                if (match.test(sbn)) {
+                    found.set(sbn);
+                    return true;
+                }
+            }
+            return false;
+        }, WAIT_MS));
+        assertNotNull("the notification has no tap action", found.get().getNotification().contentIntent);
+        return found.get();
+    }
+
+    private static CharSequence titleOf(StatusBarNotification sbn) {
+        CharSequence title = sbn.getNotification().extras.getCharSequence(Notification.EXTRA_TITLE);
+        return title == null ? "" : title;
+    }
+
+    private void deleteDownloads() {
+        if (mDownloadUrls.isEmpty()) {
+            return;
+        }
+        DownloadDataRepository repo = EntryPointAccessors.fromApplication(mApp, RepositoryEntryPoint.class)
+                .getDownloadDataRepository();
+        ArrayList<DownloadEntity> ours = new ArrayList<>();
+        for (DownloadEntity e : repo.getAllRawList()) {
+            if (mDownloadUrls.contains(e.getFileUrl())) {
+                ours.add(e);
+            }
+        }
+        if (ours.isEmpty()) {
+            return;
+        }
+        try {
+            Intent delete = new Intent(mApp, RunnableManager.class);
+            delete.setAction(IntentActions.DOWNLOAD_DELETE);
+            delete.putParcelableArrayListExtra(Keys.ITEM_LIST_ID, ours);
+            mApp.startService(delete);
+            waitUntil(() -> {
+                for (DownloadEntity e : repo.getAllRawList()) {
+                    if (mDownloadUrls.contains(e.getFileUrl())) {
+                        return false;
+                    }
+                }
+                return true;
+            }, 30_000);
+        } catch (IllegalStateException ignored) {
+            // The service could not start: the files below go anyway.
+        }
+        for (DownloadEntity e : ours) {
+            if (e.getFilePath() != null) {
+                new File(e.getFilePath()).delete();
+            }
+        }
     }
 
     /** A browser left by an earlier run would hide the one this test opens. */

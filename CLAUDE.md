@@ -13237,10 +13237,23 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   task, so the window stays (the first device run, SM-A426B Android 12,
   failed on exactly that). With it the task comes to the front, the start
   is reported as a restart of the pinned activity and the system expands
-  the window. All five green on SM-A426B (Android 12), the icon case
-  included.
-  Not covered on a device: the app lock with PiP, a content crash in PiP,
-  a download notification tapped while in PiP.
+  the window. Five more cases: the app lock due while the video floats,
+  then the window expanded → the lock screen, and the video not back in a
+  window beside it; the lock due when leaving → no PiP; a finished
+  download's notification tapped (its real PendingIntent) → Downloads,
+  and past the 2 s settle the video still plays and the private tab
+  stays; dark mode switched in the window (`cmd uimode night`, put back
+  after) → still in PiP, fullscreen, playing, no toolbar, and closing
+  then still ends the video; the screen off in the window → past the
+  settle still playing and fullscreen, the window back after
+  wake + unlock, then the icon expands it. The lock cases need a screen
+  lock, the notification case notifications allowed (else skipped); the
+  screen-off case runs last (`@FixMethodOrder`, `t01`…`t10`), sets
+  `lock_screen_lock_after_timeout` to 30 min for its run and, on a phone
+  that locks at once anyway, unlocks with
+  `-Pandroid.testInstrumentationRunnerArguments.pin=<PIN>` or fails with
+  that hint. t01–t05 green on SM-A426B (Android 12); t06–t10 not yet run.
+  Not covered on a device: a content crash in PiP.
 
 ### Subtitles in the local player — side-loaded downloads, one sheet, add a file
 
