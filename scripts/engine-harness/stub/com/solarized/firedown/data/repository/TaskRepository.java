@@ -1,4 +1,5 @@
 package com.solarized.firedown.data.repository;
+import com.solarized.firedown.data.DownloadProgress;
 import com.solarized.firedown.data.TaskEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,4 +12,11 @@ public class TaskRepository {
     public void updateCount(int regular, int safe) { counts.add(new Count(regular, safe)); }
     public void sendEvent(TaskEvent e) { events.add(e); }
     public Count lastCount() { return counts.isEmpty() ? null : counts.get(counts.size() - 1); }
+    /** The bar's line per mode, as the real repository would post it (changes only). */
+    public volatile DownloadProgress regularProgress = DownloadProgress.NONE, safeProgress = DownloadProgress.NONE;
+    public final List<DownloadProgress> regularHistory = Collections.synchronizedList(new ArrayList<>());
+    public void updateProgress(DownloadProgress regular, DownloadProgress safe) {
+        if (!regular.equals(regularProgress)) { regularProgress = regular; regularHistory.add(regular); }
+        if (!safe.equals(safeProgress)) safeProgress = safe;
+    }
 }

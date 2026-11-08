@@ -26,6 +26,7 @@ import androidx.core.widget.ImageViewCompat;
 
 import com.google.android.material.badge.ExperimentalBadgeUtils;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.DownloadProgress;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.browser.TabsBrowserButton;
 
@@ -41,7 +42,17 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
 
     private TabsBrowserButton mTabsCountButton;
 
-    private BadgeDrawable mBadge;
+    /**
+     * The Downloads button's icon, which carries the group's progress line
+     * (DownloadProgressDrawable). It replaced a coral dot: one dot meant both
+     * "something is downloading" (often, for minutes) and, on ⋮, "an update
+     * needs you" (rarely), and the frequent one taught people to ignore the
+     * rare one.
+     */
+    private DownloadProgressDrawable mDownloadsIcon;
+    @Nullable private ImageView mDownloadsButton;
+    private DownloadProgress mDownloadProgress = DownloadProgress.NONE;
+    private boolean mIncognito;
     /**
      * The ⋮ dot. Two reasons share it: an app update is ready (its "Update
      * ready" row) and an add-on update waits for the user's OK (the Add-ons
@@ -125,17 +136,15 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         downloadButton.setOnLongClickListener(this);
 
         mTabsCountButton = findViewById(R.id.tab_button);
-        mBadge = BadgeDrawable.create(context);
-        mBadge.setVisible(false);
-        // The badge is a bare dot with no label — its background IS the signal,
-        // so it is ink, not a container. colorPrimary keeps it legible on the
-        // bottom bar in both themes; colorPrimaryContainer is now a proper
-        // container tone (pale in light, dark in dark) and would disappear.
-        mBadge.setBackgroundColor(IncognitoColors.getPrimary(context, false));
-        pinBadgeToIcon((ImageView) downloadButton, mBadge);
+        mDownloadsButton = (ImageView) downloadButton;
+        mDownloadsIcon = new DownloadProgressDrawable(context);
+        mDownloadsIcon.setFillColor(ContextCompat.getColor(context, R.color.progress_indicator));
+        mDownloadsButton.setImageDrawable(mDownloadsIcon);
+        refreshDownloadsDescription();
 
-        // The same dot on ⋮ (see mMenuBadge): an app update ready, an add-on
-        // update waiting for the user.
+        // A dot on ⋮ (see mMenuBadge): an app update ready, an add-on update
+        // waiting for the user. A bare dot with no label: its background IS
+        // the signal, so it is ink, not a container.
         mMoreButton = findViewById(R.id.more_button);
         mMenuBadge = BadgeDrawable.create(context);
         mMenuBadge.setVisible(false);
@@ -205,8 +214,16 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
 
         AppCompatImageButton downloadsBtn = findViewById(R.id.downloads_button);
         if (downloadsBtn != null) {
-            downloadsBtn.setImageResource(incognito ? R.drawable.ic_lock_24 : R.drawable.download_24);
+            // Private tabs: the Safe Folder's lock at rest; it gives way to
+            // the same arrow and progress line while a download runs.
+            mIncognito = incognito;
+            mDownloadsIcon.setRestGlyph(incognito
+                    ? ContextCompat.getDrawable(context, R.drawable.ic_lock_24) : null);
+            mDownloadsIcon.setFillColor(incognito
+                    ? IncognitoColors.getPrimary(context, true)
+                    : ContextCompat.getColor(context, R.color.progress_indicator));
             ImageViewCompat.setImageTintList(downloadsBtn, iconTint);
+            refreshDownloadsDescription();
         }
 
         View moreBtn = findViewById(R.id.more_button);
@@ -221,9 +238,6 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         }
 
         // Badge color — the accent, not the container (see the create() call).
-        if (mBadge != null) {
-            mBadge.setBackgroundColor(IncognitoColors.getPrimary(context, incognito));
-        }
         if (mMenuBadge != null) {
             mMenuBadge.setBackgroundColor(IncognitoColors.getPrimary(context, incognito));
         }
@@ -254,8 +268,33 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         });
     }
 
-    public void onBadgeCount(int count){
-        mBadge.setVisible(count > 0);
+    /**
+     * The Downloads button's progress for the mode on screen. {@code animate}
+     * false for a value that is not news (a screen just bound, a switch
+     * between regular and private tabs): the icon jumps to it.
+     */
+    public void setDownloadProgress(@Nullable DownloadProgress progress, boolean animate) {
+        mDownloadProgress = progress != null ? progress : DownloadProgress.NONE;
+        mDownloadsIcon.setProgress(mDownloadProgress, animate);
+        refreshDownloadsDescription();
+    }
+
+    /** The line is drawn only: what it shows, in words. */
+    private void refreshDownloadsDescription() {
+        if (mDownloadsButton == null) {
+            return;
+        }
+        Context context = getContext();
+        String label = context.getString(mIncognito ? R.string.navigation_vault : R.string.navigation_downloads);
+        CharSequence spoken;
+        if (mDownloadProgress.state == DownloadProgress.DETERMINATE) {
+            spoken = context.getString(R.string.bottom_bar_downloading_percent, label, mDownloadProgress.percent);
+        } else if (mDownloadProgress.state == DownloadProgress.INDETERMINATE) {
+            spoken = context.getString(R.string.bottom_bar_downloading, label);
+        } else {
+            spoken = label;
+        }
+        mDownloadsButton.setContentDescription(spoken);
     }
 
     /** Shows the ⋮ dot while an update is ready to install. */

@@ -1482,4 +1482,7 @@
     <string name="addon_data_website_content">website content</string>
     <string name="settings_reject_cookie_banners_title">Reject cookie banners</string>
     <string name="settings_reject_cookie_banners_summary">Answers consent pop-ups with “reject” where possible and hides the rest</string>
+    <!-- The bottom bar's Downloads button, spoken: %1$s is the button (Downloads, or Safe Folder in private tabs), %2$d the whole group's percentage. The progress itself is a drawn line. -->
+    <string name="bottom_bar_downloading_percent">%1$s, downloading, %2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s, downloading</string>
 </resources>

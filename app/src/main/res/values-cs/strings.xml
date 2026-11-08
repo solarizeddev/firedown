@@ -1287,4 +1287,6 @@
     <string name="task_dismiss">Zavřít</string>
     <string name="task_gif_failed">GIF se nepodařilo vytvořit</string>
     <string name="task_stop">Zastavit</string>
+    <string name="bottom_bar_downloading_percent">%1$s, stahování, %2$d %%</string>
+    <string name="bottom_bar_downloading">%1$s, stahování</string>
 </resources>

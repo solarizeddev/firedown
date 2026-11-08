@@ -40,6 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import okhttp3.OkHttpClient;
 
@@ -98,6 +99,8 @@ public class DownloadEngine {
 	public static final int MSG_RESTART_DOWNLOAD = 6;
 	public static final int MSG_FINISH_DOWNLOAD = 7;
 	public static final int MSG_DELETE_DOWNLOAD = 8;
+	/** A running download's share of the bottom bar's line changed. */
+	public static final int MSG_PROGRESS = 9;
 
 	// Sets the amount of time an idle thread will wait for a task before
 	// terminating
@@ -161,6 +164,13 @@ public class DownloadEngine {
 	public final Set<String> mQueuedFileTasks = new LinkedHashSet<>();
 
 	private final Handler mHandler;
+
+	/** The bottom bar's progress line, per browsing mode (engine thread only). */
+	private final DownloadProgressGroup mRegularGroup = new DownloadProgressGroup();
+	private final DownloadProgressGroup mSafeGroup = new DownloadProgressGroup();
+
+	/** One MSG_PROGRESS in the queue at a time, however fast downloads report. */
+	private final AtomicBoolean mProgressPending = new AtomicBoolean(false);
 
 	// A managed pool of background decoder threads
 	private final ThreadPoolExecutor mDownloadThreadPool = new ThreadPoolExecutor(
@@ -271,6 +281,9 @@ public class DownloadEngine {
 			}else if(action == MSG_DELETE_DOWNLOAD){
 				Intent intent = (Intent) msg.obj;
 				addDeleteTaskToExecutor(intent);
+			}else if(action == MSG_PROGRESS){
+				mProgressPending.set(false);
+				publishProgress();
 			}
 		}
 	}
@@ -328,6 +341,18 @@ public class DownloadEngine {
 			if (t.isFileSafe()) safeCount++; else regularCount++;
 		}
 		mHost.onForegroundNeeded(safeCount, regularCount);
+	}
+
+	/**
+	 * A download's share of the bottom bar's line changed (any thread). Posts
+	 * one recompute; reports that arrive before it runs ride along with it.
+	 */
+	public void onTaskProgress() {
+		if (mProgressPending.compareAndSet(false, true)) {
+			Message msg = mHandler.obtainMessage();
+			msg.arg2 = MSG_PROGRESS;
+			mHandler.sendMessage(msg);
+		}
 	}
 
 	public void handleState(final DownloadTask task, int state) {
@@ -1063,6 +1088,7 @@ public class DownloadEngine {
 		Log.d(TAG, "recycleTask: " + runnableTask.getFileId() + " name: " + runnableTask.getName());
 
 		// Remove from active/queued lists
+		boolean listed = isTaskInLists(runnableTask.getFileId());
 		mActiveTasks.removeIf(t -> t.getFileId() == runnableTask.getFileId());
 		mQueueTasks.removeIf(t -> t.getFileId() == runnableTask.getFileId());
 
@@ -1074,6 +1100,12 @@ public class DownloadEngine {
 		// file to this cleanup. Everything else releases its path right away.
 		DownloadRunnable recycledRunnable = runnableTask.getRunnable();
 		boolean deleted = recycledRunnable != null && recycledRunnable.isDeleted();
+		if (listed) {
+			// The bar's group keeps a finished download at 100% until the
+			// group ends; a failed or deleted one simply leaves it.
+			boolean succeeded = !deleted && runnableTask.getFileStatus() == Download.FINISHED;
+			(runnableTask.isFileSafe() ? mSafeGroup : mRegularGroup).onFinished(succeeded);
+		}
 		final String path = runnableTask.getFilePath();
 		if (deleted) {
 			runnableTask.deleteRepository(() -> {
@@ -1128,6 +1160,7 @@ public class DownloadEngine {
 			if (t.isFileSafe()) safe++; else regular++;
 		}
 		mTaskRepository.updateCount(regular, safe);
+		publishProgress();
 
 		// Re-route the foreground notification's click PendingIntent
 		// to whichever Activity actually has content. Without this, the
@@ -1139,6 +1172,37 @@ public class DownloadEngine {
 		if (safe > 0 || regular > 0) {
 			mHost.onForegroundNeeded(safe, regular);
 		}
+	}
+
+	/**
+	 * Recomputes the bottom bar's line for both modes from the listed tasks
+	 * and hands it to the UI (the repository posts only changes). Engine
+	 * thread only.
+	 */
+	private void publishProgress() {
+		mTaskRepository.updateProgress(
+				mRegularGroup.update(barProgressOf(false)),
+				mSafeGroup.update(barProgressOf(true)));
+	}
+
+	private int[] barProgressOf(boolean safe) {
+		List<Integer> values = new ArrayList<>();
+		for (DownloadTask t : mActiveTasks) {
+			if (t.isFileSafe() == safe) {
+				values.add(t.getBarProgress());
+			}
+		}
+		for (DownloadTask t : mQueueTasks) {
+			if (t.isFileSafe() == safe) {
+				// Not started: no bytes yet, whatever the row last said.
+				values.add(0);
+			}
+		}
+		int[] out = new int[values.size()];
+		for (int i = 0; i < out.length; i++) {
+			out[i] = values.get(i);
+		}
+		return out;
 	}
 
 	private boolean isTaskInLists(int id) {

@@ -23,10 +23,11 @@ import java.util.Locale;
  *       parent.</li>
  * </ul>
  *
- * The check: after the pin, the dot's pixel rectangle is exactly the
- * icon's top-end corner. It also reports what the code before did
- * (fixed 20dp offsets from the button) and what a fixed 6dp inset does
- * (off by a pixel where Material rounds the dot up).
+ * The check: after the pin, the dot's pixel rectangle is centred exactly on
+ * the icon's top-end corner. It also reports what the first code did (fixed
+ * 20dp offsets from the button) and what a fixed 3dp half-dot does (off by a
+ * pixel where Material rounds the dot up). Two button positions are swept
+ * (the fourth and the last, which takes LinearLayout's rounding remainder).
  */
 public final class BadgeHarness {
 
@@ -230,9 +231,10 @@ public final class BadgeHarness {
                         Badge badge = new Badge(density);
                         int[] icon = pin(density, barPx, index, rtl, badge);
                         int dot = badge.intrinsicWidth();
+                        int half = dot / 2;
                         int[] want = rtl
-                                ? new int[] {icon[0], icon[1], icon[0] + dot, icon[1] + dot}
-                                : new int[] {icon[2] - dot, icon[1], icon[2], icon[1] + dot};
+                                ? new int[] {icon[0] - half, icon[1] - half, icon[0] + half, icon[1] + half}
+                                : new int[] {icon[2] - half, icon[1] - half, icon[2] + half, icon[1] + half};
                         sChecks++;
                         boolean ok = badge.intrinsicHeight() == dot
                                 && dot >= dimensionPixelOffset(DOT_DP, density)
@@ -245,18 +247,19 @@ public final class BadgeHarness {
                                     java.util.Arrays.toString(badge.bounds), java.util.Arrays.toString(want)));
                         }
 
-                        // A fixed 6dp inset in place of the measured dot (the first version).
+                        // A fixed 3dp half-dot in place of the measured dot.
                         if (!rtl) {
                             Badge fixed = new Badge(density);
                             int height = dimensionPixelSize(BAR_HEIGHT_DP, density);
                             int[] widths = weightedWidths(barPx);
                             int w = widths[index];
                             int x = buttonX(widths, index, false);
-                            int inset = dimensionPixelOffset(STYLE_OFFSET_DP, density);
+                            int inset = dimensionPixelOffset(DOT_DP / 2f, density);
                             fixed.horizontalOffset = w - icon[2] + inset;
                             fixed.verticalOffset = icon[1] + inset;
                             fixed.update(w, x, barPx, height, false);
-                            if (fixed.bounds[2] != icon[2] || fixed.bounds[1] != icon[1]) {
+                            if (fixed.bounds[0] + fixed.bounds[2] != 2 * icon[2]
+                                    || fixed.bounds[1] + fixed.bounds[3] != 2 * icon[1]) {
                                 fixedMissedHere = true;
                             }
 
@@ -296,10 +299,11 @@ public final class BadgeHarness {
             int[] widths = weightedWidths(landscape);
             badge.update(widths[DOWNLOADS], buttonX(widths, DOWNLOADS, false), landscape, height, false);
             int[] icon = iconRect(widths[DOWNLOADS], height, density);
-            staleMisses = badge.bounds[2] != icon[2];
-            int[] fresh = pin(density, landscape, DOWNLOADS, false, new Badge(density));
+            staleMisses = badge.bounds[0] + badge.bounds[2] != 2 * icon[2];
+            Badge freshBadge = new Badge(density);
+            int[] fresh = pin(density, landscape, DOWNLOADS, false, freshBadge);
             sChecks++;
-            if (fresh[2] != icon[2]) {
+            if (freshBadge.bounds[0] + freshBadge.bounds[2] != 2 * fresh[2]) {
                 fail("landscape pin does not land on the icon");
             }
         }
@@ -307,7 +311,7 @@ public final class BadgeHarness {
         // Teeth: the sweep must be able to see a one-pixel slip and a stale layout.
         sChecks++;
         if (fixedInsetMisses == 0) {
-            fail("a fixed 6dp inset never missed: the sweep would not catch a pixel slip");
+            fail("a fixed 3dp half-dot never missed: the sweep would not catch a pixel slip");
         }
         sChecks++;
         if (!staleMisses) {
@@ -316,7 +320,7 @@ public final class BadgeHarness {
 
         if (!quiet) {
             System.out.println(String.format(Locale.ROOT, "badge-harness: %d densities (120-640 dpi), "
-                    + "bars 280-960dp, LTR and RTL, Downloads and more", densities));
+                    + "bars 280-960dp, LTR and RTL, the fourth and the last button", densities));
             System.out.println("  common densities (dot px / icon px):");
             for (int dpi : new int[] {120, 160, 213, 240, 320, 360, 400, 420, 440, 450, 480, 560, 640}) {
                 float density = dpi / 160f;
@@ -329,7 +333,7 @@ public final class BadgeHarness {
             System.out.println(String.format(Locale.ROOT,
                     "  before (20dp from the button): up to %.1fdp right of the icon on a phone in portrait, %.1fdp in landscape",
                     oldPortraitMax, oldLandscapeMax));
-            System.out.println("  a fixed 6dp inset slips a pixel at " + fixedInsetMisses + " densities, e.g. "
+            System.out.println("  a fixed 3dp half-dot slips a pixel at " + fixedInsetMisses + " densities, e.g. "
                     + String.join(", ", fixedInsetDensities));
             System.out.println("  offsets kept from portrait after a rotation: " + (staleMisses ? "miss the icon" : "land"));
         }

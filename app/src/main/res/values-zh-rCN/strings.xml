@@ -1240,4 +1240,6 @@
     <string name="shield_no_blocker_title">未开启广告拦截器</string>
     <string name="shield_turn_on">开启</string>
     <string name="stream_audio_only_title">仅音频</string>
+    <string name="bottom_bar_downloading_percent">%1$s，正在下载，%2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s，正在下载</string>
 </resources>

@@ -7,6 +7,7 @@ import android.content.Context;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.solarized.firedown.data.DownloadProgress;
 import com.solarized.firedown.data.TaskEvent;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.TaskRepository;
@@ -33,6 +34,16 @@ public class TaskViewModel extends ViewModel {
 
     public LiveData<Integer> getSafeCount() {
         return mTaskRepository.getSafeCount();
+    }
+
+    /** The bottom bar's Downloads line for regular browsing. */
+    public LiveData<DownloadProgress> getRegularProgress() {
+        return mTaskRepository.getRegularProgress();
+    }
+
+    /** The bottom bar's Downloads line for private tabs (Safe Folder downloads). */
+    public LiveData<DownloadProgress> getSafeProgress() {
+        return mTaskRepository.getSafeProgress();
     }
 
     // --- Type-safe events (preferred) ---

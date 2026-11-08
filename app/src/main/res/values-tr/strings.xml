@@ -1254,4 +1254,6 @@
     <string name="task_dismiss">Kapat</string>
     <string name="task_gif_failed">GIF oluşturulamadı</string>
     <string name="task_stop">Durdur</string>
+    <string name="bottom_bar_downloading_percent">%1$s, indiriliyor, %%%2$d</string>
+    <string name="bottom_bar_downloading">%1$s, indiriliyor</string>
 </resources>

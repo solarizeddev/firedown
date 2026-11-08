@@ -8,6 +8,7 @@ import android.os.Looper;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.solarized.firedown.data.DownloadProgress;
 import com.solarized.firedown.data.SingleLiveEvent;
 import com.solarized.firedown.data.TaskEvent;
 import com.solarized.firedown.data.entity.DownloadEntity;
@@ -39,6 +40,19 @@ public class TaskRepository {
      *  downloads. Surfaced as the bottom-bar badge for the
      *  incognito-mode {@code BrowserFragment}. */
     private final MutableLiveData<Integer> mSafeCount = new MutableLiveData<>(0);
+
+    /**
+     * The bottom bar's Downloads line, per browsing mode (the same split as
+     * the counts): the whole group's progress, "running, total unknown", or
+     * nothing. Posted by the download engine only when it changes.
+     */
+    private final MutableLiveData<DownloadProgress> mRegularProgress =
+            new MutableLiveData<>(DownloadProgress.NONE);
+    private final MutableLiveData<DownloadProgress> mSafeProgress =
+            new MutableLiveData<>(DownloadProgress.NONE);
+    /** Last values posted; the engine's thread is the only writer. */
+    private DownloadProgress mLastRegularProgress = DownloadProgress.NONE;
+    private DownloadProgress mLastSafeProgress = DownloadProgress.NONE;
 
     /**
      * One-shot task events (Started / Progress / Finished / Deleted / Error
@@ -73,6 +87,31 @@ public class TaskRepository {
     public void updateCount(int regular, int safe) {
         mRegularCount.postValue(regular);
         mSafeCount.postValue(safe);
+    }
+
+    public LiveData<DownloadProgress> getRegularProgress() {
+        return mRegularProgress;
+    }
+
+    public LiveData<DownloadProgress> getSafeProgress() {
+        return mSafeProgress;
+    }
+
+    /**
+     * Both modes' lines at once, from the download engine's thread. A value
+     * equal to the last one posted is dropped. postValue keeps only the
+     * newest of quick changes, which is right for a progress line (a stale
+     * percent is never worth showing).
+     */
+    public void updateProgress(DownloadProgress regular, DownloadProgress safe) {
+        if (!regular.equals(mLastRegularProgress)) {
+            mLastRegularProgress = regular;
+            mRegularProgress.postValue(regular);
+        }
+        if (!safe.equals(mLastSafeProgress)) {
+            mLastSafeProgress = safe;
+            mSafeProgress.postValue(safe);
+        }
     }
 
     // --- Type-safe events (new) ---

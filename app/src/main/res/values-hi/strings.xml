@@ -1255,4 +1255,6 @@
     <string name="trackers_info_type_images">इमेज और बीकन</string>
     <string name="trackers_info_type_other">अन्य अनुरोध</string>
     <string name="trackers_info_type_scripts">स्क्रिप्ट</string>
+    <string name="bottom_bar_downloading_percent">%1$s, डाउनलोड हो रहा है, %2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s, डाउनलोड हो रहा है</string>
 </resources>

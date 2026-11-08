@@ -4316,16 +4316,19 @@ before changing a flow. The rules, each easy to undo:
     a network that never validates keeps its "Review update" row.
   - **Needs attention** (waiting and not seen) is what points at it: a
     coral dot on the bottom bar's ⋮ (`BottomNavigationBar.setAddonAttention`;
-    the one badge an app update ready also lights; it and the Downloads dot
-    sit in their ICON's top-end corner, `pinBadgeToIcon` + the pure
-    `IconBadgeOffsets`, recomputed on every layout from the icon's drawn
-    bounds and the dot's size as Material rounded it: Material measures
-    badge offsets from the button, a fifth of the bar, and fixed 20dp
-    offsets left the dots up to 17dp off their icons on a phone and 65dp in
-    landscape, while a fixed 6dp inset slips a pixel at half of all
-    densities; verify with `sh scripts/badge-harness/run.sh`, every density
-    from 120 to 640 dpi against AOSP's and Material 1.14's rounding, five
-    mutants) and on the ⋮ menus' Add-ons row
+    the one badge an app update ready also lights; it is CENTRED on its
+    ICON's top-end corner, half outside the glyph, `pinBadgeToIcon` + the
+    pure `IconBadgeOffsets`, recomputed on every layout from the icon's
+    drawn bounds and the dot's size as Material rounded it: Material
+    measures badge offsets from the button, a fifth of the bar, and fixed
+    20dp offsets left the dot up to 17dp off its icon on a phone and 65dp
+    in landscape, while a fixed half-dot inset slips a pixel at half of
+    all densities. Inside the corner (one build) it sat 4dp from ⋮'s top
+    dot and read as a fourth dot of the glyph. Verify with
+    `sh scripts/badge-harness/run.sh`, every density from 120 to 640 dpi
+    against AOSP's and Material 1.14's rounding, five mutants. It is the
+    bar's ONLY dot: the Downloads button shows a progress line, see "The
+    bottom bar's Downloads button") and on the ⋮ menus' Add-ons row
     (`AddonUpdateDots`, `popup_addons_dot`; the browser's and the home's),
     each also said in words to a screen reader; the ⋮ Add-ons sheet's row
     for that add-on reads "Update needs your review" and opens the question
@@ -6590,6 +6593,80 @@ nothing to take down — Firedown stays not-a-host.
   file no longer on the device.** Those two ARE the hosting property; any design
   that delivers them puts bytes on a public URL and brings the whole abuse desk
   with it. Accept the loss explicitly rather than reopening it.
+
+### The bottom bar's Downloads button: its tray becomes the progress line
+
+While anything downloads, the Downloads button shows the progress of the whole
+group on the icon itself (`geckoview/toolbar/DownloadProgressDrawable`, canvas
+"Add-on update review", boards 12-20). It replaced a coral dot that meant
+"something is downloading" on Downloads and "an update needs you" on ⋮: the
+frequent meaning taught people to ignore the rare one, so a dot now lives on ⋮
+only. Decided by the maintainer after two independent reviews (Claude, Fable)
+and sketches; the rules, each from a rejected option:
+
+- **One line, where the icon already has one.** At rest the icon is
+  Material's "download" (arrow over a tray). While downloading, the tray's
+  sides retract and its base becomes the progress line: a track in the icon's
+  colour at 30% with the coral fill (`progress_indicator`: `#DB4444` light,
+  `#ff716c` dark; `incognito_primary` on the private bar). Rejected on the
+  way: a ring around the icon (36dp across, louder than every other icon,
+  and turning for hours on a live recording), a bar UNDER the icon (two flat
+  lines stacked, and an underline under one icon reads as "selected"),
+  colouring part of one glyph (the tray's base, with the sides kept: looks
+  like a rendering glitch and fights the bar's whole-icon tint), the line on
+  the bar's top edge (far from the icon, echoes the page-load bar), a new
+  arrow-over-a-line icon everywhere (runner-up: it changes ten places and a
+  line that is always there is a weaker "started" signal). Chrome desktop
+  makes the same move (it drops the tray while downloading:
+  `kDownloadIcon` → `kArrowDownwardAltIcon` in
+  `download_toolbar_ui_controller.cc`); Firefox desktop hides its whole icon
+  for a ring. Neither colours part of its icon.
+- **The line is 2dp lower and 2dp wider than the tray's base** (x 3..21,
+  y 20..22 of the 24dp box, 4dp under the arrow's tip;
+  `DownloadsLineGeometry`). At the base's own place and size (2dp under the
+  tip) the maintainer read it as a small icon beside the bar's others
+  (board 20 compares the sizes with the bar's real icons). 2dp thick, the
+  glyph's own stroke; square ends. The arrow is the glyph's own path and
+  never moves.
+- **Unknown total (a live recording, a server that sends no size): Material's
+  indeterminate shape**, a 6dp coral piece sliding along the line (1.5 s),
+  the maintainer's pick over still dashes. It stops while the drawable is
+  not visible and, with animations off (`ValueAnimator.areAnimatorsEnabled`),
+  stands still in the middle of the line.
+- **Several downloads are one group per browsing mode**
+  (`manager/DownloadProgressGroup`, fed by `DownloadEngine.publishProgress`):
+  each download an equal share (streams report percent of running time, not
+  bytes), averaged; a finished one stays at 100% until nothing runs
+  (Firefox's batch, so a short download finishing never drags the line
+  back); a new one joins and the line drops a step (Chrome and Firefox do
+  the same); a queued one counts 0%; one with no known total is left out,
+  and when every running one is like that the line goes indeterminate; a
+  failed or deleted one leaves the group. When a group ends with its last
+  download finished, the line fills, holds a moment and the tray comes back
+  (`DownloadProgress.completed`); a deleted last one just morphs back.
+- **Plumbing**: each `DownloadTask` keeps its share (`getBarProgress`,
+  volatile, set by `onProgress` / `onLiveStream` / `onProcessing` = 100) and
+  pokes `DownloadEngine.onTaskProgress`, which coalesces into one
+  `MSG_PROGRESS` on the engine thread; list changes publish too
+  (`publishTaskCounts`). `TaskRepository.updateProgress` posts a mode's value
+  only when it changed (`getRegularProgress` / `getSafeProgress`, the same
+  regular/vault split as the counts). `BrowserFragment` shows the mode on
+  screen (re-read without animation on a mode switch), `HomeFragment` the
+  regular one; the first value a new bar gets never animates.
+- **Private tabs**: the button is the Safe Folder lock at rest; while a vault
+  download runs, the lock fades into the same arrow and line.
+- **Spoken**: the button says "Downloads, downloading, 40%" / "Downloads,
+  downloading" (`bottom_bar_downloading_percent` / `bottom_bar_downloading`,
+  the Safe Folder's name in private tabs); it had no description before.
+- **Verify** with `sh scripts/downloads-line-harness/run.sh` (the geometry:
+  the rest tray equals Material's, the line in the box and 4dp under the
+  tip, fill from the start edge in RTL, minimum 2dp, the piece clipped to
+  the line; four mutants) and `sh scripts/engine-harness/run.sh` section 16
+  (the group: equal shares, a finished one held at 100%, live → indeterminate
+  even beside a finished one, completed vs deleted, vault vs regular; two
+  mutants checked by hand: finished ones leaving the group, unknown counted
+  as a percentage). The drawable's animation code was type-checked against
+  stand-ins only; on-device unverified at write time.
 
 ### Home — the address bar and the mark (home v6, frame N2): the field IS the browser's bar, nothing moves
 
