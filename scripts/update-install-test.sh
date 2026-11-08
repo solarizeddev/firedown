@@ -58,7 +58,10 @@
 # off (an indeterminate progress bar never lets the screen be read), the
 # screen stays on, rotation is fixed, the font size changes for a moment,
 # Firedown may install apps, and it may post notifications (taken back only
-# if it could not before). Each case force-stops Firedown first.
+# if it could not before). Each case force-stops Firedown first. The
+# settings as they were are kept in build/update-install-test/ until they
+# are back on the phone; a run that could not put them back (killed, the
+# cable pulled) is undone by the next run, before anything else.
 
 set -Euo pipefail
 
@@ -110,6 +113,7 @@ RESTORE_APPOPS=
 REVOKE_NOTIFICATIONS=0
 INSTALLED_NEWER=0
 PHONE_TOUCHED=0
+SETTINGS_RECORD=
 SCREEN_READ=0
 CASE_NAME=
 FONT_SCALE_SAVED=
@@ -1335,6 +1339,9 @@ preflight() {
 save_setting() {
     local ns=$1 key=$2 value
     value=$(remote settings get "$ns" "$key")
+    # Nothing has been changed yet: stop rather than save a value the phone
+    # did not give (an empty one would be put back as "no value").
+    [ -n "$value" ] || die "could not read the phone's $key setting; nothing was changed on the phone."
     if [ "$ns" = global ]; then
         RESTORE_GLOBAL+=("$key" "$value")
     else
@@ -1342,9 +1349,73 @@ save_setting() {
     fi
 }
 
+# The phone's settings as they were, kept on this computer from before the
+# first change until they are back. A run that could not put them back
+# (killed, the cable pulled, the phone gone at the end) leaves the file, and
+# the next run puts them back from it before saving them again: otherwise it
+# would save the leftover values (animations off) as the phone's own.
+settings_record() {
+    local serial
+    serial=$(adbq get-serialno 2>/dev/null | tr -d '\r' | tr -c 'A-Za-z0-9._\n-' _)
+    printf '%s/phone-settings-%s.txt' "$CACHE" "${serial:-phone}"
+}
+
+write_settings_record() {
+    local file=$1 i
+    mkdir -p "$CACHE"
+    : > "$file.tmp"
+    i=0
+    while [ $i -lt ${#RESTORE_GLOBAL[@]} ]; do
+        printf 'global %s %s\n' "${RESTORE_GLOBAL[$i]}" "${RESTORE_GLOBAL[$((i + 1))]}" >> "$file.tmp"
+        i=$((i + 2))
+    done
+    i=0
+    while [ $i -lt ${#RESTORE_SYSTEM[@]} ]; do
+        printf 'system %s %s\n' "${RESTORE_SYSTEM[$i]}" "${RESTORE_SYSTEM[$((i + 1))]}" >> "$file.tmp"
+        i=$((i + 2))
+    done
+    if [ -n "$RESTORE_APPOPS" ]; then
+        printf 'appops %s\n' "$RESTORE_APPOPS" >> "$file.tmp"
+    fi
+    if [ "$REVOKE_NOTIFICATIONS" = 1 ]; then
+        printf 'revoke notifications\n' >> "$file.tmp"
+    fi
+    mv "$file.tmp" "$file"
+}
+
+read_settings_record() {
+    local ns key value
+    RESTORE_GLOBAL=()
+    RESTORE_SYSTEM=()
+    RESTORE_APPOPS=
+    REVOKE_NOTIFICATIONS=0
+    while read -r ns key value; do
+        case $ns in
+            global) RESTORE_GLOBAL+=("$key" "${value:-null}") ;;
+            system) RESTORE_SYSTEM+=("$key" "${value:-null}") ;;
+            appops) RESTORE_APPOPS=$key ;;
+            revoke) REVOKE_NOTIFICATIONS=1 ;;
+        esac
+    done < "$1"
+}
+
 setup_phone() {
-    local mode
-    PHONE_TOUCHED=1
+    local mode record
+    record=$(settings_record)
+    SETTINGS_RECORD=$record
+    if [ -f "$record" ]; then
+        say "An earlier run did not put the phone's settings back (animations, stay awake while charging, rotation, font size): putting them back first."
+        read_settings_record "$record"
+        if ! restore_phone_settings; then
+            settings_not_restored "$record"
+            die "the phone's settings could not be put back."
+        fi
+        rm -f "$record"
+        RESTORE_GLOBAL=()
+        RESTORE_SYSTEM=()
+        RESTORE_APPOPS=
+        REVOKE_NOTIFICATIONS=0
+    fi
     save_setting global animator_duration_scale
     save_setting global transition_animation_scale
     save_setting global window_animation_scale
@@ -1353,6 +1424,14 @@ setup_phone() {
     save_setting system user_rotation
     save_setting system font_scale
     FONT_SCALE_SAVED=${RESTORE_SYSTEM[$((${#RESTORE_SYSTEM[@]} - 1))]}
+    if [ "${RESTORE_GLOBAL[1]}" = 0 ] || [ "${RESTORE_GLOBAL[1]}" = 0.0 ]; then
+        say "Note: animations are already off on this phone; the script leaves them that way. If an earlier run of this script turned them off, turn them back on with:"
+        say "  adb shell settings put global animator_duration_scale 1"
+        say "  adb shell settings put global transition_animation_scale 1"
+        say "  adb shell settings put global window_animation_scale 1"
+    fi
+    write_settings_record "$record"
+    PHONE_TOUCHED=1
     remote settings put global animator_duration_scale 0
     remote settings put global transition_animation_scale 0
     remote settings put global window_animation_scale 0
@@ -1363,10 +1442,12 @@ setup_phone() {
     adbq push "$NEWER_APK" "$STAGE" >/dev/null 2>&1 || die "could not copy the APK to the phone"
     mode=$(remote appops get "$PKG" REQUEST_INSTALL_PACKAGES | sed -n 's/.*REQUEST_INSTALL_PACKAGES: \([a-z]*\).*/\1/p' | head -n 1)
     RESTORE_APPOPS=${mode:-default}
+    write_settings_record "$record"
     remote appops set "$PKG" REQUEST_INSTALL_PACKAGES allow
     if [ "$SDK" -ge 33 ]; then
         if ! has "$(remote dumpsys package "$PKG")" 'android.permission.POST_NOTIFICATIONS: granted=true'; then
             REVOKE_NOTIFICATIONS=1
+            write_settings_record "$record"
             remote pm grant "$PKG" android.permission.POST_NOTIFICATIONS
         fi
     fi
@@ -1376,43 +1457,118 @@ setup_phone() {
     [ -n "$APK_PATH" ] || die "the app's test receiver did not answer ($where). Is this checkout's debug build installed?"
 }
 
-# A setting the phone did not have reads back as "null": delete it rather
-# than store that word.
+# restore_setting NS KEY VALUE: puts one setting back and reads it again;
+# fails when the phone does not hold VALUE afterwards. A setting the phone
+# did not have reads back as "null": delete it rather than store that word.
+# Android keeps the animation scale it has when the key is deleted (it reads
+# a missing key as the scale in force, until the phone restarts), so an
+# animation key gets the default 1 before it is deleted.
 restore_setting() {
-    if [ "$3" = null ] || [ -z "$3" ]; then
-        remote settings delete "$1" "$2" >/dev/null 2>&1 || true
+    local ns=$1 key=$2 value=$3 now
+    if [ "$value" = null ] || [ -z "$value" ]; then
+        case $key in
+            animator_duration_scale|transition_animation_scale|window_animation_scale)
+                remote settings put "$ns" "$key" 1 >/dev/null 2>&1 || true
+                ;;
+        esac
+        remote settings delete "$ns" "$key" >/dev/null 2>&1 || true
+        value=null
     else
-        remote settings put "$1" "$2" "$3" >/dev/null 2>&1 || true
+        remote settings put "$ns" "$key" "$value" >/dev/null 2>&1 || true
+    fi
+    now=$(remote settings get "$ns" "$key")
+    [ "$now" = "$value" ]
+}
+
+# Every saved setting put back, then the install permission and the
+# notification permission; fails if a setting did not take.
+restore_phone_settings() {
+    local i ok=0
+    i=0
+    while [ $i -lt ${#RESTORE_GLOBAL[@]} ]; do
+        restore_setting global "${RESTORE_GLOBAL[$i]}" "${RESTORE_GLOBAL[$((i + 1))]}" || ok=1
+        i=$((i + 2))
+    done
+    i=0
+    while [ $i -lt ${#RESTORE_SYSTEM[@]} ]; do
+        restore_setting system "${RESTORE_SYSTEM[$i]}" "${RESTORE_SYSTEM[$((i + 1))]}" || ok=1
+        i=$((i + 2))
+    done
+    if [ -n "$RESTORE_APPOPS" ]; then
+        remote appops set "$PKG" REQUEST_INSTALL_PACKAGES "$RESTORE_APPOPS" >/dev/null 2>&1 || true
+    fi
+    if [ "$REVOKE_NOTIFICATIONS" = 1 ]; then
+        remote pm revoke "$PKG" android.permission.POST_NOTIFICATIONS >/dev/null 2>&1 || true
+    fi
+    return $ok
+}
+
+# settings_not_restored RECORD: says so, and how to do it by hand.
+settings_not_restored() {
+    local i key value
+    say ""
+    say "WARNING: the phone's settings were not all put back (animations, stay awake while charging, rotation, font size)."
+    say "The next run of this script puts them back ($1). To do it now:"
+    i=0
+    while [ $i -lt ${#RESTORE_GLOBAL[@]} ]; do
+        key=${RESTORE_GLOBAL[$i]}
+        value=${RESTORE_GLOBAL[$((i + 1))]}
+        if [ "$value" != null ]; then
+            say "  adb shell settings put global $key $value"
+        else
+            case $key in
+                *animation_scale|animator_duration_scale) say "  adb shell settings put global $key 1" ;;
+            esac
+            say "  adb shell settings delete global $key"
+        fi
+        i=$((i + 2))
+    done
+    i=0
+    while [ $i -lt ${#RESTORE_SYSTEM[@]} ]; do
+        key=${RESTORE_SYSTEM[$i]}
+        value=${RESTORE_SYSTEM[$((i + 1))]}
+        if [ "$value" != null ]; then
+            say "  adb shell settings put system $key $value"
+        else
+            say "  adb shell settings delete system $key"
+        fi
+        i=$((i + 2))
+    done
+    if [ -n "$RESTORE_APPOPS" ]; then
+        say "  adb shell appops set $PKG REQUEST_INSTALL_PACKAGES $RESTORE_APPOPS"
+    fi
+    if [ "$REVOKE_NOTIFICATIONS" = 1 ]; then
+        say "  adb shell pm revoke $PKG android.permission.POST_NOTIFICATIONS"
     fi
 }
 
 cleanup() {
-    local i
+    local reachable=0
     restore_gradle
-    if [ "$PHONE_TOUCHED" = 1 ] && adbq get-state >/dev/null 2>&1; then
-        if installer_up; then
-            close_installer || true
+    if [ "$PHONE_TOUCHED" = 1 ]; then
+        if adbq get-state >/dev/null 2>&1; then
+            reachable=1
         fi
-        if [ "$INSTALLED_NEWER" = 1 ] || [ "$(installed_code)" = "$NEWER_CODE" ]; then
-            ensure_base || true
-        fi
-        rx CLEAR >/dev/null 2>&1 || true
-        remote rm -f "$STAGE" /sdcard/fd-update-ui.xml >/dev/null 2>&1 || true
-        i=0
-        while [ $i -lt ${#RESTORE_GLOBAL[@]} ]; do
-            restore_setting global "${RESTORE_GLOBAL[$i]}" "${RESTORE_GLOBAL[$((i + 1))]}"
-            i=$((i + 2))
-        done
-        i=0
-        while [ $i -lt ${#RESTORE_SYSTEM[@]} ]; do
-            restore_setting system "${RESTORE_SYSTEM[$i]}" "${RESTORE_SYSTEM[$((i + 1))]}"
-            i=$((i + 2))
-        done
-        if [ -n "$RESTORE_APPOPS" ]; then
-            remote appops set "$PKG" REQUEST_INSTALL_PACKAGES "$RESTORE_APPOPS" >/dev/null 2>&1 || true
-        fi
-        if [ "$REVOKE_NOTIFICATIONS" = 1 ]; then
-            remote pm revoke "$PKG" android.permission.POST_NOTIFICATIONS >/dev/null 2>&1 || true
+        if [ "$reachable" = 0 ]; then
+            settings_not_restored "$SETTINGS_RECORD"
+        else
+            # The settings first: nothing after this may stop the trap
+            # before they are back.
+            if restore_phone_settings; then
+                rm -f "$SETTINGS_RECORD"
+            else
+                settings_not_restored "$SETTINGS_RECORD"
+            fi
+            if installer_up; then
+                close_installer || true
+            fi
+            if [ "$INSTALLED_NEWER" = 1 ] || [ "$(installed_code)" = "$NEWER_CODE" ]; then
+                # In a subshell: a failed install calls die, and an exit
+                # here would end the trap before the steps below.
+                (ensure_base) || true
+            fi
+            rx CLEAR >/dev/null 2>&1 || true
+            remote rm -f "$STAGE" /sdcard/fd-update-ui.xml >/dev/null 2>&1 || true
         fi
     fi
     if [ -n "$LOGCAT_PID" ]; then

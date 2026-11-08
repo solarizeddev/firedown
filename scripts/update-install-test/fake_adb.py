@@ -57,6 +57,17 @@ STAGE = "/data/local/tmp/fd-update-test.apk"
 #   rotate-loses  a sheet rebuilt mid-copy shows the button, not the copy
 #   no-updated    after updating itself the app posts no "Firedown updated"
 BUG = os.environ.get("FAKE_BUG", "")
+# The phone's settings before the run, as "ns/key=value,…" (none: every key
+# unset, which Android reads back as "null").
+SEED = os.environ.get("FAKE_SETTINGS", "")
+# FAKE_GONE_AT_END=1: the phone answers the first `adb get-state` and no
+# other (the cable pulled before the script puts the phone back).
+GONE_AT_END = os.environ.get("FAKE_GONE_AT_END", "") == "1"
+# FAKE_DOWNGRADE=fails: installing an older versionCode is refused, so the
+# script cannot put the original version back at the end.
+DOWNGRADE = os.environ.get("FAKE_DOWNGRADE", "")
+ANIMATION_KEYS = ("global/animator_duration_scale", "global/transition_animation_scale",
+                  "global/window_animation_scale")
 
 INSTALL_BTN = (540, 2200)
 NOTIF_ROW = (540, 475)
@@ -72,7 +83,31 @@ def fresh():
         "notif_install": False, "last_traced": None, "ui": "",
         "sheet_id": "", "seen": 0, "footer": "", "last_render": None,
         "amnesia": False, "notif_perm": NOTIF_GRANTED, "revokes": 0,
+        "live": {}, "get_state_calls": 0,
     }
+
+
+def seed(st):
+    """The settings the phone had before any run, and the animation scales
+    it runs with (WindowManager's copy, which a settings change updates)."""
+    for item in filter(None, SEED.split(",")):
+        k, v = item.split("=", 1)
+        st["settings"][k] = v
+    for k in ANIMATION_KEYS:
+        st["live"][k] = st["settings"].get(k, "1")
+
+
+def set_live(st, key, deleted):
+    """WindowManager reads a changed scale again. A deleted key reads as the
+    scale in force (WindowManagerService.getAnimatorDurationScaleSetting and
+    the window one default to their own field); the transition scale reads
+    as the resource default, 1."""
+    if key not in ANIMATION_KEYS:
+        return
+    if not deleted:
+        st["live"][key] = st["settings"][key]
+    elif key == "global/transition_animation_scale":
+        st["live"][key] = "1"
 
 
 def noise(n):
@@ -329,10 +364,12 @@ def shell(st, cmd):
     m = re.match(r"settings delete (\w+) (\w+)", cmd)
     if m:
         st["settings"].pop(m.group(1) + "/" + m.group(2), None)
+        set_live(st, m.group(1) + "/" + m.group(2), True)
         return ""
     m = re.match(r"settings put (\w+) (\w+) (\S+)", cmd)
     if m:
         st["settings"][m.group(1) + "/" + m.group(2)] = m.group(3)
+        set_live(st, m.group(1) + "/" + m.group(2), False)
         return ""
     if cmd.startswith("appops get"):
         return "REQUEST_INSTALL_PACKAGES: %s; time=+1d" % st["appops"]
@@ -488,13 +525,24 @@ def main():
             time.sleep(0.1)
     with open(STATE + ".lock", "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        st = json.load(open(STATE)) if os.path.exists(STATE) else fresh()
+        if os.path.exists(STATE):
+            st = json.load(open(STATE))
+        else:
+            st = fresh()
+            seed(st)
         advance(st)
         noise(3)
         out = ""
         rc = 0
         if args == ["get-state"]:
-            out = "device"
+            st["get_state_calls"] += 1
+            if GONE_AT_END and st["get_state_calls"] > 1:
+                sys.stderr.write("error: no devices/emulators found\n")
+                rc = 1
+            else:
+                out = "device"
+        elif args == ["get-serialno"]:
+            out = "FAKE0123"
         elif args and args[0] == "shell":
             out = shell(st, " ".join(args[1:]))
             if out.startswith("fake adb: unhandled"):
@@ -512,7 +560,10 @@ def main():
             out = "1 file pushed"
         elif args and args[0] == "install":
             m = re.search(r"versionCode=(\d+)", open(args[-1]).read())
-            if m:
+            if m and DOWNGRADE == "fails" and int(m.group(1)) < st["installed"]:
+                out = "Performing Streamed Install\nadb: failed to install: Failure [INSTALL_FAILED_VERSION_DOWNGRADE]"
+                rc = 1
+            elif m:
                 kill_app(st)
                 st["installed"] = int(m.group(1))
                 out = "Performing Streamed Install\nSuccess"

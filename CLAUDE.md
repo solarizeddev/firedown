@@ -5059,7 +5059,30 @@ is **~75 MB**, the APK 205 MB.
   drawn, or the time of the first `Btn_touch` after it), names the touch
   and tries once more; a second touch fails with that reason. Every
   phone setting it touches (animations, stay-on, rotation, font size,
-  appops, the notification grant) is put back. It runs on
+  appops, the notification grant) is put back, and a run that could not
+  put them back is caught by the next. It turns animations off for its
+  run, and on 2026-11-08 a phone was found still running with
+  `animator_duration_scale` 0 afterwards (every spinner and indeterminate
+  bar frozen in the app, read as an app bug). Three holes, each closed and
+  pinned by the selftest (12 of its checks fail on the old script): (1)
+  cleanup put the original version back BEFORE the settings, and a failed
+  `adb install` there calls `die`, whose `exit` inside the EXIT trap ends
+  the trap: the settings were never restored (now: settings first, and
+  `ensure_base` in a subshell); (2) a key the phone did not have was
+  restored by `settings delete`, and WindowManager reads a missing
+  animator or window scale as the scale in force
+  (`getAnimatorDurationScaleSetting` defaults to its own field), so a
+  CLEAN run left animations off until the phone restarted (now: put 1,
+  then delete); (3) a run that never reached its cleanup (killed, cable
+  pulled, phone gone: that case was silent) left 0 on the phone, and the
+  next run saved that 0 as the phone's own value and kept it forever. The
+  values are now written to
+  `build/update-install-test/phone-settings-<serial>.txt` before the first
+  change and deleted only once every setting reads back as saved; a run
+  that finds the file puts the phone back from it first. An unreachable
+  phone at the end prints the exact `adb shell` commands, and a phone that
+  already has animations off at the start is told how to turn them on.
+  Never restore a phone setting without reading it back. It runs on
   macOS (bash 3.2, BSD awk: the screen parsers split a dump into nodes in
   `END`, never with a multi-character `RS`, which older BSD awk lacks) and
   Linux, takes adb from PATH else from `local.properties`' `sdk.dir` /
