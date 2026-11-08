@@ -203,16 +203,13 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
     }
 
     /**
-     * The line under the title. A running transfer wins; then what to do
-     * when the folder is lost; then the ⋮-menu hint for an empty backup or
+     * The line under the title. What to do when the folder is lost wins (the
+     * button below it says the same); then a running transfer; then the ⋮-menu hint for an empty backup or
      * "N files · encrypted end-to-end" (the title already IS the size).
      */
     private String bodyText(Context ctx) {
         if (!mSetUp) {
             return ctx.getString(R.string.backup_hero_setup_body);
-        }
-        if (mActive) {
-            return ctx.getString(R.string.settings_cloud_backup_active);
         }
         if (!mReachable) {
             return ctx.getString(switch (mPlace) {
@@ -220,6 +217,9 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
                 case S3 -> R.string.s3_lost_body;
                 default -> R.string.folder_backup_lost_body;
             });
+        }
+        if (mActive) {
+            return ctx.getString(R.string.settings_cloud_backup_active);
         }
         if (mFileCount == 0) {
             return ctx.getString(R.string.cloud_status_empty_body);

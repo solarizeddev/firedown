@@ -6907,8 +6907,7 @@ left the phone. It is a SEPARATE feature from the local **Safe Folder**
 (`file_safe`, which never leaves the device): user-facing copy says "Backup",
 internal classes keep the `Cloud*`/`Vault*` names of the hosted service this
 replaced (`CloudBackupManager`, `VaultEngine`/`VaultBackupWorker`/
-`VaultRestoreWorker`/`VaultThumbnail`/`VaultEntry`, `CloudBackupListFragment`,
-`CloudBuyButtonPreference`, the `cloud_*`/`settings_cloud_*`/`home_cloud_*`
+`VaultRestoreWorker`/`VaultThumbnail`/`VaultEntry`, `CloudBackupListFragment`, the `cloud_*`/`settings_cloud_*`/`home_cloud_*`
 string keys, the `…cloud.backup.*` pref keys) — the shapes survived the
 server. The one cardinal rule is unchanged: **whoever holds the bytes never
 sees plaintext** — every file is encrypted on the device (`VaultCrypto`,
