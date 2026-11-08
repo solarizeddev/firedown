@@ -517,8 +517,8 @@ public class EngineHarness {
         // ── 16. the bottom bar's progress line: one group per mode ─
         freshEngine();
         DownloadTask p1 = startAndWait("https://cdn.example/p/1.mp4", "p1.mp4", false);
-        check("16a a started download shows the line at 0%",
-                waitUntil(() -> DownloadProgress.determinate(0).equals(taskRepo.regularProgress)),
+        check("16a a download that has not moved yet shows no percentage (the moving bar), not 0%",
+                waitUntil(() -> DownloadProgress.indeterminate().equals(taskRepo.regularProgress)),
                 String.valueOf(taskRepo.regularProgress));
         p1.reportBarProgress(40);
         check("16b its percentage reaches the line",
@@ -531,6 +531,9 @@ public class EngineHarness {
                     String.valueOf(taskRepo.regularProgress));
             p1.getRunnable().finishNaturally();
             host.await("finished:");
+            check("16c2 a finished one counts as moved: (100 + 0) / 2, a percentage",
+                    waitUntil(() -> DownloadProgress.determinate(50).equals(taskRepo.regularProgress)),
+                    String.valueOf(taskRepo.regularProgress));
             p2.reportBarProgress(50);
             check("16d a finished one stays in the group at 100%: (100 + 50) / 2",
                     waitUntil(() -> DownloadProgress.determinate(75).equals(taskRepo.regularProgress)),
@@ -543,8 +546,8 @@ public class EngineHarness {
         } else {
             p1.getRunnable().finishNaturally();
         }
-        check("16f the group ends with its last download finished → idle, completed",
-                waitUntil(() -> DownloadProgress.idle(true).equals(taskRepo.regularProgress)),
+        check("16f the group ends with its last download finished → idle",
+                waitUntil(() -> DownloadProgress.NONE.equals(taskRepo.regularProgress)),
                 String.valueOf(taskRepo.regularProgress));
         check("16g the safe line never moved for regular downloads",
                 DownloadProgress.NONE.equals(taskRepo.safeProgress), String.valueOf(taskRepo.safeProgress));
@@ -552,13 +555,13 @@ public class EngineHarness {
 
         DownloadTask p3 = startAndWait("https://cdn.example/p/3.mp4", "p3.mp4", true);
         check("16h a vault download moves the safe line only",
-                waitUntil(() -> DownloadProgress.determinate(0).equals(taskRepo.safeProgress))
+                waitUntil(() -> DownloadProgress.indeterminate().equals(taskRepo.safeProgress))
                         && !taskRepo.regularProgress.isActive(),
                 taskRepo.safeProgress + " / " + taskRepo.regularProgress);
         p3.reportBarProgress(30);
         waitUntil(() -> DownloadProgress.determinate(30).equals(taskRepo.safeProgress));
         engine.dispatch(withEntities(IntentActions.DOWNLOAD_DELETE, List.of(new DownloadEntity(p3.entity()))), 1);
-        check("16i a group whose last download is deleted ends idle, NOT completed (no full line shown)",
+        check("16i a group whose last download is deleted ends idle",
                 waitUntil(() -> DownloadProgress.NONE.equals(taskRepo.safeProgress)),
                 String.valueOf(taskRepo.safeProgress));
         host.await("idle");

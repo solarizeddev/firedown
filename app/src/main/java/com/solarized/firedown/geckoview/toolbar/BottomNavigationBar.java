@@ -19,6 +19,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -32,25 +33,30 @@ import com.solarized.firedown.ui.browser.TabsBrowserButton;
 
 import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.badge.BadgeUtils;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 
 public class BottomNavigationBar extends FrameLayout implements View.OnClickListener, View.OnLongClickListener {
 
     private static final String TAG = BottomNavigationBar.class.getName();
 
+    /** The progress bar's track: the icons' colour at about 30%. */
+    private static final int TRACK_ALPHA = 77;
+
     private OnBottomBarListener mOnBottomBarListener;
 
     private TabsBrowserButton mTabsCountButton;
 
     /**
-     * The Downloads button's icon, which carries the group's progress line
-     * (DownloadProgressDrawable). It replaced a coral dot: one dot meant both
-     * "something is downloading" (often, for minutes) and, on ⋮, "an update
-     * needs you" (rarely), and the frequent one taught people to ignore the
-     * rare one.
+     * While anything downloads, the Downloads button shows a plain arrow with
+     * Material's progress bar under it; otherwise its usual icon. It replaced
+     * a coral dot: one dot meant both "something is downloading" (often, for
+     * minutes) and, on ⋮, "an update needs you" (rarely), and the frequent one
+     * taught people to ignore the rare one.
      */
-    private DownloadProgressDrawable mDownloadsIcon;
     @Nullable private ImageView mDownloadsButton;
+    @Nullable private LinearProgressIndicator mDownloadsBar;
+    private int mDownloadsIconRes;
     private DownloadProgress mDownloadProgress = DownloadProgress.NONE;
     private boolean mIncognito;
     /**
@@ -123,7 +129,12 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         // Inflate-with-attach returns `this`; the LinearLayout is its sole child.
         ViewGroup bar = (ViewGroup) getChildAt(0);
         for (int i = 0; i < bar.getChildCount(); i++) {
-            bar.getChildAt(i).setOnClickListener(this);
+            View child = bar.getChildAt(i);
+            // The Downloads cell is a frame around its button and progress
+            // bar: the button takes the clicks.
+            if (child.getId() != R.id.downloads_cell) {
+                child.setOnClickListener(this);
+            }
         }
 
         View newTabButton = findViewById(R.id.new_tab_button);
@@ -133,13 +144,13 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         // keeps the four visible cells evenly distributed across the bar.
         searchIcon.setVisibility(hideMiddleSlot ? View.INVISIBLE : View.VISIBLE);
         newTabButton.setOnLongClickListener(this);
+        downloadButton.setOnClickListener(this);
         downloadButton.setOnLongClickListener(this);
 
         mTabsCountButton = findViewById(R.id.tab_button);
         mDownloadsButton = (ImageView) downloadButton;
-        mDownloadsIcon = new DownloadProgressDrawable(context);
-        mDownloadsIcon.setFillColor(ContextCompat.getColor(context, R.color.progress_indicator));
-        mDownloadsButton.setImageDrawable(mDownloadsIcon);
+        mDownloadsBar = findViewById(R.id.downloads_progress);
+        refreshDownloadsIcon();
         refreshDownloadsDescription();
 
         // A dot on ⋮ (see mMenuBadge): an app update ready, an add-on update
@@ -217,13 +228,15 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             // Private tabs: the Safe Folder's lock at rest; it gives way to
             // the same arrow and progress line while a download runs.
             mIncognito = incognito;
-            mDownloadsIcon.setRestGlyph(incognito
-                    ? ContextCompat.getDrawable(context, R.drawable.ic_lock_24) : null);
-            mDownloadsIcon.setFillColor(incognito
+            ImageViewCompat.setImageTintList(downloadsBtn, iconTint);
+            refreshDownloadsIcon();
+            refreshDownloadsDescription();
+        }
+        if (mDownloadsBar != null) {
+            mDownloadsBar.setIndicatorColor(incognito
                     ? IncognitoColors.getPrimary(context, true)
                     : ContextCompat.getColor(context, R.color.progress_indicator));
-            ImageViewCompat.setImageTintList(downloadsBtn, iconTint);
-            refreshDownloadsDescription();
+            mDownloadsBar.setTrackColor(ColorUtils.setAlphaComponent(iconColor, TRACK_ALPHA));
         }
 
         View moreBtn = findViewById(R.id.more_button);
@@ -275,14 +288,50 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
      */
     public void setDownloadProgress(@Nullable DownloadProgress progress, boolean animate) {
         mDownloadProgress = progress != null ? progress : DownloadProgress.NONE;
-        mDownloadsIcon.setProgress(mDownloadProgress, animate);
+        refreshDownloadsIcon();
+        if (mDownloadsBar != null) {
+            if (!mDownloadProgress.isActive()) {
+                mDownloadsBar.setVisibility(View.GONE);
+                // The next group starts from an empty bar, not this one's end.
+                mDownloadsBar.setProgressCompat(0, false);
+            } else {
+                if (mDownloadProgress.state == DownloadProgress.INDETERMINATE) {
+                    mDownloadsBar.setIndeterminate(true);
+                } else {
+                    // From the moving bar, Material switches at the end of
+                    // its current cycle.
+                    mDownloadsBar.setProgressCompat(mDownloadProgress.percent, animate);
+                }
+                mDownloadsBar.setVisibility(View.VISIBLE);
+            }
+        }
         refreshDownloadsDescription();
     }
 
+    /** The arrow over the bar while anything downloads; the mode's own icon otherwise. */
+    private void refreshDownloadsIcon() {
+        if (mDownloadsButton == null) {
+            return;
+        }
+        int res;
+        if (mDownloadProgress.isActive()) {
+            res = R.drawable.download_arrow_24;
+        } else if (mIncognito) {
+            res = R.drawable.ic_lock_24;
+        } else {
+            res = R.drawable.download_24;
+        }
+        if (res != mDownloadsIconRes) {
+            mDownloadsIconRes = res;
+            mDownloadsButton.setImageResource(res);
+        }
+    }
+
     /**
-     * The line is drawn only: what it shows, in words. In steps of 10%: a
-     * screen reader re-reads a focused button whenever its description
-     * changes, and every percent would be a sentence a second.
+     * The bar is hidden from screen readers: the button says what it shows,
+     * in words. In steps of 10%: a screen reader re-reads a focused button
+     * whenever its description changes, and every percent would be a
+     * sentence a second.
      */
     private void refreshDownloadsDescription() {
         if (mDownloadsButton == null) {

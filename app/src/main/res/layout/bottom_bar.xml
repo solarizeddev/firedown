@@ -1,4 +1,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="@dimen/app_bar_size"
@@ -39,16 +40,42 @@
         android:tint="?attr/colorOnSurface"
         android:src="@drawable/ic_bookmark_border_24" />
 
-    <androidx.appcompat.widget.AppCompatImageButton
-        android:id="@+id/downloads_button"
+    <!-- The Downloads button and, under its icon while anything downloads,
+         Material's progress bar (BottomNavigationBar.setDownloadProgress).
+         The bar is centred on the icon and moved down to where the icon's
+         tray is: 18dp wide, 3dp thick, its centre 9.5dp below the icon's. -->
+    <FrameLayout
+        android:id="@+id/downloads_cell"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="6dp"
-        android:scaleType="centerInside"
-        android:tint="?attr/colorOnSurface"
-        android:src="@drawable/download_24" />
+        android:layout_weight="1">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/downloads_button"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="6dp"
+            android:scaleType="centerInside"
+            android:tint="?attr/colorOnSurface"
+            android:src="@drawable/download_24" />
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/downloads_progress"
+            style="@style/Widget.Material3.LinearProgressIndicator"
+            android:layout_width="18dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:translationY="9.5dp"
+            android:importantForAccessibility="no"
+            android:visibility="gone"
+            app:indeterminateAnimationType="disjoint"
+            app:indicatorDirectionLinear="startToEnd"
+            app:indicatorTrackGapSize="0dp"
+            app:trackCornerRadius="1.5dp"
+            app:trackStopIndicatorSize="0dp"
+            app:trackThickness="3dp" />
+    </FrameLayout>
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/more_button"
