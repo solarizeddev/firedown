@@ -13223,15 +13223,24 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   `sh scripts/prompt-harness/run.sh`, and on
   a device `phone/BrowserPipDeviceTest` (a loopback page whose `<video>`
   goes fullscreen and plays on a real `input tap`; Home → PiP with the same
-  activity instance and no toolbar; expand → still fullscreen and playing;
-  close through the PiP window's accessibility dismiss → paused, out of
-  fullscreen, a private tab kept — skipped where the system UI offers no
-  dismiss; a video not fullscreen → no PiP, audio on; an `alert()` fired
-  when the viewport shrinks into the window → answered, no dialog). Written
-  for #311; not run on a device at write time. Not covered on a device:
-  the app lock with PiP, a content crash in PiP, a download notification
-  tapped while in PiP, the expand from the launcher icon (the test uses
-  `am start`).
+  activity instance and no toolbar; expand through the PiP window's
+  accessibility expand → still fullscreen and playing; the app icon's own
+  start (`-f 0x10200000`, NEW_TASK | RESET_TASK_IF_NEEDED, what a launcher
+  sends) → expanded the same way; close through the window's
+  accessibility dismiss → paused, out of fullscreen, a private tab kept;
+  the window actions are skipped where the system UI offers none; a video
+  not fullscreen → no PiP, audio on; an `alert()` fired when the viewport
+  shrinks into the window → answered, no dialog). **The icon start must
+  carry RESET_TASK_IF_NEEDED**: without it (a bare `am start -n`) Android
+  ADDS the routing activity on top of a task whose root is the browser
+  (opened by a link), it finishes at once, and nothing reaches the pinned
+  task, so the window stays (the first device run, SM-A426B Android 12,
+  failed on exactly that). With it the task comes to the front, the start
+  is reported as a restart of the pinned activity and the system expands
+  the window. All five green on SM-A426B (Android 12), the icon case
+  included.
+  Not covered on a device: the app lock with PiP, a content crash in PiP,
+  a download notification tapped while in PiP.
 
 ### Subtitles in the local player — side-loaded downloads, one sheet, add a file
 
