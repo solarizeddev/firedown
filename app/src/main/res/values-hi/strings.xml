@@ -1011,6 +1011,8 @@
     <string name="feedback_failed">भेजा नहीं जा सका। अपना कनेक्शन जाँचें और फिर से कोशिश करें।</string>
     <string name="settings_address_bar_host_only_title">पता बार में केवल साइट का नाम दिखाएँ</string>
     <string name="settings_address_bar_host_only_summary">बार पर टैप करने पर पूरा पता दिखता है।</string>
+    <string name="settings_web_video_double_tap_title">वीडियो में आगे-पीछे जाने के लिए दो बार टैप करें</string>
+    <string name="settings_web_video_double_tap_summary">किसी वेबसाइट के फ़ुलस्क्रीन वीडियो में बाईं या दाईं ओर दो बार टैप करने से वीडियो 10 सेकंड पीछे या आगे जाता है।</string>
     <string name="capture_earlier_in_tab">इस टैब में पहले</string>
     <string name="capture_video_on_site">%1$s पर वीडियो</string>
     <string name="capture_audio_on_site">%1$s पर ऑडियो</string>

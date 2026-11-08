@@ -1035,6 +1035,8 @@
     <string name="feedback_failed">Не вдалося надіслати. Перевірте з\'єднання й спробуйте ще раз.</string>
     <string name="settings_address_bar_host_only_title">Показувати в адресному рядку лише назву сайту</string>
     <string name="settings_address_bar_host_only_summary">Повна адреса з\'являється при натисканні на рядок.</string>
+    <string name="settings_web_video_double_tap_title">Подвійне торкання для перемотування відео</string>
+    <string name="settings_web_video_double_tap_summary">У повноекранному відео на сайті подвійне торкання ліворуч або праворуч перемотує на 10 секунд назад або вперед.</string>
     <string name="security_block_ads_trackers">Блокувати рекламу та трекери</string>
     <string name="capture_earlier_in_tab">Раніше в цій вкладці</string>
     <string name="capture_video_on_site">Відео з %1$s</string>

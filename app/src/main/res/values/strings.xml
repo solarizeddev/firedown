@@ -1316,6 +1316,8 @@
     <string name="feedback_failed">Couldn\'t send. Check your connection and try again.</string>
     <string name="settings_address_bar_host_only_title">Show only the site name in the address bar</string>
     <string name="settings_address_bar_host_only_summary">The full address appears when you tap the bar.</string>
+    <string name="settings_web_video_double_tap_title">Double-tap to skip in videos</string>
+    <string name="settings_web_video_double_tap_summary">In a fullscreen video on a website, double-tap the left or right side to go back or ahead 10 seconds.</string>
 
     <!-- The local player's Subtitles sheet (MediaViewerFragment). -->
     <string name="player_speed">Playback speed</string>

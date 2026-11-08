@@ -83,8 +83,9 @@ public class NestedGeckoView extends GeckoView implements NestedScrollingChild {
 
     /**
      * Sees every touch event before the page does. Returning true keeps
-     * the event from Gecko; a filter keeps a gesture WHOLE (from its
-     * ACTION_DOWN to its ACTION_UP), never part of one.
+     * the event from Gecko. A filter that holds an event hands it over
+     * later with {@link #deliverTouch}; once it has let one event of a
+     * gesture through, it lets the rest of that gesture through too.
      */
     public interface TouchFilter {
         boolean onTouch(MotionEvent event);
@@ -94,6 +95,11 @@ public class NestedGeckoView extends GeckoView implements NestedScrollingChild {
 
     public void setTouchFilter(TouchFilter filter) {
         mTouchFilter = filter;
+    }
+
+    /** Hands the page an event the filter held, past the filter. */
+    public void deliverTouch(MotionEvent ev) {
+        handleTouch(ev);
     }
 
     // ── Constructors ──────────────────────────────────────────────────────────────────────────────
@@ -117,6 +123,10 @@ public class NestedGeckoView extends GeckoView implements NestedScrollingChild {
         if (mTouchFilter != null && mTouchFilter.onTouch(ev)) {
             return true;
         }
+        return handleTouch(ev);
+    }
+
+    private boolean handleTouch(MotionEvent ev) {
         MotionEvent event = MotionEvent.obtain(ev);
         final int action = event.getActionMasked();
         int eventY = (int) event.getY();

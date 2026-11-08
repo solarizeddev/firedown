@@ -1082,6 +1082,8 @@
     <string name="feedback_failed">Versturen mislukt. Controleer je verbinding en probeer het opnieuw.</string>
     <string name="settings_address_bar_host_only_title">Alleen de sitenaam in de adresbalk tonen</string>
     <string name="settings_address_bar_host_only_summary">Het volledige adres verschijnt als je op de balk tikt.</string>
+    <string name="settings_web_video_double_tap_title">Dubbeltikken om te springen in video\'s</string>
+    <string name="settings_web_video_double_tap_summary">In een video op volledig scherm op een website spring je met dubbeltikken links of rechts 10 seconden terug of vooruit.</string>
     <string name="capture_earlier_in_tab">Eerder in dit tabblad</string>
     <string name="capture_video_on_site">Video op %1$s</string>
     <string name="capture_audio_on_site">Audio op %1$s</string>

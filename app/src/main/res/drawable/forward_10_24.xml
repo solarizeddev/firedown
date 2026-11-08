@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Material Symbols "forward_10" at settings size: the double-tap seek
+  switch in Settings. Its own file, not ic_media_forward_10_24: Settings
+  tints its icons, and a shared drawable would carry that tint into the
+  player's button.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorOnSurfaceVariant">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M18,13c0,3.31 -2.69,6 -6,6s-6,-2.69 -6,-6 2.69,-6 6,-6v4l5,-5 -5,-5v4c-4.42,0 -8,3.58 -8,8 0,4.42 3.58,8 8,8s8,-3.58 8,-8h-2zM10.86,15.94v-4.27h-0.09l-1.77,0.63v0.69l1.01,-0.31v3.26h0.85zM12.25,13.44v0.74c0,1.02 0.55,1.83 1.5,1.83 0.94,0 1.5,-0.81 1.5,-1.83v-0.74c0,-1.02 -0.55,-1.83 -1.5,-1.83 -0.95,0 -1.5,0.81 -1.5,1.83zM14.5,14.36c0,0.54 -0.24,1.07 -0.74,1.07s-0.74,-0.53 -0.74,-1.07v-1.1c0,-0.54 0.24,-1.07 0.74,-1.07s0.74,0.53 0.74,1.07v1.1z" />
+</vector>

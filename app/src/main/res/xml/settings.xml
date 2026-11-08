@@ -40,6 +40,18 @@
             android:summary="@string/settings_address_bar_host_only_summary"
             app:icon="@drawable/ic_web_24"/>
 
+        <!-- Double-tap seek on web video in page fullscreen (Preferences
+             .SETTINGS_WEB_VIDEO_DOUBLE_TAP_SEEK). ON by default; the
+             defaultValue must match DEFAULT_WEB_VIDEO_DOUBLE_TAP_SEEK.
+             Self-persisting; BrowserFragment re-reads it on resume. -->
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            app:singleLineTitle="false"
+            android:key="com.solarized.firedown.preferences.browser.video.doubletapseek"
+            android:title="@string/settings_web_video_double_tap_title"
+            android:summary="@string/settings_web_video_double_tap_summary"
+            app:icon="@drawable/forward_10_24"/>
+
         <!-- DOOR to the Translations sub-screen (TranslationsFragment):
              Gecko's built-in on-device translator — master switch, the offer
              prompt, downloaded language files, never-translate sites. -->

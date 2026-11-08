@@ -980,6 +980,8 @@
     <string name="feedback_failed">Saatmine ebaõnnestus. Kontrolli ühendust ja proovi uuesti.</string>
     <string name="settings_address_bar_host_only_title">Näita aadressiribal ainult saidi nime</string>
     <string name="settings_address_bar_host_only_summary">Täielik aadress ilmub ribale koputades.</string>
+    <string name="settings_web_video_double_tap_title">Topeltkoputus video kerimiseks</string>
+    <string name="settings_web_video_double_tap_summary">Veebisaidi täisekraanvideos kerib topeltkoputus vasakule või paremale poolele 10 sekundit tagasi või edasi.</string>
     <string name="security_block_ads_trackers">Blokeeri reklaamid ja jälitajad</string>
     <string name="capture_earlier_in_tab">Varem sellel vahekaardil</string>
     <string name="capture_video_on_site">Video saidilt %1$s</string>

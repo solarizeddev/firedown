@@ -1002,6 +1002,8 @@
     <string name="feedback_failed">Неуспешно изпращане. Проверете връзката и опитайте отново.</string>
     <string name="settings_address_bar_host_only_title">Показвай само името на сайта в адресната лента</string>
     <string name="settings_address_bar_host_only_summary">Пълният адрес се показва при докосване на лентата.</string>
+    <string name="settings_web_video_double_tap_title">Двукратно докосване за превъртане във видео</string>
+    <string name="settings_web_video_double_tap_summary">Във видео на цял екран в уебсайт двукратното докосване вляво или вдясно връща назад или превърта напред с 10 секунди.</string>
     <string name="security_block_ads_trackers">Блокиране на реклами и тракери</string>
     <string name="capture_earlier_in_tab">По-рано в този раздел</string>
     <string name="capture_video_on_site">Видео от %1$s</string>

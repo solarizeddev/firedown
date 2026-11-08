@@ -251,6 +251,17 @@ public class Preferences {
 
     public static final boolean DEFAULT_ADDRESS_BAR_HOST_ONLY = false;
 
+    /**
+     * Double-tap the left or right side of a web video in page fullscreen
+     * to seek 10 s ({@code WebVideoSeekGesture}). ON by default; off hands
+     * every tap to the page as before. Read by BrowserFragment on resume;
+     * the settings.xml defaultValue must match the default here.
+     */
+    public static final String SETTINGS_WEB_VIDEO_DOUBLE_TAP_SEEK =
+            "com.solarized.firedown.preferences.browser.video.doubletapseek";
+
+    public static final boolean DEFAULT_WEB_VIDEO_DOUBLE_TAP_SEEK = true;
+
     public static final String SETTINGS_THEME = "com.solarized.firedown.preferences.theme";
 
     public static final String SETTINGS_THEME_DEFAULT = "com.solarized.firedown.preferences.theme.default";

@@ -1173,6 +1173,8 @@
     <string name="feedback_failed">Senden fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.</string>
     <string name="settings_address_bar_host_only_title">Nur den Namen der Website in der Adressleiste anzeigen</string>
     <string name="settings_address_bar_host_only_summary">Die vollständige Adresse erscheint beim Antippen der Leiste.</string>
+    <string name="settings_web_video_double_tap_title">Doppeltippen zum Springen in Videos</string>
+    <string name="settings_web_video_double_tap_summary">Bei einem Video im Vollbild auf einer Website springt doppeltes Antippen links oder rechts 10 Sekunden zurück oder vor.</string>
     <string name="capture_earlier_in_tab">Früher in diesem Tab</string>
     <string name="capture_video_on_site">Video auf %1$s</string>
     <string name="capture_audio_on_site">Audio auf %1$s</string>

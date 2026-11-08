@@ -1106,6 +1106,8 @@
     <string name="feedback_failed">Не удалось отправить. Проверьте подключение и повторите попытку.</string>
     <string name="settings_address_bar_host_only_title">Показывать в адресной строке только имя сайта</string>
     <string name="settings_address_bar_host_only_summary">Полный адрес появляется при нажатии на строку.</string>
+    <string name="settings_web_video_double_tap_title">Двойное нажатие для перемотки видео</string>
+    <string name="settings_web_video_double_tap_summary">В полноэкранном видео на сайте двойное нажатие слева или справа перематывает на 10 секунд назад или вперёд.</string>
     <string name="capture_earlier_in_tab">Ранее в этой вкладке</string>
     <string name="capture_video_on_site">Видео с %1$s</string>
     <string name="capture_audio_on_site">Аудио с %1$s</string>

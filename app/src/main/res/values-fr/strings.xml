@@ -1179,6 +1179,8 @@
     <string name="feedback_failed">Échec de l\'envoi. Vérifiez votre connexion et réessayez.</string>
     <string name="settings_address_bar_host_only_title">Afficher uniquement le nom du site dans la barre d\'adresse</string>
     <string name="settings_address_bar_host_only_summary">L\'adresse complète apparaît quand vous touchez la barre.</string>
+    <string name="settings_web_video_double_tap_title">Toucher deux fois pour avancer dans les vidéos</string>
+    <string name="settings_web_video_double_tap_summary">Dans une vidéo en plein écran sur un site, toucher deux fois le côté gauche ou droit recule ou avance de 10 secondes.</string>
     <string name="capture_earlier_in_tab">Plus tôt dans cet onglet</string>
     <string name="capture_video_on_site">Vidéo sur %1$s</string>
     <string name="capture_audio_on_site">Audio sur %1$s</string>

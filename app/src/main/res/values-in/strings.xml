@@ -830,6 +830,8 @@
     <string name="settings_account_summary">Cadangan unduhan terenkripsi di folder pilihan Anda, dan sinkronisasi markah. Satu kode pemulihan</string>
     <string name="settings_account_title">Cadangan</string>
     <string name="settings_address_bar_host_only_summary">Alamat lengkap muncul saat Anda mengetuk bilah.</string>
+    <string name="settings_web_video_double_tap_title">Ketuk dua kali untuk melompat di video</string>
+    <string name="settings_web_video_double_tap_summary">Di video layar penuh pada situs web, ketuk dua kali sisi kiri atau kanan untuk mundur atau maju 10 detik.</string>
     <string name="settings_address_bar_host_only_title">Hanya tampilkan nama situs di bilah alamat</string>
     <string name="settings_autofill_active">Isi otomatis sistem aktif. Ketuk untuk mengubah.</string>
     <string name="settings_autofill_none_configured">Tidak ada layanan isi otomatis yang dikonfigurasi. Ketuk untuk menyiapkannya.</string>

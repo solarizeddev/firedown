@@ -1164,6 +1164,8 @@
     <string name="feedback_failed">送信できませんでした。接続を確認してもう一度お試しください。</string>
     <string name="settings_address_bar_host_only_title">アドレスバーにサイト名のみを表示</string>
     <string name="settings_address_bar_host_only_summary">バーをタップすると完全なアドレスが表示されます。</string>
+    <string name="settings_web_video_double_tap_title">ダブルタップで動画をスキップ</string>
+    <string name="settings_web_video_double_tap_summary">ウェブサイトの全画面動画で左右どちらかをダブルタップすると、10 秒戻るか進みます。</string>
     <string name="capture_earlier_in_tab">このタブの以前のページ</string>
     <string name="capture_video_on_site">%1$s の動画</string>
     <string name="capture_audio_on_site">%1$s の音声</string>

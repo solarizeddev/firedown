@@ -13027,15 +13027,27 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
 
 A web video in page fullscreen seeks ±10 s on a double tap of the left or
 right third, like the file player (feedback from 1.2.5). Pure rules in
-`phone/WebVideoSeekGesture` (`WebVideoSeekGestureTest`, JVM); wiring in
-`BrowserFragment.setupWebVideoSeek` through `NestedGeckoView.setTouchFilter`.
-- **The first tap goes to the page; the second, and every streak tap, is
-  kept from it** (a gesture is kept or passed WHOLE, decided at its first
-  down). So a site's own tap handler still shows its controls, and the page
-  never sees a double tap on the sides: no double-tap zoom, and a player
-  that seeks on double tap by itself cannot add its seek to ours. Gecko
-  delivers the lone first tap after its double-tap wait, as for any single
-  tap. The middle third is the page's.
+`phone/WebVideoSeekGesture` and `phone/WebVideoSeekGate` (JVM tests of
+both); wiring in `BrowserFragment.setupWebVideoSeek` through
+`NestedGeckoView.setTouchFilter` / `deliverTouch`. Nothing runs in the
+page: no script, no selectors, no player names. A site change can stop the
+gesture from turning on; it cannot break the site.
+- **A tap on a side is HELD from the page, then handed over late**: after
+  the double-tap timeout if no second tap comes (a copy of its DOWN and
+  UP, original timestamps, delivered past the filter), at once if it turns
+  into anything else (moves past the touch slop, a second finger, held past
+  the long-press timeout, a tap elsewhere). A double tap never reaches the
+  page: a player that pauses on a single tap does not pause and then seek,
+  and a site's own double-tap zoom or seek cannot add to ours. The cost is
+  a ~300 ms delay on a single tap on the sides of a fullscreen video (what
+  Chrome's own controls and the file player do). A cancelled held gesture
+  is dropped (the page never saw it start). Every held copy is handed over
+  or recycled exactly once (pinned by the random-sequence test). A held tap
+  is flushed to the old session before a tab switch, and dropped when the
+  view goes away.
+- **The middle third and a band along the top and bottom are the page's**,
+  never held: the band is 15% of the view's height, at least 64dp, where
+  players keep their control bars.
 - **The seek is the tab's MediaSession `seekTo`**, so a page's own
   `seekto` action handler runs when it has one. The target is the last
   `onPositionState` (stored per tab on `GeckoState`, ungated, with the time
@@ -13043,12 +13055,27 @@ right third, like the file player (feedback from 1.2.5). Pure rules in
   [0, duration]; after a seek the stored position is set to the target so
   the next streak tap counts from there. A live stream (no finite duration)
   is not seekable this way.
-- **Active only** in DOM fullscreen (`mUiState` FULL_SCREEN and the tab's
-  `isFullScreen`), the tab having a media session that is the fullscreen
-  element's (`onFullscreen`, `isMediaFullScreen`) or playing (a container
-  div fullscreen), never under touch exploration (double tap is
-  TalkBack's activate) or in PiP.
-- On-device unverified at write time.
+- **When it is on** (`webVideoSeekable` + `WebVideoSeekGate`): every touch
+  needs the setting, DOM fullscreen (`mUiState` FULL_SCREEN and the tab's
+  `isFullScreen`), no touch exploration (double tap is TalkBack's
+  activate), no PiP, and the tab's media session alive with a finite
+  length. It turns on once the video shows itself (the fullscreen element,
+  `onFullscreen`/`isMediaFullScreen`, or playing, for a player that
+  fullscreens a wrapper) and then STAYS on for the fullscreen stint, so
+  pausing to rewind does not switch it off. Entering fullscreen
+  (`enterFullScreen`) starts a new stint.
+- **Off switch**: Settings → General → "Double-tap to skip in videos"
+  (`SETTINGS_WEB_VIDEO_DOUBLE_TAP_SEEK`, default ON), read on resume. Its
+  icon is its own `forward_10_24`: Settings tints its icons, and sharing the
+  player's `ic_media_forward_10_24` would carry the tint into the player.
+- Known limits, from Fable's review: Gecko reports no media session for
+  muted or very short media, and lets go of one paused for long, so the
+  gesture is off there (taps pass as before); a quick second tap on a
+  player's menu in a side third counts as a double tap.
+- On-device unverified at write time: whether Gecko takes the late taps
+  with old timestamps as taps, and the matrix (m.youtube.com, Vimeo, a
+  Twitch past broadcast, a Video.js/Brightcove page, Plyr, a bare
+  `<video controls>`; paused, muted).
 
 ### Subtitles in the local player — side-loaded downloads, one sheet, add a file
 

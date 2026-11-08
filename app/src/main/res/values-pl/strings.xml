@@ -1104,6 +1104,8 @@
     <string name="feedback_failed">Nie udało się wysłać. Sprawdź połączenie i spróbuj ponownie.</string>
     <string name="settings_address_bar_host_only_title">Pokazuj w pasku adresu tylko nazwę witryny</string>
     <string name="settings_address_bar_host_only_summary">Pełny adres pojawia się po dotknięciu paska.</string>
+    <string name="settings_web_video_double_tap_title">Dwukrotne dotknięcie przewija wideo</string>
+    <string name="settings_web_video_double_tap_summary">W filmie na stronie internetowej w trybie pełnoekranowym dwukrotne dotknięcie lewej lub prawej strony przewija o 10 sekund do tyłu lub do przodu.</string>
     <string name="capture_earlier_in_tab">Wcześniej w tej karcie</string>
     <string name="capture_video_on_site">Wideo z %1$s</string>
     <string name="capture_audio_on_site">Dźwięk z %1$s</string>

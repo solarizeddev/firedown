@@ -1040,6 +1040,8 @@
     <string name="feedback_failed">Lähetys epäonnistui. Tarkista yhteys ja yritä uudelleen.</string>
     <string name="settings_address_bar_host_only_title">Näytä osoitepalkissa vain sivuston nimi</string>
     <string name="settings_address_bar_host_only_summary">Koko osoite näkyy, kun napautat palkkia.</string>
+    <string name="settings_web_video_double_tap_title">Hyppää videossa kaksoisnapautuksella</string>
+    <string name="settings_web_video_double_tap_summary">Verkkosivuston koko näytön videossa kaksoisnapautus vasemmalle tai oikealle puolelle siirtää 10 sekuntia taakse- tai eteenpäin.</string>
     <string name="capture_earlier_in_tab">Aiemmin tässä välilehdessä</string>
     <string name="capture_video_on_site">Video sivustolta %1$s</string>
     <string name="capture_audio_on_site">Ääni sivustolta %1$s</string>

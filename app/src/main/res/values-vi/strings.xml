@@ -865,6 +865,8 @@
     <string name="settings_account_summary">Sao lưu tải xuống được mã hóa vào thư mục bạn chọn và đồng bộ dấu trang. Một mã khôi phục</string>
     <string name="settings_account_title">Sao lưu</string>
     <string name="settings_address_bar_host_only_summary">Địa chỉ đầy đủ sẽ hiện ra khi bạn nhấn vào thanh.</string>
+    <string name="settings_web_video_double_tap_title">Nhấn đúp để tua video</string>
+    <string name="settings_web_video_double_tap_summary">Trong video toàn màn hình trên trang web, nhấn đúp vào bên trái hoặc bên phải để tua lùi hoặc tua tới 10 giây.</string>
     <string name="settings_address_bar_host_only_title">Chỉ hiện tên trang trên thanh địa chỉ</string>
     <string name="settings_autofill_active">Tự động điền của hệ thống đang bật. Nhấn để thay đổi.</string>
     <string name="settings_autofill_none_configured">Chưa cấu hình dịch vụ tự động điền. Nhấn để thiết lập.</string>

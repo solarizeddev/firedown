@@ -10,6 +10,8 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -48,6 +50,7 @@ import androidx.navigation.NavDestination;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.phone.PipPolicy;
+import com.solarized.firedown.phone.WebVideoSeekGate;
 import com.solarized.firedown.phone.WebVideoSeekGesture;
 
 import com.solarized.firedown.UpdateReadyLiveData;
@@ -200,9 +203,19 @@ public class BrowserFragment extends BaseBrowserFragment
     private boolean mTouchExplorationEnabled = false;
 
     /** Double-tap seek on a web video in page fullscreen. */
-    private WebVideoSeekGesture mWebSeekGesture;
-    /** The current gesture is kept from the page (decided at its down). */
-    private boolean mWebSeekKeeping;
+    /** Smallest band left to the page's controls at the top and bottom. */
+    private static final float WEB_SEEK_MIN_BAND_DP = 64f;
+    private WebVideoSeekGesture<MotionEvent> mWebSeekGesture;
+    private final WebVideoSeekGate mWebSeekGate = new WebVideoSeekGate();
+    private final Handler mWebSeekHandler = new Handler(Looper.getMainLooper());
+    private final Runnable mWebSeekTimeout = () -> {
+        if (mWebSeekGesture != null) {
+            mWebSeekGesture.onTimeout();
+        }
+    };
+    private float mWebSeekMinBandPx;
+    /** {@link Preferences#SETTINGS_WEB_VIDEO_DOUBLE_TAP_SEEK}, read on resume. */
+    private boolean mWebSeekEnabled = Preferences.DEFAULT_WEB_VIDEO_DOUBLE_TAP_SEEK;
     private TextView mWebSeekFeedbackLeft;
     private TextView mWebSeekFeedbackRight;
 
@@ -440,6 +453,9 @@ public class BrowserFragment extends BaseBrowserFragment
         // Settings is another Activity, so a toggle there lands here on the
         // way back — no navigation event would otherwise repaint the bar.
         applyAddressBarDisplayPref();
+        mWebSeekEnabled = mSharedPreferences.getBoolean(
+                Preferences.SETTINGS_WEB_VIDEO_DOUBLE_TAP_SEEK,
+                Preferences.DEFAULT_WEB_VIDEO_DOUBLE_TAP_SEEK);
         // The DRM switch may have changed in Settings: repaint the shield's
         // dot so it never outlives the row, and bring the page on screen in
         // line with the switch.
@@ -1353,6 +1369,12 @@ public class BrowserFragment extends BaseBrowserFragment
         mSwipeRefreshLayout       = null;
         mAutoCompleteEditText     = null;
         mAutoCompleteView         = null;
+        if (mWebSeekGesture != null) {
+            // Nothing can reach the page any more: drop what is held.
+            mWebSeekGesture.reset();
+            mWebSeekGesture = null;
+        }
+        mWebSeekHandler.removeCallbacks(mWebSeekTimeout);
         if (mGeckoView != null) {
             mGeckoView.setTouchFilter(null);
         }
@@ -1364,7 +1386,6 @@ public class BrowserFragment extends BaseBrowserFragment
         }
         mWebSeekFeedbackLeft      = null;
         mWebSeekFeedbackRight     = null;
-        mWebSeekKeeping           = false;
         mGeckoView                = null;
         mDownloadButton           = null;
         mGeckoToolbar             = null;
@@ -1488,6 +1509,9 @@ public class BrowserFragment extends BaseBrowserFragment
     private void enterFullScreen(View decorView) {
         decorView.setBackgroundColor(Color.BLACK);
         mUiState = UiState.FULL_SCREEN;
+        // A new fullscreen stint: the video must show itself again before
+        // double-tap seek turns on.
+        mWebSeekGate.clear();
         // The one mUiState transition that previously skipped the policy:
         // without this, isScrollEnabled stays true for the whole fullscreen
         // stay and the gesture detector keeps translating the GONE toolbar
@@ -1873,50 +1897,81 @@ public class BrowserFragment extends BaseBrowserFragment
 
     /**
      * Double-tap the left or right third of a web video in page
-     * fullscreen to seek 10 s, as in the file player. The first tap goes
-     * to the page, the second (and every streak tap) is kept from it; see
-     * {@link WebVideoSeekGesture}. Seeks through the tab's media session.
+     * fullscreen to seek 10 s, as in the file player. A tap on a side is
+     * held from the page until it is clear no second tap follows, so the
+     * page never sees a double tap; see {@link WebVideoSeekGesture}.
+     * Seeks through the tab's media session. Off in Settings
+     * ({@link Preferences#SETTINGS_WEB_VIDEO_DOUBLE_TAP_SEEK}).
      */
     private void setupWebVideoSeek() {
         ViewConfiguration config = ViewConfiguration.get(mActivity);
-        mWebSeekGesture = new WebVideoSeekGesture(
+        mWebSeekGesture = new WebVideoSeekGesture<>(new WebSeekHost(),
                 ViewConfiguration.getDoubleTapTimeout(),
                 config.getScaledDoubleTapSlop(),
                 config.getScaledTouchSlop(),
                 ViewConfiguration.getLongPressTimeout());
+        mWebSeekMinBandPx = WEB_SEEK_MIN_BAND_DP
+                * getResources().getDisplayMetrics().density;
         mGeckoView.setTouchFilter(this::filterWebVideoTouch);
+    }
+
+    /** The gesture's hands on the view: held copies, the timer, the seek. */
+    private final class WebSeekHost implements WebVideoSeekGesture.Host<MotionEvent> {
+
+        @Override
+        public MotionEvent copy(MotionEvent event) {
+            return MotionEvent.obtain(event);
+        }
+
+        @Override
+        public void deliver(MotionEvent event) {
+            if (mGeckoView != null) {
+                mGeckoView.deliverTouch(event);
+            }
+            event.recycle();
+        }
+
+        @Override
+        public void discard(MotionEvent event) {
+            event.recycle();
+        }
+
+        @Override
+        public void seek(int direction, int taps) {
+            seekWebVideo(direction, taps);
+        }
+
+        @Override
+        public void schedule(long delayMs) {
+            mWebSeekHandler.removeCallbacks(mWebSeekTimeout);
+            mWebSeekHandler.postDelayed(mWebSeekTimeout, delayMs);
+        }
+
+        @Override
+        public void cancelSchedule() {
+            mWebSeekHandler.removeCallbacks(mWebSeekTimeout);
+        }
     }
 
     private boolean filterWebVideoTouch(MotionEvent event) {
         switch (event.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN:
-                mWebSeekKeeping = mWebSeekGesture.onDown(event.getX(), event.getY(),
-                        event.getEventTime(), mGeckoView.getWidth(), webVideoSeekable());
-                return mWebSeekKeeping;
-            case MotionEvent.ACTION_POINTER_DOWN:
-                mWebSeekGesture.onPointerDown();
-                return mWebSeekKeeping;
+            case MotionEvent.ACTION_DOWN: {
+                int height = mGeckoView.getHeight();
+                return mWebSeekGesture.onDown(event, event.getX(), event.getY(),
+                        event.getEventTime(), mGeckoView.getWidth(), height,
+                        WebVideoSeekGesture.bandFor(height, mWebSeekMinBandPx),
+                        webVideoSeekable());
+            }
             case MotionEvent.ACTION_MOVE:
-                mWebSeekGesture.onMove(event.getX(), event.getY());
-                return mWebSeekKeeping;
-            case MotionEvent.ACTION_UP: {
-                boolean kept = mWebSeekKeeping;
-                mWebSeekKeeping = false;
-                int direction = mWebSeekGesture.onUp(event.getX(), event.getY(),
+                return mWebSeekGesture.onMove(event.getX(), event.getY());
+            case MotionEvent.ACTION_UP:
+                return mWebSeekGesture.onUp(event, event.getX(), event.getY(),
                         event.getEventTime());
-                if (direction != 0) {
-                    seekWebVideo(direction);
-                }
-                return kept;
-            }
-            case MotionEvent.ACTION_CANCEL: {
-                boolean kept = mWebSeekKeeping;
-                mWebSeekKeeping = false;
-                mWebSeekGesture.onCancel();
-                return kept;
-            }
+            case MotionEvent.ACTION_CANCEL:
+                return mWebSeekGesture.onCancel();
             default:
-                return mWebSeekKeeping;
+                // A second finger down or up.
+                return mWebSeekGesture.onOtherPointer();
         }
     }
 
@@ -1924,31 +1979,43 @@ public class BrowserFragment extends BaseBrowserFragment
      * A video of this fragment's mode in page fullscreen, with a known,
      * finite length (a live stream is not seekable this way). Off under
      * touch exploration, where a double tap is the screen reader's
-     * "activate", and in a PiP window.
+     * "activate", in a PiP window, and when the setting is off. Once the
+     * video has shown itself (the fullscreen element, or playing) it stays
+     * on for the fullscreen stint, paused included ({@link WebVideoSeekGate}).
      */
     private boolean webVideoSeekable() {
-        if (mUiState != UiState.FULL_SCREEN || mTouchExplorationEnabled
-                || mActivity.isInPictureInPictureMode()) {
-            return false;
-        }
         GeckoState current = peekCurrentGeckoState();
-        if (current == null || !current.isFullScreen()) {
-            return false;
+        boolean base = mWebSeekEnabled
+                && mUiState == UiState.FULL_SCREEN
+                && !mTouchExplorationEnabled
+                && !mActivity.isInPictureInPictureMode()
+                && current != null
+                && current.isFullScreen()
+                && mGeckoMediaController.hasSession(current.getEntityId())
+                && hasFiniteLength(current);
+        if (current == null) {
+            return mWebSeekGate.allow(0, false, false);
         }
         int id = current.getEntityId();
-        if (!mGeckoMediaController.hasSession(id)) {
-            return false;
-        }
         // The media itself in fullscreen, or playing under a fullscreen
         // element: a page in fullscreen with no video keeps every tap.
-        if (!current.isMediaFullScreen() && !mGeckoMediaController.isPlaying(id)) {
-            return false;
-        }
-        double duration = current.getMediaDuration();
+        boolean active = current.isMediaFullScreen() || mGeckoMediaController.isPlaying(id);
+        return mWebSeekGate.allow(id, base, active);
+    }
+
+    private static boolean hasFiniteLength(GeckoState state) {
+        double duration = state.getMediaDuration();
         return !Double.isNaN(duration) && !Double.isInfinite(duration) && duration > 0;
     }
 
-    private void seekWebVideo(int direction) {
+    /** Hands anything held to the page and leaves the gesture at rest. */
+    private void flushWebVideoSeek() {
+        if (mWebSeekGesture != null) {
+            mWebSeekGesture.flush();
+        }
+    }
+
+    private void seekWebVideo(int direction, int taps) {
         GeckoState current = peekCurrentGeckoState();
         if (current == null) {
             return;
@@ -1966,7 +2033,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // its new position.
         current.setMediaPosition(current.getMediaDuration(), target,
                 current.getMediaRate(), now);
-        showWebSeekFeedback(direction, mWebSeekGesture.getStreakTaps());
+        showWebSeekFeedback(direction, taps);
     }
 
     /** The cumulative badge at the tapped edge; fades once the streak ends. */
@@ -3386,6 +3453,9 @@ public class BrowserFragment extends BaseBrowserFragment
     private void setGeckoViewSession(GeckoState geckoState) {
         Log.d(TAG, "setGeckoViewSession: id=" + geckoState.getEntityId()
                 + " uri=" + geckoState.getEntityUri());
+
+        // A tap held for double-tap seek belongs to the page on screen now.
+        flushWebVideoSeek();
 
         final WebExtensionController controller =
                 mGeckoRuntimeHelper.getGeckoRuntime().getWebExtensionController();

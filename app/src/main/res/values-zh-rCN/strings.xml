@@ -1164,6 +1164,8 @@
     <string name="feedback_failed">发送失败。请检查网络连接后重试。</string>
     <string name="settings_address_bar_host_only_title">地址栏仅显示网站名称</string>
     <string name="settings_address_bar_host_only_summary">点按地址栏时会显示完整地址。</string>
+    <string name="settings_web_video_double_tap_title">双击快进或快退视频</string>
+    <string name="settings_web_video_double_tap_summary">在网站的全屏视频中，双击左侧或右侧可后退或前进 10 秒。</string>
     <string name="capture_earlier_in_tab">此标签页中较早的内容</string>
     <string name="capture_video_on_site">%1$s 上的视频</string>
     <string name="capture_audio_on_site">%1$s 上的音频</string>
