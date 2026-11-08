@@ -32,7 +32,10 @@ package com.solarized.firedown.phone;
  *   <li>Another Firedown screen opened over it (a download notification):
  *       the screen lands in the window's task, which BaseActivity then
  *       brings to the front (the system expands the window), and the
- *       browser stops behind it with no onResume. Not a close: the video
+ *       browser stops behind it with no onResume, sometimes still reporting
+ *       PiP, and the new screen is recreated for the expanded size (so for
+ *       a moment no screen of the app is started). BaseActivity reports
+ *       the screen ({@link #screenOpenedInWindow}). Not a close: the video
  *       keeps playing as audio, as when the app is left without PiP.</li>
  * </ul>
  */
@@ -73,6 +76,12 @@ public final class PipSession {
      * closed over a Firedown screen in another task, not expanded under one.
      */
     private long mEndedUnderScreenAtMs = -1;
+    /**
+     * Another of the app's screens was created in the window's task (a
+     * notification): whatever stops the browser next is that screen
+     * covering it, not a close, however the system orders the expand.
+     */
+    private boolean mScreenInWindow;
 
     // ── the app's own starts ────────────────────────────────────────────────
 
@@ -93,6 +102,18 @@ public final class PipSession {
     // ── mode changes ────────────────────────────────────────────────────────
 
     /**
+     * Another of the app's screens was created inside the window's task.
+     * The browser stops behind it once the window expands, possibly still
+     * reporting PiP, and while that screen is being recreated for the new
+     * size no screen of the app counts as started: neither is a close.
+     */
+    public void screenOpenedInWindow() {
+        if (mInPipStay) {
+            mScreenInWindow = true;
+        }
+    }
+
+    /**
      * A new instance created inside the window (a configuration change the
      * activity does not handle): the stay goes on.
      */
@@ -104,6 +125,7 @@ public final class PipSession {
     /** The activity entered PiP. */
     public void enteredPip() {
         mEndedUnderScreenAtMs = -1;
+        mScreenInWindow = false;
         mInPipStay = true;
         mTeardown = false;
         mStoppedExitPending = false;
@@ -147,7 +169,7 @@ public final class PipSession {
         if (!mStoppedExitPending) {
             return false;
         }
-        if (otherScreenStarted) {
+        if (otherScreenStarted || mScreenInWindow) {
             endStayUnderScreen(nowMs);
             return false;
         }
@@ -166,6 +188,7 @@ public final class PipSession {
 
     public void onResume() {
         mEndedUnderScreenAtMs = -1;
+        mScreenInWindow = false;
         // Not the own-start flag: a start made INSIDE onResume (the lock
         // screen) must still keep the pause it causes out of PiP. onPause
         // clears it, and onUserLeaveHint runs before onPause.
@@ -200,7 +223,7 @@ public final class PipSession {
         if (changingConfigurations || !mInPipStay) {
             return false;
         }
-        if (!inPip && otherScreenStarted) {
+        if (mScreenInWindow || (!inPip && otherScreenStarted)) {
             endStayUnderScreen(nowMs);
             return false;
         }
@@ -258,6 +281,7 @@ public final class PipSession {
     }
 
     private void endStayUnderScreen(long nowMs) {
+        mScreenInWindow = false;
         mInPipStay = false;
         mTeardown = false;
         mStoppedExitPending = false;
@@ -269,6 +293,7 @@ public final class PipSession {
             mStoppedExitPending = false;
             return false;
         }
+        mScreenInWindow = false;
         mInPipStay = false;
         mTeardown = false;
         mStoppedExitPending = false;

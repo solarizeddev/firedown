@@ -57,6 +57,7 @@ public class BrowserMainActivity extends BaseActivity {
     /** Decides a mode exit that arrived while stopped (see PipSession). */
     private final Handler mPipHandler = new Handler(Looper.getMainLooper());
     private final Runnable mSettleStoppedExit = () -> {
+        takeScreenOpenedInPipTask();
         if (!isDestroyed() && mPip.settleStoppedExit(
                 ApplicationLifeCycleHandler.otherScreenStarted(), SystemClock.uptimeMillis())) {
             pipDismissed();
@@ -78,6 +79,25 @@ public class BrowserMainActivity extends BaseActivity {
      */
     public static boolean isPipTask(int taskId) {
         return taskId != -1 && taskId == sPipTaskId;
+    }
+
+    /** Another app screen was created in the window's task, not yet told to the session. */
+    private static boolean sScreenOpenedInPipTask;
+
+    /**
+     * Another of the app's screens was created in the PiP window's task
+     * (BaseActivity): the browser's next stop is that screen covering it.
+     */
+    public static void screenOpenedInPipTask() {
+        sScreenOpenedInPipTask = true;
+    }
+
+    /** Hands a reported screen to the session before it decides anything. */
+    private void takeScreenOpenedInPipTask() {
+        if (sScreenOpenedInPipTask) {
+            sScreenOpenedInPipTask = false;
+            mPip.screenOpenedInWindow();
+        }
     }
 
     /** Created inside a PiP window: the bucket is read at the first resume. */
@@ -196,6 +216,7 @@ public class BrowserMainActivity extends BaseActivity {
         BrowserFragment fragment = browserFragment();
         if (isInPictureInPictureMode) {
             mPipHandler.removeCallbacks(mSettleStoppedExit);
+            sScreenOpenedInPipTask = false;
             sPipTaskId = getTaskId();
             mPip.enteredPip();
             if (fragment != null) {
@@ -204,6 +225,7 @@ public class BrowserMainActivity extends BaseActivity {
             return;
         }
         sPipTaskId = -1;
+        takeScreenOpenedInPipTask();
         if (mPip.leftPip(lifecycleState())) {
             mPipHandler.removeCallbacks(mSettleStoppedExit);
             mPipHandler.postDelayed(mSettleStoppedExit, PipSession.STOPPED_EXIT_SETTLE_MS);
@@ -232,6 +254,7 @@ public class BrowserMainActivity extends BaseActivity {
         // size at this point, and a recreate mid-expand loses the fullscreen
         // page (a bucket change while in PiP, an unfold, is the residual).
         mPipHandler.removeCallbacks(mSettleStoppedExit);
+        sScreenOpenedInPipTask = false;
         mPip.onResume();
         if (mWidthBucket == WIDTH_BUCKET_UNKNOWN && !isInPictureInPictureMode()) {
             mWidthBucket = PipPolicy.widthBucket(
@@ -269,6 +292,7 @@ public class BrowserMainActivity extends BaseActivity {
     protected void onStop() {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         boolean interactive = pm == null || pm.isInteractive();
+        takeScreenOpenedInPipTask();
         // A recreate in the window (dark mode) stops it with the screen on,
         // like Samsung's drag-to-dismiss: isChangingConfigurations tells them apart.
         if (mPip.onStop(isInPictureInPictureMode(), interactive,
@@ -334,6 +358,7 @@ public class BrowserMainActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         mPipHandler.removeCallbacks(mSettleStoppedExit);
+        takeScreenOpenedInPipTask();
         // A mode exit still settling: the ROMs that stop before reporting a
         // close destroy right after it.
         if (mPip.onDestroy(isFinishing(), ApplicationLifeCycleHandler.otherScreenStarted(),

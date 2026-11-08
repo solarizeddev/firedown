@@ -586,6 +586,8 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
         if (this instanceof BrowserMainActivity || !BrowserMainActivity.isPipTask(getTaskId())) {
             return;
         }
+        // The browser stops behind this screen: that is not the window closed.
+        BrowserMainActivity.screenOpenedInPipTask();
         getWindow().getDecorView().post(() -> {
             if (isFinishing() || isDestroyed() || !BrowserMainActivity.isPipTask(getTaskId())) {
                 return;

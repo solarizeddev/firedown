@@ -13208,7 +13208,13 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   (`LauncherActivity.openAppIntent`): the task comes to the front with the
   new screen still on top, and the window expands. Every non-browser
   screen of the app gets it (Settings from a backup notification, a
-  share link's Downloads). That reading is provisional: a FINISHING destroy within 5 s of it
+  share link's Downloads). **The same check reports the screen to the
+  browser** (`screenOpenedInPipTask` → `PipSession.screenOpenedInWindow`),
+  and the browser's next stop or settle ends the stay under it, whatever
+  the started count says: the expand recreates the new screen for the
+  full size, so for a moment no other screen is started when the browser
+  stops (the second device run read that as a close and paused the
+  video). That reading is provisional: a FINISHING destroy within 5 s of it
   is a close after all (Downloads shown in a task of its own, the window
   floating over it, then closed with X — the system removes the browser's
   task). **Closing removes the task, which FINISHES the browser** on AOSP:
@@ -13234,7 +13240,7 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   gated out — `MediaSession.Delegate.onFullscreen`'s orientation notify is
   gated on the current tab now (a background tab's video used to rotate
   the visible one).
-- Verify: `PipPolicyTest` + `PipSessionTest` (JVM; seventeen planted bugs
+- Verify: `PipPolicyTest` + `PipSessionTest` (JVM; eighteen planted bugs
   each fail the latter: a stopped exit closing at once, onStart not
   cancelling it, no time bound, screen off read as a close, the teardown
   ignored, the destroy not settling, onResume clearing the own start,
@@ -13242,7 +13248,7 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   provisional close, a provisional close with no time bound, a recreate's
   stop or destroy deciding, the transit resume ending the stay, a mode
   exit not clearing the transit flag, a resumed mode exit keeping the
-  stay),
+  stay, a screen reported in the window ignored),
   `sh scripts/prompt-harness/run.sh`, and on
   a device `phone/BrowserPipDeviceTest` (a loopback page whose `<video>`
   goes fullscreen and plays on a real `input tap`; Home → PiP with the same
@@ -13277,7 +13283,9 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   (or types `-Pandroid.testInstrumentationRunnerArguments.pin=<PIN>`).
   On SM-A426B (Android 12) t01–t07 green; t08 and t09 found the two bugs
   above (Downloads stuck in the window, a dark-mode recreate read as a
-  close), t10 waited too briefly for the unlock.
+  close), t10 waited too briefly for the unlock. On the rerun t08 found a
+  third: the expand recreated Downloads and the browser's stop counted no
+  started screen (now reported from BaseActivity, see above).
   Not covered on a device: a content crash in PiP.
 
 ### Subtitles in the local player — side-loaded downloads, one sheet, add a file

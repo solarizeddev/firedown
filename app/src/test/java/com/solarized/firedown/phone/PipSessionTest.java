@@ -175,6 +175,11 @@ public class PipSessionTest {
             stop();
         }
 
+        /** A notification creates another Firedown screen in the window's task. */
+        void screenOpenedInWindow() {
+            pip.screenOpenedInWindow();
+        }
+
         void screenOnUnlock() {
             screenOn = true;
             start();
@@ -369,6 +374,75 @@ public class PipSessionTest {
         d.resume();
         d.homeToPip();
         d.closeAosp();
+        assertEquals(1, d.closes);
+    }
+
+    @Test
+    public void screenInTheWindowRecreatedForTheExpandIsNotAClose() {
+        // The device's t08: Downloads opens inside the window, is brought to
+        // the front (the window expands, the browser still paused), and is
+        // recreated for the new size, so no screen counts as started when
+        // the browser stops behind it.
+        Device d = new Device();
+        d.homeToPip();
+        d.screenOpenedInWindow();
+        d.otherScreen = true;
+        d.modeChanged(false);
+        d.otherScreen = false; // Downloads stopped and destroyed for its recreate
+        d.stop();
+        d.otherScreen = true;
+        d.advance(10_000);
+        assertEquals(0, d.closes);
+        assertFalse(d.pip.inPipStay());
+    }
+
+    @Test
+    public void screenInTheWindowStopsTheBrowserStillInPip() {
+        // Downloads covers the browser while the window is still pinned:
+        // a stop in PiP with the screen on, as Samsung's drag-dismiss.
+        Device d = new Device();
+        d.homeToPip();
+        d.screenOpenedInWindow();
+        d.otherScreen = true;
+        d.stop();
+        d.modeChanged(false);
+        d.advance(10_000);
+        assertEquals(0, d.closes);
+        // Much later the browser is finished (swiped away): not a close.
+        d.advance(60_000);
+        d.destroy(true);
+        assertEquals(0, d.closes);
+        assertEquals(Boolean.FALSE, d.privateTabsKept);
+    }
+
+    @Test
+    public void screenInTheWindowThenTheWindowClosedEndsTheVideo() {
+        // The bring-to-front failed and the user closes the window with the
+        // screen inside it: the system removes the task at once.
+        Device d = new Device();
+        d.homeToPip();
+        d.screenOpenedInWindow();
+        d.otherScreen = true;
+        d.modeChanged(false);
+        d.stop();
+        d.destroy(true);
+        assertEquals(1, d.closes);
+        assertEquals(Boolean.TRUE, d.privateTabsKept);
+    }
+
+    @Test
+    public void aScreenInAnEarlierWindowDoesNotShieldTheNextClose() {
+        Device d = new Device();
+        d.homeToPip();
+        d.screenOpenedInWindow();
+        d.otherScreen = true;
+        d.modeChanged(false);
+        d.stop();
+        d.otherScreen = false;
+        d.start();
+        d.resume();
+        d.homeToPip();
+        d.dragDismissSamsung();
         assertEquals(1, d.closes);
     }
 
@@ -720,7 +794,7 @@ public class PipSessionTest {
             long lastCloseAt = Long.MIN_VALUE / 2;
             for (int step = 0; step < 40 && !d.destroyed; step++) {
                 int before = d.closes;
-                int pick = random.nextInt(13);
+                int pick = random.nextInt(14);
                 switch (pick) {
                     case 0:
                         if (d.state == PipSession.State.RESUMED && !d.inPip) {
@@ -797,6 +871,17 @@ public class PipSessionTest {
                             assertEquals("another screen never closes", before, d.closes);
                             d.advance(5_000);
                             d.otherScreen = false;
+                        }
+                        break;
+                    case 12:
+                        if (d.inPip && d.state == PipSession.State.STARTED && d.screenOn) {
+                            // a screen created in the window, recreated by the expand
+                            d.screenOpenedInWindow();
+                            d.modeChanged(false);
+                            d.stop();
+                            stayOpen = false;
+                            assertEquals("a screen in the window never closes", before, d.closes);
+                            d.advance(5_000);
                         }
                         break;
                     case 11:
