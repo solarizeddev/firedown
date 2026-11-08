@@ -4316,7 +4316,11 @@ before changing a flow. The rules, each easy to undo:
     a network that never validates keeps its "Review update" row.
   - **Needs attention** (waiting and not seen) is what points at it: a
     coral dot on the bottom bar's ⋮ (`BottomNavigationBar.setAddonAttention`;
-    the one badge an app update ready also lights) and on the ⋮ menus' Add-ons row
+    the one badge an app update ready also lights; it and the Downloads dot
+    sit on their ICON's top-end corner, `pinBadgeToIcon`, recomputed on every
+    layout: Material measures badge offsets from the button, a fifth of the
+    bar, and fixed 20dp offsets left the dots 7dp off their icons on a phone
+    and 52dp off in landscape) and on the ⋮ menus' Add-ons row
     (`AddonUpdateDots`, `popup_addons_dot`; the browser's and the home's),
     each also said in words to a screen reader; the ⋮ Add-ons sheet's row
     for that add-on reads "Update needs your review" and opens the question

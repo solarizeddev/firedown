@@ -5,12 +5,15 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
+import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
@@ -129,17 +132,7 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         // bottom bar in both themes; colorPrimaryContainer is now a proper
         // container tone (pale in light, dark in dark) and would disappear.
         mBadge.setBackgroundColor(IncognitoColors.getPrimary(context, false));
-        mBadge.setVerticalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_vertical_offset));
-        mBadge.setHorizontalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_horizontal_offset));
-
-        downloadButton.addOnLayoutChangeListener(new OnLayoutChangeListener() {
-            @OptIn(markerClass = ExperimentalBadgeUtils.class)
-            @Override
-            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                downloadButton.removeOnLayoutChangeListener(this);
-                BadgeUtils.attachBadgeDrawable(mBadge, downloadButton);
-            }
-        });
+        pinBadgeToIcon((ImageView) downloadButton, mBadge);
 
         // The same dot on ⋮ (see mMenuBadge): an app update ready, an add-on
         // update waiting for the user.
@@ -147,19 +140,9 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         mMenuBadge = BadgeDrawable.create(context);
         mMenuBadge.setVisible(false);
         mMenuBadge.setBackgroundColor(IncognitoColors.getPrimary(context, false));
-        mMenuBadge.setVerticalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_vertical_offset));
-        mMenuBadge.setHorizontalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_horizontal_offset));
         if (mMoreButton != null) {
             mMoreDescription = mMoreButton.getContentDescription();
-            View more = mMoreButton;
-            more.addOnLayoutChangeListener(new OnLayoutChangeListener() {
-                @OptIn(markerClass = ExperimentalBadgeUtils.class)
-                @Override
-                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                    more.removeOnLayoutChangeListener(this);
-                    BadgeUtils.attachBadgeDrawable(mMenuBadge, more);
-                }
-            });
+            pinBadgeToIcon((ImageView) mMoreButton, mMenuBadge);
         }
 
         // Top hairline divider, added as the LAST child of this FrameLayout so
@@ -288,6 +271,44 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     public void setAddonAttention(boolean attention) {
         mAddonAttention = attention;
         refreshMenuBadge();
+    }
+
+    /**
+     * Puts a dot on its icon's top-end corner, Material's own place for a
+     * badge on a 24dp icon. The badge measures its offsets from the BUTTON,
+     * a fifth of the bar, so fixed offsets put the dot further from its icon
+     * the wider the bar: 7dp off on a 390dp phone, 52dp in landscape. The
+     * offsets are worked out from where the button draws its icon, again on
+     * every layout, since a rotation resizes the bar without recreating it.
+     * The math is for Material 3's badge style (the app themes'), which
+     * aligns the dot's edge, not its centre, on the offsets.
+     */
+    private void pinBadgeToIcon(ImageView button, BadgeDrawable badge) {
+        int inset = getResources().getDimensionPixelOffset(R.dimen.badge_icon_offset);
+        button.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+            private boolean mAttached;
+
+            @OptIn(markerClass = ExperimentalBadgeUtils.class)
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                       int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                Drawable icon = button.getDrawable();
+                if (icon == null) {
+                    return;
+                }
+                RectF bounds = new RectF(icon.getBounds());
+                button.getImageMatrix().mapRect(bounds);
+                bounds.offset(button.getPaddingLeft(), button.getPaddingTop());
+                boolean rtl = button.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
+                float fromEnd = rtl ? bounds.left : button.getWidth() - bounds.right;
+                badge.setHorizontalOffset(Math.round(fromEnd) + inset);
+                badge.setVerticalOffset(Math.round(bounds.top) + inset);
+                if (!mAttached) {
+                    mAttached = true;
+                    BadgeUtils.attachBadgeDrawable(badge, button);
+                }
+            }
+        });
     }
 
     private void refreshMenuBadge() {
