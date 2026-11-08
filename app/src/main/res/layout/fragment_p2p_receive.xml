@@ -336,7 +336,7 @@
                         android:id="@+id/p2p_progress_bar"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:trackCornerRadius="4dp" />
+                        app:trackCornerRadius="50%" />
 
                     <TextView
                         android:id="@+id/p2p_progress_text"

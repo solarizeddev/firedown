@@ -72,7 +72,6 @@
             app:indeterminateAnimationType="disjoint"
             app:indicatorDirectionLinear="startToEnd"
             app:indicatorTrackGapSize="0dp"
-            app:trackCornerRadius="1.5dp"
             app:trackStopIndicatorSize="0dp"
             app:trackThickness="3dp" />
     </FrameLayout>
