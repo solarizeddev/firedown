@@ -13291,7 +13291,8 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   started screen (now reported from BaseActivity, see above). t08 now
   waits for the browser to stop with the window gone before it checks
   (the first Downloads resumes inside the window, before anything is
-  decided) and checks fullscreen too.
+  decided) and checks fullscreen too. With these fixes all ten pass on
+  SM-A426B (Android 12).
   Not covered on a device: a content crash in PiP.
 
 ### Subtitles in the local player — side-loaded downloads, one sheet, add a file
