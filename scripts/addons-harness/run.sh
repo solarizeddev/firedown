@@ -12,8 +12,9 @@
 # list read case-sensitively, the shield switch offered to every add-on,
 # uBlock's per-tab title echoed under its name, and the update reviews: a
 # newer version not arming the mark again, a declined question still
-# nagging, an old build's mark notified twice or re-armed, and a waiting
-# add-on rechecked (downloaded) every day.
+# nagging, an old build's mark notified twice or re-armed, a waiting
+# add-on rechecked (downloaded) every day, and Gecko's "no update" trusted
+# offline (a failed check reads the same).
 #
 # usage: sh scripts/addons-harness/run.sh [mozilla-firefox checkout]
 #   With a Firefox source checkout, Firefox's own AMO fixtures are parsed too
@@ -119,4 +120,5 @@ mutant nagdecline AddonUpdateReviews 's/entry.shown = true;/entry.shown = false;
 mutant legacynotify AddonUpdateReviews 's/new Entry("", false, true)/new Entry("", false, false)/'
 mutant legacyrearm AddonUpdateReviews 's/if (entry.version.isEmpty()) {/if (false) {/'
 mutant dailyrecheck AddonUpdateReviews 's/return now < lastRecheck || now - lastRecheck >= RECHECK_INTERVAL_MS;/return true;/'
+mutant trustnull AddonUpdateReviews 's/        if (validatedNetwork) {/        if (true) {/'
 exit $status

@@ -530,5 +530,19 @@ public final class AddonsHarness {
                         && AddonUpdateReviews.recheckDue(now - 7 * day, now));
         check("reviews: a last recheck in the future (clock moved back) rechecks",
                 AddonUpdateReviews.recheckDue(now + day, now));
+
+        // Gecko answers "no update" for a FAILED check too (offline, server down).
+        check("reviews: no update on a validated network clears the mark",
+                AddonUpdateReviews.afterNoUpdate(true, false) == AddonUpdateReviews.CLEAR
+                        && AddonUpdateReviews.afterNoUpdate(true, true) == AddonUpdateReviews.CLEAR);
+        check("reviews: the background's no update offline keeps the mark (a declined update must not come back as new)",
+                AddonUpdateReviews.afterNoUpdate(false, false) == AddonUpdateReviews.KEEP);
+        check("reviews: the user's own check offline counts as having looked, the mark stays",
+                AddonUpdateReviews.afterNoUpdate(false, true) == AddonUpdateReviews.SEEN);
+        AddonUpdateReviews accepted = AddonUpdateReviews.decode(null);
+        accepted.offer("d@x", "5.0");
+        check("reviews: an accepted update that then fails keeps its mark, seen and not re-announced",
+                accepted.answered("d@x", "5.0") && accepted.isWaiting("d@x") && !accepted.needsAttention("d@x")
+                        && !accepted.offer("d@x", "5.0") && !accepted.notificationDue());
     }
 }

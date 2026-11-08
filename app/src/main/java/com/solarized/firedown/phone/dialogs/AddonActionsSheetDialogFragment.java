@@ -19,6 +19,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.addons.AddonIcons;
 import com.solarized.firedown.addons.AddonManager;
 import com.solarized.firedown.addons.AddonPolicy;
+import com.solarized.firedown.addons.AddonUpdateDots;
 import com.solarized.firedown.data.entity.OptionEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.data.models.GeckoStateViewModel;
@@ -149,7 +150,6 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
      */
     private void bindManageRow(@NonNull List<String> listed) {
         View manage = mView.findViewById(R.id.addon_actions_manage);
-        View dot = mView.findViewById(R.id.addon_actions_manage_dot);
         boolean elsewhere = false;
         List<String> attention = mAddonManager.getUpdateAttention().getValue();
         if (attention != null) {
@@ -160,9 +160,8 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
                 }
             }
         }
-        dot.setVisibility(elsewhere ? View.VISIBLE : View.GONE);
-        manage.setContentDescription(elsewhere
-                ? getString(R.string.addons_manage) + ", " + getString(R.string.addons_update_review) : null);
+        AddonUpdateDots.show(manage, manage.findViewById(R.id.addon_actions_manage_dot),
+                manage.findViewById(R.id.addon_actions_manage_label), elsewhere);
     }
 
     /** The add-on's waiting update: Settings opens its page and puts the question. */

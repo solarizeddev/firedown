@@ -82,4 +82,6 @@
     <item name="settings_card_background" type="id" />
     <!-- The ⋮ Add-ons sheet asks BrowserFragment to open an add-on's waiting update (OptionEntity action = its id). -->
     <item name="addon_review_update" type="id" />
+    <!-- A menu label's own end padding, kept while AddonUpdateDots widens it for the dot. -->
+    <item name="addon_dot_label_padding" type="id" />
 </resources>

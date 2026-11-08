@@ -214,6 +214,31 @@ public final class AddonUpdateReviews {
         return mEntries.isEmpty();
     }
 
+    /** {@link #afterNoUpdate}: leave the mark as it is. */
+    public static final int KEEP = 0;
+    /** {@link #afterNoUpdate}: the user looked; the mark stays, nothing points at it. */
+    public static final int SEEN = 1;
+    /** {@link #afterNoUpdate}: no update is offered any more; the mark goes. */
+    public static final int CLEAR = 2;
+
+    /**
+     * What a "no update" answer means for an add-on whose update waits.
+     * Gecko gives the same answer when the check FAILED (offline, the
+     * server down: XPIInstall's onUpdateCheckError calls
+     * onNoUpdateAvailable), so it is believed only on a network Android
+     * has validated; clearing on a failed check would forget that the user
+     * declined, and the next check would ask again as if new. A user's own
+     * check on any other network still counts as having looked, so the dot
+     * goes. The cost, accepted: a pulled update on a network that never
+     * validates keeps its "Review update" row.
+     */
+    public static int afterNoUpdate(boolean validatedNetwork, boolean interactive) {
+        if (validatedNetwork) {
+            return CLEAR;
+        }
+        return interactive ? SEEN : KEEP;
+    }
+
     /**
      * Whether a background check should look again at add-ons whose update
      * waits: a refused update is downloaded before it is refused, so not
