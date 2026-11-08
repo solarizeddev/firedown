@@ -39,10 +39,16 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     private TabsBrowserButton mTabsCountButton;
 
     private BadgeDrawable mBadge;
-    /** The ⋮ button's dot: an add-on update waits for the user (see setMenuAttention). */
+    /**
+     * The ⋮ dot. Two reasons share it: an app update is ready (its "Update
+     * ready" row) and an add-on update waits for the user's OK (the Add-ons
+     * row). Shown while either holds; said in words to a screen reader.
+     */
     private BadgeDrawable mMenuBadge;
     @Nullable private View mMoreButton;
     @Nullable private CharSequence mMoreDescription;
+    private boolean mUpdateReady;
+    private boolean mAddonAttention;
 
     // Top hairline divider (Firefox-parity). The bar is painted the page
     // SURFACE tone (not a tonal surfaceContainer step), so it would dissolve
@@ -135,7 +141,8 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             }
         });
 
-        // The same dot on ⋮, the door to the menu's Add-ons row.
+        // The same dot on ⋮ (see mMenuBadge): an app update ready, an add-on
+        // update waiting for the user.
         mMoreButton = findViewById(R.id.more_button);
         mMenuBadge = BadgeDrawable.create(context);
         mMenuBadge.setVisible(false);
@@ -268,22 +275,43 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         mBadge.setVisible(count > 0);
     }
 
+    /** Shows the ⋮ dot while an update is ready to install. */
+    public void setUpdateReady(boolean ready) {
+        mUpdateReady = ready;
+        refreshMenuBadge();
+    }
+
     /**
-     * An add-on update waits for the user and they have not seen its
-     * question: a dot on ⋮, said in words to a screen reader too (the dot
-     * alone is colour only). The menu's Add-ons row carries the same dot.
+     * An add-on update asks for new permissions and the user has not seen
+     * the question (AddonManager.getUpdateAttention).
      */
-    public void setMenuAttention(boolean attention) {
+    public void setAddonAttention(boolean attention) {
+        mAddonAttention = attention;
+        refreshMenuBadge();
+    }
+
+    private void refreshMenuBadge() {
         if (mMenuBadge == null) {
             return;
         }
-        mMenuBadge.setVisible(attention);
-        if (mMoreButton != null) {
-            CharSequence base = mMoreDescription != null ? mMoreDescription
-                    : getContext().getString(R.string.tabs_more_options);
-            mMoreButton.setContentDescription(attention
-                    ? base + ", " + getContext().getString(R.string.addons_update_review) : mMoreDescription);
+        mMenuBadge.setVisible(mUpdateReady || mAddonAttention);
+        if (mMoreButton == null) {
+            return;
         }
+        if (!mUpdateReady && !mAddonAttention) {
+            mMoreButton.setContentDescription(mMoreDescription);
+            return;
+        }
+        // The dot alone is colour only: the reasons, in words.
+        StringBuilder spoken = new StringBuilder(mMoreDescription != null ? mMoreDescription
+                : getContext().getString(R.string.tabs_more_options));
+        if (mUpdateReady) {
+            spoken.append(", ").append(getContext().getString(R.string.update_ready_title));
+        }
+        if (mAddonAttention) {
+            spoken.append(", ").append(getContext().getString(R.string.addons_update_review));
+        }
+        mMoreButton.setContentDescription(spoken);
     }
 
     public void onTabsCount(int count) {

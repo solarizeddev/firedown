@@ -890,44 +890,4 @@
         <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
-    <!-- The Backup hero's roadmap (preference_cloud_status.xml): a 20dp
-         numbered circle centred in the 24dp glyph column, a done-check in the
-         same slot, and the step's text from the title's start (72dp from the
-         screen, where every row title of the Backup screen starts). -->
-    <style name="Firedown.Widget.BackupStepMark" parent="">
-        <item name="android:layout_width">20dp</item>
-        <item name="android:layout_height">20dp</item>
-        <item name="android:layout_gravity">center</item>
-        <item name="android:gravity">center</item>
-        <item name="android:includeFontPadding">false</item>
-        <item name="android:textSize">11dp</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:fontFeatureSettings">"tnum"</item>
-    </style>
-
-    <style name="Firedown.Widget.BackupStepDone" parent="">
-        <item name="android:layout_width">20dp</item>
-        <item name="android:layout_height">20dp</item>
-        <item name="android:layout_gravity">center</item>
-        <item name="android:padding">3dp</item>
-        <item name="android:scaleType">fitCenter</item>
-        <item name="android:src">@drawable/ic_check_18</item>
-        <item name="android:background">@drawable/bg_step_done</item>
-        <item name="tint">?attr/colorOnSurfaceVariant</item>
-        <item name="android:visibility">gone</item>
-        <item name="android:importantForAccessibility">no</item>
-    </style>
-
-    <style name="Firedown.Widget.BackupStepText" parent="">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_weight">1</item>
-        <item name="android:layout_marginStart">16dp</item>
-        <item name="android:minHeight">20dp</item>
-        <item name="android:gravity">center_vertical|start</item>
-        <item name="android:importantForAccessibility">no</item>
-        <item name="android:textSize">12.5sp</item>
-        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
-    </style>
-
 </resources>

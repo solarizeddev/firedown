@@ -175,12 +175,6 @@ public class Preferences {
     /** The Backup screen's "Backup folder" row: title + the location as its
      *  summary; tap = change it (confirmed while the folder holds files). */
     public static final String SETTINGS_CLOUD_BACKUP_FOLDER = "com.solarized.firedown.preferences.cloud.backup.folder";
-    /** The Backup screen's MORPHING CTA (the button under the hero): "Create
-     *  recovery code" pre-key, "Choose backup folder" once a key exists,
-     *  "Choose the folder again" when the folder is unreachable; HIDDEN once
-     *  the backup is healthy (the folder row carries the change). The key
-     *  value is historical. */
-    public static final String SETTINGS_CLOUD_BACKUP_CTA = "com.solarized.firedown.preferences.cloud.backup.buy";
     public static final String SETTINGS_CLOUD_BACKUP_SHOW_CODE = "com.solarized.firedown.preferences.cloud.backup.show.code";
     /** The ONE erasure door on the Backup screen — opens the scoped sub-screen. */
     public static final String SETTINGS_CLOUD_DELETE = "com.solarized.firedown.preferences.cloud.delete";
@@ -388,6 +382,16 @@ public class Preferences {
         }
         return value;
     }
+
+    /**
+     * Direct share: share the whole offer in the link ({@code FDS1.}, ~1.2 K
+     * characters) instead of the short {@code FDO1.} link whose offer (file
+     * name, size, device name) is held for 15 minutes by the rendezvous
+     * mailbox. Off by default: a privacy preference set once, never a
+     * question asked at every share.
+     */
+    public static final String SETTINGS_P2P_PRIVATE_LINKS = "com.solarized.firedown.preferences.p2p.private.links";
+    public static final boolean DEFAULT_P2P_PRIVATE_LINKS = false;
 
     /**
      * OPTIONAL TURN relay for the P2P share — the ONLY way two peers that
@@ -890,10 +894,9 @@ public class Preferences {
     }
 
     /**
-     * DRM defaults to off. Firedown can't download DRM-protected content,
-     * so the request_media_key_system_access prompt is dead-end noise for
-     * the few sites that still gate playback on it. Users who want DRM
-     * playback flip the toggle in settings.
+     * DRM defaults to off: Firedown can't download DRM-protected content,
+     * and with EME off a page can't learn which DRM formats the phone
+     * supports. On, every page that asks for DRM gets it without a dialog.
      */
     public static boolean getDRMEnabled(SharedPreferences sharedPreferences){
         return sharedPreferences.getBoolean(SETTINGS_ENABLE_DRM, false);

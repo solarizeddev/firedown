@@ -70,7 +70,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
  * is two local facts — is the folder reachable, and what does it hold — read
  * through the provider on a bounded pool (a provider can block on its own
  * network), with the last good answer cached in memory and the totals
- * mirrored to prefs for the folder-lost state's "Last seen".
+ * mirrored to prefs as the floor for a cold start.
  */
 @Singleton
 public class CloudBackupManager {
@@ -473,7 +473,7 @@ public class CloudBackupManager {
     /**
      * The last successfully-read total bytes, PERSISTED across process death,
      * or -1 when unknown — the durable floor under {@link #lastStatus()} for a
-     * cold start, and the figure the folder-lost state shows as "Last seen".
+     * cold start.
      */
     public long lastKnownTotalBytes() {
         return prefs.getLong(Preferences.CLOUD_LAST_TOTAL_BYTES, -1);

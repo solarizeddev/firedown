@@ -81,10 +81,17 @@
 
 
         <!-- The browser. singleTask: a link from another app reuses the one
-             browser. It is NOT the icon's activity (see the alias below). -->
+             browser. It is NOT the icon's activity (see the alias below).
+             Picture-in-picture for a fullscreen web video (PipPolicy).
+             smallestScreenSize is handled in code: entering PiP changes it,
+             and a recreate would rebuild the page's chrome inside the PiP
+             window; BrowserMainActivity recreates itself when the
+             sw600dp/sw720dp bucket really changes (a foldable unfolding). -->
         <activity
             android:name="com.solarized.firedown.phone.BrowserMainActivity"
-            android:configChanges="keyboardHidden|orientation|screenLayout|screenSize"
+            android:configChanges="keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
             android:launchMode="singleTask"
             android:exported="true"
             android:windowSoftInputMode="adjustResize"

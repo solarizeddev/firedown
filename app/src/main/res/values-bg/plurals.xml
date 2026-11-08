@@ -45,4 +45,8 @@
         <item quantity="one">%d отворен поверителен раздел</item>
         <item quantity="other">%d отворени поверителни раздела</item>
     </plurals>
+    <plurals name="p2p_link_open_for">
+        <item quantity="one">Споделено · отворено още %d минута.</item>
+        <item quantity="other">Споделено · отворено още %d минути.</item>
+    </plurals>
 </resources>

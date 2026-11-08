@@ -18,8 +18,8 @@ import com.solarized.firedown.data.entity.DownloadEntity;
  * <p>Everything a screen could need to repaint from scratch is here: the
  * role and stage, the file (the sender's {@link DownloadEntity} for its card,
  * the receiver's name/size/mime from the parsed offer), the peer's device
- * name, the offer code + the link-shared flag (so a returning sender sees
- * "Link sent · waiting", not the share buttons again), the receiver's
+ * name, the offer code, its expiry and the link-shared flag (so a returning
+ * sender sees the link row's countdown, not a fresh list), the receiver's
  * fallback reply code, progress, the live path's relayed/direct fact, the
  * error, the received row, and a one-shot {@link #notice} (a declined
  * request, an unreachable device) keyed by {@link #noticeSeq} so a screen
@@ -73,8 +73,12 @@ public final class ShareState {
     @Nullable public String offerCode;
     /** Sender: a link went out — the screen shows the waiting card. */
     public boolean linkShared;
-    /** Sender: which link mode was shared last (re-share uses the same). */
-    public boolean linkPrivate;
+    /**
+     * Sender: end of the offer's lifetime on {@code SystemClock.elapsedRealtime}
+     * (READY onward); the link row counts it down. Not wall-clock, so a clock
+     * change can't jump the countdown. 0 until the offer is minted.
+     */
+    public long offerExpiresAt;
 
     /**
      * Receiver: the {@code FDR1.} reply when BOTH push paths (LAN return,
@@ -146,7 +150,7 @@ public final class ShareState {
         s.peerDevice = peerDevice;
         s.offerCode = offerCode;
         s.linkShared = linkShared;
-        s.linkPrivate = linkPrivate;
+        s.offerExpiresAt = offerExpiresAt;
         s.answerCode = answerCode;
         s.arrivedRemote = arrivedRemote;
         s.arrivedNearby = arrivedNearby;

@@ -240,9 +240,6 @@
     <string name="settings_sync_never_synced">On. Not synced yet</string>
     <string name="settings_sync_last_synced">On. Last synced %1$s</string>
     <string name="settings_sync_restore_action">Restore</string>
-    <!-- Account-level Create / "I have a recovery code" pair (Backup screen, no-key state).
-         The key is the gateway: bookmarks + downloads backup stay disabled until one exists. -->
-    <string name="settings_sync_create_title">Create recovery code</string>
     <!-- Disabled-row summary shown on Bookmarks + Downloads backup until a key exists. -->
     <string name="settings_sync_needs_key">Create or enter a recovery code first</string>
     <string name="settings_sync_link_title">I have a recovery code</string>
@@ -317,14 +314,19 @@
         <item quantity="one">%d file</item>
         <item quantity="other">%d files</item>
     </plurals>
-    <string name="settings_cloud_backup_usage_unavailable">Backed up. Size unknown while the folder is unreachable</string>
     <string name="settings_cloud_backup_active">Transfer in progress…</string>
-    <!-- unit label beside the big size, e.g. "1.2 GB  backed up" -->
-    <string name="cloud_status_backed_up">backed up</string>
     <string name="cloud_backup_header_encrypted">encrypted end-to-end</string>
     <!-- Content description for the small cloud badge on a Downloads row that's backed up. -->
     <string name="cloud_backed_up_desc">Backed up</string>
     <string name="cloud_status_empty_title">Nothing backed up yet</string>
+    <!-- The Backup screen's status card while no backup is set up (the Signal
+         shape: a title, one line, one button). The button creates the
+         recovery code and goes straight on to choosing where to back up. -->
+    <string name="backup_hero_setup_title">Back up your downloads</string>
+    <string name="backup_hero_setup_body">Encrypted on this phone, then saved where you choose.</string>
+    <string name="backup_hero_setup_cta">Set up backup</string>
+    <!-- The status card's title once files are backed up: %1$s is a size, "854 MB". -->
+    <string name="backup_hero_size">%1$s backed up</string>
     <string name="cloud_status_empty_body">Back up a finished download from its ⋮ menu.</string>
     <string name="settings_cloud_backup_files_summary">View and restore what you\'ve backed up</string>
 
@@ -349,7 +351,6 @@
     <string name="folder_backup_hero_on">On %1$s</string>
     <string name="folder_backup_lost_title">Can\'t reach your backup folder</string>
     <string name="folder_backup_lost_body">The folder may have been moved, deleted or signed out. Choose it again to keep backing up. Nothing on this phone is affected.</string>
-    <string name="folder_backup_lost_seen">Last seen: %1$s</string>
     <string name="folder_backup_choose_cta">Choose backup folder</string>
     <string name="folder_backup_pick_title">Where to back up</string>
     <string name="folder_backup_pick_unavailable">No folder picker is available on this phone</string>
@@ -456,7 +457,6 @@
     <string name="folder_backup_guard_message">Firedown already keeps your downloads in %1$s. A backup there is lost with the phone. Choose a folder on a cloud app or an SD card instead.</string>
     <string name="folder_backup_guard_choose_other">Choose another</string>
     <string name="folder_backup_guard_use_anyway">Use it anyway</string>
-    <string name="folder_backup_step_folder">Choose where to back up</string>
     <string name="folder_backup_rechoose_cta">Choose the folder again</string>
     <string name="folder_backup_folder_set">Backup folder: %1$s</string>
     <string name="folder_backup_header_on">Firedown Backup on %1$s</string>
@@ -668,8 +668,6 @@
     <string name="quit_application">Quitting the application to apply changes…</string>
     <string name="rename">Rename</string>
     <string name="rename_file">Rename file</string>
-    <string name="request_media_key_system_access">Allow &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt; to play DRM-controlled content?</string>
-    <string name="request_media_key_system_access_subtitle">DRM-protected files can\'t be downloaded</string>
     <string name="request_storage">Allow access to device storage for &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
     <string name="request_storage_access">Allow third parties to access first party storage for &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
     <string name="restart_origin">Restart</string>
@@ -971,15 +969,20 @@
     <!-- Versioned notification body; %1$s is the new version name. -->
     <string name="update_prompt_install_body_versioned">%1$s is ready. Tap to update.</string>
     <string name="update_prompt_install_title">Firedown update</string>
-    <!-- In-app update-available bottom sheet (UpdateAvailableSheet). %1$s is the
-         new version name, e.g. "Firedown 1.1.81". -->
-    <string name="update_available_sheet_title">Update available</string>
+    <!-- The "Update ready" sheet (UpdateAvailableSheet) and the ⋮ menus'
+         row. update_busy_*: what installing would stop, shown when the sheet
+         is opened on purpose while it runs (installing closes Firedown). -->
+    <string name="update_ready_title">Update ready</string>
+    <string name="update_sheet_closes_note">Firedown closes while the update installs.</string>
+    <string name="update_busy_download">A download is running. It stops when Firedown closes.</string>
+    <string name="update_busy_task">A file is being converted or moved. That stops when Firedown closes.</string>
+    <string name="update_busy_share">A file share is open. It ends when Firedown closes.</string>
+    <string name="update_busy_playback">Playback stops when Firedown closes.</string>
     <!-- %1$s is the currently-installed version name. -->
     <string name="update_available_sheet_current">Current version %1$s</string>
     <!-- New version + the size of the APK waiting to be installed; %1$s is the
          version name, %2$s the size. Punctuation-only join, so it carries no
          translatable words. -->
-    <string name="update_available_sheet_version_size" translatable="false">%1$s · %2$s</string>
     <string name="update_available_sheet_whats_new">What\'s new</string>
     <string name="update_available_sheet_install">Install</string>
     <!-- The install tap, while Firedown copies the APK into Android's
@@ -1089,9 +1092,6 @@
     <string name="p2p_send">Send</string>
     <string name="p2p_send_title">Send directly</string>
     <string name="p2p_receive_title">Receive a file</string>
-    <string name="p2p_send_lead">Sends straight to another device running Firedown. Encrypted, no server in between.</string>
-    <string name="p2p_receive_lead">Receive a file from another device running Firedown.</string>
-    <string name="p2p_code_hint_send">Scan this with the other device, from Downloads → Receive a file or its camera. If a reply code appears, scan it back.</string>
     <string name="p2p_code_hint_reply">Show this reply to the sender, or send it back the way their code arrived.</string>
     <string name="p2p_share_code">Send code another way</string>
     <string name="p2p_share_reply">Send reply another way</string>
@@ -1099,7 +1099,6 @@
     <string name="p2p_paste_reply">Paste reply</string>
     <string name="p2p_scan_code">Scan code</string>
     <string name="p2p_paste_code">Paste code</string>
-    <string name="p2p_receive_from">from %1$s</string>
     <string name="p2p_accept">Accept</string>
     <string name="p2p_decline">Decline</string>
     <string name="p2p_preparing">Preparing…</string>
@@ -1119,7 +1118,6 @@
     <string name="p2p_error_generic">The transfer failed.</string>
     <string name="p2p_error_bad_code">That code isn\'t valid. Try again.</string>
     <string name="p2p_clipboard_empty">No code in the clipboard.</string>
-    <string name="p2p_qr_too_large">This code is too big to show as a QR. Use “Send code another way”.</string>
     <string name="p2p_qr_content_desc">Your share code, as a QR</string>
     <string name="p2p_footer">Encrypted device-to-device transfer. The file never touches a server.</string>
     <string name="p2p_footer_relayed">Encrypted end-to-end. Relayed through firedown.app, which can\'t read it.</string>
@@ -1127,13 +1125,6 @@
     <string name="p2p_hint_vpn">Excluding Firedown from your VPN lets it connect directly.</string>
     <string name="p2p_scan_hint">Point the camera at the sender\'s code</string>
     <string name="p2p_camera_denied">Camera access is needed to scan. You can paste the code instead.</string>
-    <string name="p2p_send_link">Send link</string>
-    <string name="p2p_send_private">Private link</string>
-    <string name="p2p_send_link_again">Send link again</string>
-    <string name="p2p_send_link_hint">Send it through any app. The transfer starts when they accept, even if you leave this screen.</string>
-    <string name="p2p_link_sent">Link sent</string>
-    <string name="p2p_link_sent_body">Waiting for them to accept. The transfer then starts on its own.</string>
-    <string name="p2p_clipboard_note">A copied reply is picked up automatically.</string>
     <string name="p2p_reply_detected">Reply found. Connecting…</string>
     <string name="p2p_reconnecting">Reconnecting…</string>
     <string name="p2p_send_reply">Send reply</string>
@@ -1141,21 +1132,36 @@
     <string name="p2p_reply_no_session">This reply belongs to a share that\'s no longer open.</string>
     <!-- Send: the nearby list (phones with Receive open on this Wi-Fi, found
          over NSD) above the link; the QR folded under "Show QR". -->
-    <string name="p2p_nearby_label">Nearby · on this Wi‑Fi</string>
-    <string name="p2p_nearby_empty">No one yet. On the other phone, open Downloads → Receive a file.</string>
-    <string name="p2p_nearby_tap">Tap to send</string>
+    <!-- Send: ONE "Send to" list. Nearby phones (Receive open on this
+         Wi-Fi), then a link, then a QR; each row's second line is its
+         state. -->
+    <string name="p2p_send_to">Send to</string>
+    <string name="p2p_on_this_wifi">On this Wi‑Fi</string>
+    <string name="p2p_share_link">Share a link</string>
+    <string name="p2p_share_link_hint">Through any app. Works anywhere.</string>
+    <string name="p2p_preparing_link">Preparing link…</string>
+    <string name="p2p_link_shared">Shared</string>
+    <string name="p2p_qr_scan_line">On their phone: Downloads → ⋮ → Receive a file → Scan code. Their camera app works too.</string>
+    <string name="p2p_nearby_title">Someone next to you</string>
+    <string name="p2p_nearby_hint">Their phone on this Wi‑Fi, or a code they scan.</string>
+    <string name="p2p_nearby_found">On this Wi‑Fi: %1$s</string>
+    <string name="p2p_nearby_waiting">Sent to %1$s · waiting for them to accept</string>
+    <string name="p2p_nearby_none">No phone on this Wi‑Fi has Receive a file open yet. They can scan instead:</string>
+    <string name="p2p_nearby_or_scan">Or they scan</string>
+    <string name="p2p_qr_too_big">This share is too big for a QR code. Share a link instead.</string>
+    <string name="p2p_waiting_note">The transfer starts when they accept, even if you leave this screen.</string>
+    <!-- Receive -->
+    <string name="p2p_visible_hint_link">Phones on this Wi‑Fi can send to you while this screen is open. A link someone sent you opens here when you tap it.</string>
+    <string name="p2p_accept_first">Nothing is received until you accept.</string>
+    <string name="p2p_wants_to_send">%1$s wants to send you</string>
+    <string name="p2p_wants_to_send_unknown">Someone wants to send you</string>
     <string name="p2p_nearby_sent">Sent · waiting for them to accept</string>
     <string name="p2p_nearby_busy">%1$s is busy with another transfer.</string>
     <string name="p2p_nearby_unreachable">Couldn\'t reach %1$s.</string>
     <string name="p2p_declined">They declined.</string>
-    <string name="p2p_anywhere_label">Anywhere</string>
-    <string name="p2p_show_qr">Show QR</string>
-    <string name="p2p_hide_qr">Hide QR</string>
     <!-- Receive: visible to nearby senders while the screen is open. -->
     <string name="p2p_visible_as">Visible as %1$s</string>
-    <string name="p2p_visible_hint">Phones on this Wi‑Fi can send to you while this screen is open.</string>
     <string name="p2p_not_visible">Not visible nearby. Connect to Wi‑Fi, or use a code or link.</string>
-    <string name="p2p_got_code">Got a code or link?</string>
     <!-- The transfer runs in a foreground service once it starts. -->
     <string name="p2p_background_note">You can leave this screen. The transfer continues in the background.</string>
     <string name="p2p_error_timeout">No one accepted the file in time.</string>
@@ -1181,6 +1187,8 @@
     <string name="settings_p2p_turn_cred_hint">Password</string>
     <string name="settings_p2p_turn_clear">Clear</string>
     <string name="settings_p2p_turn_invalid">Enter a valid relay, e.g. turn:host:3478</string>
+    <string name="settings_p2p_private_links">Private links</string>
+    <string name="settings_p2p_private_links_summary">Put the whole share in the link instead of a short one. Longer links, but the file\'s name and size are never stored on firedown.app.</string>
 
     <plurals name="cloud_restore_started_many">
         <item quantity="one">Restoring %d file…</item>
@@ -1353,6 +1361,14 @@
     <string name="addons_footnote">The list is Mozilla\'s selection of add-ons that work on Android, fetched from addons.mozilla.org when you open this screen. Installed add-ons check for updates once a day. Add-ons see the pages you visit and work outside Firedown\'s no-tracking promise.</string>
     <string name="addons_off">Off</string>
     <string name="addons_installing">Installing…</string>
+    <string name="addons_add_description">Add %1$s</string>
+    <string name="addons_rating" translatable="false">★ %1$s</string>
+    <plurals name="addons_users">
+        <item quantity="one">%1$s user</item>
+        <item quantity="other">%1$s users</item>
+    </plurals>
+    <!-- A rounded count ("1.2M"): always the plural form for many. -->
+    <string name="addons_users_compact">%1$s users</string>
     <string name="addons_update_review">Update needs your review</string>
     <string name="addons_disabled_blocked">Blocked by Mozilla</string>
     <string name="addons_disabled_unsupported">Doesn\'t work in this version</string>
@@ -1368,6 +1384,7 @@
     <string name="addon_private_not_allowed">This add-on doesn\'t run in private tabs</string>
     <string name="addon_settings">Add-on settings</string>
     <string name="addon_permissions">Permissions</string>
+    <string name="addon_data_collection">Data collection</string>
     <string name="addon_permissions_none">No special permissions</string>
     <string name="addon_optional_permissions">Optional permissions</string>
     <string name="addon_optional_data">Share %1$s with the developer</string>
@@ -1397,7 +1414,6 @@
     <string name="addon_prompt_update">Update</string>
     <string name="addon_prompt_allow">Allow</string>
     <string name="addon_prompt_technical">Share technical and interaction data with the developer</string>
-    <string name="addon_prompt_line" translatable="false">•  %1$s</string>
 
     <string name="addon_installed">%1$s added. Find it in the ⋮ menu.</string>
     <string name="addon_failed">Couldn\'t add %1$s</string>

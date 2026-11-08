@@ -22,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
 
 import com.google.android.material.button.MaterialButton;
+import com.solarized.firedown.UpdateAvailableSheet;
 import com.solarized.firedown.R;
 import com.solarized.firedown.phone.dialogs.BaseBottomSheetDialogFragment;
 
@@ -120,6 +121,11 @@ public class CrashReportSheet extends BaseBottomSheetDialogFragment {
                 // during the async gap (activity paused / another sheet shown).
                 if (fm.isStateSaved()) return;
                 if (fm.findFragmentByTag(TAG) != null) return;
+                // The update sheet opens on the same resume without a disk
+                // read, so it is always first. Don't land on top of it: the
+                // reports stay pending (only a dismissal sweeps them) and
+                // show on the next resume.
+                if (fm.findFragmentByTag(UpdateAvailableSheet.FRAGMENT_TAG) != null) return;
                 CrashReportSheet sheet = new CrashReportSheet();
                 Bundle args = new Bundle();
                 args.putStringArray(ARG_PENDING_PATHS, paths);

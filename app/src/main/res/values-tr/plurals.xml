@@ -45,4 +45,8 @@
         <item quantity="one">%d gizli sekme açık</item>
         <item quantity="other">%d gizli sekme açık</item>
     </plurals>
+    <plurals name="p2p_link_open_for">
+        <item quantity="one">Paylaşıldı · %d dakika daha açık.</item>
+        <item quantity="other">Paylaşıldı · %d dakika daha açık.</item>
+    </plurals>
 </resources>

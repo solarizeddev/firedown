@@ -44,7 +44,6 @@ import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.DebugLog;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.UrlStringUtils;
-import com.solarized.firedown.utils.WebUtils;
 
 import org.mozilla.geckoview.AllowOrDeny;
 import org.mozilla.geckoview.GeckoResult;
@@ -1015,6 +1014,9 @@ public class GeckoComponents {
             geckoState.clearPendingUserLoad();
             geckoState.setShowingErrorPage(false);
             geckoState.recordCrash();
+            // The dead document's fullscreen is gone with it, and Gecko
+            // sends no exit for it.
+            geckoState.setEntityFullScreen(false);
             // Discard at the DATA layer, before notify: the observer is
             // view-lifecycle scoped, so a crash landing while the browser view
             // is destroyed (user in Settings) used to skip the fragment's
@@ -1054,6 +1056,7 @@ public class GeckoComponents {
             geckoState.setLoading(false);
             geckoState.clearPendingUserLoad();
             geckoState.setShowingErrorPage(false);
+            geckoState.setEntityFullScreen(false);
             geckoState.discardGeckoSession();
             mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.KILL_SESSION, geckoState);
         }
@@ -1459,6 +1462,22 @@ public class GeckoComponents {
             if(geckoState == null)
                 return;
 
+            // Per tab and ungated, like the DOM fullscreen flag: the
+            // browser's picture-in-picture window reads it when the user
+            // leaves the app.
+            if (enabled && meta != null) {
+                geckoState.setMediaFullScreenSize((int) meta.width, (int) meta.height);
+            } else {
+                geckoState.setMediaFullScreenSize(0, 0);
+            }
+
+            // Orientation is UI: only the tab on screen may rotate it (a
+            // background tab's video going fullscreen rotated the visible
+            // one).
+            if (!isCurrentGeckoState(geckoState)) {
+                return;
+            }
+
             if (!enabled) {
                 mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_USER);
                 return;
@@ -1644,12 +1663,52 @@ public class GeckoComponents {
             }
         }
 
+        /**
+         * A page's DRM (EME) request. With the switch off, media.eme.enabled
+         * is false and Gecko refuses the page itself; this callback then comes
+         * only from the engine's notice (firedown-geckoview patch 0010), once
+         * per window, and the answer changes nothing for the page. Say so to
+         * the user, once per page load, and answer PROMPT (GeckoView stores
+         * every answer; a PROMPT row is one nothing reads). Gecko never
+         * repeats the notice for that document, so a tab that is not on
+         * screen keeps it until it is opened. With the switch on, the switch
+         * is the consent: every page that asks gets it, with no dialog (a
+         * per-site Allow on top of the switch made the switch look inert),
+         * and the tab remembers it so turning the switch off reloads it.
+         */
+        private GeckoResult<Integer> onDrmRequest(@Nullable GeckoState geckoState) {
+            if (!Preferences.getDRMEnabled(mSharedPreferences)) {
+                if (geckoState != null && geckoState.claimDrmNotice()) {
+                    if (isCurrentGeckoState(geckoState)) {
+                        mGeckoObserverRegistry.notifyObservers(
+                                GeckoObserverInvoker.DRM_DISABLED, geckoState);
+                    } else {
+                        geckoState.setDrmNoticePending(true);
+                    }
+                }
+                return GeckoResult.fromValue(ContentPermission.VALUE_PROMPT);
+            }
+            if (geckoState != null) {
+                geckoState.markDrmGranted();
+            }
+            return GeckoResult.fromValue(ContentPermission.VALUE_ALLOW);
+        }
+
         @Override
         public GeckoResult<Integer> onContentPermissionRequest(
                 @NonNull final GeckoSession session, @NonNull final ContentPermission perm) {
             Log.d(TAG, "onContentRequest: " + perm.permission);
 
             GeckoState findGeckoState = findGeckoState(session);
+
+            // DRM follows the switch in every tab, private ones included: the
+            // switch is the consent, and a private tab refused here showed the
+            // site's own "not supported" error with no word from the app, so
+            // the switch read as inert there. Gecko keeps no DRM state for a
+            // private window.
+            if (perm.permission == PERMISSION_MEDIA_KEY_SYSTEM_ACCESS) {
+                return onDrmRequest(findGeckoState);
+            }
 
             //Don't allow in incognito
             if(findGeckoState != null && findGeckoState.isIncognito())
@@ -1670,36 +1729,6 @@ public class GeckoComponents {
                 case PERMISSION_AUTOPLAY_AUDIBLE:
                 case PERMISSION_AUTOPLAY_INAUDIBLE:
                     return GeckoResult.fromValue(ContentPermission.VALUE_ALLOW);
-                case PERMISSION_MEDIA_KEY_SYSTEM_ACCESS:
-                    // With the DRM switch off, media.eme.enabled is false and
-                    // Gecko refuses the page's request itself; this callback
-                    // then comes only from the engine's notice (firedown-
-                    // geckoview patch 0010), once per window, and the answer
-                    // changes nothing for the page. Say so to the user, once
-                    // per page load, and answer PROMPT (GeckoView stores every
-                    // answer; a PROMPT row is one nothing reads). Gecko never
-                    // repeats the notice for that document, so a tab that is
-                    // not on screen keeps it until it is opened.
-                    if (!Preferences.getDRMEnabled(mSharedPreferences)) {
-                        if (findGeckoState != null && findGeckoState.claimDrmNotice()) {
-                            if (isCurrentGeckoState(findGeckoState)) {
-                                mGeckoObserverRegistry.notifyObservers(
-                                        GeckoObserverInvoker.DRM_DISABLED, findGeckoState);
-                            } else {
-                                findGeckoState.setDrmNoticePending(true);
-                            }
-                        }
-                        return GeckoResult.fromValue(ContentPermission.VALUE_PROMPT);
-                    }
-                    // The user turned DRM on from the notice for this site in
-                    // this tab: that tap was the consent, don't ask again on
-                    // the page it reloaded.
-                    if (findGeckoState != null
-                            && findGeckoState.isDrmAllowedHost(WebUtils.getDomainName(perm.uri))) {
-                        return GeckoResult.fromValue(ContentPermission.VALUE_ALLOW);
-                    }
-                    resId = R.string.request_media_key_system_access;
-                    break;
                 case PERMISSION_STORAGE_ACCESS:
                     resId = R.string.request_storage_access;
                     break;

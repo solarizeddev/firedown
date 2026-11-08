@@ -15,7 +15,7 @@ import java.util.List;
  * and they have not seen its question: the coral dot at the row's end
  * (popup_addons_dot), and the same fact in words for a screen reader, since
  * a dot alone is colour only. The bottom bar's ⋮ carries the same dot
- * (BottomNavigationBar.setMenuAttention).
+ * (BottomNavigationBar.setAddonAttention).
  */
 public final class AddonUpdateDots {
 

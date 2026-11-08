@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Material Icons "location_on" (outlined, 24 viewport): the add-on page's
+     glyph for an add-on that may ask for the device's location. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorOnSurfaceVariant">
+  <path
+      android:fillColor="@android:color/white"
+      android:pathData="M12,12Q12.825,12 13.413,11.413Q14,10.825 14,10Q14,9.175 13.413,8.588Q12.825,8 12,8Q11.175,8 10.588,8.588Q10,9.175 10,10Q10,10.825 10.588,11.413Q11.175,12 12,12ZM12,19.35Q15.05,16.55 16.525,14.262Q18,11.975 18,10.2Q18,7.475 16.263,5.738Q14.525,4 12,4Q9.475,4 7.738,5.738Q6,7.475 6,10.2Q6,11.975 7.475,14.262Q8.95,16.55 12,19.35ZM12,22Q7.975,18.575 5.988,15.637Q4,12.7 4,10.2Q4,6.45 6.412,4.225Q8.825,2 12,2Q15.175,2 17.587,4.225Q20,6.45 20,10.2Q20,12.7 18.013,15.637Q16.025,18.575 12,22Z"/>
+</vector>

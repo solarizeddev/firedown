@@ -67,6 +67,7 @@
     <string name="addon_perm_user_scripts">Mengizinkan skrip pihak ketiga yang tidak terverifikasi mengakses data Anda</string>
     <string name="addon_perm_web_navigation">Mengakses aktivitas peramban selama navigasi</string>
     <string name="addon_permissions">Izin</string>
+    <string name="addon_data_collection">Pengumpulan data</string>
     <string name="addon_permissions_none">Tidak ada izin khusus</string>
     <string name="addon_private">Jalankan di tab pribadi</string>
     <string name="addon_private_not_allowed">Pengaya ini tidak berjalan di tab pribadi</string>
@@ -111,6 +112,11 @@
     <string name="addons_install_from_file_summary">Pengaya Firefox bertanda tangan (.xpi)</string>
     <string name="addons_installed">Terpasang</string>
     <string name="addons_installing">Memasang…</string>
+    <string name="addons_add_description">Tambah %1$s</string>
+    <plurals name="addons_users">
+        <item quantity="other">%1$s pengguna</item>
+    </plurals>
+    <string name="addons_users_compact">%1$s pengguna</string>
     <string name="addons_manage">Kelola pengaya</string>
     <string name="addons_more">Lainnya</string>
     <string name="addons_no_button">Bekerja dengan sendirinya</string>
@@ -542,9 +548,12 @@
     <plurals name="cloud_restore_started_many">
         <item quantity="other">Memulihkan %d berkas…</item>
     </plurals>
-    <string name="cloud_status_backed_up">dicadangkan</string>
     <string name="cloud_status_empty_body">Cadangkan unduhan yang sudah selesai dari menu ⋮-nya.</string>
     <string name="cloud_status_empty_title">Belum ada yang dicadangkan</string>
+    <string name="backup_hero_setup_title">Cadangkan unduhan Anda</string>
+    <string name="backup_hero_setup_body">Dienkripsi di ponsel ini, lalu disimpan di tempat pilihan Anda.</string>
+    <string name="backup_hero_setup_cta">Siapkan pencadangan</string>
+    <string name="backup_hero_size">%1$s dicadangkan</string>
     <string name="compress">Kompres</string>
     <string name="contextmenu_snackbar_too_large">Terlalu besar untuk disalin atau dibagikan</string>
     <string name="crash_sheet_send">Kirim laporan</string>
@@ -606,7 +615,6 @@
     <string name="folder_backup_lost_notif_text">Firedown tidak dapat menjangkau %1$s. Buka Cadangan untuk memilih folder lagi.</string>
     <string name="folder_backup_lost_notif_text_noname">Firedown tidak dapat menjangkau folder cadangan Anda. Buka Cadangan untuk memilihnya lagi.</string>
     <string name="folder_backup_lost_notif_title">Folder cadangan tidak dapat dijangkau</string>
-    <string name="folder_backup_lost_seen">Terakhir terlihat: %1$s</string>
     <string name="folder_backup_lost_title">Tidak dapat menjangkau folder cadangan Anda</string>
     <string name="folder_backup_pick_title">Tujuan cadangan</string>
     <string name="folder_backup_pick_unavailable">Tidak ada pemilih folder di ponsel ini</string>
@@ -631,7 +639,6 @@
     <string name="folder_backup_state_lost">Folder tidak terjangkau</string>
     <string name="folder_backup_state_not_set_up">Belum disiapkan</string>
     <string name="folder_backup_state_write">Gagal menulis</string>
-    <string name="folder_backup_step_folder">Pilih tujuan cadangan</string>
     <string name="folder_backup_transfer_file">Tidak dapat membaca berkas. Berkas mungkin telah dihapus atau dipindahkan</string>
     <string name="folder_backup_transfer_lost">Tidak dapat menjangkau folder cadangan. Pilih lagi di Cadangan</string>
     <string name="folder_backup_transfer_not_set_up">Cadangan belum disiapkan. Selesaikan penyiapan di Cadangan</string>
@@ -683,14 +690,11 @@
     <string name="p2p_abandon_confirm">Hentikan</string>
     <string name="p2p_abandon_message">Hentikan transfer ini? Transfer belum selesai.</string>
     <string name="p2p_accept">Terima</string>
-    <string name="p2p_anywhere_label">Di mana saja</string>
     <string name="p2p_background_note">Anda dapat meninggalkan layar ini. Transfer berlanjut di latar belakang.</string>
     <string name="p2p_busy_other_transfer">Transfer lain sedang berlangsung. Selesaikan atau batalkan dulu.</string>
     <string name="p2p_camera_denied">Akses kamera diperlukan untuk memindai. Anda dapat menempelkan kode sebagai gantinya.</string>
     <string name="p2p_clipboard_empty">Tidak ada kode di papan klip.</string>
-    <string name="p2p_clipboard_note">Balasan yang disalin akan diambil secara otomatis.</string>
     <string name="p2p_code_hint_reply">Tunjukkan balasan ini ke pengirim, atau kirim balik melalui cara kode mereka tiba.</string>
-    <string name="p2p_code_hint_send">Pindai ini dengan perangkat lain, dari Unduhan → Terima berkas atau kameranya. Jika muncul kode balasan, pindai balik.</string>
     <string name="p2p_decline">Tolak</string>
     <string name="p2p_declined">Mereka menolak.</string>
     <string name="p2p_done">Selesai</string>
@@ -708,16 +712,28 @@
     <string name="p2p_footer">Transfer terenkripsi antarperangkat. Berkas tidak pernah melewati server.</string>
     <string name="p2p_footer_connecting">Terenkripsi ujung ke ujung.</string>
     <string name="p2p_footer_relayed">Terenkripsi ujung ke ujung. Diteruskan melalui firedown.app, yang tidak dapat membacanya.</string>
-    <string name="p2p_got_code">Punya kode atau tautan?</string>
-    <string name="p2p_hide_qr">Sembunyikan QR</string>
     <string name="p2p_hint_vpn">Mengecualikan Firedown dari VPN Anda memungkinkannya terhubung langsung.</string>
-    <string name="p2p_link_sent">Tautan terkirim</string>
-    <string name="p2p_link_sent_body">Menunggu mereka menerima. Transfer lalu dimulai dengan sendirinya.</string>
     <string name="p2p_nearby_busy">%1$s sedang sibuk dengan transfer lain.</string>
-    <string name="p2p_nearby_empty">Belum ada. Di ponsel lain, buka Unduhan → Terima berkas.</string>
-    <string name="p2p_nearby_label">Terdekat · di Wi‑Fi ini</string>
+    <string name="p2p_send_to">Kirim ke</string>
+    <string name="p2p_on_this_wifi">Di Wi‑Fi ini</string>
+    <string name="p2p_share_link">Bagikan tautan</string>
+    <string name="p2p_share_link_hint">Lewat aplikasi apa pun. Berfungsi di mana saja.</string>
+    <string name="p2p_preparing_link">Menyiapkan tautan…</string>
+    <string name="p2p_link_shared">Dibagikan</string>
+    <string name="p2p_qr_scan_line">Di ponsel mereka: Unduhan → ⋮ → Terima berkas → Pindai kode. Aplikasi kamera juga bisa.</string>
+    <string name="p2p_nearby_title">Seseorang di dekat Anda</string>
+    <string name="p2p_nearby_hint">Ponsel mereka di Wi‑Fi ini, atau kode yang mereka pindai.</string>
+    <string name="p2p_nearby_found">Di Wi‑Fi ini: %1$s</string>
+    <string name="p2p_nearby_waiting">Terkirim ke %1$s · menunggu mereka menerima</string>
+    <string name="p2p_nearby_none">Belum ada ponsel di Wi‑Fi ini yang membuka Terima berkas. Mereka bisa memindai sebagai gantinya:</string>
+    <string name="p2p_nearby_or_scan">Atau mereka memindai</string>
+    <string name="p2p_qr_too_big">Berbagi ini terlalu besar untuk kode QR. Bagikan tautan saja.</string>
+    <string name="p2p_waiting_note">Transfer dimulai saat mereka menerima, meski Anda meninggalkan layar ini.</string>
+    <string name="p2p_visible_hint_link">Ponsel di Wi‑Fi ini dapat mengirim ke Anda selama layar ini terbuka. Tautan yang dikirim seseorang kepada Anda terbuka di sini saat diketuk.</string>
+    <string name="p2p_accept_first">Tidak ada yang diterima sebelum Anda menyetujuinya.</string>
+    <string name="p2p_wants_to_send">%1$s ingin mengirim kepada Anda</string>
+    <string name="p2p_wants_to_send_unknown">Seseorang ingin mengirim kepada Anda</string>
     <string name="p2p_nearby_sent">Terkirim · menunggu mereka menerima</string>
-    <string name="p2p_nearby_tap">Ketuk untuk mengirim</string>
     <string name="p2p_nearby_unreachable">Tidak dapat menjangkau %1$s.</string>
     <string name="p2p_not_visible">Tidak terlihat di sekitar. Hubungkan ke Wi‑Fi, atau gunakan kode atau tautan.</string>
     <string name="p2p_notif_receiving">Menerima %1$s</string>
@@ -730,9 +746,6 @@
     <string name="p2p_preparing">Menyiapkan…</string>
     <string name="p2p_progress_of">%1$s dari %2$s · %3$s/dtk</string>
     <string name="p2p_qr_content_desc">Kode berbagi Anda, sebagai QR</string>
-    <string name="p2p_qr_too_large">Kode ini terlalu besar untuk ditampilkan sebagai QR. Gunakan “Kirim kode dengan cara lain”.</string>
-    <string name="p2p_receive_from">dari %1$s</string>
-    <string name="p2p_receive_lead">Terima berkas dari perangkat lain yang menjalankan Firedown.</string>
     <string name="p2p_receive_title">Terima berkas</string>
     <string name="p2p_reconnecting">Menghubungkan ulang…</string>
     <string name="p2p_reply_detected">Balasan ditemukan. Menghubungkan…</string>
@@ -741,22 +754,15 @@
     <string name="p2p_scan_hint">Arahkan kamera ke kode pengirim</string>
     <string name="p2p_scan_reply">Pindai balasan</string>
     <string name="p2p_send">Kirim</string>
-    <string name="p2p_send_lead">Mengirim langsung ke perangkat lain yang menjalankan Firedown. Terenkripsi, tanpa server di antaranya.</string>
-    <string name="p2p_send_link">Kirim tautan</string>
-    <string name="p2p_send_link_again">Kirim tautan lagi</string>
-    <string name="p2p_send_link_hint">Kirim melalui aplikasi apa pun. Transfer dimulai saat mereka menerima, meskipun Anda meninggalkan layar ini.</string>
-    <string name="p2p_send_private">Tautan pribadi</string>
     <string name="p2p_send_reply">Kirim balasan</string>
     <string name="p2p_send_reply_body">Kirim balik balasan ini. Pengirim mengetuknya dan transfer dimulai.</string>
     <string name="p2p_send_title">Kirim langsung</string>
     <string name="p2p_share_code">Kirim kode dengan cara lain</string>
     <string name="p2p_share_reply">Kirim balasan dengan cara lain</string>
-    <string name="p2p_show_qr">Tampilkan QR</string>
     <string name="p2p_state_connected">Terhubung</string>
     <string name="p2p_state_connecting">Menghubungkan…</string>
     <string name="p2p_try_again">Coba lagi</string>
     <string name="p2p_visible_as">Terlihat sebagai %1$s</string>
-    <string name="p2p_visible_hint">Ponsel di Wi‑Fi ini dapat mengirim ke Anda selama layar ini terbuka.</string>
     <string name="pip_enter">Gambar dalam gambar</string>
     <string name="pip_pause">Jeda</string>
     <string name="pip_play">Putar</string>
@@ -773,8 +779,6 @@
     <string name="player_subtitles_unsupported">Berkas ini bukan subtitel yang dapat ditampilkan pemutar</string>
     <string name="popup_group_this_page">Halaman ini</string>
     <string name="quality_section_title">Kualitas</string>
-    <string name="request_media_key_system_access">Izinkan &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt; memutar konten yang dikendalikan DRM?</string>
-    <string name="request_media_key_system_access_subtitle">Berkas yang dilindungi DRM tidak dapat diunduh</string>
     <string name="request_storage">Izinkan akses ke penyimpanan perangkat untuk &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
     <string name="request_storage_access">Izinkan pihak ketiga mengakses penyimpanan pihak pertama untuk &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
     <string name="restore_downloads_button">Pulihkan unduhan sebelumnya</string>
@@ -851,7 +855,6 @@
     </plurals>
     <string name="settings_cloud_backup_files_summary">Lihat dan pulihkan yang telah Anda cadangkan</string>
     <string name="settings_cloud_backup_title">Cadangan</string>
-    <string name="settings_cloud_backup_usage_unavailable">Dicadangkan. Ukuran tidak diketahui selama folder tidak dapat dijangkau</string>
     <string name="settings_cloud_delete_summary">Markah atau berkas cadangan, secara permanen</string>
     <string name="settings_cloud_delete_title">Hapus data cadangan</string>
     <string name="settings_direct_share_summary">Setelan jaringan untuk mengirim berkas antarperangkat</string>
@@ -907,6 +910,8 @@
     <string name="settings_p2p_turn_clear">Hapus</string>
     <string name="settings_p2p_turn_cred_hint">Kata sandi</string>
     <string name="settings_p2p_turn_invalid">Masukkan relai yang valid, mis. turn:host:3478</string>
+    <string name="settings_p2p_private_links">Tautan pribadi</string>
+    <string name="settings_p2p_private_links_summary">Masukkan seluruh berbagi ke dalam tautan, bukan tautan pendek. Tautan lebih panjang, tetapi nama dan ukuran berkas tidak pernah disimpan di firedown.app.</string>
     <string name="settings_p2p_turn_message">Hanya digunakan saat koneksi langsung gagal. Berkas tetap terenkripsi ujung ke ujung.</string>
     <string name="settings_p2p_turn_summary">Relai bawaan selalu aktif. Tambahkan relai Anda sendiri hanya jika perlu.</string>
     <string name="settings_p2p_turn_url_hint">turn:host:3478</string>
@@ -954,7 +959,6 @@
     <string name="settings_sync_code_show_qr">Tampilkan kode QR</string>
     <string name="settings_sync_code_unavailable">Kode pemulihan tidak tersedia</string>
     <string name="settings_sync_code_warning">Kode pemulihan ini adalah satu-satunya kunci untuk markah tersinkronisasi Anda. Simpan di pengelola kata sandi atau tempat aman lain. Kode ini tidak dapat dipulihkan jika hilang.</string>
-    <string name="settings_sync_create_title">Buat kode pemulihan</string>
     <string name="settings_sync_delete_action">Hapus</string>
     <string name="settings_sync_delete_done">Data Anda telah dihapus dari server</string>
     <string name="settings_sync_delete_failed">Tidak dapat menghapus. Periksa koneksi Anda dan coba lagi</string>
@@ -1165,7 +1169,12 @@
     <string name="update_auto_update_success_title">Firedown diperbarui</string>
     <string name="update_available_sheet_current">Versi saat ini %1$s</string>
     <string name="update_available_sheet_install">Pasang</string>
-    <string name="update_available_sheet_title">Pembaruan tersedia</string>
+    <string name="update_ready_title">Pembaruan siap</string>
+    <string name="update_sheet_closes_note">Firedown tertutup selama pembaruan dipasang.</string>
+    <string name="update_busy_download">Ada unduhan yang berjalan. Unduhan berhenti saat Firedown tertutup.</string>
+    <string name="update_busy_task">Sebuah file sedang dikonversi atau dipindahkan. Proses itu berhenti saat Firedown tertutup.</string>
+    <string name="update_busy_share">Berbagi file sedang terbuka. Berbagi berakhir saat Firedown tertutup.</string>
+    <string name="update_busy_playback">Pemutaran berhenti saat Firedown tertutup.</string>
     <string name="update_available_sheet_whats_new">Yang baru</string>
     <string name="update_check_failed">Tidak dapat memeriksa pembaruan. Coba lagi nanti.</string>
     <string name="update_check_found">Pembaruan %1$s ditemukan. Anda akan diberi tahu saat siap</string>

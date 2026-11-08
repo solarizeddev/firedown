@@ -10,6 +10,10 @@
 # with `am broadcast`; the install itself is the real code, on the phone.
 #
 # Cases, run in this order (--only picks some):
+# Every case marks the update ready with test release notes (nine bullets,
+# one that wraps, one starting "-5%"), so the screenshots show the sheet's
+# notes as a real update would.
+#
 #   sheet         Install from the sheet: the footer counts the copy up, then
 #                 Android answers. On Android 12+ it installs the update
 #                 without asking (Firedown requests that); otherwise its
@@ -58,6 +62,14 @@
 
 set -Euo pipefail
 
+# Every awk here reads bytes: the phone's log and screen dumps carry bytes
+# that are not valid UTF-8, and gawk in a UTF-8 locale warns on each line
+# its string functions touch ("Invalid multibyte data detected"). Matching
+# and the field splits need nothing more than bytes.
+awk() {
+    LC_ALL=C command awk "$@"
+}
+
 PKG=com.solarized.firedown
 ACTIVITY="$PKG/$PKG.phone.BrowserActivity"
 RX="$PKG/$PKG.updatetest.UpdateTestReceiver"
@@ -99,6 +111,7 @@ REVOKE_NOTIFICATIONS=0
 INSTALLED_NEWER=0
 PHONE_TOUCHED=0
 SCREEN_READ=0
+CASE_NAME=
 FONT_SCALE_SAVED=
 OUTCOME=
 SILENT_SEEN=0
@@ -436,14 +449,61 @@ wait_sheet() {
     return 1
 }
 
-# Why wait_sheet failed, for the report.
+# sheet_seen MARK: what the case's log says about the sheet after the MARK
+# line: empty when it never drew, "shown" when it drew, or the time of the
+# first touch of the screen after it drew. A real finger is logged as
+# Btn_touch on some phones (Samsung); the script's own taps never are.
+sheet_seen() {
+    case_log "$CASE_NAME" | awk -v m="FDUPDTEST: $1" '
+        index($0, m) { on = 1; next }
+        on && !drawn && index($0, "UpdateSheetTrace: ") { drawn = 1; next }
+        on && drawn && index($0, "Btn_touch(") { print $2; found = 1; exit }
+        END { if (drawn && !found) print "shown" }'
+}
+
+# Why wait_sheet failed, for the report. SEEN is what sheet_seen said.
 no_sheet() {
-    if [ "$SCREEN_READ" = 1 ]; then
-        fail "the update sheet did not appear (another sheet on top? see the screenshot)"
-    else
+    local seen=${2:-}
+    if [ "$SCREEN_READ" != 1 ]; then
         fail "the screen could not be read (uiautomator never saw it idle: a page animating in the open tab?). Open a still page in Firedown and run again"
+    elif [ "$seen" = shown ]; then
+        fail "the sheet opened and closed again with nothing touching the screen (see logcat.txt)"
+    elif [ -n "$seen" ]; then
+        fail "the sheet opened, then a finger on the screen closed it at $seen, twice. Keep your hands off the phone and run again"
+    else
+        fail "the update sheet did not appear (another sheet on top, the app lock, or something running in Firedown that holds it back: a download, a task, a file share, playback? see the screenshot)"
     fi
     shot "$1"
+}
+
+# open_sheet SHOT KIND [MB]: the update made ready (prepare_ready KIND MB),
+# Firedown started, its sheet on screen. A touch outside a sheet closes it
+# like "Not now", so a finger that closes it gets one more try. False, after
+# reporting why, when there is no sheet.
+open_sheet() {
+    local shot=$1 kind=$2 mb=${3:-0} try seen
+    for try in 1 2; do
+        if [ "$try" = 2 ]; then
+            remote am force-stop "$PKG" >/dev/null
+        fi
+        mark "sheet try $try"
+        prepare_ready "$kind" "$mb"
+        if ! launch; then
+            fail "Firedown did not come to the front (is the phone locked?)"
+            shot "$shot-no-app"
+            return 1
+        fi
+        if wait_sheet; then
+            return 0
+        fi
+        seen=$(sheet_seen "sheet try $try")
+        if [ "$try" = 1 ] && [ -n "$seen" ] && [ "$seen" != shown ] && [ "$SCREEN_READ" = 1 ]; then
+            info "a finger on the screen closed the sheet at $seen (a touch outside a sheet is Not now); trying once more. Keep your hands off the phone"
+            continue
+        fi
+        no_sheet "$shot" "$seen"
+        return 1
+    done
 }
 
 rotate() {
@@ -655,12 +715,12 @@ prepare_ready() {
         *) die "the app's test receiver did not answer ($ans). Is this checkout's debug build installed?" ;;
     esac
     put_file "$kind" "$mb"
-    ans=$(rx MARK_READY --ei code "$NEWER_CODE" --es name "$(q "$TEST_NAME")")
+    ans=$(rx MARK_READY --ei code "$NEWER_CODE" --es name "$(q "$TEST_NAME")" --ez notes true)
     if [ "$(kv readable "$ans")" != true ] && [ -z "$PUT_MODE" ]; then
         # The app could not read what the shell wrote: write it as the app.
         PUT_MODE=runas
         put_file "$kind" "$mb"
-        ans=$(rx MARK_READY --ei code "$NEWER_CODE" --es name "$(q "$TEST_NAME")")
+        ans=$(rx MARK_READY --ei code "$NEWER_CODE" --es name "$(q "$TEST_NAME")" --ez notes true)
     fi
     if [ "$(kv readable "$ans")" != true ]; then
         die "Firedown cannot read the file at $APK_PATH ($ans)."
@@ -720,6 +780,7 @@ begin_case() {
     rotate 0
     ensure_base
     remote am force-stop "$PKG" >/dev/null
+    CASE_NAME=$1
     mark "case $1 start"
 }
 
@@ -744,12 +805,7 @@ footer_ok() {
 
 case_sheet() {
     begin_case sheet "install from the sheet, then Android's answer"
-    prepare_ready apk
-    launch || { fail "Firedown did not come to the front (is the phone locked?)"; shot sheet-no-app; return; }
-    if ! wait_sheet; then
-        no_sheet sheet-missing
-        return
-    fi
+    open_sheet sheet-missing apk || return
     pass "the update sheet appeared"
     shot sheet-ready
     tap_id update_sheet_install || { fail "could not find the Install button"; return; }
@@ -899,9 +955,7 @@ case_refused() {
         info "less than 1.5 GB free on the phone: skipped"
         return
     fi
-    prepare_ready junk "$mb"
-    launch || { fail "Firedown did not come to the front"; return; }
-    wait_sheet || { no_sheet refused-missing; return; }
+    open_sheet refused-missing junk "$mb" || return
     tap_id update_sheet_install || { fail "could not find the Install button"; return; }
     sleep 0.3
     read_state
@@ -972,9 +1026,7 @@ case_refused() {
 
 case_missing() {
     begin_case missing "the APK disappears after the sheet showed"
-    prepare_ready apk
-    launch || { fail "Firedown did not come to the front"; return; }
-    wait_sheet || { no_sheet missing-no-sheet; return; }
+    open_sheet missing-no-sheet apk || return
     remove_file
     tap_id update_sheet_install || { fail "could not find the Install button"; return; }
     if wait_state FAILED 20; then
@@ -1146,9 +1198,7 @@ case_install() {
         return
     fi
     begin_case install "a real update to $(name_for "$NEWER_CODE")"
-    prepare_ready apk
-    launch || { fail "Firedown did not come to the front"; return; }
-    wait_sheet || { no_sheet install-no-sheet; return; }
+    open_sheet install-no-sheet apk || return
     tap_id update_sheet_install || { fail "could not find the Install button"; return; }
     wait_outcome 90 || true
     case $OUTCOME in

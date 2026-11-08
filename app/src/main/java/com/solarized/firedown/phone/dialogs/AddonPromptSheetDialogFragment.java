@@ -18,8 +18,10 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.addons.AddonIcons;
 import com.solarized.firedown.addons.AddonManager;
 import com.solarized.firedown.addons.AddonPermissionText;
+import com.solarized.firedown.ui.BulletList;
 import com.solarized.firedown.utils.SheetGroups;
 
+import java.util.Collections;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -161,7 +163,8 @@ public class AddonPromptSheetDialogFragment extends BaseBottomSheetDialogFragmen
     private TextView lineView(@NonNull LinearLayout parent, @NonNull String text) {
         TextView view = (TextView) LayoutInflater.from(requireContext())
                 .inflate(R.layout.item_addon_prompt_line, parent, false);
-        view.setText(getString(R.string.addon_prompt_line, text));
+        view.setText(BulletList.build(requireContext(), Collections.singletonList(text), null,
+                view.getCurrentTextColor()));
         return view;
     }
 

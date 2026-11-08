@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Send screen overflow: the reply fallbacks, for the rare share where both
+     automatic answer paths (LAN, mailbox) failed. Shown only while the offer
+     waits (READY). Clipboard auto-pickup covers the common copy-and-return. -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_paste_reply"
+        android:title="@string/p2p_paste_reply"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_scan_reply"
+        android:title="@string/p2p_scan_reply"
+        app:showAsAction="never" />
+</menu>

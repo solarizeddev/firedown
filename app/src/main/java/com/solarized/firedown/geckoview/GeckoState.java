@@ -277,16 +277,11 @@ public class GeckoState {
     private boolean mDrmNoticePending;
 
     /**
-     * The host the user turned DRM on for from the notice. That tap was the
-     * consent, so the reload's DRM requests for this host are granted without
-     * asking again — for that ONE document: the next page start after the
-     * reload's own clears it ({@link #mDrmAllowArmed}). Not persisted.
+     * This document was granted DRM (the switch was on). Turning the switch
+     * off in Settings reloads such a page so it stops playing under the old
+     * answer. Cleared on page start. Not persisted.
      */
-    @Nullable
-    private String mDrmAllowedHost;
-
-    /** Set by the tap; the reload's page start spends it and keeps the host. */
-    private boolean mDrmAllowArmed;
+    private boolean mDrmGranted;
 
     /**
      * The latest state Gecko's built-in translator reported for this tab's
@@ -697,6 +692,30 @@ public class GeckoState {
         return mLoading;
     }
 
+    // ── Media fullscreen (MediaSession.Delegate.onFullscreen) ───────────────
+
+    /**
+     * Size of the video the page put in fullscreen, from the media
+     * session's element metadata; 0 when none is (or the size is unknown).
+     * The browser's picture-in-picture window takes its aspect from it.
+     * Not persisted: a restored tab is never fullscreen.
+     */
+    private int mMediaFullScreenWidth;
+    private int mMediaFullScreenHeight;
+
+    public void setMediaFullScreenSize(int width, int height) {
+        mMediaFullScreenWidth = Math.max(width, 0);
+        mMediaFullScreenHeight = Math.max(height, 0);
+    }
+
+    public int getMediaFullScreenWidth() {
+        return mMediaFullScreenWidth;
+    }
+
+    public int getMediaFullScreenHeight() {
+        return mMediaFullScreenHeight;
+    }
+
     // ── Error page (see mShowingErrorPage) ───────────────────────────────────
 
     /**
@@ -763,19 +782,20 @@ public class GeckoState {
         mMediaNoticeShown = false;
     }
 
-    /**
-     * A new document (top-level page start): its DRM request gets its own
-     * notice, and a host allowed from the notice lasts only through the
-     * document the tap reloaded.
-     */
+    /** A new document (top-level page start): its DRM request gets its own notice. */
     public void resetDrmNotice() {
         mDrmNoticeShown = false;
         mDrmNoticePending = false;
-        if (mDrmAllowArmed) {
-            mDrmAllowArmed = false;
-        } else {
-            mDrmAllowedHost = null;
-        }
+        mDrmGranted = false;
+    }
+
+    public void markDrmGranted() {
+        mDrmGranted = true;
+    }
+
+    /** True when this document was granted DRM; see {@link #mDrmGranted}. */
+    public boolean isDrmGrantedHere() {
+        return mDrmGranted;
     }
 
     /**
@@ -796,17 +816,6 @@ public class GeckoState {
         boolean pending = mDrmNoticePending;
         mDrmNoticePending = false;
         return pending;
-    }
-
-    /** The user turned DRM on for {@code host}; the reload that follows is allowed. */
-    public void allowDrmForReload(@Nullable String host) {
-        mDrmAllowedHost = host;
-        mDrmAllowArmed = host != null;
-    }
-
-    /** True when the user turned DRM on from this tab's notice for {@code host}. */
-    public boolean isDrmAllowedHost(@Nullable String host) {
-        return host != null && host.equals(mDrmAllowedHost);
     }
 
     // ── Translation (see mTranslationState) ─────────────────────────────────

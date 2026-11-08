@@ -174,11 +174,6 @@ public class PromptViewFactory {
 
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity, resolveDialogTheme(state));
 
-        // Handle special DRM / Media Key UI
-        if (permission.permission == GeckoSession.PermissionDelegate.PERMISSION_MEDIA_KEY_SYSTEM_ACCESS) {
-            builder.setView(R.layout.fragment_dialog_drm);
-        }
-
         // Modern HTML parsing for the message (e.g., "Allow <b>google.com</b> to use camera?")
         builder.setMessage(Html.fromHtml(message, Html.FROM_HTML_MODE_LEGACY))
                 .setPositiveButton(R.string.prompts_allow, (d, w) -> {

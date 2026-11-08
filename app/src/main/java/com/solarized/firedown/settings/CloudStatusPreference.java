@@ -1,7 +1,7 @@
 package com.solarized.firedown.settings;
 
 import android.content.Context;
-import android.graphics.Typeface;
+import android.content.res.ColorStateList;
 import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.util.AttributeSet;
@@ -11,42 +11,39 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceViewHolder;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.R;
 import com.solarized.firedown.settings.ui.FlatPreference;
 import com.solarized.firedown.sync.BackupStores;
 
-import java.util.Locale;
-
 /**
- * The Backup status hero (custom-layout {@link Preference}, styled by
- * {@code preference_cloud_status.xml}). One card, three states:
+ * The Backup status card (custom-layout {@link Preference}, styled by
+ * {@code preference_cloud_status.xml}), in the Signal "Secure Backups" shape:
+ * the words on the start side, a glyph on a disc on the end side, at most one
+ * button, inside the card.
  *
  * <ul>
- *   <li><b>Set up, folder reachable</b> — the cloud-upload glyph, "Firedown Backup"
- *       over "On &lt;provider&gt;" (the folder's own name, and whose storage
- *       it sits in — Google Drive, Dropbox, Nextcloud, this phone…), the
- *       backed-up size headline and a caption with the file count. While
- *       nothing is backed up yet the caption is the ⋮-menu hint instead.</li>
- *   <li><b>Set up, folder LOST</b> — the same frame with the cloud-off
- *       glyph (the struck twin of the healthy one), "Can't reach your backup folder", the LAST SEEN totals (so the
- *       user knows what was there), and the body line saying what to do. The
- *       CTA under the hero reads "Choose the folder again" in that state
- *       (SyncSettingsFragment); this card only states the fact.</li>
- *   <li><b>Not set up</b> — the dashed onboarding ROADMAP: ① Create recovery
- *       code → ② Choose backup folder → ③ Back up a finished download from
- *       its ⋮ menu. A done step gets a check and muted ink; the current
- *       step's number sits on a disc filled like the CTA under the card,
- *       with bold full-contrast text, so it reads as "you are here".</li>
+ *   <li><b>Not set up</b> — "Back up your downloads", one line, and the
+ *       button the fragment hands in ({@link #setAction}: "Set up backup",
+ *       which creates the recovery code and goes straight on to choosing
+ *       where to back up).</li>
+ *   <li><b>Set up, folder reachable</b> — "On &lt;place&gt;" over the
+ *       backed-up size, then the file count (or "Nothing backed up yet" and
+ *       the ⋮-menu hint). No button: a backup that needs nothing shows none,
+ *       and the "Backup folder" row below carries the change.</li>
+ *   <li><b>Set up, folder LOST</b> — the cloud-off glyph and the title in the
+ *       error ink, what to do, and the fragment's button ("Choose the folder
+ *       again" / "Reconnect").</li>
  * </ul>
  *
- * A running transfer swaps the caption for the live "Transfer in progress…"
- * line. There is no quota, meter or chip any more: the folder is the user's
- * own storage, so the only facts the card can state are what is in it and
- * whether it answers.
+ * A running transfer replaces the line under the title with "Transfer in
+ * progress…". It replaced a numbered roadmap (① code → ② folder → ③ first
+ * backup) with a separate button row under it.
  */
 public class CloudStatusPreference extends Preference implements FlatPreference {
 
@@ -55,22 +52,20 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
      *  set up; defaults to true so a cold bind never flashes the lost state. */
     private boolean mReachable = true;
     private boolean mActive;
-    /** Whether a recovery code exists on this device — roadmap step ①. */
-    private boolean mHasKey;
-    /** Whether a backup folder is chosen — roadmap step ②. */
-    private boolean mHasFolder;
     private int mFileCount = -1;
     private long mTotalBytes = -1;
-    /** WHERE the backup is — the location label ("Google Drive › Backups":
-     *  the provider, then the picked folder's own name; the provider alone
-     *  until a read has named the folder), or empty when unknown — then the
-     *  subtitle line is hidden. */
+    /** WHERE the backup is — the location label ("Google Drive › Backups"),
+     *  or empty when unknown, then the line above the title is hidden. */
     private String mProvider = "";
     /** The kind of place: for a WebDAV server or an S3 bucket the lost
-     *  state names it and the remedy is Reconnect, not choosing a folder
-     *  again. */
+     *  state names it. */
     @NonNull
     private BackupStores.Place mPlace = BackupStores.Place.FOLDER;
+    /** The card's button label, 0 = no button. */
+    @StringRes
+    private int mActionLabel;
+    @Nullable
+    private Runnable mAction;
 
     public CloudStatusPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -93,23 +88,8 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
         }
     }
 
-    /** A recovery code exists — checks off onboarding step ①. */
-    public void setHasKey(boolean hasKey) {
-        if (mHasKey != hasKey) {
-            mHasKey = hasKey;
-            notifyChanged();
-        }
-    }
-
-    /** A backup folder is chosen — checks off onboarding step ②. */
-    public void setHasFolder(boolean hasFolder) {
-        if (mHasFolder != hasFolder) {
-            mHasFolder = hasFolder;
-            notifyChanged();
-        }
-    }
-
-    /** A transfer (backup/restore) is running — overrides the caption line. */
+    /** A transfer (backup/restore) is running — overrides the line under
+     *  the title. */
     public void setActive(boolean active) {
         if (mActive != active) {
             mActive = active;
@@ -126,8 +106,7 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
         }
     }
 
-    /** The kind of place, which words the lost state: a folder to choose
-     *  again, a server or a bucket to reconnect to. */
+    /** The kind of place, which words the lost state. */
     public void setPlace(@NonNull BackupStores.Place place) {
         if (mPlace != place) {
             mPlace = place;
@@ -135,7 +114,8 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
         }
     }
 
-    /** The location the subtitle names ("On Google Drive › Backups"). */
+    /** The location the line above the title names ("On Google Drive ›
+     *  Backups"). */
     public void setProvider(@Nullable String provider) {
         String next = provider == null ? "" : provider;
         if (!next.equals(mProvider)) {
@@ -144,71 +124,112 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
         }
     }
 
+    /** The card's one button: {@code label} 0 hides it. The runnable is
+     *  kept even when the label is unchanged (the fragment rebuilds it). */
+    public void setAction(@StringRes int label, @Nullable Runnable action) {
+        mAction = action;
+        if (mActionLabel != label) {
+            mActionLabel = label;
+            notifyChanged();
+        }
+    }
+
     @Override
     public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
         super.onBindViewHolder(holder);
         Context ctx = getContext();
-        View hero = holder.findViewById(R.id.cb_hero);
-        View empty = holder.findViewById(R.id.cb_empty);
-        if (hero == null || empty == null) {
-            return;
-        }
-        if (!mSetUp) {
-            hero.setVisibility(View.GONE);
-            empty.setVisibility(View.VISIBLE);
-            bindOnboardingSteps(ctx, holder);
-            return;
-        }
-        hero.setVisibility(View.VISIBLE);
-        empty.setVisibility(View.GONE);
-
         ImageView glyph = (ImageView) holder.findViewById(R.id.cb_glyph);
+        TextView eyebrow = (TextView) holder.findViewById(R.id.cb_eyebrow);
         TextView title = (TextView) holder.findViewById(R.id.cb_title);
-        TextView subtitle = (TextView) holder.findViewById(R.id.cb_subtitle);
-        TextView big = (TextView) holder.findViewById(R.id.cb_big);
-        TextView bigUnit = (TextView) holder.findViewById(R.id.cb_big_unit);
-        TextView caption = (TextView) holder.findViewById(R.id.cb_caption);
-        TextView alert = (TextView) holder.findViewById(R.id.cb_alert);
-        if (glyph == null || title == null || subtitle == null || big == null
-                || bigUnit == null || caption == null || alert == null) {
+        TextView body = (TextView) holder.findViewById(R.id.cb_body);
+        MaterialButton action = (MaterialButton) holder.findViewById(R.id.cb_action);
+        if (glyph == null || eyebrow == null || title == null || body == null
+                || action == null) {
             return;
         }
 
-        // Every view is set in BOTH branches — the holder recycles, so a
-        // one-sided set would leak the previous state (the one-sided-set rule).
+        // Every view is set in every branch: the holder recycles.
         int onSurface = MaterialColors.getColor(title,
                 com.google.android.material.R.attr.colorOnSurface);
         int error = MaterialColors.getColor(title,
                 androidx.appcompat.R.attr.colorError);
-        if (mReachable) {
-            glyph.setImageResource(R.drawable.cloud_upload_24);
-            title.setText(R.string.folder_backup_hero_title);
-            title.setTextColor(onSurface);
-            alert.setVisibility(View.GONE);
+        int brand = MaterialColors.getColor(glyph, R.attr.brandInk);
+        boolean lost = mSetUp && !mReachable;
+
+        if (!mSetUp || TextUtils.isEmpty(mProvider)) {
+            eyebrow.setVisibility(View.GONE);
         } else {
-            glyph.setImageResource(R.drawable.cloud_off_24);
-            title.setText(lostTitle(mPlace));
-            title.setTextColor(error);
-            alert.setText(switch (mPlace) {
+            eyebrow.setText(ctx.getString(R.string.folder_backup_hero_on, mProvider));
+            eyebrow.setVisibility(View.VISIBLE);
+        }
+
+        glyph.setImageResource(lost ? R.drawable.cloud_off_24 : R.drawable.cloud_upload_24);
+        glyph.setImageTintList(ColorStateList.valueOf(lost ? error : brand));
+        title.setTextColor(lost ? error : onSurface);
+        title.setText(titleText(ctx));
+        String line = bodyText(ctx);
+        body.setText(line);
+        body.setVisibility(TextUtils.isEmpty(line) ? View.GONE : View.VISIBLE);
+
+        if (mActionLabel == 0) {
+            action.setVisibility(View.GONE);
+            action.setOnClickListener(null);
+        } else {
+            action.setText(mActionLabel);
+            action.setVisibility(View.VISIBLE);
+            action.setOnClickListener(v -> {
+                if (mAction != null) {
+                    mAction.run();
+                }
+            });
+        }
+    }
+
+    private String titleText(Context ctx) {
+        if (!mSetUp) {
+            return ctx.getString(R.string.backup_hero_setup_title);
+        }
+        if (!mReachable) {
+            return ctx.getString(lostTitle(mPlace));
+        }
+        if (mFileCount == 0) {
+            return ctx.getString(R.string.cloud_status_empty_title);
+        }
+        if (mTotalBytes < 0) {
+            return ctx.getString(R.string.folder_backup_hero_title);
+        }
+        return ctx.getString(R.string.backup_hero_size,
+                Formatter.formatShortFileSize(ctx, mTotalBytes));
+    }
+
+    /**
+     * The line under the title. What to do when the folder is lost wins (the
+     * button below it says the same); then a running transfer; then the ⋮-menu hint for an empty backup or
+     * "N files · encrypted end-to-end" (the title already IS the size).
+     */
+    private String bodyText(Context ctx) {
+        if (!mSetUp) {
+            return ctx.getString(R.string.backup_hero_setup_body);
+        }
+        if (!mReachable) {
+            return ctx.getString(switch (mPlace) {
                 case WEBDAV -> R.string.webdav_lost_body;
                 case S3 -> R.string.s3_lost_body;
                 default -> R.string.folder_backup_lost_body;
             });
-            alert.setVisibility(View.VISIBLE);
         }
-        if (TextUtils.isEmpty(mProvider)) {
-            subtitle.setVisibility(View.GONE);
-        } else {
-            subtitle.setText(ctx.getString(R.string.folder_backup_hero_on, mProvider));
-            subtitle.setVisibility(View.VISIBLE);
+        if (mActive) {
+            return ctx.getString(R.string.settings_cloud_backup_active);
         }
-
-        // Headline: how much of the user's stuff is safe (the LAST SEEN figure
-        // in the lost state — the files are still in the folder, the device
-        // just cannot see it right now).
-        big.setText(mTotalBytes >= 0 ? Formatter.formatShortFileSize(ctx, mTotalBytes) : "—");
-        bigUnit.setText(R.string.cloud_status_backed_up);
-        caption.setText(captionText(ctx));
+        if (mFileCount == 0) {
+            return ctx.getString(R.string.cloud_status_empty_body);
+        }
+        if (mFileCount < 0) {
+            return "";
+        }
+        String files = ctx.getResources().getQuantityString(
+                R.plurals.settings_cloud_backup_file_count, mFileCount, mFileCount);
+        return files + " · " + ctx.getString(R.string.cloud_backup_header_encrypted);
     }
 
     /** The lost state's title for a kind of place, shared with the Backups
@@ -219,84 +240,5 @@ public class CloudStatusPreference extends Preference implements FlatPreference 
             case S3 -> R.string.s3_lost_title;
             default -> R.string.folder_backup_lost_title;
         };
-    }
-
-    /**
-     * The not-set-up empty state is the onboarding ROADMAP: ① recovery code →
-     * ② backup folder → ③ first backup. A DONE step gets a check and muted
-     * ink; the next pending step is the "you are here" one. ③ is by
-     * definition pending while the empty state shows (both ① and ② done IS
-     * set up, which flips the card to the hero).
-     */
-    private void bindOnboardingSteps(Context ctx, PreferenceViewHolder holder) {
-        boolean codeDone = mHasKey;
-        boolean folderDone = mHasFolder;
-        bindStep(holder, R.id.cb_step_code_row, R.id.cb_step_code_mark, R.id.cb_step_code_done,
-                R.id.cb_step_code, 1, ctx.getString(R.string.settings_sync_create_title),
-                codeDone, !codeDone);
-        bindStep(holder, R.id.cb_step_folder_row, R.id.cb_step_folder_mark, R.id.cb_step_folder_done,
-                R.id.cb_step_folder, 2, ctx.getString(R.string.folder_backup_step_folder),
-                folderDone, codeDone && !folderDone);
-        bindStep(holder, R.id.cb_step_backup_row, R.id.cb_step_backup_mark, R.id.cb_step_backup_done,
-                R.id.cb_step_backup, 3, ctx.getString(R.string.cloud_status_empty_body),
-                false, codeDone && folderDone);
-    }
-
-    /**
-     * One roadmap row. The marker is one of three shapes in the same 20dp
-     * slot: a check on a tonal disc when done, the number on a disc filled
-     * like the CTA (colorPrimary under colorOnPrimary) when current, the
-     * number in a ring when still ahead. The step's text is bold
-     * full-contrast when current, muted otherwise. Every view is set in every
-     * branch (the holder recycles). The row carries the spoken line.
-     */
-    private static void bindStep(PreferenceViewHolder holder, int rowId, int markId, int doneId,
-                                 int textId, int number, String text, boolean done, boolean current) {
-        View row = holder.findViewById(rowId);
-        TextView mark = (TextView) holder.findViewById(markId);
-        View doneMark = holder.findViewById(doneId);
-        TextView label = (TextView) holder.findViewById(textId);
-        if (row == null || mark == null || doneMark == null || label == null) {
-            return;
-        }
-        String numeral = String.format(Locale.getDefault(), "%d", number);
-        mark.setText(numeral);
-        mark.setVisibility(done ? View.GONE : View.VISIBLE);
-        doneMark.setVisibility(done ? View.VISIBLE : View.GONE);
-        mark.setBackgroundResource(current ? R.drawable.bg_step_current : R.drawable.bg_step_ahead);
-        mark.setTextColor(current
-                ? MaterialColors.getColor(mark, com.google.android.material.R.attr.colorOnPrimary)
-                : MaterialColors.getColor(mark, com.google.android.material.R.attr.colorOnSurfaceVariant));
-        label.setText(text);
-        label.setTextColor(current
-                ? MaterialColors.getColor(label, com.google.android.material.R.attr.colorOnSurface)
-                : MaterialColors.getColor(label, com.google.android.material.R.attr.colorOnSurfaceVariant));
-        label.setTypeface(null, current ? Typeface.BOLD : Typeface.NORMAL);
-        row.setContentDescription((done ? "✓" : numeral + ".") + " " + text);
-    }
-
-    /**
-     * The caption under the headline. A running transfer wins; then the
-     * folder-lost "last seen" line; then, with the totals known, the ⋮-menu
-     * hint while the folder is empty or "N files · encrypted end-to-end"
-     * (the headline above already IS the size, so the caption pairs the count
-     * with the trust line instead of repeating it).
-     */
-    private String captionText(Context ctx) {
-        if (mActive) {
-            return ctx.getString(R.string.settings_cloud_backup_active);
-        }
-        if (mFileCount < 0 || mTotalBytes < 0) {
-            return ctx.getString(R.string.settings_cloud_backup_usage_unavailable);
-        }
-        String files = ctx.getResources().getQuantityString(
-                R.plurals.settings_cloud_backup_file_count, mFileCount, mFileCount);
-        if (!mReachable) {
-            return ctx.getString(R.string.folder_backup_lost_seen, files);
-        }
-        if (mFileCount == 0) {
-            return ctx.getString(R.string.cloud_status_empty_body);
-        }
-        return files + " · " + ctx.getString(R.string.cloud_backup_header_encrypted);
     }
 }

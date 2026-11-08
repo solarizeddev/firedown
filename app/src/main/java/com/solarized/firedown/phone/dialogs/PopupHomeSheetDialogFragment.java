@@ -63,6 +63,8 @@ public class PopupHomeSheetDialogFragment extends BaseBottomSheetDialogFragment
         mView = inflater.inflate(R.layout.fragment_dialog_home_popup, container, false);
 
         bindRows();
+        PopupUpdateRow.bind(mView, requireActivity(),
+                () -> NavigationUtils.popBackStackSafe(mNavController, R.id.dialog_home_popup));
         applyModeVisibility();
         applyQuitVisibility();
         // Grouped card rows: the Library group swaps a row per mode and Quit

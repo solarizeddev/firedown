@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Base64;
 import android.util.Log;
@@ -550,6 +551,16 @@ public class P2pShareController {
                 mState.isLive(), mState.isInTransfer());
     }
 
+    /**
+     * True while any share is open: an offer waiting for an accept, a request
+     * waiting for an answer, or a transfer. Installing an update closes the
+     * app and ends it, so the update sheet waits while this is true.
+     */
+    @UiThread
+    public boolean hasLiveSession() {
+        return mState != null && mState.isLive();
+    }
+
     /* ── port lifecycle (called from GeckoRuntimeHelper) ────────────────── */
 
     @UiThread
@@ -625,12 +636,6 @@ public class P2pShareController {
             postError("file", "file unreadable");
             return;
         }
-        long size = RestoredFileAccess.length(mContext, path);
-        if (size <= 0) {
-            publish();
-            postError("file", "file unreadable");
-            return;
-        }
         // Derive the mime from the file's OWN extension, not the entity's
         // stored label — that label is Firedown's internal/UI value (an
         // HLS capture muxed to .mp4 can carry a manifest mime) and would
@@ -638,10 +643,33 @@ public class P2pShareController {
         String fileName = new File(path).getName();
         String mime = FileUriHelper.getMimeTypeFromFile(fileName);
         mState.fileName = fileName;
-        mState.fileSize = size;
         mState.mime = mime;
         publish();
 
+        // The size is read off the main thread: for a download restored after
+        // a reinstall (foreign-owned) it is a SAF open through the system's
+        // file provider, a binder call that can stall.
+        mDiskExecutor.execute(() -> {
+            long size = RestoredFileAccess.length(mContext, path);
+            mMainHandler.post(() -> {
+                if (!isCurrent(gen) || !isSend()) {
+                    return; // cancelled or replaced while the size was read
+                }
+                if (size <= 0) {
+                    postError("file", "file unreadable");
+                    return;
+                }
+                mState.fileSize = size;
+                publish();
+                continueSend(entity, path, mime, size, gen);
+            });
+        });
+    }
+
+    /** The rest of {@link #startSend}, once the file's size is known. */
+    @UiThread
+    private void continueSend(@NonNull DownloadEntity entity, @NonNull String path,
+                              @Nullable String mime, long size, int gen) {
         if (!startLoopback()) {
             postError(ShareState.ERROR_ENGINE, "loopback start failed");
             return;
@@ -1085,14 +1113,20 @@ public class P2pShareController {
         // ignores a later duplicate.
         if (mRendezvous != null && mRendezvousId != null) {
             startRendezvousPoll(gen);
-            // NB: the offer is NOT brokered here — that's LAZY, done only when the
-            // user picks the SHORT link (resolveShortLink). Brokering eagerly would
-            // upload the offer (which carries the file's name/size) to the server
-            // for every share, making the "Private link" choice meaningless. So a
-            // private share uploads nothing. (The answer still returns via `rvz`
+            // NB: the offer is NOT brokered here — that's LAZY, done only when a
+            // link is shared without the "Private links" setting
+            // (resolveShortLink). Brokering eagerly would upload the offer
+            // (which carries the file's name/size) for every share, nearby and
+            // QR ones included, and the setting would mean nothing. So a
+            // private share uploads no offer. (The answer still returns via `rvz`
             // for both — that's the receiver's candidates, not the shared file.)
         }
-        if (mSignaling != null && mSignalingId != null && !mSignalingBase.isEmpty()) {
+        // The dormant signaling relay uploads the offer EAGERLY, so it must
+        // respect "Private links" too (that setting promises the file's name
+        // and size are never stored on a server). Its URL is "" today.
+        boolean privateLinks = mSharedPreferences.getBoolean(
+                Preferences.SETTINGS_P2P_PRIVATE_LINKS, Preferences.DEFAULT_P2P_PRIVATE_LINKS);
+        if (!privateLinks && mSignaling != null && mSignalingId != null && !mSignalingBase.isEmpty()) {
             final String base = mSignalingBase;
             final String id = mSignalingId;
             mSignaling.uploadOffer(base, id, code, ok -> mMainHandler.post(() -> {
@@ -1114,6 +1148,7 @@ public class P2pShareController {
         mMainHandler.postDelayed(mOfferTimeout, OFFER_LIFETIME_MS);
         if (mState != null) {
             mState.offerCode = code;
+            mState.offerExpiresAt = SystemClock.elapsedRealtime() + OFFER_LIFETIME_MS;
             mState.stage = ShareState.Stage.READY;
             publish();
         }
@@ -1129,10 +1164,10 @@ public class P2pShareController {
     /**
      * Resolve the SHORT share link, brokering the offer LAZILY on first use: the
      * offer is uploaded to the rendezvous offer mailbox now (not eagerly at
-     * mint), so the "Private link" path can genuinely upload nothing. Hands
+     * mint), so a share under the "Private links" setting uploads no offer. Hands
      * {@code cb} (main thread) the short {@code FDO1.<id>} https link once the
      * upload lands, or the FULL self-contained link if brokering is unavailable
-     * or fails — so "Short link" is never a dead action, it just isn't shorter
+     * or fails — so sharing a link is never a dead action, it just isn't shorter
      * offline. Cached (`mShareLink`) so a re-share is instant.
      */
     @UiThread
@@ -1188,15 +1223,13 @@ public class P2pShareController {
 
     /**
      * Sender: a link went out through the share sheet. Recorded on the state
-     * (not the screen) so a sender who leaves and comes back sees the waiting
-     * card, not the share buttons again. {@code privateMode} is what "Send
-     * link again" re-shares.
+     * (not the screen) so a sender who leaves and comes back sees the link
+     * row's countdown, not the list as it was before.
      */
     @UiThread
-    public void markLinkShared(boolean privateMode) {
-        if (isSend()) {
+    public void markLinkShared() {
+        if (isSend() && !mState.linkShared) {
             mState.linkShared = true;
-            mState.linkPrivate = privateMode;
             publish();
         }
     }

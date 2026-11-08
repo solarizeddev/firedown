@@ -1308,7 +1308,7 @@ public class GeckoRuntimeHelper {
      * GeckoView never tells the app a page wanted DRM. firedown-geckoview
      * patch 0010 adds a notice for it (an app-approval request whose answer
      * is ignored); {@code GeckoComponents.PermissionDelegate} turns it into
-     * the "DRM is off · Turn on" snackbar.
+     * the "This video needs DRM" sheet.
      *
      *   media.eme.enabled                = !disable
      *   media.gmp-widevinecdm.enabled    = !disable
@@ -1319,8 +1319,8 @@ public class GeckoRuntimeHelper {
      *
      * <p>With the switch on, Android plays Widevine through MediaDrm
      * ({@code media.mediadrm-widevinecdm.visible}, on in GeckoView); the GMP
-     * prefs only stop Gecko-internal plugin pathways. Each page's request then
-     * goes through the app's "Allow … to play DRM-controlled content?" prompt.
+     * prefs only stop Gecko-internal plugin pathways. Each page's request is
+     * then granted by the app with no dialog: the switch is the consent.
      *
      * @return completes once Gecko has the new values (also on failure), so a
      *         caller can reload a page that should see them.
@@ -1340,9 +1340,9 @@ public class GeckoRuntimeHelper {
 
         List<GeckoPreferenceController.SetGeckoPreference<?>> preferenceList = new ArrayList<>();
 
-        // Master EME switch — IronFox-style hard disable. Removes
-        // requestMediaKeySystemAccess from the page entirely, which
-        // closes the capability-probing fingerprint surface.
+        // Master EME switch. Off, Gecko refuses every request before probing
+        // the device, which closes the capability-probing fingerprint
+        // surface (the API itself stays on the page).
         preferenceList.add(GeckoPreferenceController.SetGeckoPreference
                 .setBoolPref("media.eme.enabled", enable, GeckoPreferenceController.PREF_BRANCH_USER));
 

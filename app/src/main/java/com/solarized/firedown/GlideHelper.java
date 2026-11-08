@@ -605,6 +605,25 @@ public class GlideHelper {
     }
 
 
+    /**
+     * Sets a row's mime type and path on Glide options, leaving out a null.
+     * Glide's {@code set} refuses null, and a row can lack either column (a
+     * restored backup, an imported download list, a file another app opened
+     * with no type); an unset option reads as its declared default
+     * (octet-stream / ""), which every decoder already handles.
+     */
+    public static RequestOptions withFileOptions(RequestOptions options,
+                                                 @Nullable String mimeType,
+                                                 @Nullable String filePath) {
+        if (mimeType != null) {
+            options = options.set(GlideRequestOptions.MIMETYPE, mimeType);
+        }
+        if (filePath != null) {
+            options = options.set(GlideRequestOptions.FILEPATH, filePath);
+        }
+        return options;
+    }
+
     // ── DownloadEntity thumbnail fallback ────────────────────────────────────────
 
     /**
@@ -647,9 +666,8 @@ public class GlideHelper {
                 // (small) offset — so past the black intro and never t=0.
                 .set(VideoDecoder.FRAME_OPTION, MediaMetadataRetriever.OPTION_NEXT_SYNC)
                 .override(THUMB_WIDTH, THUMB_HEIGHT)
-                .set(GlideRequestOptions.FRAME, interval)
-                .set(GlideRequestOptions.MIMETYPE, mimeType)
-                .set(GlideRequestOptions.FILEPATH, entity.getFilePath());
+                .set(GlideRequestOptions.FRAME, interval);
+        options = withFileOptions(options, mimeType, entity.getFilePath());
 
         if (FileUriHelper.isGIF(mimeType) || FileUriHelper.isWEP(mimeType) || FileUriHelper.isSVG(mimeType)) {
             Glide.with(image).load(RestoredFileAccess.openableUri(App.getAppContext(), entity.getFilePath()))
@@ -807,9 +825,8 @@ public class GlideHelper {
                 // (small) offset — so past the black intro and never t=0.
                 .set(VideoDecoder.FRAME_OPTION, MediaMetadataRetriever.OPTION_NEXT_SYNC)
                 .override(THUMB_WIDTH, THUMB_HEIGHT)
-                .set(GlideRequestOptions.FRAME, interval)
-                .set(GlideRequestOptions.MIMETYPE, mimeType)
-                .set(GlideRequestOptions.FILEPATH, entity.getFilePath());
+                .set(GlideRequestOptions.FRAME, interval);
+        options = withFileOptions(options, mimeType, entity.getFilePath());
 
         if (FileUriHelper.isGIF(mimeType) || FileUriHelper.isWEP(mimeType) || FileUriHelper.isSVG(mimeType)) {
             return glide.load(RestoredFileAccess.openableUri(App.getAppContext(), entity.getFilePath())).apply(options);

@@ -27,6 +27,8 @@
         layout="@layout/dialog_drag_handle" />
 
 
+    <include layout="@layout/item_popup_update_ready" />
+
     <!-- ── Tabs ─────────────────────────────────────────────────── -->
     <LinearLayout
         android:id="@+id/popup_section_tabs"

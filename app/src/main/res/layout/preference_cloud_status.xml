@@ -1,297 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  The Backup status hero (custom Preference layout, bound by
-  CloudStatusPreference). One card, three states:
+  The Backup status card (custom Preference layout, bound by
+  CloudStatusPreference). The Signal "Secure Backups" shape: one card, the
+  words on the start side, a glyph on a disc on the end side, and at most one
+  button, inside the card. Every state is the same four views:
 
-    A · set up, folder reachable — cloud-upload glyph, "Firedown Backup" over
-                                   "On <provider>" (the folder's own name and
-                                   whose storage it sits in), the backed-up
-                                   size headline, and a caption with the file
-                                   count — or the ⋮-menu hint while nothing is
-                                   backed up yet
-    B · set up, folder LOST      — the same frame with the cloud-off glyph,
-                                   "Can't reach your backup folder", the last
-                                   seen totals, and the body line that says
-                                   what to do (cb_alert)
-    C · not set up               — the dashed onboarding roadmap
-                                   (① recovery code → ② folder → ③ first
-                                   backup)
+    not set up   — "Back up your downloads", one line, [Set up backup]
+    set up       — "On <place>" over "854 MB backed up", "14 files ·
+                   encrypted end-to-end" (or "Nothing backed up yet" and the
+                   ⋮-menu hint), no button
+    folder lost  — "On <place>" over "Can't reach your backup folder" in the
+                   error ink, what to do, [Choose the folder again] /
+                   [Reconnect]
 
-  No quota, no meter, no chip: the folder is the user's own storage, so the
-  only facts this card can state are what is in it and whether it answers.
-
-  Geometry: every state sits on the card rows' two axes, so the page reads as
-  one column. The rows below are a card 16dp from the screen, 16dp padding, a
-  24dp icon and the title at 72dp. Here the 16dp gutter is the root's padding,
-  the inner 16dp is the hero's (or the dashed card's) padding, the glyph is
-  24dp, and every line of text starts 16dp after it: the glyph, the step
-  markers and the rows' icons share one centre line (44dp), every title and
-  step text one start (72dp).
+  It replaced a numbered roadmap (① code → ② folder → ③ first backup) and a
+  separate button row under the card: the button now creates the code and
+  goes straight on to "Where to back up", so the user sees one step.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
     android:paddingHorizontal="16dp"
-    android:paddingTop="14dp"
-    android:paddingBottom="16dp">
+    android:paddingTop="8dp"
+    android:paddingBottom="12dp">
 
-    <!-- ── set-up hero (reachable AND lost — the class swaps glyph/copy) ── -->
-    <LinearLayout
-        android:id="@+id/cb_hero"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingHorizontal="16dp"
-        tools:visibility="visible">
+        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:id="@+id/cb_glyph"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/cloud_upload_24"
-                app:tint="?attr/colorOnSurfaceVariant"
-                android:importantForAccessibility="no" />
+            android:padding="24dp">
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="16dp"
                 android:orientation="vertical">
+
+                <!-- Where the backup is ("On Google Drive › Backups"); gone
+                     while nothing is set up. -->
+                <TextView
+                    android:id="@+id/cb_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:visibility="gone"
+                    tools:text="On Google Drive › Backups"
+                    tools:visibility="visible" />
 
                 <TextView
                     android:id="@+id/cb_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
+                    android:textAppearance="?attr/textAppearanceTitleLarge"
                     android:textColor="?attr/colorOnSurface"
-                    tools:text="@string/folder_backup_hero_title" />
+                    tools:text="854 MB backed up" />
 
+                <!-- One line under the title: the file count, the hint, what
+                     to do when the folder is lost, or a running transfer. -->
                 <TextView
-                    android:id="@+id/cb_subtitle"
+                    android:id="@+id/cb_body"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="13sp"
+                    android:layout_marginTop="4dp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnSurfaceVariant"
-                    tools:text="On Google Drive" />
+                    tools:text="14 files · encrypted end-to-end" />
+
+                <!-- The card's one action, when one is owed. Clicks are
+                     wired by CloudStatusPreference; the preference row
+                     itself is not selectable. -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/cb_action"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone"
+                    tools:text="@string/backup_hero_setup_cta"
+                    tools:visibility="visible" />
 
             </LinearLayout>
 
-        </LinearLayout>
-
-        <!-- The figure, caption and alert hang under the title (40dp = the
-             24dp glyph + its 16dp gap), on the rows' text axis. -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="40dp"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal"
-            android:baselineAligned="true">
-
-            <!-- baselineAligned keeps the small unit label sitting on the big
-                 figure's baseline. -->
-            <TextView
-                android:id="@+id/cb_big"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="30sp"
-                android:textStyle="bold"
-                android:textColor="?attr/colorOnSurface"
-                tools:text="854 MB" />
-
-            <TextView
-                android:id="@+id/cb_big_unit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:text="@string/cloud_status_backed_up" />
-
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/cb_caption"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="40dp"
-            android:layout_marginTop="4dp"
-            android:textSize="12sp"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            tools:text="14 files · encrypted end-to-end" />
-
-        <!-- The folder-LOST body line (colorError ink — the readable attention
-             ink on both surfaces; never backup_warning amber, 2.09:1 on light). -->
-        <TextView
-            android:id="@+id/cb_alert"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="40dp"
-            android:layout_marginTop="8dp"
-            android:textSize="12.5sp"
-            android:textColor="?attr/colorError"
-            android:visibility="gone"
-            tools:visibility="visible"
-            tools:text="@string/folder_backup_lost_body" />
-
-    </LinearLayout>
-
-    <!-- ── not-set-up: the onboarding roadmap ── -->
-    <LinearLayout
-        android:id="@+id/cb_empty"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:background="@drawable/bg_cloud_empty_dashed"
-        android:visibility="gone"
-        tools:visibility="visible">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/cloud_upload_24"
-                app:tint="?attr/colorOnSurfaceVariant"
-                android:importantForAccessibility="no" />
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+            <!-- The glyph on a tonal disc, Signal's illustration slot. -->
+            <FrameLayout
+                android:layout_width="64dp"
+                android:layout_height="64dp"
                 android:layout_marginStart="16dp"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:textColor="?attr/colorOnSurface"
-                android:text="@string/cloud_status_empty_title" />
-
-        </LinearLayout>
-
-        <!-- Three roadmap lines, each a HANGING row: a 20dp marker centred
-             in the glyph's 24dp column (the markers, the cloud and the rows'
-             icons below share one centre line), the step's text from the
-             title's start, so a wrapped line continues under its text. The
-             marker is one of three shapes, set by
-             CloudStatusPreference.bindStep: ahead = a ring round the number,
-             current = the number on a disc filled like the CTA under the
-             card (the button that performs that step), done = a check on a
-             tonal disc. The numeral is sized in dp: it is a glyph of a fixed
-             circle, and the step's text beside it follows the font scale.
-             The row carries the spoken line; the marker column is hidden
-             from TalkBack. -->
-        <LinearLayout
-            android:id="@+id/cb_step_code_row"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:importantForAccessibility="yes"
-            android:orientation="horizontal">
-
-            <FrameLayout
-                android:layout_width="24dp"
-                android:layout_height="20dp"
+                android:background="@drawable/bg_empty_disc"
                 android:importantForAccessibility="noHideDescendants">
 
-                <TextView
-                    android:id="@+id/cb_step_code_mark"
-                    style="@style/Firedown.Widget.BackupStepMark"
-                    tools:text="1" />
-
                 <ImageView
-                    android:id="@+id/cb_step_code_done"
-                    style="@style/Firedown.Widget.BackupStepDone"
+                    android:id="@+id/cb_glyph"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/cloud_upload_24"
+                    app:tint="?attr/brandInk"
                     tools:ignore="ContentDescription" />
 
             </FrameLayout>
 
-            <TextView
-                android:id="@+id/cb_step_code"
-                style="@style/Firedown.Widget.BackupStepText"
-                tools:text="Create recovery code" />
-
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/cb_step_folder_row"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:importantForAccessibility="yes"
-            android:orientation="horizontal">
+    </com.google.android.material.card.MaterialCardView>
 
-            <FrameLayout
-                android:layout_width="24dp"
-                android:layout_height="20dp"
-                android:importantForAccessibility="noHideDescendants">
-
-                <TextView
-                    android:id="@+id/cb_step_folder_mark"
-                    style="@style/Firedown.Widget.BackupStepMark"
-                    tools:text="2" />
-
-                <ImageView
-                    android:id="@+id/cb_step_folder_done"
-                    style="@style/Firedown.Widget.BackupStepDone"
-                    tools:ignore="ContentDescription" />
-
-            </FrameLayout>
-
-            <TextView
-                android:id="@+id/cb_step_folder"
-                style="@style/Firedown.Widget.BackupStepText"
-                tools:text="Choose where to back up" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/cb_step_backup_row"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:importantForAccessibility="yes"
-            android:orientation="horizontal">
-
-            <FrameLayout
-                android:layout_width="24dp"
-                android:layout_height="20dp"
-                android:importantForAccessibility="noHideDescendants">
-
-                <TextView
-                    android:id="@+id/cb_step_backup_mark"
-                    style="@style/Firedown.Widget.BackupStepMark"
-                    tools:text="3" />
-
-                <ImageView
-                    android:id="@+id/cb_step_backup_done"
-                    style="@style/Firedown.Widget.BackupStepDone"
-                    tools:ignore="ContentDescription" />
-
-            </FrameLayout>
-
-            <TextView
-                android:id="@+id/cb_step_backup"
-                style="@style/Firedown.Widget.BackupStepText"
-                tools:text="Back up a finished download from its ⋮ menu." />
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-</LinearLayout>
+</FrameLayout>

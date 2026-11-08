@@ -1,8 +1,14 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.format.Formatter;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -12,13 +18,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
 import com.solarized.firedown.R;
 import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.p2pshare.ShareState;
 import com.solarized.firedown.utils.FileUriHelper;
-
-import java.util.Locale;
-
 import dagger.hilt.android.AndroidEntryPoint;
 
 /**
@@ -30,7 +34,7 @@ import dagger.hilt.android.AndroidEntryPoint;
  * as a normal FINISHED entry in Downloads — the session then outlives this
  * screen (the service carries it).
  *
- * <p>Screen walk: IDLE (visible card + the code/link fold) → PREVIEW
+ * <p>Screen walk: IDLE (visible card + Scan; Paste code in the overflow) → PREVIEW
  * (accept/decline) → CONNECTING (with the human-relayed reply only when both
  * push paths failed) → TRANSFER → DONE (Open) / ERROR (Try again). Rendered
  * from the controller's {@link ShareState}.
@@ -54,8 +58,10 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
     public static final String ARG_SIGNALING_BASE = "p2p.sig.base";
     public static final String ARG_SIGNALING_ID = "p2p.sig.id";
 
+    /** Stands in for the sender's name while the sentence is formatted. */
+    private static final String NAME_MARK = "\uE000";
+
     private View mView;
-    private boolean mCodeExpanded;
     private String mRenderedReplyCode;
     private String mVisibleAs;
     private ShareState mLast;
@@ -69,18 +75,21 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
         mView = inflater.inflate(R.layout.fragment_p2p_receive, container, false);
         mToolbar = mView.findViewById(R.id.toolbar);
 
-        mView.findViewById(R.id.p2p_code_toggle).setOnClickListener(v -> {
-            mCodeExpanded = !mCodeExpanded;
-            updateCodeFold();
-        });
         mView.findViewById(R.id.p2p_scan_code).setOnClickListener(v ->
                 navigateToScanner(P2pShareController.OFFER_PREFIX, false));
-        mView.findViewById(R.id.p2p_paste_code).setOnClickListener(v -> {
-            String code = readCodeFromClipboard(P2pShareController.OFFER_PREFIX);
-            if (code != null && !refuseWhileBusy()) {
-                // Pasted from a messenger = phones apart.
-                mP2pController.startReceive(code, true);
+        // Paste a bare code: rare (a link tapped in a chat opens this screen
+        // by itself), so it lives in the overflow, shown while idle.
+        mToolbar.inflateMenu(R.menu.menu_p2p_receive);
+        mToolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_paste_code) {
+                String code = readCodeFromClipboard(P2pShareController.OFFER_PREFIX);
+                if (code != null && !refuseWhileBusy()) {
+                    // Pasted from a messenger = phones apart.
+                    mP2pController.startReceive(code, true);
+                }
+                return true;
             }
+            return false;
         });
         mView.findViewById(R.id.p2p_accept).setOnClickListener(v -> {
             mP2pController.acceptOffer();
@@ -209,6 +218,8 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
             }
             // CONNECTING / TRANSFERRING keep running: the service carries them.
         }
+        // A rebuilt view starts with an empty reply QR: draw it again.
+        mRenderedReplyCode = null;
         mView = null;
         super.onDestroyView();
     }
@@ -257,12 +268,13 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
             mLast = null;
             showStage(R.id.p2p_idle_group);
             renderVisible();
-            updateCodeFold();
+            setMenuVisible(true);
             mView.findViewById(R.id.p2p_stop).setVisibility(View.GONE);
             bindFooter(mView, null);
             return;
         }
         mLast = state;
+        setMenuVisible(false);
         MaterialButton stop = mView.findViewById(R.id.p2p_stop);
         TextView status = mView.findViewById(R.id.p2p_status);
         switch (state.stage) {
@@ -312,17 +324,42 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
     private void bindPreview(@NonNull ShareState state) {
         mView.findViewById(R.id.p2p_accept).setEnabled(true);
         mView.findViewById(R.id.p2p_decline).setEnabled(true);
+        // Who is sending leads: the device name the sender's phone claims,
+        // in the title's weight (the copy never calls it verified).
+        String device = state.peerDevice == null ? "" : state.peerDevice.trim();
+        CharSequence from;
+        if (device.isEmpty()) {
+            from = getString(R.string.p2p_wants_to_send_unknown);
+        } else {
+            // The name is placed where the translation puts %1$s: format with a
+            // marker, then swap the name in, so the bold run is the argument
+            // even when the sentence contains the same word.
+            String text = getString(R.string.p2p_wants_to_send, NAME_MARK);
+            SpannableStringBuilder styled = new SpannableStringBuilder(text);
+            int at = text.indexOf(NAME_MARK);
+            if (at >= 0) {
+                styled.replace(at, at + NAME_MARK.length(), device);
+                styled.setSpan(new StyleSpan(Typeface.BOLD), at, at + device.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                styled.setSpan(new ForegroundColorSpan(MaterialColors.getColor(mView,
+                                com.google.android.material.R.attr.colorOnSurface)),
+                        at, at + device.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            from = styled;
+        }
+        ((TextView) mView.findViewById(R.id.p2p_preview_from)).setText(from);
         ((TextView) mView.findViewById(R.id.p2p_preview_name)).setText(
                 state.fileName == null ? "" : state.fileName);
-        String sizeText = Formatter.formatShortFileSize(requireContext(), state.fileSize);
-        String device = state.peerDevice == null ? "" : state.peerDevice;
-        String tag = device.isEmpty()
-                ? sizeText
-                : String.format(Locale.ROOT, "%s · %s", sizeText,
-                        getString(R.string.p2p_receive_from, device));
-        ((TextView) mView.findViewById(R.id.p2p_preview_tag)).setText(tag);
-        ((ImageView) mView.findViewById(R.id.p2p_preview_icon)).setImageResource(
-                FileUriHelper.getMimeTypeIcon(state.mime == null ? "" : state.mime));
+        ((TextView) mView.findViewById(R.id.p2p_preview_tag)).setText(
+                Formatter.formatShortFileSize(requireContext(), state.fileSize));
+        String mime = state.mime == null ? "" : state.mime;
+        ImageView icon = mView.findViewById(R.id.p2p_preview_icon);
+        icon.setImageResource(FileUriHelper.getMimeTypeIcon(mime));
+        // The tile is the only visual statement of the file's type.
+        // An unknown type is just "File", never "BIN File".
+        boolean unknown = mime.isEmpty() || "application/octet-stream".equalsIgnoreCase(mime);
+        icon.setContentDescription(unknown ? getString(R.string.media_type_file)
+                : FileUriHelper.getLongMimeText(requireContext(), mime));
     }
 
     /**
@@ -345,8 +382,8 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
         mRenderedReplyCode = state.answerCode;
         boolean rendered = setQr(mView.findViewById(R.id.p2p_reply_qr), state.answerCode);
         mView.findViewById(R.id.p2p_reply_qr_card).setVisibility(rendered ? View.VISIBLE : View.GONE);
-        ((TextView) mView.findViewById(R.id.p2p_reply_hint)).setText(
-                rendered ? R.string.p2p_code_hint_reply : R.string.p2p_qr_too_large);
+        // Too big for a QR: the "Send reply" button above is the way back.
+        mView.findViewById(R.id.p2p_reply_hint).setVisibility(rendered ? View.VISIBLE : View.GONE);
     }
 
     /** The idle card: "Visible as <name>" with the live dot, or not visible. */
@@ -359,20 +396,28 @@ public class P2pReceiveFragment extends P2pShareBaseFragment {
         View dot = mView.findViewById(R.id.p2p_visible_dot);
         if (mVisibleAs != null && !mVisibleAs.isEmpty()) {
             text.setText(getString(R.string.p2p_visible_as, mVisibleAs));
-            hint.setText(R.string.p2p_visible_hint);
+            hint.setText(R.string.p2p_visible_hint_link);
+            hint.setVisibility(View.VISIBLE);
             dot.setVisibility(View.VISIBLE);
         } else {
+            // Not advertised: the "phones on this Wi-Fi can send to you" hint
+            // would contradict the line above, which already says what to do.
             text.setText(R.string.p2p_not_visible);
-            hint.setText(R.string.p2p_visible_hint);
+            hint.setVisibility(View.GONE);
             dot.setVisibility(View.GONE);
+            return;
         }
     }
 
-    private void updateCodeFold() {
-        mView.findViewById(R.id.p2p_code_group)
-                .setVisibility(mCodeExpanded ? View.VISIBLE : View.GONE);
-        ((ImageView) mView.findViewById(R.id.p2p_code_chevron))
-                .setRotation(mCodeExpanded ? 180f : 0f);
+    /** Paste code belongs to the idle screen only. */
+    private void setMenuVisible(boolean visible) {
+        if (mToolbar == null) {
+            return;
+        }
+        Menu menu = mToolbar.getMenu();
+        for (int i = 0; i < menu.size(); i++) {
+            menu.getItem(i).setVisible(visible);
+        }
     }
 
     private void showStage(int visibleId) {

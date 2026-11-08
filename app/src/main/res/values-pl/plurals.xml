@@ -63,4 +63,10 @@
         <item quantity="many">%d otwartych kart prywatnych</item>
         <item quantity="other">%d otwartych kart prywatnych</item>
     </plurals>
+    <plurals name="p2p_link_open_for">
+        <item quantity="one">Udostępniono · otwarte jeszcze przez %d minutę.</item>
+        <item quantity="few">Udostępniono · otwarte jeszcze przez %d minuty.</item>
+        <item quantity="many">Udostępniono · otwarte jeszcze przez %d minut.</item>
+        <item quantity="other">Udostępniono · otwarte jeszcze przez %d minuty.</item>
+    </plurals>
 </resources>

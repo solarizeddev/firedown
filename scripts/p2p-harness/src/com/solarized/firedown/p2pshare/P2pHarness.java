@@ -55,6 +55,7 @@ public final class P2pHarness {
             networkGate();
             fileNames();
             sessionPolicy();
+            sendRows();
             reachableHosts();
             lanServer();
             lanDeadlineAndPool();
@@ -392,6 +393,145 @@ public final class P2pHarness {
                         && !P2pSessionPolicy.blocksNewSession(true, true, false)
                         && !P2pSessionPolicy.blocksNewSession(true, false, true)
                         && !P2pSessionPolicy.blocksNewSession(false, false, false));
+    }
+
+    /* ── P2pSendRows (the Send screen's one "Send to" list) ─────────────── */
+
+    private static String rows(List<P2pSendRows.Row> rows) {
+        StringBuilder b = new StringBuilder();
+        for (P2pSendRows.Row r : rows) {
+            if (b.length() > 0) {
+                b.append(" | ");
+            }
+            b.append(r);
+        }
+        return b.toString();
+    }
+
+    private static int spinners(List<P2pSendRows.Row> rows) {
+        int n = 0;
+        for (P2pSendRows.Row r : rows) {
+            if (r.spinner) {
+                n++;
+            }
+        }
+        return n;
+    }
+
+    private static void sendRows() {
+        final long now = 1_000_000_000L;
+        final long fifteen = now + 15 * 60_000L;
+        List<String> none = Collections.emptyList();
+        List<String> two = Arrays.asList("Ana's Pixel 8", "Galaxy A52");
+        P2pSendRows.Phase READY = P2pSendRows.Phase.READY;
+        P2pSendRows.Kind LINK = P2pSendRows.Kind.LINK;
+        P2pSendRows.Kind NEARBY = P2pSendRows.Kind.NEARBY;
+        List<P2pSendRows.Row> r;
+
+        // Rest, nobody nearby: two destinations, the link and "someone next
+        // to you". No placeholder row, nothing spins, nothing is active.
+        r = P2pSendRows.build(READY, none, null, false, false, false, fifteen, now);
+        check("rows: at rest → link, then someone next to you",
+                r.size() == 2 && r.get(0).kind == LINK && r.get(1).kind == NEARBY, rows(r));
+        check("rows: folded in-person row with nobody found says how it works",
+                r.get(1).sub == P2pSendRows.Sub.NEARBY_IDLE && r.get(1).tappable && !r.get(1).active, rows(r));
+        check("rows: nothing spins at rest", spinners(r) == 0, rows(r));
+        check("rows: nothing is active at rest", !r.get(0).active && !r.get(1).active, rows(r));
+        check("rows: no Cancel at rest", !P2pSendRows.somethingOut(READY, null, false));
+
+        // Phones found while folded: the row NAMES them (never hidden behind
+        // the fold), lit, still the same two rows.
+        r = P2pSendRows.build(READY, two, null, false, false, false, fifteen, now);
+        check("rows: folded, phones found → named on the in-person row",
+                r.size() == 2 && r.get(1).sub == P2pSendRows.Sub.NEARBY_FOUND
+                        && r.get(1).names.equals(two) && r.get(1).active, rows(r));
+        check("rows: folded row carries no phone rows", r.get(1).children.isEmpty(), rows(r));
+
+        // Unfolded: the phones found are its children, in discovery order.
+        r = P2pSendRows.build(READY, two, null, false, false, true, fifteen, now);
+        check("rows: unfolded → the phones inside it, tappable",
+                r.size() == 2 && r.get(1).sub == P2pSendRows.Sub.NEARBY_OPEN
+                        && r.get(1).children.size() == 2
+                        && "Ana's Pixel 8".equals(r.get(1).children.get(0).name)
+                        && r.get(1).children.get(0).sub == P2pSendRows.Sub.ON_WIFI
+                        && r.get(1).children.get(0).tappable, rows(r));
+        r = P2pSendRows.build(READY, none, null, false, false, true, fifteen, now);
+        check("rows: unfolded with nobody found → no phone rows (the QR fills it)",
+                r.get(1).sub == P2pSendRows.Sub.NEARBY_OPEN && r.get(1).children.isEmpty()
+                        && r.get(1).tappable, rows(r));
+
+        // A phone tapped: its row waits, untappable; the others stay live.
+        r = P2pSendRows.build(READY, two, "Ana's Pixel 8", false, false, true, fifteen, now);
+        List<P2pSendRows.Row> kids = r.get(1).children;
+        check("rows: the asked phone waits and cannot be asked twice",
+                kids.get(0).sub == P2pSendRows.Sub.WAITING_ACCEPT && !kids.get(0).tappable
+                        && kids.get(0).active, rows(r));
+        check("rows: the other phone and the link stay tappable",
+                kids.get(1).tappable && r.get(0).tappable, rows(r));
+        check("rows: waiting is still, not a spinner", spinners(r) == 0 && spinners(kids) == 0, rows(r));
+        check("rows: Cancel once a phone was asked", P2pSendRows.somethingOut(READY, "Ana's Pixel 8", false));
+        r = P2pSendRows.build(READY, two, "Ana's Pixel 8", false, false, false, fifteen, now);
+        check("rows: folded after asking → the row says who is waiting",
+                r.get(1).sub == P2pSendRows.Sub.NEARBY_WAITING && "Ana's Pixel 8".equals(r.get(1).name)
+                        && r.get(1).active, rows(r));
+        // The asked phone left discovery (its screen went off): its waiting row
+        // stays, the request is still out.
+        r = P2pSendRows.build(READY, Collections.singletonList("Galaxy A52"), "Ana's Pixel 8",
+                false, false, true, fifteen, now);
+        kids = r.get(1).children;
+        check("rows: an asked phone that left discovery keeps its waiting row",
+                kids.size() == 2 && "Ana's Pixel 8".equals(kids.get(0).name)
+                        && kids.get(0).sub == P2pSendRows.Sub.WAITING_ACCEPT
+                        && kids.get(1).sub == P2pSendRows.Sub.ON_WIFI, rows(r));
+        r = P2pSendRows.build(READY, none, "Ana's Pixel 8", false, false, true, fifteen, now);
+        check("rows: ... and with nobody else found, just it",
+                r.get(1).children.size() == 1
+                        && r.get(1).children.get(0).sub == P2pSendRows.Sub.WAITING_ACCEPT, rows(r));
+
+        // The link: preparing, then shared with a countdown.
+        r = P2pSendRows.build(READY, none, null, false, true, false, fifteen, now);
+        check("rows: preparing the link is untappable (no double share sheet)",
+                r.get(0).sub == P2pSendRows.Sub.LINK_PREPARING && !r.get(0).tappable && spinners(r) == 0, rows(r));
+        r = P2pSendRows.build(READY, none, null, true, false, false, fifteen, now);
+        check("rows: shared link counts down from 15 and stays tappable (share again)",
+                r.get(0).sub == P2pSendRows.Sub.LINK_SHARED && r.get(0).minutesLeft == 15
+                        && r.get(0).tappable && r.get(0).active, rows(r));
+        check("rows: Cancel once a link went out", P2pSendRows.somethingOut(READY, null, true));
+        r = P2pSendRows.build(READY, two, null, true, false, true, fifteen, now);
+        check("rows: a shared link leaves the nearby phones tappable",
+                r.get(1).children.get(0).tappable && r.get(1).children.get(1).tappable, rows(r));
+
+        // Countdown rounding.
+        check("countdown: 13:01 left reads 14", P2pSendRows.minutesLeft(now + 13 * 60_000 + 1_000, now) == 14);
+        check("countdown: exactly 14:00 reads 14", P2pSendRows.minutesLeft(now + 14 * 60_000, now) == 14);
+        check("countdown: 10 s left reads 1, never 0", P2pSendRows.minutesLeft(now + 10_000, now) == 1);
+        check("countdown: past the expiry still reads 1", P2pSendRows.minutesLeft(now - 5_000, now) == 1);
+        check("countdown: unknown expiry invents nothing", P2pSendRows.minutesLeft(0, now) == 0);
+        check("countdown: unknown expiry → a shared row with no count",
+                P2pSendRows.build(P2pSendRows.Phase.READY, Collections.emptyList(), null,
+                        true, false, false, 0, now).get(0).minutesLeft == 0);
+        check("tick: next change lands on the minute boundary",
+                P2pSendRows.nextTickMs(now + 13 * 60_000 + 1_000, now) == 1_000
+                        && P2pSendRows.nextTickMs(now + 14 * 60_000, now) == 60_000);
+
+        // Connecting collapses to the one peer, with the one spinner.
+        r = P2pSendRows.build(P2pSendRows.Phase.CONNECTING, two, "Galaxy A52", true, false, true, fifteen, now);
+        check("rows: connecting to a nearby phone → only that phone, spinning",
+                r.size() == 1 && "Galaxy A52".equals(r.get(0).name)
+                        && r.get(0).sub == P2pSendRows.Sub.CONNECTING && r.get(0).spinner && !r.get(0).tappable, rows(r));
+        r = P2pSendRows.build(P2pSendRows.Phase.CONNECTING, two, null, true, false, false, fifteen, now);
+        check("rows: connecting through the link → only the link row, spinning",
+                r.size() == 1 && r.get(0).kind == LINK && r.get(0).spinner, rows(r));
+        check("rows: at most one spinner while connecting", spinners(r) == 1, rows(r));
+        r = P2pSendRows.build(P2pSendRows.Phase.CONNECTING, two, null, false, false, true, fifteen, now);
+        check("rows: connecting after a QR scan → the in-person row, never \"Share a link\"",
+                r.size() == 1 && r.get(0).kind == NEARBY && r.get(0).spinner
+                        && r.get(0).children.isEmpty(), rows(r));
+        check("rows: Cancel while connecting", P2pSendRows.somethingOut(P2pSendRows.Phase.CONNECTING, null, false));
+
+        // No list before the offer exists, or once bytes move.
+        r = P2pSendRows.build(P2pSendRows.Phase.NONE, two, "Galaxy A52", true, false, true, fifteen, now);
+        check("rows: no list outside READY / CONNECTING", r.isEmpty(), rows(r));
     }
 
     /* ── P2pLanServer.reachableHost (what NSD resolved → a URL host) ────── */

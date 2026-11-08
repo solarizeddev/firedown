@@ -4,7 +4,8 @@
 # the test receiver's answers) and the build.gradle edit, on canned input;
 # then the whole script against two simulated phones (fake_adb.py): one
 # where Android 12+ installs the update without asking, as the first real
-# run found, one that shows Android's dialog; and five faults planted in
+# run found, one that shows Android's dialog (with fingers that close the
+# shade or the sheet); and five faults planted in
 # them, each of which it must report.
 #   bash scripts/update-install-test/selftest.sh      (QUICK=1: canned input only)
 
@@ -332,6 +333,13 @@ print(s['installed'], s['appops'], s['settings'], s['files'], s['notif_perm'], s
     check "touched shade: exit code" "$(run_fake touched '' FAKE_SHADE=touched -- --skip-build --only notification)" "0"
     check "touched shade: the touch named" "$(said touched 'the screen was touched while the shade was being read')" "yes"
     check "touched shade: read again and tapped" "$(said touched 'INFO tapped the notification in the shade')" "yes"
+    # A finger closes the sheet once: named, then a second try passes.
+    check "touched sheet: exit code" "$(run_fake sheettouch '' FAKE_SHEET=touched -- --skip-build --only sheet)" "0"
+    check "touched sheet: the touch named" "$(said sheettouch 'a finger on the screen closed the sheet at')" "yes"
+    check "touched sheet: the sheet came back" "$(said sheettouch 'PASS the update sheet appeared')" "yes"
+    # Twice: it fails, and says why instead of guessing.
+    check "touched sheet twice: fails" "$(run_fake sheettouch2 '' FAKE_SHEET=touched-twice -- --skip-build --only sheet)" "1"
+    check "touched sheet twice: named" "$(said sheettouch2 'then a finger on the screen closed it at')" "yes"
     # Android 10 has no all-windows dump, so a shade the plain dump cannot
     # see falls back to the test receiver.
     check "android 10: exit code" "$(run_fake sdk29 '' FAKE_SDK=29 -- --skip-build --only notification)" "0"

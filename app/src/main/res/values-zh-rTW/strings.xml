@@ -166,8 +166,6 @@
     <string name="quit_application">即將結束應用程式讓變更生效…</string>
     <string name="rename">重命名</string>
     <string name="rename_file">重命名文件</string>
-    <string name="request_media_key_system_access">允許 &lt;b&gt;%s&lt;/b&gt; 播放受 DRM 控制的內容嗎？</string>
-    <string name="request_media_key_system_access_subtitle">請注意，Firedown 無法下載受 DRM 保護的文件</string>
     <string name="request_storage">允許存取 &lt;b&gt;%s&lt;/b&gt; 的裝置儲存空間嗎？</string>
     <string name="request_storage_access">允許第三方存取 &lt;b&gt;%s&lt;/b&gt; 的第一方儲存空間嗎？</string>
     <string name="restart_origin">重新開始</string>

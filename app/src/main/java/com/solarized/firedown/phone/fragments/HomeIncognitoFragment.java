@@ -27,6 +27,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.solarized.firedown.UpdateReadyLiveData;
+import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
@@ -205,6 +207,17 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
         super.onResume();
         // An add-on's new tab or popup opens in the mode on screen.
         mAddonManager.setBrowsingPrivate(true);
+        // Back on the home screen from a page (no activity resume): the
+        // update sheet may open here (UpdatePromptPolicy). Posted, behind the
+        // activity's own resume check, which it then finds by tag.
+        View root = getView();
+        if (root != null) {
+            root.post(() -> {
+                if (isResumed() && getActivity() instanceof BaseActivity) {
+                    ((BaseActivity) getActivity()).offerUpdateHere();
+                }
+            });
+        }
     }
 
     @Override
@@ -217,6 +230,9 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
         // Observe incognito tab count for the bottom bar badge.
         // If all incognito tabs are closed externally (e.g. via the
         // notification "Close all" action), navigate to regular home.
+        // The ⋮ dot while an update is ready (its "Update ready" row).
+        new UpdateReadyLiveData(requireContext()).observe(getViewLifecycleOwner(),
+                ready -> mBottomNavigationBar.setUpdateReady(Boolean.TRUE.equals(ready)));
         mIncognitoStateViewModel.getTabsCount().observe(getViewLifecycleOwner(), count -> {
             mBottomNavigationBar.onTabsCount(count);
             if (count == 0) {

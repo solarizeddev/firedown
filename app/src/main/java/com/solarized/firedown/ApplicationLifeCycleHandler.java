@@ -119,8 +119,23 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
     @Override
     public void onActivityCreated(@NonNull Activity activity, Bundle bundle) { }
 
+    /**
+     * Firedown screens other than the browser that are started (visible).
+     * Read by the browser's picture-in-picture rules: a PiP window expanded
+     * under another of the app's screens (a notification opening Downloads)
+     * is not a closed window. Main thread only.
+     */
+    private static int sOtherScreensStarted;
+
+    public static boolean otherScreenStarted() {
+        return sOtherScreensStarted > 0;
+    }
+
     @Override
     public void onActivityStarted(@NonNull Activity activity) {
+        if (!(activity instanceof BrowserMainActivity)) {
+            sOtherScreensStarted++;
+        }
         updateWindowSecureMode(activity);
     }
 
@@ -159,7 +174,11 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
     }
 
     @Override
-    public void onActivityStopped(@NonNull Activity activity) { }
+    public void onActivityStopped(@NonNull Activity activity) {
+        if (!(activity instanceof BrowserMainActivity) && sOtherScreensStarted > 0) {
+            sOtherScreensStarted--;
+        }
+    }
 
     @Override
     public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle bundle) { }
@@ -176,8 +195,13 @@ public class ApplicationLifeCycleHandler implements Application.ActivityLifecycl
 
             if (activity.isFinishing()) {
                 stopMediaPlaybackService();
-                mIncognitoStateRepository.deleteAll();
-                mIncognitoNotification.dismiss();
+                // Closing a PiP window removes the task and so finishes the
+                // browser: not a way out of private browsing.
+                boolean closedFromPip = ((BrowserMainActivity) activity).wasClosedFromPip();
+                if (!closedFromPip) {
+                    mIncognitoStateRepository.deleteAll();
+                    mIncognitoNotification.dismiss();
+                }
             }
         }
     }

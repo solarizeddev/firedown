@@ -467,6 +467,8 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
      * row — both wired in {@link #bindQuickRow()}, not here.
      */
     private void bindRows() {
+        PopupUpdateRow.bind(mView, requireActivity(),
+                () -> NavigationUtils.popBackStackSafe(mNavController, R.id.dialog_browser_popup));
         bindTranslateRow();
         bindAddonsRow();
         mView.findViewById(R.id.popup_bookmarks).setOnClickListener(this);

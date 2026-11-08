@@ -10,8 +10,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Which sites have already shown the "This video needs DRM" sheet. The sheet
@@ -24,6 +27,9 @@ import java.util.Locale;
  * without being readable as one. It lives in {@code backup_local.xml}, which
  * Auto Backup excludes, and is capped at {@link #MAX_SITES}, oldest first out.
  * The same file holds whether the one-time shield tip was shown.</p>
+ *
+ * <p>A private tab's sites are kept in memory only, never on disk: they go
+ * with the process, as private tabs do.</p>
  */
 public final class DrmNoticeSites {
 
@@ -32,6 +38,9 @@ public final class DrmNoticeSites {
     private static final String KEY_TIP_SHOWN = "drm_shield_tip_shown";
     static final int MAX_SITES = 200;
 
+    /** Private tabs' sites (hashes), until the private tabs are all closed. */
+    private static final Set<String> sPrivateSites = Collections.synchronizedSet(new HashSet<>());
+
     private DrmNoticeSites() {}
 
     private static SharedPreferences prefs(Context context) {
@@ -39,16 +48,26 @@ public final class DrmNoticeSites {
     }
 
     /** True when the sheet was already shown for {@code host}. */
-    public static boolean wasShown(Context context, @Nullable String host) {
+    public static boolean wasShown(Context context, @Nullable String host, boolean privateTab) {
         if (host == null || host.isEmpty()) {
             return false;
+        }
+        if (privateTab) {
+            return sPrivateSites.contains(hash(host));
         }
         return read(prefs(context)).contains(hash(host));
     }
 
     /** Records that the sheet was shown for {@code host}. */
-    public static void markShown(Context context, @Nullable String host) {
+    public static void markShown(Context context, @Nullable String host, boolean privateTab) {
         if (host == null || host.isEmpty()) {
+            return;
+        }
+        if (privateTab) {
+            if (sPrivateSites.size() >= MAX_SITES) {
+                sPrivateSites.clear();
+            }
+            sPrivateSites.add(hash(host));
             return;
         }
         SharedPreferences p = prefs(context);
@@ -60,6 +79,11 @@ public final class DrmNoticeSites {
             sites.remove(0);
         }
         p.edit().putString(KEY_SITES, String.join(",", sites)).apply();
+    }
+
+    /** The private tabs were all closed: their sites go with them. */
+    public static void clearPrivate() {
+        sPrivateSites.clear();
     }
 
     /** True the first time it is asked, false after: the shield tip shows once. */

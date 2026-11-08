@@ -1,3 +1,23 @@
+## [1.2.8] - 2026-11-08
+
+- Fullscreen videos keep playing in a picture-in-picture window when you leave the app
+- The update prompt opens only when it interrupts nothing, and waits in the ⋮ menu
+- Add-ons: the list shows each add-on's rating and users, and its page lists permissions one by one
+- Add-ons: an update asking for new permissions shows a dot on the ⋮ menu until you review it
+- Backup: a simpler status card, with one button to set it up
+
+## [1.2.7] - 2026-11-06
+
+- Send directly: send by link or to someone next to you, by Wi‑Fi or QR code
+- Turning DRM on lets protected videos play, in private tabs too, with no per-site prompt
+- Pop-up windows opened by a page now open and work
+- A tab that closes itself now shows the next tab
+- Websites can no longer ask for your location
+- Websites asking for the camera or microphone are refused, with a notice saying so
+- Pages can use Android's share sheet and lock the screen rotation
+- The shield no longer counts other add-ons as ad blockers
+- Fixed a crash when showing some restored or imported downloads
+
 ## [1.2.6] - 2026-11-05
 
 - Updated the GeckoView browser engine to 159.0.20261105170000

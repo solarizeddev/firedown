@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
@@ -14,6 +15,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.R;
+import com.solarized.firedown.UpdatePromptPolicy;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.p2pshare.P2pShareController;
 import com.solarized.firedown.phone.fragments.P2pReceiveFragment;
@@ -51,6 +53,15 @@ public class DownloadsActivity extends BaseActivity {
     @Inject
     P2pShareController mP2pShareController;
 
+
+    /* The main list: the update sheet may open here. A sub-screen (a form,
+     * a share screen, a review list) is something being used, like a page. */
+    @NonNull
+    @Override
+    protected UpdatePromptPolicy.Place updatePromptPlace() {
+        return showsDestination(R.id.downloads)
+                ? UpdatePromptPolicy.Place.SCREEN : UpdatePromptPolicy.Place.PAGE;
+    }
 
     /* Opened from a notification or a link with no browser behind it,
      * Back and Up go to the browser, not out of the app. */

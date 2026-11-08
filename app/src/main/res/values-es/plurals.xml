@@ -44,4 +44,9 @@
         <item quantity="many">%d pestañas privadas abiertas</item>
         <item quantity="other">%d pestañas privadas abiertas</item>
     </plurals>
+    <plurals name="p2p_link_open_for">
+        <item quantity="one">Compartido · abierto %d minuto más.</item>
+        <item quantity="many">Compartido · abierto %d minutos más.</item>
+        <item quantity="other">Compartido · abierto %d minutos más.</item>
+    </plurals>
 </resources>

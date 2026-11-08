@@ -19,6 +19,7 @@ import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
+import com.solarized.firedown.UpdatePromptPolicy;
 
 public class SettingsActivity extends BaseActivity {
 
@@ -82,6 +83,15 @@ public class SettingsActivity extends BaseActivity {
             activity.startActivity(openIntent);
         }
         activity.finish();
+    }
+
+    /* The main list: the update sheet may open here. A sub-screen (a form,
+     * a share screen, a review list) is something being used, like a page. */
+    @NonNull
+    @Override
+    protected UpdatePromptPolicy.Place updatePromptPlace() {
+        return showsDestination(R.id.settings)
+                ? UpdatePromptPolicy.Place.SCREEN : UpdatePromptPolicy.Place.PAGE;
     }
 
     /* Opened from a notification or a link with no browser behind it,

@@ -7,14 +7,11 @@
   Layout, in priority order:
 
     ── (flat, on the page) ──
-       CloudStatusPreference   the live folder/usage hero (or the not-set-up
-                               roadmap)
-       the morphing CTA        directly under the hero (custom layout
-                               preference_cloud_buy_button.xml): "Create
-                               recovery code" → "Choose backup folder" →
-                               "Choose the folder again" (when lost); GONE
-                               once the backup is healthy — the folder row
-                               below carries the change
+       CloudStatusPreference   the status card: "Back up your downloads" +
+                               [Set up backup] (creates the recovery code,
+                               then "Where to back up"), the backed-up size
+                               once set up, or the lost folder + [Choose the
+                               folder again] / [Reconnect]
     ── three UNLABELLED card groups (title-less PreferenceCategory) ──
        KEY group   Recovery code (shown once a key exists; the reveal dialog
                    carries Copy AND Save-to-file) · I have a recovery code
@@ -27,7 +24,7 @@
                    erasure door, LAST by danger)
     The KEY and USE groups swap by LIFE STAGE (SyncSettingsFragment
     .updateState): KEY above USE until the backup is set up — the second way
-    in sits right under the create-CTA while there is nothing else to reach —
+    in sits right under the setup card while there is nothing else to reach —
     then USE above KEY, the daily-use rows first. Swapping GROUPS, not rows,
     keeps each group whole in both stages.
 
@@ -39,11 +36,11 @@
   grouping, so the old "a header owns every row until the next one" trap
   cannot come back.
 
-  KEY-FIRST GATE: a recovery code is the gateway. Until one exists the CTA
-  reads "Create recovery code" (not choose-a-folder), the Backups row is
-  hidden, and the Bookmarks switch is DISABLED — a folder can only be chosen
-  once there is a key to encrypt into it with. Creating a key forces the
-  "I've saved it" step before it counts.
+  KEY-FIRST GATE: a recovery code is the gateway. "Set up backup" creates it
+  (with the "I've saved it" step) before it opens the place chooser, the
+  Backups row is hidden and the Bookmarks switch is DISABLED until one
+  exists — a folder can only be chosen once there is a key to encrypt into
+  it with.
 
   The bookmarks-list overflow + sync banner deep-links (EXTRA_OPEN_BOOKMARKS_SYNC)
   land HERE. Backing up stays action-driven (a download's options sheet backs
@@ -53,28 +50,12 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- The status HERO (folder + usage / lost / the roadmap), bound by
-         SyncSettingsFragment. Custom layout — no title/icon. -->
+    <!-- The status CARD (Signal's shape: where, how much, and at most one
+         button inside it — "Set up backup" or the lost folder's remedy),
+         bound by SyncSettingsFragment. Custom layout — no title/icon. -->
     <com.solarized.firedown.settings.CloudStatusPreference
         android:key="com.solarized.firedown.preferences.cloud.backup.status"
         android:selectable="false"
-        android:persistent="false" />
-
-    <!-- The one PROMINENT action — a MORPHING CTA whose label is the
-         Preference title (the layout binds it into the button): pre-key it
-         reads "Create recovery code" (onboarding step ①), then "Choose backup
-         folder" (step ②), then "Choose the folder again" when the folder
-         stopped answering. SyncSettingsFragment swaps title + click routing
-         in updateState. It shows ONLY while a step is owed: once the backup
-         is healthy it is HIDDEN, and the "Backup folder" row in the USE group
-         is the change door (an outlined "Change folder" lived here for one
-         release and read as the screen's one action — a verb with nothing it
-         pointed at). The key keeps its historical name (…cloud.backup.buy);
-         nothing is bought here any more. -->
-    <com.solarized.firedown.settings.CloudBuyButtonPreference
-        android:key="com.solarized.firedown.preferences.cloud.backup.buy"
-        android:title="@string/settings_sync_create_title"
-        android:layout="@layout/preference_cloud_buy_button"
         android:persistent="false" />
 
     <!-- KEY group (title-less: a card group, no label). XML position (above
@@ -98,7 +79,7 @@
             app:singleLineTitle="false"
             app:icon="@drawable/ic_key_24" />
 
-        <!-- The adopt-an-existing-key door (the CTA above covers Create;
+        <!-- The adopt-an-existing-key door (the setup card above covers Create;
              post-key this row is a REPLACE — see SyncSettingsFragment). It shares
              a card group with the Recovery code row: the two are the key's two
              doors (see yours / use another one). Shield-with-keyhole glyph
@@ -139,7 +120,7 @@
         <!-- Visible once the backup is set up (a key AND a folder). No "Manage
              backup" label: over this row it restated the row (the same
              taxonomy-noise argument that dissolved the Cookies category), and the
-             row already sits in backup context under the hero + CTA. -->
+             row already sits in backup context under the status card. -->
         <Preference
             android:key="com.solarized.firedown.preferences.cloud.backup.files"
             android:title="@string/cloud_backup_files_title"

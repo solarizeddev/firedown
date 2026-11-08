@@ -3,8 +3,9 @@
 # on a plain JVM, with the REAL classes copied out of app/src at run time:
 #
 #   1. JUnit: app/src/test's UpdatePatchTest, UpdatePlanTest,
-#      UpdateManifestTest and UpdateInstallProgressTest (the install tap's
-#      states) — the same tests ./gradlew testDebugUnitTest runs.
+#      UpdateManifestTest, UpdateInstallProgressTest (the install tap's
+#      states) and UpdatePromptPolicyTest (when the sheet opens by
+#      itself) — the same tests ./gradlew testDebugUnitTest runs.
 #   1b. The download state machine (UpdateFlowHarness): the REAL
 #      UpdateDownloader + UpdateFinalizeWorker against fakes of DownloadManager,
 #      WorkManager and SharedPreferences — the patch / .xz / APK ladder,
@@ -106,12 +107,14 @@ copy main com/solarized/firedown/update/UpdatePatch.java
 copy main com/solarized/firedown/UpdateManifest.java
 copy main com/solarized/firedown/UpdatePlan.java
 copy main com/solarized/firedown/UpdateInstallProgress.java
+copy main com/solarized/firedown/UpdatePromptPolicy.java
 copy updatetool com/solarized/firedown/update/UpdateDiff.java
 copy updatetool com/solarized/firedown/update/UpdateTool.java
 copy test com/solarized/firedown/update/UpdatePatchTest.java
 copy test com/solarized/firedown/UpdatePlanTest.java
 copy test com/solarized/firedown/UpdateManifestTest.java
 copy test com/solarized/firedown/UpdateInstallProgressTest.java
+copy test com/solarized/firedown/UpdatePromptPolicyTest.java
 cp -r "$HERE/stub/." "$SRC/"
 cp -r "$HERE/src/." "$SRC/"
 
@@ -121,7 +124,7 @@ compile() { # src-dir classes-dir
     javac -nowarn -proc:none -encoding UTF-8 -d "$2" -cp "$CP" $(find "$1" -name '*.java') 2>&1 \
         | grep -v '^Picked up JAVA_TOOL_OPTIONS'
 }
-TESTS="com.solarized.firedown.update.UpdatePatchTest com.solarized.firedown.UpdatePlanTest com.solarized.firedown.UpdateManifestTest com.solarized.firedown.UpdateInstallProgressTest"
+TESTS="com.solarized.firedown.update.UpdatePatchTest com.solarized.firedown.UpdatePlanTest com.solarized.firedown.UpdateManifestTest com.solarized.firedown.UpdateInstallProgressTest com.solarized.firedown.UpdatePromptPolicyTest"
 junit() { # classes-dir test-classes… ; output to $OUT/junit.log
     cls=$1
     shift
@@ -269,6 +272,12 @@ if [ "${MUTANTS:-1}" != 0 ]; then
     mutant 'a late callback moves a newer install' $I 's/if \(generation != mGeneration \|\| mPhase != Phase\.INSTALLING\)/if (mPhase != Phase.INSTALLING)/' $IT
     mutant 'a cancelled dialog reads as a failure' $I 's/public synchronized Snapshot refused\(\) \{\n(\s*)if \(mPhase != Phase\.INSTALLING\)/public synchronized Snapshot refused() {\n$1if (false)/' $IT
     mutant 'every byte publishes' $I 's/if \(percent == mPercent\) \{/if (false) {/' $IT
+    Q=com/solarized/firedown/UpdatePromptPolicy.java
+    QT=com.solarized.firedown.UpdatePromptPolicyTest
+    mutant 'the sheet opens over a page' $Q 's/return firstScreen;/return true;/' $QT
+    mutant 'the sheet opens while something runs' $Q 's/if \(!ready \|\| snoozed \|\| busy != Busy\.NONE\)/if (!ready || snoozed)/' $QT
+    mutant 'the sheet opens on the lock screen' $Q 's/default:\n(\s*)return false;/default:\n$1return firstScreen;/' $QT
+    mutant 'reminders never end' $Q 's/count >= MAX_PROMPTS \? Long\.MAX_VALUE/false ? Long.MAX_VALUE/' $QT
 fi
 
 echo "== 4. Gradle: app/release.gradle releaseStatus"

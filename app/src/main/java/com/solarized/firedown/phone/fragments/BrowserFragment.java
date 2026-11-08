@@ -45,7 +45,9 @@ import androidx.navigation.NavDestination;
 
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
+import com.solarized.firedown.phone.PipPolicy;
 
+import com.solarized.firedown.UpdateReadyLiveData;
 import com.solarized.firedown.addons.AddonPolicy;
 import com.solarized.firedown.App;
 import com.solarized.firedown.IntentActions;
@@ -168,6 +170,22 @@ public class BrowserFragment extends BaseBrowserFragment
     private boolean mRecreatingSession = false;
 
     private UiState mUiState = UiState.INIT;
+
+    /** The "exit fullscreen with back" hint, dismissed when PiP opens. */
+    private Snackbar mFullScreenHint;
+
+    /** The page left fullscreen inside a PiP window; applied when it ends. */
+    private boolean mFullScreenExitDeferred;
+    /**
+     * The fullscreen layout is on (bars GONE, the page edge to edge). Kept
+     * apart from mUiState: a session attached inside a PiP window (a crashed
+     * page reopened) moves the state to BROWSING while the bars stay hidden
+     * until the window leaves PiP.
+     */
+    private boolean mChromeHidden;
+    /** The tab whose video went to the PiP window. */
+    @Nullable
+    private GeckoState mPipTab;
 
     // ── Toolbar scroll policy (Fenix ToolbarBehaviorController equivalent) ───────────────────────
     //
@@ -422,10 +440,57 @@ public class BrowserFragment extends BaseBrowserFragment
         // Settings is another Activity, so a toggle there lands here on the
         // way back — no navigation event would otherwise repaint the bar.
         applyAddressBarDisplayPref();
-        // The DRM switch may have changed in Settings (it applies without a
-        // reload): repaint the shield's dot so it never outlives the row.
+        // The DRM switch may have changed in Settings: repaint the shield's
+        // dot so it never outlives the row, and bring the page on screen in
+        // line with the switch.
         refreshShield();
-        showPendingDrmNotice(peekCurrentGeckoState());
+        // Back from a PiP window (or any trip away) on a fullscreen page:
+        // the system may have shown its bars meanwhile.
+        if (mUiState == UiState.FULL_SCREEN) {
+            applySystemBars(mActivity.getWindow(), mActivity.getWindow().getDecorView(), true);
+        }
+        GeckoState current = peekCurrentGeckoState();
+        reconcileDrm(current);
+        showPendingDrmNotice(current);
+        // A download the page started while the tab played in a PiP window.
+        if (current != null) {
+            showPendingDownload(current);
+        }
+    }
+
+    /**
+     * Reloads a tab whose page holds a DRM answer the switch has since
+     * changed, either way: Gecko reads the switch when a page loads, so a
+     * page refused while DRM was off stays refused after it is turned on,
+     * and a page granted DRM keeps playing after it is turned off. Runs when
+     * the browser comes back (Settings is another Activity) and when a tab
+     * is switched onto (a background tab missed the change). A page reloaded
+     * because DRM was turned OFF has its site marked as told, so the reload
+     * gets the dot and the security sheet's row but not the "Turn on" sheet
+     * right after the user turned it off.
+     */
+    private void reconcileDrm(@Nullable GeckoState geckoState) {
+        // No mode filter: this acts on the tab it is handed, and on a
+        // regular <-> private switch the attach runs before the browser's
+        // mode is applied. A load the user issued that has not started yet
+        // is left alone: a reload now would replace it with the old page.
+        if (geckoState == null || geckoState.getPendingUserLoadUri() != null) {
+            return;
+        }
+        boolean drmOn = Preferences.getDRMEnabled(mSharedPreferences);
+        boolean stale = drmOn ? geckoState.isDrmRefusedHere() : geckoState.isDrmGrantedHere();
+        if (!stale) {
+            return;
+        }
+        if (!drmOn) {
+            DrmNoticeSites.markShown(mActivity,
+                    WebUtils.getDomainName(geckoState.getEntityUri()), geckoState.isIncognito());
+        }
+        geckoState.resetDrmNotice();
+        refreshShield();
+        // Through setDRM, so the reload never races the Settings screen's
+        // own write of the value (idempotent).
+        mGeckoRuntimeHelper.setDRM(!drmOn).accept(ignored -> geckoState.reload());
     }
 
     /** Host-only address bar at rest — see {@link Preferences#SETTINGS_ADDRESS_BAR_HOST_ONLY}. */
@@ -654,6 +719,9 @@ public class BrowserFragment extends BaseBrowserFragment
         // its badge in the regular BrowserFragment chrome and vice
         // versa — the bottom bar is a single instance shared across
         // both modes.
+        // The ⋮ dot while an update is ready (its "Update ready" row).
+        new UpdateReadyLiveData(requireContext()).observe(getViewLifecycleOwner(),
+                ready -> mBottomNavigationBar.setUpdateReady(Boolean.TRUE.equals(ready)));
         mTaskViewModel.getRegularCount().observe(getViewLifecycleOwner(), count -> {
             if (!mIsIncognitoThemed) mBottomNavigationBar.onBadgeCount(count);
         });
@@ -1426,7 +1494,14 @@ public class BrowserFragment extends BaseBrowserFragment
         // spinner must not appear over.
         mSwipeRefreshLayout.setEnabled(false);
         mDownloadButton.hide();
-        makeSnackbar(mBottomNavigationBar, R.string.exit_fullscreen_with_back_button_short, mIsIncognitoThemed).show();
+        // Not inside a picture-in-picture window: nothing but the video
+        // belongs there.
+        if (mActivity.isInPictureInPictureMode()) {
+            return;
+        }
+        mFullScreenHint = makeSnackbar(mBottomNavigationBar,
+                R.string.exit_fullscreen_with_back_button_short, mIsIncognitoThemed);
+        mFullScreenHint.show();
     }
 
     /**
@@ -1748,6 +1823,21 @@ public class BrowserFragment extends BaseBrowserFragment
         // flip this fragment's chrome.
         if (geckoState.isIncognito() != mIsIncognitoThemed) return;
 
+        // The page left fullscreen while it plays in a PiP window (a video
+        // ending): the toolbar and bottom bar would be drawn inside the
+        // small window. They come back when it is expanded or closed.
+        if (!fullScreen && mActivity.isInPictureInPictureMode()) {
+            mFullScreenExitDeferred = true;
+            return;
+        }
+        // Back in fullscreen before the deferred exit ran: the chrome never
+        // left it, so there is nothing to enter again.
+        if (fullScreen && mFullScreenExitDeferred && mUiState == UiState.FULL_SCREEN) {
+            mFullScreenExitDeferred = false;
+            return;
+        }
+        mFullScreenExitDeferred = false;
+
         // System UI / immersive mode — mirrors upstream enterImmersiveMode / exitImmersiveMode.
         final Window window = mActivity.getWindow();
         final View decorView = window.getDecorView();
@@ -1773,6 +1863,14 @@ public class BrowserFragment extends BaseBrowserFragment
             exitFullScreen(decorView);
         }
 
+        applySystemBars(window, decorView, fullScreen);
+
+        // Pull-to-refresh must be disabled in fullscreen.
+        mSwipeRefreshLayout.setEnabled(!fullScreen);
+    }
+
+    /** Hides the system bars for page fullscreen, or shows them again. */
+    private void applySystemBars(Window window, View decorView, boolean fullScreen) {
         if (BuildUtils.hasAndroidR()) {
             final WindowInsetsControllerCompat controller =
                     WindowCompat.getInsetsController(window, decorView);
@@ -1791,9 +1889,121 @@ public class BrowserFragment extends BaseBrowserFragment
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                     : View.SYSTEM_UI_FLAG_VISIBLE);
         }
+    }
 
-        // Pull-to-refresh must be disabled in fullscreen.
-        mSwipeRefreshLayout.setEnabled(!fullScreen);
+    // ─────────────────────────────────────────────────────────────────────────────────────────────
+    // Picture-in-picture (PipPolicy; driven by BrowserMainActivity)
+    // ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Whether leaving the app now should put this page in a PiP window:
+     * the browser page is on screen, its tab (of THIS fragment's mode) is
+     * in page fullscreen, and that tab's media plays.
+     */
+    public boolean wantsPictureInPicture(boolean leavingForOwnStart, boolean inPip) {
+        GeckoState current = peekCurrentGeckoState();
+        if (current == null || mGeckoView == null || mNavController == null) {
+            return false;
+        }
+        NavDestination destination = mNavController.getCurrentDestination();
+        boolean onBrowser = destination != null && destination.getId() == R.id.browser;
+        boolean domFullScreen = current.isFullScreen() && mUiState == UiState.FULL_SCREEN;
+        boolean playing = mGeckoMediaController.isPlaying(current.getEntityId());
+        return PipPolicy.browserShouldEnter(onBrowser, domFullScreen, playing,
+                leavingForOwnStart, inPip);
+    }
+
+    /** The PiP window's aspect {num, den}, from the fullscreen video's size. */
+    public int[] pictureInPictureAspect() {
+        GeckoState current = peekCurrentGeckoState();
+        if (current == null) {
+            return PipPolicy.aspect(0, 0);
+        }
+        return PipPolicy.aspect(current.getMediaFullScreenWidth(),
+                current.getMediaFullScreenHeight());
+    }
+
+    /**
+     * Entering PiP: nothing but the video belongs in the small window, so
+     * the transient chrome laid over the page goes.
+     */
+    public void onPictureInPictureEntered() {
+        mPipTab = peekCurrentGeckoState();
+        if (mFullScreenHint != null) {
+            mFullScreenHint.dismiss();
+            mFullScreenHint = null;
+        }
+        dismissDrmTip();
+        hideTranslateOffer();
+    }
+
+    /**
+     * The window left PiP (expanded, or on its way to closing): a fullscreen
+     * exit the page made meanwhile is applied now.
+     */
+    public void onPictureInPictureLeft() {
+        if (!mFullScreenExitDeferred) {
+            return;
+        }
+        mFullScreenExitDeferred = false;
+        GeckoState current = peekCurrentGeckoState();
+        if (mChromeHidden && (current == null || !current.isFullScreen())) {
+            leaveFullScreenUi();
+        }
+    }
+
+    /**
+     * The tab on screen lost its content process while in page fullscreen
+     * (a crash or a kill): the reopened page is not fullscreen and Gecko
+     * sends no exit for the dead one, so the chrome comes back here (when
+     * the window leaves PiP, if it is in one). The media's orientation
+     * lock goes with it.
+     */
+    private void pageLostFullScreen(GeckoState geckoState) {
+        if (geckoState.isIncognito() != mIsIncognitoThemed
+                || geckoState != peekCurrentGeckoState()
+                || mUiState != UiState.FULL_SCREEN
+                || getView() == null) {
+            return;
+        }
+        onFullScreen(geckoState, false);
+        mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
+    }
+
+    /** The chrome back from page fullscreen: bars, layout, system bars, rotation. */
+    private void leaveFullScreenUi() {
+        final Window window = mActivity.getWindow();
+        collapseBrowserView();
+        exitFullScreen(window.getDecorView());
+        applySystemBars(window, window.getDecorView(), false);
+        mSwipeRefreshLayout.setEnabled(true);
+    }
+
+    /**
+     * The user threw the PiP window away (X, or dragged it off): the video
+     * ends there, as in the file player. Its media pauses and the page
+     * leaves fullscreen, so the app reopens on the page, not on a paused
+     * fullscreen video with no way to tell it is the browser.
+     */
+    public void onPictureInPictureDismissed() {
+        GeckoState current = peekCurrentGeckoState();
+        // The tab that went to the window, which a page's new window may have
+        // replaced on screen meanwhile.
+        GeckoState pipTab = mPipTab != null ? mPipTab : current;
+        mPipTab = null;
+        if (pipTab == null) {
+            return;
+        }
+        mGeckoMediaController.pause(pipTab.getEntityId());
+        boolean exitPending = pipTab == current && pipTab.isFullScreen();
+        if (pipTab.isFullScreen()) {
+            pipTab.exitFullScreen();
+        }
+        // Gecko's exit brings the chrome back through onFullScreen; otherwise
+        // it comes back here.
+        if (!exitPending) {
+            onPictureInPictureLeft();
+        }
     }
 
     // ── Built-in translator ──────────────────────────────────────────────
@@ -1880,16 +2090,19 @@ public class BrowserFragment extends BaseBrowserFragment
      */
     private void showDrmNotice(@NonNull GeckoState geckoState) {
         refreshShield();
+        // A notice that waited while the switch was turned on is stale.
+        if (Preferences.getDRMEnabled(mSharedPreferences)) return;
         String host = WebUtils.getDomainName(geckoState.getEntityUri());
         if (host == null || host.isEmpty()) return;
-        if (DrmNoticeSites.wasShown(mActivity, host)) return;
+        boolean privateTab = geckoState.isIncognito();
+        if (DrmNoticeSites.wasShown(mActivity, host, privateTab)) return;
         NavDestination current = mNavController.getCurrentDestination();
         if (current == null || current.getId() != R.id.browser) return;
         NavigationUtils.navigateSafe(mNavController, R.id.dialog_drm, R.id.browser,
                 DrmSheetDialogFragment.args(host, mIsIncognitoThemed));
         NavDestination shown = mNavController.getCurrentDestination();
         if (shown != null && shown.getId() == R.id.dialog_drm) {
-            DrmNoticeSites.markShown(mActivity, host);
+            DrmNoticeSites.markShown(mActivity, host, privateTab);
         }
     }
 
@@ -1897,22 +2110,19 @@ public class BrowserFragment extends BaseBrowserFragment
      * The answer of the DRM sheet or the security sheet's row. Turn on writes
      * the setting, applies it to Gecko (the Settings listeners are not
      * registered while the browser is in front) and reloads the tab once
-     * Gecko has the new value; the reload's own DRM request for this site is
-     * allowed without asking again, but only when the tab is still on the
-     * site the question was about. Not now from the sheet shows, once ever,
-     * where the switch lives now: the shield.
+     * Gecko has the new value; with the switch on, the reloaded page's DRM
+     * request is granted without a dialog. Not now from the sheet shows,
+     * once ever, where the switch lives now: the shield.
      */
     private void onDrmResult(@NonNull Bundle result) {
         GeckoState geckoState = peekCurrentGeckoState();
         if (geckoState == null) return;
-        String questionHost = result.getString(DrmSheetDialogFragment.RESULT_HOST);
         if (result.getBoolean(DrmSheetDialogFragment.RESULT_TURN_ON, false)) {
             dismissDrmTip();
             mSharedPreferences.edit().putBoolean(Preferences.SETTINGS_ENABLE_DRM, true).apply();
-            String host = WebUtils.getDomainName(geckoState.getEntityUri());
-            if (host != null && host.equals(questionHost)) {
-                geckoState.allowDrmForReload(host);
-            }
+            // Cleared before the reload is scheduled, as reconcileDrm does,
+            // so a resume or tab switch meanwhile can't reload a second time.
+            geckoState.resetDrmNotice();
             refreshShield();
             mGeckoRuntimeHelper.setDRM(false).accept(ignored -> geckoState.reload());
             return;
@@ -2075,6 +2285,10 @@ public class BrowserFragment extends BaseBrowserFragment
      */
     private void showTranslateOffer(@NonNull GeckoState geckoState) {
         if (mTranslateOfferCard == null) return;
+        // Not inside a picture-in-picture window (a playlist moving on to a
+        // page in another language): dropped like a background tab's offer,
+        // the popup row stays the door.
+        if (mActivity.isInPictureInPictureMode()) return;
         String from = TranslationLanguages.displayName(geckoState.getDetectedDocLanguage());
         String toTag = geckoState.getDetectedUserLanguage();
         if (TextUtils.isEmpty(toTag)) toTag = Locale.getDefault().toLanguageTag();
@@ -2258,6 +2472,11 @@ public class BrowserFragment extends BaseBrowserFragment
         if (!NavigationUtils.checkCurrentDestination(mNavController, R.id.browser)) {
             return;
         }
+        // Not in a picture-in-picture window: the response waits on the tab
+        // and the dialog opens when the window is expanded (onResume).
+        if (mActivity.isInPictureInPictureMode()) {
+            return;
+        }
         if (!geckoState.claimDownloadPrompt()) {
             return;
         }
@@ -2438,6 +2657,11 @@ public class BrowserFragment extends BaseBrowserFragment
         if (UrlStringUtils.isHttpOrHttps(uri) && !UrlStringUtils.isPlayStoreUrl(uri)) {
             return;
         }
+        // The page firing an app link while it plays in a PiP window: Gecko
+        // already refused the load; no snackbar or sheet in the small window.
+        if (pageFired && mActivity.isInPictureInPictureMode()) {
+            return;
+        }
         AppLinkTarget target = AppLinkResolver.resolve(mActivity, uri);
         if (target == null) {
             return;
@@ -2588,6 +2812,7 @@ public class BrowserFragment extends BaseBrowserFragment
     @Override
     public void onCrash(GeckoState geckoState) {
         stopMedia(mGeckoMediaController, geckoState);
+        pageLostFullScreen(geckoState);
         // The dead session was already discarded at the DATA layer
         // (GeckoComponents.onCrash) — it must happen even when no fragment
         // view is alive, or the closed session reference survives and a later
@@ -2605,6 +2830,11 @@ public class BrowserFragment extends BaseBrowserFragment
         // A page that crashes on every load is reopened once, then left for
         // the user: it used to reload in a loop.
         if (geckoState.isCrashLooping()) {
+            // Not inside a picture-in-picture window; the page stays blank
+            // there and reopens when the tab is shown again.
+            if (mActivity.isInPictureInPictureMode()) {
+                return;
+            }
             Snackbar snackbar = makeAnchoredSnackbar(R.string.tab_crashed_again);
             snackbar.setDuration(Snackbar.LENGTH_INDEFINITE);
             snackbar.setAction(R.string.tab_crashed_reload, v -> {
@@ -2924,6 +3154,7 @@ public class BrowserFragment extends BaseBrowserFragment
     public void onKill(GeckoState geckoState) {
         super.onKill(geckoState);
         stopMedia(mGeckoMediaController, geckoState);
+        pageLostFullScreen(geckoState);
         // A killed content process never delivers onPageStop — if the killed
         // tab is the one this fragment is showing, drop the load-pin or the
         // bars stay pinned for a load that no longer exists. (GeckoComponents
@@ -3098,6 +3329,29 @@ public class BrowserFragment extends BaseBrowserFragment
         // floating over the newly attached tab. Fall back to the raw call
         // for an orphaned session no repo knows (or one whose state already
         // swapped its session reference) — same behavior as before.
+        // Another tab put on screen while this one is fullscreen (a link
+        // from another app, which also expands a PiP window): the old tab
+        // leaves fullscreen and the chrome comes back. Its own
+        // onFullScreen(false) would be gated out, as it is no longer the
+        // current tab.
+        if (previousSession != null && previousSession != newSession
+                && mUiState == UiState.FULL_SCREEN && !geckoState.isFullScreen()) {
+            if (previousSession.isOpen()) {
+                previousSession.exitFullScreen();
+            }
+            // In a PiP window (a crashed page reopened, a page's new
+            // window): the chrome comes back when the window leaves PiP.
+            if (mActivity.isInPictureInPictureMode()) {
+                mFullScreenExitDeferred = true;
+            } else {
+                mFullScreenExitDeferred = false;
+                leaveFullScreenUi();
+            }
+            // The old tab's media fullscreen exit, which resets a landscape
+            // lock, is gated out too.
+            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
+        }
+
         if (previousSession != null && previousSession != newSession) {
             Log.d(TAG, "setGeckoViewSession: deactivating previousSession");
             controller.setTabActive(previousSession, false);
@@ -3111,7 +3365,10 @@ public class BrowserFragment extends BaseBrowserFragment
 
         mAutoCompleteEditText.setEnabled(true);
 
-        if (!newSession.isOpen()) {
+        // An already-open tab is put on screen without a load; a freshly
+        // opened one loads (or restores) its page below.
+        boolean wasOpen = newSession.isOpen();
+        if (!wasOpen) {
             Log.d(TAG, "setGeckoViewSession: session not open, opening + loading URI");
             newSession.open(mGeckoRuntimeHelper.getGeckoRuntime());
             newSession.setActive(true);
@@ -3165,6 +3422,27 @@ public class BrowserFragment extends BaseBrowserFragment
         // Every attach, the plain tab switch included (an open session skips
         // applyOpenUriUi): the window's cutout mode is the tab's own.
         applyViewportFit(geckoState.getViewportFit());
+        // A page still in fullscreen attached to a new view (the activity was
+        // recreated: dark mode, locale, inside a PiP window or not): Gecko
+        // sends no second fullscreen event, so the layout is put back here.
+        boolean tabSwitch = previousSession != null && previousSession != newSession;
+        if (wasOpen && !tabSwitch && geckoState.isFullScreen() && !mChromeHidden) {
+            if (mUiState == UiState.SEARCH) {
+                exitSearch();
+            }
+            final View decorView = mActivity.getWindow().getDecorView();
+            expandBrowserView();
+            enterFullScreen(decorView);
+            applySystemBars(mActivity.getWindow(), decorView, true);
+        }
+        // A tab switched onto while it was in the background may hold a DRM
+        // answer the switch has since changed, or a notice that waited for
+        // it (applyOpenUriUi covers the tabs that load here). Not for a tab
+        // that is loading now: its page start resets both.
+        if (wasOpen) {
+            reconcileDrm(geckoState);
+            showPendingDrmNotice(geckoState);
+        }
 
         if (geckoState.getGeckoStateEntity().isIncognito()) {
             mIncognitoStateViewModel.setGeckoState(geckoState, true);
@@ -3507,6 +3785,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // Only the toolbar is force-collapsed; the bottom bar is slaved to it
         // (BottomNavigationBehavior) and both are GONE for the whole fullscreen
         // stay anyway — visibility is what hides them, translation is bookkeeping.
+        mChromeHidden = true;
         mGeckoToolbar.forceCollapse();
         mGeckoToolbar.setVisibility(View.GONE);
         mBottomNavigationBar.setVisibility(View.GONE);
@@ -3528,6 +3807,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // Both bars VISIBLE first, then expand the toolbar — the bottom bar re-syncs from
         // the toolbar's translation on its layout pass (BottomNavigationBehavior.onLayoutChild)
         // and follows the expand animation frame-by-frame.
+        mChromeHidden = false;
         mGeckoToolbar.setVisibility(View.VISIBLE);
         mBottomNavigationBar.setVisibility(View.VISIBLE);
         mGeckoToolbar.forceExpand();

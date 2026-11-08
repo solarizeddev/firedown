@@ -162,8 +162,6 @@
     <string name="quit_application">Zapiranje aplikacije za uveljavitev sprememb …</string>
     <string name="rename">Preimenuj</string>
     <string name="rename_file">Preimenuj datoteko</string>
-    <string name="request_media_key_system_access">Ali dovolite aplikaciji &lt;b&gt;%s&lt;/b&gt; predvajanje vsebine, nadzorovane s tehnologijo DRM?</string>
-    <string name="request_media_key_system_access_subtitle">Upoštevajte, da Firedown ne more prenesti datotek, zaščitenih z DRM</string>
     <string name="request_storage">Ali dovolite dostop do pomnilnika naprave za &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_storage_access">Želite tretjim osebam dovoliti dostop do lastne shrambe za &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Ponovni zagon</string>

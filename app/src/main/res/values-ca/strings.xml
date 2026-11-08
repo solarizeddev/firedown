@@ -163,8 +163,6 @@
     <string name="quit_application">S’està tancant l’aplicació per aplicar els canvis…</string>
     <string name="rename">Canvia el nom</string>
     <string name="rename_file">Canvia el nom del fitxer</string>
-    <string name="request_media_key_system_access">Vols permetre que &lt;b&gt;%s&lt;/b&gt; reprodueixi contingut controlat per DRM?</string>
-    <string name="request_media_key_system_access_subtitle">Tingues en compte que Firedown no pot baixar els fitxers protegits per DRM</string>
     <string name="request_storage">Vols permetre l\'accés a l\'emmagatzematge del dispositiu per a &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="request_storage_access">Vols permetre que tercers accedeixin a l\'emmagatzematge propi per a &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Reinicia</string>

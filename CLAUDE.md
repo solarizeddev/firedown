@@ -4307,8 +4307,8 @@ before changing a flow. The rules, each easy to undo:
     "Review update" in place of "Check for update", until the update is
     installed, the add-on removed, or no update is offered any more.
   - **Needs attention** (waiting and not seen) is what points at it: a
-    coral dot on the bottom bar's ⋮ (`BottomNavigationBar.setMenuAttention`,
-    the Downloads dot's BadgeDrawable) and on the ⋮ menus' Add-ons row
+    coral dot on the bottom bar's ⋮ (`BottomNavigationBar.setAddonAttention`;
+    the one badge an app update ready also lights) and on the ⋮ menus' Add-ons row
     (`AddonUpdateDots`, `popup_addons_dot`; the browser's and the home's),
     each also said in words to a screen reader; the ⋮ Add-ons sheet's row
     for that add-on reads "Update needs your review" and opens the question
@@ -4419,6 +4419,39 @@ before changing a flow. The rules, each easy to undo:
   `makeAnchoredSnackbar`, the homes' bottom bar), the same placement as the
   download and new-tab snackbars, and falls back to the content frame
   (Settings).
+- **The add-on screens' shape** (reviewed against Firefox for Android and
+  Chrome, 2026-11; canvas "Add-on screens", page B and list C): a catalog
+  row (`CatalogPreference`) reads "★ 4.6 · 1.2M users" (Mozilla's rating
+  and user count, a 12sp line, either half left out when the list doesn't
+  say) over the first TWO lines of Mozilla's summary with "…" (summaries
+  ran to five lines and stranded the icon beside the third; hard line
+  breaks are collapsed in `AmoCatalog`), and a tonal "Add" button in the
+  trailing slot (the shield sheet's "Turn on" shape, 12dp padding) so the
+  row says what a tap does. The meta line does NOT always fit one line:
+  measured at 360dp with ICU's compact counts and Roboto/Noto, Russian,
+  Ukrainian, Bulgarian and Dutch wrap it beside their wider "Add" (every
+  locale fits at 393dp), and a large font wraps English too. So the clamp
+  is not "2 + 1": the meta is the summary's LEAD
+  (`BusyPreference.setSummaryMaxLines(lines, leadLength)`), the limit is
+  set after layout to the lines the lead takes plus the description's two
+  (`LeadClamp`), and a wrapped meta never costs the description a line;
+  the spinner takes the button's place while it installs, and a tap
+  anywhere on the row does the same (TalkBack hears it once, on the row:
+  "double-tap to add …", the button hidden from it). A rounded user count
+  ("1,2 тыс.") takes `addons_users_compact`, the plural form for many,
+  never `getQuantityString` on the raw count: Slavic plurals chosen from
+  1201 read "1,2 тыс. пользователь". Installed rows carry no
+  chevron: no settings door does. An add-on's page opens with a FLAT
+  header (`AddonHeaderPreference`: 48dp icon at 32dp, where the card rows
+  start their text; name; author and version on their own lines;
+  description at full width), not a card row, which put its text 37dp
+  right of every row under it. What it may do is ONE CARD ROW PER LINE,
+  each with a glyph for the kind of access (`AddonPermissionText.rows` /
+  `icon`: the globe for sites, the thing reached for an API permission),
+  and what the developer says it collects is its own "Data collection"
+  group (it is not a permission; hidden for an add-on that predates the
+  declaration). The install question keeps bulleted lines (`ui/BulletList`:
+  a `BulletSpan` per item so a wrapped line hangs under its text).
 - **Not built, on purpose or for now**: `downloads.download` and
   `browsingData` for add-ons (Firefox for Android registers no
   `DownloadDelegate`/`BrowsingDataDelegate` either); an options page with
@@ -4438,7 +4471,7 @@ before changing a flow. The rules, each easy to undo:
   them.
 - **Verify** with `sh scripts/addons-harness/run.sh /path/to/firefox-src`
   (the real pure classes against Firefox's own test fixtures and AMO
-  shapes; 116 checks without the Firefox fixtures, 21 mutants must
+  shapes; 117 checks without the Firefox fixtures, 21 mutants must
   fail), the JUnit
   `AddonsPureTest`, and on a device `addons/AddonsDeviceTest`
   (`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.addons.AddonsDeviceTest`;
@@ -4844,6 +4877,55 @@ is **~75 MB**, the APK 205 MB.
   full for everyone (the installed versions don't read the blocks); F-Droid
   clients (Droid-ify, Neo Store, F-Droid) installing from the firedown.app
   repo always download the full APK — the F-Droid repo format has no patches.
+- **The "Update ready" sheet opens by itself only where and when it
+  interrupts nothing** (`UpdatePromptPolicy`, pure, in the update harness
+  with four mutants): on the browser's home screen or the Downloads or
+  Settings LIST (a sub-screen — a sign-in form, the share screen, a review
+  list — counts as a page), or as the first screen after the app starts;
+  never over a page being read, never on or under the lock screen, the
+  Safe Folder or the page viewer (`BaseActivity.updatePromptPlace`, NEVER
+  by default, `showsDestination` for the lists; the home fragments offer
+  it again when the browser returns home without a resume); and never
+  while something installing would stop is running (a download, a
+  GIF/audio/Safe Folder task, an open file share, media actually PLAYING —
+  a paused session keeps its notification for hours and must not hold it
+  back: `UpdateAvailableSheet.busyNow`). With the app lock due, the lock
+  screen is started from inside `super.onResume()`, so BaseActivity skips
+  the check and does not use up the first-screen flag: the screen reached
+  after unlocking is the first one. `mPaused` is set in `onPause` (nothing
+  set it before, so the posted checks never saw a screen that had left).
+  The crash sheet steps aside for an open update sheet and shows on the
+  next resume (it decides after a disk read, so it always came second and
+  landed on top). Installing closes Firedown (on
+  Android 12+ at once, with no question) and nothing reopens it, so the
+  button stays "Install" with the line "Firedown closes while the update
+  installs" — never "Install and restart". It opened on every resume of
+  every screen (over a video being watched, over the lock screen). While an
+  update waits, both ⋮ menus lead with an "Update ready" row
+  (`item_popup_update_ready`, `PopupUpdateRow`) and the bottom bar's ⋮ wears
+  a dot (`BottomNavigationBar.setUpdateReady`, fed by `UpdateReadyLiveData`,
+  a preference listener; ONE badge shared with an add-on update waiting for
+  the user, `setAddonAttention`, shown while either holds, each reason said
+  in the button's spoken label). The row opens the sheet on purpose
+  (`openOnPurpose`: no place, busy or snooze rule, and closing it writes no
+  snooze); the sheet then says what would stop (`update_busy_*`). The
+  sheet itself: no size (it is already downloaded, and the file on disk is
+  the rebuilt APK, not what was fetched), "Update ready", a 72dp picture
+  (132 took a third of the sheet), a fade at the notes' bottom edge,
+  wrapped bullets indented under their text (only a "• ", "- " or "* "
+  bullet is stripped, so "-5%" keeps its sign), the version line in
+  `update_version_ink` (dark in light theme: coral is 2.2:1 there), and
+  Not now + Install. Not now does what a swipe does (snooze a day,
+  permanent after three); a full-width "Later" under Install was removed
+  once as a misclick trap with nowhere to come back to, and a text button
+  beside the filled one, with the ⋮ row as the way back, is neither. Both
+  paths open the sheet with `showNow`, so two callers in one frame find
+  one sheet by its tag.
+  Device check: `phone/UpdateSheetDeviceTest` (an update faked as the
+  debug UpdateTestReceiver does; on Downloads the sheet opens with no size
+  and Not now, Not now snoozes and the recreated screen stays quiet, a
+  queued task holds it back and the on-purpose open names the task and
+  writes no snooze). Written for 1.2.8; not run on a device at write time.
 - **The install tap shows its progress; the download and the rebuild don't**
   (`UpdateInstallProgress`, published through `UpdateInstaller.state()`).
   Download, rebuild and checks finish before the user hears of the update, so
@@ -4877,7 +4959,10 @@ is **~75 MB**, the APK 205 MB.
   and fakes "an update is ready" through the debug-only `UpdateTestReceiver`
   (`app/src/debug`, exported but gated on `android.permission.DUMP`, which
   the adb shell holds and no installed app can: WHERE / MARK_READY / CLEAR /
-  POST_PROMPT / TAP_PROMPT / STATE, answered as `am broadcast` result data).
+  POST_PROMPT / TAP_PROMPT / STATE, answered as `am broadcast` result data;
+  the script's MARK_READY carries `--ez notes true`, which also stores test
+  release notes — nine bullets, one that wraps and one starting "-5%" — so
+  the sheet's notes, fade and hanging indent show in its screenshots).
   Cases: the sheet (the footer counting up, then Android's answer), a large
   file that is not an APK (rotation mid-copy, a sheet REBUILT mid-copy by a
   font size change — the browser handles rotation itself, so rotating never
@@ -4911,7 +4996,12 @@ is **~75 MB**, the APK 205 MB.
   where the script's taps are `Inject motion`), about 2.3 s after the shade
   opened, i.e. someone reacting to "Tap to update" on screen. The script
   now says up front to keep hands off the phone, and names such a touch
-  when the phone logs one. Every
+  when the phone logs one. The update SHEET has the same exposure: a touch
+  outside it closes it as "Not now" (the 1.2.8 run's sheet was drawn and a
+  finger closed it 1.1 s later, which read as "the sheet did not appear").
+  `open_sheet` reads the case log after drawing (`sheet_seen`: never drawn,
+  drawn, or the time of the first `Btn_touch` after it), names the touch
+  and tries once more; a second touch fails with that reason. Every
   phone setting it touches (animations, stay-on, rotation, font size,
   appops, the notification grant) is put back. It runs on
   macOS (bash 3.2, BSD awk: the screen parsers split a dump into nodes in
@@ -5682,17 +5772,99 @@ and the in-person path was a QR to aim across a table. Now:
   is closed at once, the token compare is `MessageDigest.isEqual`, and the
   handler decides atomically (`mNearbyBusy`/`mAnswerTaken` are
   `AtomicBoolean`s, several workers can ask at once).
-- **Screens:** Send = the file card, NEARBY (the device rows, inflated
-  from `item_p2p_device.xml`, with the empty line "No one yet. On the other
-  phone, open Downloads → Receive a file"), then ANYWHERE (Send link,
-  Private link, and the QR folded under "Show QR" with the scan/paste
-  reply fallbacks). Receive = the "Visible as <name>" card and a "Got a
-  code or link?" fold (Scan · Paste); the request card (Accept/Decline);
-  the human-relayed reply only when both push paths failed
-  (`ShareState.answerCode`). Both carry "You can leave this screen. The
-  transfer continues in the background." on the progress card. The old
-  "Nearby? Show the QR" fold, the scan/paste entry card and the reply
-  stage's "One step left" copy are retired (base + every `values-*`).
+- **Screens (the 2026-11 simplification, canvas "Send directly redesign",
+  direction B with two tweaks).** The previous Send screen showed every
+  mechanism at once — a NEARBY card whose spinner never ended (discovery
+  has no end, and nobody appears on the common cross-network path), an
+  ANYWHERE card with Send link / Private link / Show QR, and after a share
+  a second card with its own spinner, two paragraphs, Paste reply and Send
+  link again — and was reported as confusing. Now: **Send = the file card
+  + ONE "Send to" list** (`P2pSendRows`, pure Java, pinned by
+  `scripts/p2p-harness` with mutants and `P2pSendRowsTest`) of TWO
+  destinations: "Share a link" (anywhere) and **"Someone next to you"**
+  (`p2p_nearby_title`, `ic_people_24`), each a grouped `SheetRowCard`
+  (`item_p2p_device`, corners from `SheetGroups.applyCorners`, so a press
+  stays inside the card). **Nearby phones and the QR are ONE destination**
+  (canvas board H, Claude and Fable agreeing): the user's intent is the
+  same ("the person next to me"), the mechanics differ in a way they can't
+  see — nearby needs the same Wi‑Fi without client isolation (guest, hotel,
+  café Wi‑Fi and hotspots often hide phones) AND their Receive screen open,
+  the QR needs neither — so two rows asked them to pick a transport they
+  can't judge. Folded, the row says what is there: "Their phone on this
+  Wi‑Fi, or a code they scan." with nobody found, "On this Wi‑Fi: Ana's
+  Pixel 8, …" (coral, at most three names) once phones are found — a phone
+  is never hidden behind the fold, and the first one found is announced to
+  TalkBack — and "Sent to <phone> · waiting…" once one was asked. Unfolded
+  (`p2p_nearby_body`, moved into the card's `p2p_device_extra`): the phones
+  found as their own card group on the QR tile's tone (`bindPhones`, bound
+  in place), or with none the line "No phone on this Wi‑Fi has Receive a
+  file open yet. They can scan instead:", then the QR on its pale tile
+  (`bg_p2p_qr_tile`; `p2p_qr_size` 232dp, `p2p_qr_size_fallback` 180dp
+  under "Or they scan" when phones are listed) and the ONE line with the
+  full path (`p2p_qr_scan_line`: "On their phone: Downloads → ⋮ → Receive
+  a file → Scan code. Their camera app works too."). The QR fills the empty
+  state, so there is no placeholder slot, no hint line, no help sheet: the
+  receiving steps are written once on the screen, inside the open row.
+  Signal's and Telegram's QR tile, NOT their full page of numbered steps.
+  Homes for the "how a phone gets listed" text that were rejected on the
+  way here: a placeholder card in the list (every card can be tapped), a
+  glyph line above the group, a footnote under the group (a stray caption,
+  and the path twice), a line under the label (the footnote moved up), an
+  ⓘ or ⋮ help sheet, and an always-present disabled nearby row (38% reads
+  as a feature turned off). What happened
+  after a tap is THAT ROW'S second line, never another card: a tapped
+  phone reads "Sent · waiting for them to accept" (untappable, and it
+  keeps its row even if it drops out of discovery), the link reads
+  "Preparing link…" for the bounded broker wait, then "Shared · open for
+  N more minutes." (the offer's 15-minute lifetime,
+  `ShareState.offerExpiresAt`, rounded UP, never 0, repainted on the
+  minute boundary; an unknown expiry reads just "Shared", no countdown
+  invented). The active row's TEXT is `@color/p2p_status_active`
+  (onSurface in light, coral in dark: coral is ~2.3:1 as light-theme
+  text); the coral disc marks it in both. Cards are BOUND IN PLACE while
+  the rows' kinds and names are unchanged (the countdown and discovery
+  repaint often; a rebuild lost TalkBack's place and cut off a press), and
+  the in-person card announces expand / collapse. Connecting collapses the
+  list to the one peer (the phone, else the link row, else the in-person row
+  after a QR scan) with the ONLY spinner, bounded
+  by the connect timeout. Transferring and done are painted on the file
+  card (bar + numbers under the name; the check and "Sent · size"). No
+  Cancel at rest (nothing is out; Back is enough), Cancel once a phone was
+  asked or a link went out. The reply fallbacks (Paste reply, Scan reply)
+  live in the toolbar overflow, shown only while the offer waits. **There
+  is no per-share private/short choice**: Settings → Direct share →
+  "Private links" (`SETTINGS_P2P_PRIVATE_LINKS`, default off) makes "Share
+  a link" send the full `FDS1.` code (no offer stored on the server); off,
+  it is the short link with the full one as the automatic fallback. The
+  lead sentence ("no server in between", untrue for a short or relayed
+  share) and the meaningless live dot are gone. **Receive** = the "Visible
+  as <name>" card (its hint now also says a tapped link opens here) and
+  one "Scan code" button; Paste code is in the overflow (idle only); a
+  request REPLACES that stage and is laid out as the decision, AirDrop's
+  shape: "<device> wants to send you" first (the name in the title's
+  weight, `p2p_wants_to_send`; "Someone…" when none), the file type's
+  glyph on a 112dp tile (the type is its TalkBack label), the name on ONE
+  line with "…" in the middle so the extension survives (Android ellipsizes
+  the middle only on one line; at two it just cuts the end), the size,
+  full-width Decline / Accept, and "Nothing is received until you
+  accept." The name is bolded where the translation puts `%1$s`
+  (formatted with a marker, then swapped in), never found by searching
+  the sentence. An instruction that walks the menus names each step in
+  the UI's own words and includes the ⋮ ("Receive a file" is in the
+  Downloads overflow). The QR on its tile is square and at most
+  `p2p_qr_size`, so it shrinks on a 320dp phone. (A bottom sheet over the
+  waiting screen, Quick Share's shape, was sketched and not taken: a
+  swipe-away reads as an ambiguous decline); the
+  human-relayed reply only when both push paths failed
+  (`ShareState.answerCode`). Don't bring back a second card for a state,
+  a spinner at rest, or a per-share privacy choice. **Device check:
+  `phone/P2pScreensDeviceTest`** (androidTest, Espresso, one phone): the
+  real Downloads activity and share session; the Send screen lists the two
+  destinations, "Someone next to you" unfolds to the QR on its tile and the
+  receiving path and folds again; then the Send screen's own offer is handed
+  to the Receive screen, which shows it as the request hero (the type tile
+  labelled, never "BIN File") and Decline returns to "Visible as". Written
+  for 1.2.7; not run on a device at write time.
 
 **Transport: Gecko's own WebRTC DataChannel — deliberately NO libwebrtc
 dependency** (~10 MB/ABI to duplicate what GeckoView ships).
@@ -5745,19 +5917,19 @@ through a messenger — with two wrapper forms for each code:**
   the firedown:// form.
 - **QR / in-person form: `firedown://p2p/<code>`** (`toDeepLink`) — what the
   QR encodes, so any scanner (system camera included) offers "open in
-  Firedown". The QR is folded under "Show QR" in the sender's ANYWHERE card
-  — the in-person path that needs NO network at all; two phones on one
+  Firedown". The QR unfolds under the "Show a QR code" row of the sender's
+  "Send to" list — the in-person path that needs NO network at all; two phones on one
   Wi-Fi use the nearby list instead (the redo note above).
 `handleP2pDeepLink` routes both forms by prefix: an **FDS1 offer** →
 `p2p_receive` (`ARG_OFFER_CODE`); an **FDR1 reply** → the LIVE send session
 (`provideExternalAnswer`; no session → an honest "share no longer open"
 snackbar). So the remote round trip is share link → Accept → send reply →
 sender TAPS the reply in the chat — no scanning, no pasting. The sender's
-screen shows a WAITING card after sharing (`ShareState.linkShared`, kept on
+link row shows its countdown after sharing (`ShareState.linkShared`, kept on
 the state so a sender who leaves and returns still sees it), auto-picks an
 FDR1 reply off the CLIPBOARD on window focus (each clip value tried once, so
 a soft bad-code can't loop; Android's paste toast keeps the read visible),
-and keeps Paste as the manual fallback. The receiver shows a reply ONLY
+and keeps Paste reply in the overflow as the manual fallback. The receiver shows a reply ONLY
 when both push paths (LAN return, mailbox) failed (`ShareState.answerCode`):
 "Send reply" for a sender reached by link plus the QR for one standing
 there; `arrivedRemote` still shapes the no-path error copy. `P2pShareController.stripDeepLink` unwraps both forms and bare codes
@@ -5962,8 +6134,8 @@ fails on the VPN, relay↔relay wins) automatically, once the answer is timely.
 The self-contained offer (`FDS1.` = whole SDP + candidates + file meta, ~1–2 KB
 base64) makes a ~1166-char link/QR. So the sender ALSO uploads the full offer to
 the rendezvous **offer mailbox** (`/v1/p2p/o/<id>`, same id as its `/a/<id>`
-answer poll; `P2pSignalingClient.uploadOffer`) and the "Send link" action shares
-a short reference `https://firedown.app/s#FDO1.<id>` (`OFFER_REF_PREFIX`,
+answer poll; `P2pSignalingClient.uploadOffer`) and "Share a link" (unless
+Settings → Direct share → Private links is on) shares a short reference `https://firedown.app/s#FDO1.<id>` (`OFFER_REF_PREFIX`,
 `getShareContent` flips to it only AFTER the upload lands — a tap before then
 falls back to the full self-contained link, no regression). The receiver's
 `DownloadsActivity.routeCode` recognizes `FDO1.` → `ARG_OFFER_REF` →
@@ -6132,7 +6304,7 @@ bound on the loopback through its package-private `start(InetAddress)` door
 `declined` body, a busy receiver's 409, exact body bytes, a slow client, the
 connection deadline, the worker pool and the exact-bytes token compare —
 `RelayCredsPolicy`'s boundaries and network gate, `P2pFileNames`,
-`P2pSessionPolicy` and `reachableHost`; 116 checks, ~15 s). Known residual:
+`P2pSessionPolicy`, `reachableHost` and the Send list's `P2pSendRows`; 146 checks, ~15 s). Known residual:
 non-trickle ICE means a receiver that accepts a 10-minute-old link answers
 candidates minted 10 minutes ago; a NAT binding that expired meanwhile
 shows as `no-path` on an otherwise fine network — the relay candidate is
@@ -6772,8 +6944,7 @@ left the phone. It is a SEPARATE feature from the local **Safe Folder**
 (`file_safe`, which never leaves the device): user-facing copy says "Backup",
 internal classes keep the `Cloud*`/`Vault*` names of the hosted service this
 replaced (`CloudBackupManager`, `VaultEngine`/`VaultBackupWorker`/
-`VaultRestoreWorker`/`VaultThumbnail`/`VaultEntry`, `CloudBackupListFragment`,
-`CloudBuyButtonPreference`, the `cloud_*`/`settings_cloud_*`/`home_cloud_*`
+`VaultRestoreWorker`/`VaultThumbnail`/`VaultEntry`, `CloudBackupListFragment`, the `cloud_*`/`settings_cloud_*`/`home_cloud_*`
 string keys, the `…cloud.backup.*` pref keys) — the shapes survived the
 server. The one cardinal rule is unchanged: **whoever holds the bytes never
 sees plaintext** — every file is encrypted on the device (`VaultCrypto`,
@@ -6888,8 +7059,8 @@ not hidden):
   FOLDER, not the network": `VaultBackupWorker` fails terminally with
   `SLUG_FOLDER` and posts the folder-lost notification ONCE (tap → the Backup
   screen), the Backups list's transfer row names it
-  (`folder_backup_transfer_lost`), and the Backup screen's hero shows the
-  lost state with the CTA reading "Choose the folder again".
+  (`folder_backup_transfer_lost`), and the Backup screen's status card shows the
+  lost state with its button reading "Choose the folder again".
   `isReachable()` = the persisted grant is still held with read+write AND
   the tree's root document answers a query — one resolver round trip, OFF
   the main thread only (Drive answers a cold listing from the network).
@@ -7080,7 +7251,7 @@ recovery code, the password sealed under the same keystore key through
   folder row wears `dns_24` and reads "<host> · WebDAV"
   (`webdav_folder_row`, untranslatable); the hero's lost state reads "Can't
   reach your backup server" with a body naming offline / a changed password
-  or certificate (`CloudStatusPreference.setPlace`); the CTA in that state
+  or certificate (`CloudStatusPreference.setPlace`); the card's button in that state
   is **"Reconnect"** and opens the prefilled sign-in page directly, not
   the chooser; the worker fails a server with **`SLUG_SERVER`** (its own
   words on the row, the snackbar and the notification, and the Backups
@@ -7608,62 +7779,52 @@ either: everything is plain REST through the app's OkHttp.
 
 ONE screen hosts the downloads backup AND the bookmarks switch (the
 two-level IA and the focused bookmarks screen were retired as tap tax).
-Order = priority: the **status hero** (`CloudStatusPreference`, flat), the
-**morphing CTA** (`CloudBuyButtonPreference` — historical name, nothing is
-bought; the MaterialButton carries `@android:id/title` so the Preference
-TITLE is its label), then three UNLABELLED card groups: KEY (Recovery code
+Order = priority: the **status card** (`CloudStatusPreference`, flat,
+with the screen's one button INSIDE it), then three UNLABELLED card groups: KEY (Recovery code
 reveal + "I have a recovery code"), USE (Backups + the Bookmarks switch),
 last (the "How sync & encryption work" link → `firedown.app/security` + the
 "Delete backup data" door). The KEY and USE groups SWAP by life stage
 (`SETTINGS_CLOUD_GROUP_KEY`/`_USE`): KEY above USE until set up (the adopt
-door is the second way in, right under the create-CTA), USE above KEY once
+door is the second way in, right under the setup card), USE above KEY once
 set up — groups, not rows, so each card stays whole. NO category labels
 (the last header umbrella'd the code/help/delete rows as "Bookmarks"
 children — the card edges do the grouping).
 
-- **The hero has THREE states** (`CloudStatusPreference`): set up + folder
-  reachable (the cloud-upload glyph, `cloud_upload_24` — THE backup glyph
-  on every door and notification, the maintainer's pick over the earlier
-  folder — "Firedown Backup" over "On <provider › folder>" (the location
-  label, below), the backed-up size headline, a file-count caption; the
-  ⋮-menu hint while
-  nothing is backed up yet; "Transfer in progress…" while a worker runs);
-  set up + folder LOST (the cloud-off glyph, `cloud_off_24` — the healthy
-  glyph's struck twin, so the pair stays one family; the same glyph is the
-  folder-lost notification's small icon — "Can't reach your backup
-  folder", the LAST SEEN totals, the body line saying what to do — the card
-  states the fact, the CTA acts); not set up → the dashed ROADMAP ① Create
-  recovery code → ② Choose backup folder → ③ Back up a finished download
-  from its ⋮. Each step is a HANGING row (`cb_step_*_mark` /
-  `cb_step_*_done` + `cb_step_*`): a 20dp marker in the glyph's 24dp
-  column, the text in a column under the title, so a wrapped line
-  continues under its text. The marker is a SHAPE, not typed text: a ring
-  round the number (ahead), the number on a disc filled like the CTA
-  under the card (current — the button performs that step), a check on a
-  tonal disc (done); the numeral is in dp (a glyph of a fixed circle), the
-  text beside it follows the font scale. It was one TextView per step
-  with "2 ·  " typed in front (step ②'s second line sat under the
-  number), then text markers "1 ·" / "✓" / "3 ·" of three widths,
-  start-aligned in a 28dp column, which lined up with nothing (both
-  reported on-device). **The hero sits on the card rows' two axes**: the
-  rows below are a card 16dp from the screen with 16dp padding, a 24dp
-  icon and the title at 72dp, so every state's glyph is 24dp at 32dp
-  (the root's 16dp gutter + the hero's or the dashed card's 16dp), every
-  title, step text, size figure and caption starts at 72dp, and the
-  glyph, the markers and the rows' icons share one centre line (44dp).
-  The glyph was 28dp at the card's edge with the text at 56dp. The row
-  carries the spoken line, the marker column is hidden from TalkBack.
-  There is no
-  quota, meter or chip: the folder is the user's own storage, so the only
-  facts the card can state are what is in it and whether it answers.
-  `mReachable` defaults TRUE so a cold bind never flashes the lost state;
-  the hero binds `lastStatus()` first, then the fresh read.
-- **The CTA shows ONLY while a step is owed, and the FOLDER is a ROW**
-  (`applyCta` / `applyFolderRow`, 2026-10-13, the maintainer's "open folder
-  or change folder is still confusing for cloud"): no key → "Create
-  recovery code" (FILLED; with the mandatory "I've saved it" dialog), key
-  but no folder → "Choose backup folder" (FILLED), folder lost → "Choose
-  the folder again" (FILLED), healthy → the button is HIDDEN. It stayed as
+- **The status card is Signal's "Secure Backups" card** (2026-11, the
+  maintainer: "instead of the 1·2·3 steps, simplify like Signal"):
+  `preference_cloud_status.xml` is one `MaterialCardView`
+  (`surfaceContainerHigh`, 24dp corners, 24dp padding) with the words on
+  the start side — an optional line above the title, the title
+  (TitleLarge), one line under it, at most one button — and the glyph on a
+  64dp tonal disc (`bg_empty_disc`) on the end side, in `brandInk`
+  (`cloud_upload_24`) or the error ink (`cloud_off_24`, the struck twin;
+  also the folder-lost notification's small icon). THREE states:
+  not set up → "Back up your downloads" / "Encrypted on this phone, then
+  saved where you choose." / **[Set up backup]**; set up + reachable →
+  "On <provider › folder>" over "854 MB backed up" (`backup_hero_size`),
+  "14 files · encrypted end-to-end" (or "Nothing backed up yet" + the
+  ⋮-menu hint, or "Transfer in progress…" while a worker runs), NO
+  button; set up + LOST → the place over the lost title in the error ink,
+  what to do, **[Choose the folder again]** / **[Reconnect]**. It replaced
+  a dashed numbered ROADMAP (① code → ② folder → ③ first backup, with
+  ring/disc/check markers) plus a separate morphing CTA row under it
+  (`CloudBuyButtonPreference`, deleted with its layouts, the step
+  drawables and styles): two surfaces describing one next step. **"Set up
+  backup" is ONE flow**: it creates the recovery code (the "I've saved
+  it" gate unchanged) and Done goes straight on to "Where to back up"
+  (`showCodeDialog`'s `onDone`); with a code already present it opens
+  the chooser directly. So the user never sees step numbers, and a user
+  who backed out of the chooser gets the same button next time. Don't
+  bring a roadmap or a second button row back. The card states no last
+  seen totals any more (the lost state is the title, the remedy and its
+  button). There is no quota, meter or chip: the folder is the user's own
+  storage. `mReachable` defaults TRUE so a cold bind never flashes the
+  lost state; the card binds `lastStatus()` first, then the fresh read.
+- **The card's button shows ONLY while a step is owed, and the FOLDER is
+  a ROW** (`applyCardAction` / `applyFolderRow`, 2026-10-13, the
+  maintainer's "open folder or change folder is still confusing for
+  cloud"): no key or no folder → "Set up backup", folder lost → "Choose
+  the folder again" / "Reconnect", healthy → no button. A button stayed as
   an outlined "Change folder" for one release and that was the screen's
   one visible action on a healthy backup: a verb with no object, which
   asked "change it to what, from what?". The answer is the **"Backup
@@ -7802,10 +7963,7 @@ children — the card edges do the grouping).
   check that fails a working folder is worse than none. The adopt runs in
   the manager, so a pick lands even if the user left the screen mid-check. The setup copy
   (`cloud_backup_setup_message`) names the kinds of places too, so the
-  first pick is steered before the chooser opens; roadmap step ②
-  (`folder_backup_step_folder`) is "Choose where to back up", the sheet's
-  own title, with no examples (it named Dropbox, which the kind-row rule
-  above excludes, and wrapped on a phone). The two folders stay as they are: list recovery for a same-phone
+  first pick is steered before the chooser opens. The two folders stay as they are: list recovery for a same-phone
   reinstall vs file copies elsewhere are different jobs, and renaming the
   mirror's folder buys nothing the guard doesn't.
 - **The folder picker lists ONLY providers that declare
@@ -7835,9 +7993,9 @@ children — the card edges do the grouping).
   taps "Cloud storage" simply does not find Proton under ☰, and the write
   check never runs because there was nothing to pick. The diagnostic for the next such report is
   the Import-picker test above.
-- **The KEY-FIRST GATE**: until a recovery code exists the CTA reads "Create
-  recovery code" (not choose-a-folder), the Backups row is hidden and the
-  Bookmarks switch is disabled — a folder can only be chosen once there is
+- **The KEY-FIRST GATE**: "Set up backup" creates the recovery code before
+  it opens the place chooser, and until one exists the Backups row is
+  hidden and the Bookmarks switch is disabled — a folder can only be chosen once there is
   a key to encrypt into it with. A code, once created, forces the "I've
   saved it" checkbox before Done (non-cancelable in create mode).
 - **Adopting a code works in BOTH key states** — post-key the row's summary
@@ -8988,6 +9146,16 @@ missing callback does now, and what stays off on purpose:
   frame-redirect prompts (Gecko blocks them, no "Allow" yet), app links
   inside iframes (`onSubframeLoadRequest` allows; nothing happens).
   `onSlowScript` stays default (Gecko stops the script, as in Firefox).
+- **Device check: `geckoview/BrowserCallbacksDeviceTest`** (androidTest, no
+  network): a loopback page's tap-opened `window.open` gets a real window
+  that is listed as the opener's child tab, becomes the tab on screen, and
+  whose `window.opener.postMessage` reaches the opener (the test process
+  surviving is part of the check: a session opened twice crashes); and
+  Widevine requested with the DRM switch off is refused with the tab's
+  `isDrmRefusedHere()` set, and with it on is granted with no dialog, in a
+  regular and a private tab (skipped without Widevine). Tabs are built with
+  `GeckoComponents.connectSession` on a `SiteAuditActivity` view, no
+  browser fragment. Written for 1.2.7; not run on a device at write time.
 
 #### Long-press context menu — glyphs are index-paired arrays, image rows get a thumbnail
 
@@ -11712,6 +11880,34 @@ after sketches on the design canvas:
 
 "Enable DRM playback" (`SETTINGS_ENABLE_DRM`, Security door, default OFF)
 drives `GeckoRuntimeHelper.setDRM`: `media.eme.enabled` and the GMP prefs.
+**The switch IS the consent**: on, `PERMISSION_MEDIA_KEY_SYSTEM_ACCESS` is
+answered `VALUE_ALLOW` with no dialog, in private tabs too
+(`GeckoComponents.onDrmRequest`, run BEFORE the private-tab refusal of every
+other content permission: a private tab refused there showed the site's own
+"not supported" error and nothing from the app, the same inert switch).
+There used to be a per-site "Allow <site> to play DRM-controlled content?"
+dialog on top of the switch, and issue #310's reporter read the switch as
+doing nothing: on or off, a DRM page met a prompt. The dialog, its layout
+and its two strings are gone; the download caveat lives in the switch's
+summary and the notice sheet. Returning from Settings reloads a tab whose
+DRM answer the switch just changed, both ways (`onResume`: refused and now
+on, `isDrmRefusedHere`; granted and now off, `isDrmGrantedHere`, set on the
+ALLOW, cleared on page start): Gecko reads the pref when the page loads, so
+the page on screen keeps the old answer until then. The same check
+(`BrowserFragment.reconcileDrm`) runs when an already-open tab is switched
+onto (end of `setGeckoViewSession`, never on a tab that is loading: a
+reload there would abort the load), and `showDrmNotice` drops a notice
+that waited while the switch was turned on. A page reloaded because DRM
+was turned OFF has its site marked as told, so it gets the dot and the row
+but not the "Turn on" sheet right after the user turned it off. Private
+tabs' remembered sites are cleared with "close all private tabs"
+(`DrmNoticeSites.clearPrivate`). Known, not built: Android's Widevine
+CDM is provisioned per device, so a license server can link DRM playback
+in a private tab to the same phone as a regular tab (nothing new is
+stored by playing). Reviewed by Fable after
+the first cut, which traced code paths but never what the user saw per case
+(on/off × regular/private × fresh/already open); keep that table in mind
+for any change here.
 Two facts about Gecko that the code used to get wrong:
 - **The pref does not remove the API.** `navigator.requestMediaKeySystemAccess`
   always exists; with the pref off Gecko refuses every Widevine request with
@@ -11741,8 +11937,7 @@ that lands while Settings/Downloads covers the browser, waits on the tab
 the message for good. **What the user sees** (canvas "DRM notice
 alternatives", boards C–E, picked over a snackbar that was too easy to miss):
 - **Once per site, the "This video needs DRM" sheet**
-  (`DrmSheetDialogFragment`, `fragment_dialog_drm_notice`; the older
-  `fragment_dialog_drm` is the Allow dialog's view, a different thing): the
+  (`DrmSheetDialogFragment`, `fragment_dialog_drm_notice`): the
   key in the security sheet's 40dp identity tile, "<site> · DRM is turned
   off", three facts in one group of `SheetRowCard`s with `SheetRowText`
   labels (allowed to wrap, not tappable) — turning it on lets the page play
@@ -11774,21 +11969,18 @@ alternatives", boards C–E, picked over a snackbar that was too easy to miss):
   visible and the toolbar not scrolled away (a PopupWindow does not follow
   the toolbar's translation). Its width is the WINDOW's (`drm_tip_width`):
   inflated without a parent, the layout's own width is dropped.
-- `onResume` repaints the shield: Settings turns DRM on without a reload,
-  and the dot must not outlive the security sheet's row.
+- `onResume` repaints the shield (the dot must not outlive the security
+  sheet's row) and reloads a page whose DRM answer Settings changed.
 - The sheet and the row answer through ONE fragment result
   (`DrmSheetDialogFragment.RESULT_KEY`), handled by
   `BrowserFragment.onDrmResult`, so turning DRM on has one implementation.
-The download sentence is load-bearing on both surfaces: Turn on skips the
-Allow dialog, whose subtitle was the only other place the user
-heard it before choosing. Turn on writes the
-setting, calls `setDRM(false)` (which now returns the pref write's result) and
-reloads the tab when Gecko has the values. The host is read AT THE TAP and
-allowed only if the tab is still on the page the notice was about
-(`allowDrmForReload`), and only for the document the reload brings: the next
-page start after it clears the host, so a shortcut can't outlive its tap. Private tabs refuse every
-content permission before this branch, so they never show the notice (DRM
-could not play there anyway). On an engine without 0010 nothing changes: the
+The download sentence is load-bearing on both surfaces and on the switch's
+summary: no dialog states it at the moment a page plays. Turn on writes the
+setting, calls `setDRM(false)` (which returns the pref write's result) and
+reloads the tab when Gecko has the values. A private tab gets the notice
+like any other; its site is remembered in memory only
+(`DrmNoticeSites.markShown(…, privateTab)`), never in `backup_local.xml`.
+On an engine without 0010 nothing changes when DRM is off: the
 notice simply never arrives. Reviewed by a second model against the 159.0.1
 sources (lifetime, page-visible effects, threading, host matching); on-device
 unverified at write time.
@@ -12223,7 +12415,10 @@ here:
     Continue, progress, the checked filter chip. Never a passive container.
   - **secondary CONTAINER = peach — SUPPORTS.** Tonal ground behind content:
     the recovery-code box, banners. Never fills a
-    button. (The home backup pill used to take it and no longer does — see
+    COMMITTING button; a TONAL button (a secondary action beside content,
+    the shield sheet's "Turn on", Storage's review button, the add-on
+    list's "Add") takes it through `Widget.Material3.Button.TonalButton`,
+    which is that style's own token. (The home backup pill used to take it and no longer does — see
     the cloud-states rule: those two surfaces are plain
     `surfaceContainerHigh`.) **`colorSecondary` itself stays CORAL** —
     `Theme.FireDown` sets no `colorControlActivated` and no
@@ -12769,6 +12964,129 @@ so both can notify at once). Invariants, each load-bearing:
   playback ENDED stops the service by itself. `CloudBackupStreamActivity`
   has its own player and is NOT covered — a backed-up stream still stops in
   background (candidate follow-up, same hub pattern would apply).
+
+### Picture-in-picture for web video — fullscreen only (issue #311)
+
+Leaving the app with a web video in page fullscreen puts the page in a PiP
+window; any other page keeps playing only its audio through
+`GeckoMediaPlaybackService`, as before (the reporter's own split, and
+Firefox for Android's rule: android-components' PictureInPictureFeature
+enters on Home only when the selected tab is fullscreen AND its media
+plays). The decisions are `phone/PipPolicy` (pure, `PipPolicyTest`) and
+the lifecycle bookkeeping `phone/PipSession` (pure, `PipSessionTest`: every
+callback ordering devices deliver, plus 20 000 random sequences); the
+wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
+
+- **Entry is `onUserLeaveHint`, gated by `PipPolicy.browserShouldEnter`**:
+  the browser page is the nav destination (a sheet, home or tab grid is
+  not), the tab of the FRAGMENT's mode (`peekCurrentGeckoState`, never the
+  per-repo `isCurrentGeckoState`) is in DOM fullscreen with `mUiState`
+  FULL_SCREEN (the toolbar-hiding pseudo fullscreen does not count), THAT
+  tab plays (`GeckoMediaController.isPlaying(int)`, not the global
+  `isPlaying()`), and the app did not start another screen itself
+  (`PipSession.leavingForOwnStart`, set in the `startActivityForResult` /
+  `startIntentSenderForResult` overrides every start funnels through,
+  cleared on a throw and on onPause, NOT on onResume: onUserLeaveHint also
+  fires for "Open in app" or the file picker, and the app lock starts
+  LockActivity from inside `super.onResume()` — clearing it in onResume
+  put the fullscreen video in a PiP window beside the lock screen; a
+  locked app never enters PiP either). No `setAutoEnterEnabled` (Android
+  12+): a stale true would PiP a plain page on swipe-home; it is the
+  follow-up for a smoother gesture-nav animation, with the flag refreshed
+  on every fullscreen, play/pause and tab change. No custom RemoteActions:
+  the system's PiP menu uses the app's MediaSession (the playback
+  service's).
+- **The manifest handles `smallestScreenSize`** — entering PiP changes it,
+  and a recreate rebuilt the browser with `mUiState` INIT under a tab still
+  in DOM fullscreen, i.e. the chrome inside the window. Because
+  `values-sw600dp`/`sw720dp` exist, `recreateIfWidthBucketChanged` does the
+  recreate Android used to do, only when the bucket really changes and
+  never in PiP or on its way out. NOT in onResume: the resources can still
+  carry the PiP window's size there, and a recreate mid-expand loses the
+  fullscreen page. Residual: unfolding a foldable while in PiP keeps the
+  phone resources until the next recreate. **A recreate inside PiP**
+  (dark mode, locale: not handled config changes) keeps the stay
+  (`onCreate` seeds `PipSession` from a saved-state flag, or
+  `isInPictureInPictureMode()`; the bucket is read at the first resume out
+  of the window), and an open tab still in DOM fullscreen attached to a new
+  view gets the fullscreen layout back in `setGeckoViewSession` (Gecko
+  sends no second fullscreen event) — never on a tab switch, where an exit
+  may still be in flight.
+- **Aspect** comes from `MediaSession.Delegate.onFullscreen`'s element
+  metadata, stored per tab and ungated (`GeckoState.setMediaFullScreenSize`)
+  and clamped by `PipPolicy.aspect` — the one clamp, which `PlayerActivity`
+  uses too. A page that went fullscreen on a container div may report no
+  size: 16:9.
+- **Nothing but the video in the window**: `GeckoPromptManager.canShowPrompt`
+  refuses in PiP (the prompt is answered at once, page JS goes on; prompt
+  harness 8c/8d), the download dialog waits on the tab and opens on expand
+  (`showPendingDownload` from onResume; one-shot per response), a
+  page-fired app link is dropped (Gecko already refused it), the fullscreen
+  hint snackbar, DRM tip and translate card are dismissed on entry, and the
+  DRM notice already waits for a resume; the fullscreen hint, a new
+  translate card and the crash-loop snackbar are never shown in PiP. **The
+  page leaving fullscreen in PiP (a video ending, a crash or kill of the
+  tab, another tab put on screen) is deferred** (`mFullScreenExitDeferred`):
+  the chrome would be drawn inside the window; it is applied when the
+  window leaves PiP, keyed on `mChromeHidden` (the layout actually hidden),
+  never on `mUiState` — a session attached in PiP (a crashed page reopened)
+  moves the state to BROWSING with the bars still GONE, and a state test
+  left them gone for good. A crash or kill of a fullscreen tab clears the
+  entity's fullscreen flag at the data layer (Gecko sends no exit for a
+  dead document) and gives the chrome back (`pageLostFullScreen`).
+- **Expand returns to the fullscreen video** (onResume re-hides the system
+  bars). Firefox for Android exits fullscreen on every PiP exit; here only
+  on a close.
+- **Close (X, or dragged off) ends the video**, the file player's contract:
+  the media of the tab that went to the window pauses (`mPipTab`: a
+  page's new window may be on screen by then) and the page leaves
+  fullscreen. Detection (`PipSession`): a mode exit followed by onStop with
+  no resume (the teardown flag), or onStop still in PiP with the display
+  ON (Samsung's drag-dismiss, which reports no mode change first). Screen
+  off in PiP is not a close; the audio goes on. **A mode exit while
+  stopped is decided 2 s later** (a posted settle, or the destroy if it
+  comes first): screen off in PiP, then the app opened from a notification
+  or the lock screen, delivers exactly that, followed by onStart — an
+  expand, not a close (it paused the video when read at once). **Another
+  Firedown screen started over it is not a close either**
+  (`ApplicationLifeCycleHandler.otherScreenStarted()`, a count of started
+  non-browser activities): a download notification opens Downloads into
+  the pinned task, the window expands and the browser stops behind it
+  unresumed; the video goes on as audio, as when the app is left without
+  PiP. That reading is provisional: a FINISHING destroy within 5 s of it
+  is a close after all (Downloads shown in a task of its own, the window
+  floating over it, then closed with X — the system removes the browser's
+  task). **Closing removes the task, which FINISHES the browser** on AOSP:
+  `wasClosedFromPip()` keeps `ApplicationLifeCycleHandler.onActivityDestroyed`
+  from deleting the private tabs (the finishing rule is for leaving the
+  browser, not for closing a video window), only within 5 s of the close
+  (a ROM that keeps the activity and is swiped from recents later still
+  deletes them); the playback service still stops.
+- **Another tab put on screen while fullscreen** (a link from another app,
+  which also expands the window): `setGeckoViewSession` exits the old tab's
+  DOM fullscreen, restores the chrome and resets the orientation itself,
+  since that tab's own callbacks are no longer the current tab's and are
+  gated out — `MediaSession.Delegate.onFullscreen`'s orientation notify is
+  gated on the current tab now (a background tab's video used to rotate
+  the visible one).
+- Verify: `PipPolicyTest` + `PipSessionTest` (JVM; twelve planted bugs
+  each fail the latter: a stopped exit closing at once, onStart not
+  cancelling it, no time bound, screen off read as a close, the teardown
+  ignored, the destroy not settling, onResume clearing the own start,
+  another screen ignored at the stop or the settle, a 500 ms settle, no
+  provisional close, a provisional close with no time bound),
+  `sh scripts/prompt-harness/run.sh`, and on
+  a device `phone/BrowserPipDeviceTest` (a loopback page whose `<video>`
+  goes fullscreen and plays on a real `input tap`; Home → PiP with the same
+  activity instance and no toolbar; expand → still fullscreen and playing;
+  close through the PiP window's accessibility dismiss → paused, out of
+  fullscreen, a private tab kept — skipped where the system UI offers no
+  dismiss; a video not fullscreen → no PiP, audio on; an `alert()` fired
+  when the viewport shrinks into the window → answered, no dialog). Written
+  for #311; not run on a device at write time. Not covered on a device:
+  the app lock with PiP, a content crash in PiP, a download notification
+  tapped while in PiP, the expand from the launcher icon (the test uses
+  `am start`).
 
 ### Subtitles in the local player — side-loaded downloads, one sheet, add a file
 

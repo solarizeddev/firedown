@@ -48,6 +48,23 @@ public class UpdateTestReceiver extends BroadcastReceiver {
     private static final String TAP_PROMPT = PREFIX + "TAP_PROMPT";
     private static final String STATE = PREFIX + "STATE";
 
+    /**
+     * Release notes MARK_READY stores with {@code --ez notes true}, shaped like
+     * a real status.json changelog ("• " bullets): long enough to scroll
+     * under the sheet's fade, one line that wraps (its second line must start
+     * under the text, not the bullet) and one that starts with a minus sign
+     * (it must keep it).
+     */
+    private static final String TEST_NOTES = "• Send directly: send by link or to someone next to you, by Wi‑Fi or QR code\n"
+            + "• Turning DRM on lets protected videos play, in private tabs too, with no per-site prompt\n"
+            + "• Pop-up windows opened by a page now open and work\n"
+            + "• A tab that closes itself now shows the next tab\n"
+            + "• -5% smaller downloads for updates\n"
+            + "• Websites can no longer ask for your location\n"
+            + "• Websites asking for the camera or microphone are refused, with a notice saying so\n"
+            + "• Pages can use Android’s share sheet and lock the screen rotation\n"
+            + "• Fixed a crash when showing some restored or imported downloads";
+
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
@@ -80,7 +97,11 @@ public class UpdateTestReceiver extends BroadcastReceiver {
         return "path=" + apk.getAbsolutePath() + " installed=" + App.getVersionCode();
     }
 
-    /** What {@code UpdateDownloader.markReady} leaves behind, without a download. */
+    /**
+     * What {@code UpdateDownloader.markReady} leaves behind, without a
+     * download. With {@code --ez notes true} it also stores test release
+     * notes for the version, as an update check stores status.json's.
+     */
     private static String markReady(Context context, Intent intent) {
         int code = intent.getIntExtra("code", -1);
         String name = intent.getStringExtra("name");
@@ -96,6 +117,9 @@ public class UpdateTestReceiver extends BroadcastReceiver {
                 .remove(Keys.UPDATE_PROMPT_SNOOZE_UNTIL)
                 .remove(Keys.UPDATE_PROMPT_SNOOZE_COUNT)
                 .commit();
+        if (intent.getBooleanExtra("notes", false)) {
+            UpdateDownloader.setChangelog(context, code, name == null ? "" : name, TEST_NOTES);
+        }
         return "ready path=" + apk.getAbsolutePath()
                 + " size=" + (apk.exists() ? apk.length() : -1)
                 + " readable=" + readable(apk)

@@ -31,6 +31,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 
 import com.google.android.material.snackbar.Snackbar;
+import com.solarized.firedown.UpdateReadyLiveData;
+import com.solarized.firedown.BaseActivity;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
@@ -170,6 +172,18 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         if (mGeckoStateViewModel != null) {
             mGeckoStateViewModel.ensureHomeTabIfEmpty();
         }
+
+        // Back on the home screen from a page (no activity resume): the
+        // update sheet may open here (UpdatePromptPolicy). Posted, behind the
+        // activity's own resume check, which it then finds by tag.
+        View root = getView();
+        if (root != null) {
+            root.post(() -> {
+                if (isResumed() && getActivity() instanceof BaseActivity) {
+                    ((BaseActivity) getActivity()).offerUpdateHere();
+                }
+            });
+        }
     }
 
     /**
@@ -290,6 +304,9 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
         // (redundant with both the ongoing download notification and
         // the Downloads entry card), the badge is the one lightweight
         // 'something is downloading' cue left on Home.
+        // The ⋮ dot while an update is ready (its "Update ready" row).
+        new UpdateReadyLiveData(requireContext()).observe(getViewLifecycleOwner(),
+                ready -> mBottomNavigationBar.setUpdateReady(Boolean.TRUE.equals(ready)));
         mTaskViewModel.getRegularCount().observe(getViewLifecycleOwner(), count -> {
             mBottomNavigationBar.onBadgeCount(count);
             // Same active+queued signal drives the breathing ember behind the

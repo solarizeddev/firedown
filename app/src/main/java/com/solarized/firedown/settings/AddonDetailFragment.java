@@ -1,16 +1,21 @@
 package com.solarized.firedown.settings;
 
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.SwitchPreferenceCompat;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
@@ -30,7 +35,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * One installed add-on: on/off, private tabs, its settings page, an update
- * waiting for the user, what it may do, its page, Remove. Follows
+ * waiting for the user, its page, what it may do, what it collects, Remove. Follows
  * {@link AddonManager#getAddons()}, so a change made anywhere (the add-on
  * updated, Gecko blocked it) repaints here, and a removed add-on closes it.
  */
@@ -45,7 +50,10 @@ public class AddonDetailFragment extends BasePreferenceFragment {
     private static final String KEY_REVIEW = "com.solarized.firedown.preferences.addon.review";
     private static final String KEY_UPDATE = "com.solarized.firedown.preferences.addon.update";
     private static final String KEY_PAGE = "com.solarized.firedown.preferences.addon.page";
-    private static final String KEY_PERMISSIONS = "com.solarized.firedown.preferences.addon.permissions";
+    private static final String KEY_PERMISSIONS = "com.solarized.firedown.preferences.addon.permissions.category";
+    private static final String PERMISSION_PREFIX = "com.solarized.firedown.preferences.addon.permission.";
+    private static final String KEY_DATA_CATEGORY = "com.solarized.firedown.preferences.addon.data.category";
+    private static final String KEY_DATA = "com.solarized.firedown.preferences.addon.data";
     private static final String KEY_REMOVE = "com.solarized.firedown.preferences.addon.remove";
     private static final String KEY_OPTIONAL = "com.solarized.firedown.preferences.addon.optional.category";
     private static final String OPTIONAL_PREFIX = "com.solarized.firedown.preferences.addon.optional.";
@@ -54,7 +62,7 @@ public class AddonDetailFragment extends BasePreferenceFragment {
     AddonManager mAddonManager;
 
     private String mId;
-    private Preference mHeader;
+    private AddonHeaderPreference mHeader;
     private SwitchPreferenceCompat mEnabled;
     private SwitchPreferenceCompat mPrivate;
     private SwitchPreferenceCompat mShield;
@@ -62,7 +70,12 @@ public class AddonDetailFragment extends BasePreferenceFragment {
     private Preference mReview;
     private Preference mUpdate;
     private Preference mPage;
-    private Preference mPermissions;
+    private PreferenceCategory mPermissions;
+    /** The permission rows now shown, so a repaint only rebuilds when they change. */
+    private List<String> mPermissionTexts = new ArrayList<>();
+    private PreferenceCategory mDataCategory;
+    private Preference mData;
+    private int mIconInk;
     private PreferenceCategory mOptional;
     /** The rows now in {@link #mOptional}, so a repaint only rebuilds when they change. */
     private List<String> mOptionalKeys = new ArrayList<>();
@@ -84,7 +97,13 @@ public class AddonDetailFragment extends BasePreferenceFragment {
         mUpdate = findPreference(KEY_UPDATE);
         mPage = findPreference(KEY_PAGE);
         mPermissions = findPreference(KEY_PERMISSIONS);
+        mDataCategory = findPreference(KEY_DATA_CATEGORY);
+        mData = findPreference(KEY_DATA);
         mOptional = findPreference(KEY_OPTIONAL);
+        mIconInk = MaterialColors.getColor(requireContext(), android.R.attr.textColorSecondary, Color.GRAY);
+        if (mData != null && mData.getIcon() != null) {
+            mData.getIcon().mutate().setTint(mIconInk);
+        }
         Preference remove = findPreference(KEY_REMOVE);
 
         if (mEnabled != null) {
@@ -165,23 +184,18 @@ public class AddonDetailFragment extends BasePreferenceFragment {
         }
         mBinding = true;
         if (mHeader != null) {
-            mHeader.setTitle(info.name);
             List<String> facts = new ArrayList<>();
             if (!TextUtils.isEmpty(info.creator)) {
                 facts.add(getString(R.string.addon_by, info.creator));
             }
             facts.add(getString(R.string.addon_version, info.version));
-            String summary = TextUtils.join(" · ", facts);
-            if (!info.description.isEmpty()) {
-                summary = info.description + "\n" + summary;
-            }
-            mHeader.setSummary(summary);
+            mHeader.set(info.name, TextUtils.join("\n", facts), info.description);
             if (!mIconLoaded) {
                 mIconLoaded = true;
-                int px = getResources().getDimensionPixelSize(R.dimen.addon_icon_size);
+                int px = getResources().getDimensionPixelSize(R.dimen.addon_prompt_icon_size);
                 AddonIcons.load(requireContext(), info.icon, px, icon -> {
                     if (isAdded() && mHeader != null) {
-                        mHeader.setIcon(icon);
+                        mHeader.setAddonIcon(icon);
                     }
                 });
             }
@@ -220,19 +234,65 @@ public class AddonDetailFragment extends BasePreferenceFragment {
                 return true;
             });
         }
-        if (mPermissions != null) {
-            List<String> lines = AddonPermissionText.lines(requireContext(),
-                    info.requiredPermissions, info.requiredOrigins);
+        bindPermissions(info);
+        if (mDataCategory != null && mData != null) {
             String data = AddonPermissionText.dataCollection(requireContext(), info.requiredDataCollection);
-            if (data != null) {
-                lines.add(data);
-            }
-            mPermissions.setSummary(lines.isEmpty()
-                    ? getString(R.string.addon_permissions_none)
-                    : TextUtils.join("\n", lines));
+            mDataCategory.setVisible(data != null);
+            mData.setTitle(data);
         }
         bindOptional(info);
         mBinding = false;
+    }
+
+    /**
+     * What it may do, a row each with its glyph (Firefox lists the same
+     * lines; a glyph per kind lets the eye find "all websites" among
+     * them). Rebuilt only when the lines change: an update adding a
+     * permission does, a toggle elsewhere on the page does not.
+     */
+    private void bindPermissions(@NonNull AddonInfo info) {
+        if (mPermissions == null) {
+            return;
+        }
+        List<AddonPermissionText.Row> rows = AddonPermissionText.rows(requireContext(),
+                info.requiredPermissions, info.requiredOrigins);
+        List<String> texts = new ArrayList<>();
+        for (AddonPermissionText.Row row : rows) {
+            texts.add(row.text);
+        }
+        if (texts.equals(mPermissionTexts) && mPermissions.getPreferenceCount() > 0) {
+            return;
+        }
+        mPermissions.removeAll();
+        if (rows.isEmpty()) {
+            mPermissions.addPreference(permissionRow(0, getString(R.string.addon_permissions_none), 0));
+        }
+        for (int i = 0; i < rows.size(); i++) {
+            AddonPermissionText.Row row = rows.get(i);
+            mPermissions.addPreference(permissionRow(i, row.text, row.icon));
+        }
+        mPermissionTexts = texts;
+    }
+
+    @NonNull
+    private Preference permissionRow(int index, @NonNull String text, @DrawableRes int icon) {
+        Preference p = new Preference(requireContext());
+        p.setKey(PERMISSION_PREFIX + index);
+        p.setPersistent(false);
+        p.setSelectable(false);
+        p.setTitle(text);
+        p.setSingleLineTitle(false);
+        if (icon != 0) {
+            Drawable d = AppCompatResources.getDrawable(requireContext(), icon);
+            if (d != null) {
+                d = d.mutate();
+                d.setTint(mIconInk);
+                p.setIcon(d);
+            }
+        } else {
+            p.setIconSpaceReserved(false);
+        }
+        return p;
     }
 
     /** One optional thing the add-on may ask for: its words, and whether it has it now. */

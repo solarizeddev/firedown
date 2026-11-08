@@ -445,6 +445,6 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
      */
     protected void observeAddonAttention(@NonNull BottomNavigationBar bar) {
         mAddonManager.getUpdateAttention().observe(getViewLifecycleOwner(),
-                ids -> bar.setMenuAttention(ids != null && !ids.isEmpty()));
+                ids -> bar.setAddonAttention(ids != null && !ids.isEmpty()));
     }
 }
