@@ -76,7 +76,7 @@ public class PipSessionTest {
 
         void destroy(boolean finishing) {
             settleAt = -1;
-            if (pip.onDestroy(otherScreen, now)) {
+            if (pip.onDestroy(finishing, otherScreen, now)) {
                 closes++;
             }
             if (finishing) {
@@ -85,14 +85,17 @@ public class PipSessionTest {
             destroyed = true;
         }
 
+        /** Moves the clock; the posted settle runs at its own due time. */
         void advance(long ms) {
-            now += ms;
-            if (settleAt >= 0 && now >= settleAt) {
+            long target = now + ms;
+            if (settleAt >= 0 && target >= settleAt) {
+                now = settleAt;
                 settleAt = -1;
                 if (!destroyed && pip.settleStoppedExit(otherScreen, now)) {
                     closes++;
                 }
             }
+            now = target;
         }
 
         // ── what the user does, in the order devices report it ──
@@ -330,6 +333,31 @@ public class PipSessionTest {
         d.homeToPip();
         d.closeAosp();
         assertEquals(1, d.closes);
+    }
+
+    @Test
+    public void closedWhileAFiredownScreenShowsInAnotherTask() {
+        // Downloads opened in a task of its own; the window floats over it
+        // and the user closes it: the browser's task is removed at once.
+        Device d = new Device();
+        d.homeToPip();
+        d.otherScreen = true;
+        d.closeAosp();
+        assertEquals(1, d.closes);
+        assertEquals(Boolean.TRUE, d.privateTabsKept);
+    }
+
+    @Test
+    public void expandedUnderAnotherScreenThenFinishedMuchLaterIsNotAClose() {
+        Device d = new Device();
+        d.homeToPip();
+        d.modeChanged(false);
+        d.otherScreen = true;
+        d.stop();
+        d.advance(60_000);
+        d.destroy(true);
+        assertEquals(0, d.closes);
+        assertEquals(Boolean.FALSE, d.privateTabsKept);
     }
 
     @Test

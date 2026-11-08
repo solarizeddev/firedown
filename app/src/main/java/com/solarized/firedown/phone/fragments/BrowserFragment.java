@@ -3415,7 +3415,8 @@ public class BrowserFragment extends BaseBrowserFragment
         // A page still in fullscreen attached to a new view (the activity was
         // recreated: dark mode, locale, inside a PiP window or not): Gecko
         // sends no second fullscreen event, so the layout is put back here.
-        if (wasOpen && geckoState.isFullScreen() && !mChromeHidden) {
+        boolean tabSwitch = previousSession != null && previousSession != newSession;
+        if (wasOpen && !tabSwitch && geckoState.isFullScreen() && !mChromeHidden) {
             if (mUiState == UiState.SEARCH) {
                 exitSearch();
             }

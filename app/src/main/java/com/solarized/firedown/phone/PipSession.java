@@ -57,6 +57,12 @@ public final class PipSession {
     private boolean mStoppedExitPending;
     private boolean mClosedFromPip;
     private long mClosedAtMs;
+    /**
+     * When a stay last ended under another of the app's screens, or -1. Only
+     * provisional: if the browser is FINISHED right after, the window was
+     * closed over a Firedown screen in another task, not expanded under one.
+     */
+    private long mEndedUnderScreenAtMs = -1;
 
     // ── the app's own starts ────────────────────────────────────────────────
 
@@ -78,6 +84,7 @@ public final class PipSession {
 
     /** The activity entered PiP. */
     public void enteredPip() {
+        mEndedUnderScreenAtMs = -1;
         mInPipStay = true;
         mTeardown = false;
         mStoppedExitPending = false;
@@ -117,7 +124,7 @@ public final class PipSession {
             return false;
         }
         if (otherScreenStarted) {
-            endStay();
+            endStayUnderScreen(nowMs);
             return false;
         }
         return dismiss(nowMs);
@@ -129,10 +136,12 @@ public final class PipSession {
         // Visible again: a pending mode exit was a bring-back, and a later
         // finish is the user leaving the browser.
         mStoppedExitPending = false;
+        mEndedUnderScreenAtMs = -1;
         mClosedFromPip = false;
     }
 
     public void onResume() {
+        mEndedUnderScreenAtMs = -1;
         // Not the own-start flag: a start made INSIDE onResume (the lock
         // screen) must still keep the pause it causes out of PiP. onPause
         // clears it, and onUserLeaveHint runs before onPause.
@@ -160,7 +169,7 @@ public final class PipSession {
             return false;
         }
         if (!inPip && otherScreenStarted) {
-            endStay();
+            endStayUnderScreen(nowMs);
             return false;
         }
         if (PipPolicy.dismissedAtStop(mTeardown, inPip, interactive)) {
@@ -171,11 +180,21 @@ public final class PipSession {
 
     /**
      * The activity is being destroyed. A mode exit still waiting to settle
-     * is a close (the stop-first ROMs destroy right after it).
+     * is a close (the stop-first ROMs destroy right after it), and so is a
+     * FINISH right after a stay ended under another screen: the window was
+     * closed while a Firedown screen showed in another task, and the system
+     * removed the browser's task.
      *
      * @return true when it was a close
      */
-    public boolean onDestroy(boolean otherScreenStarted, long nowMs) {
+    public boolean onDestroy(boolean finishing, boolean otherScreenStarted, long nowMs) {
+        if (finishing && mEndedUnderScreenAtMs >= 0
+                && nowMs - mEndedUnderScreenAtMs >= 0
+                && nowMs - mEndedUnderScreenAtMs < CLOSED_WINDOW_MS) {
+            mEndedUnderScreenAtMs = -1;
+            mInPipStay = true;
+            return dismiss(nowMs);
+        }
         return settleStoppedExit(otherScreenStarted, nowMs);
     }
 
@@ -198,10 +217,11 @@ public final class PipSession {
         return mInPipStay;
     }
 
-    private void endStay() {
+    private void endStayUnderScreen(long nowMs) {
         mInPipStay = false;
         mTeardown = false;
         mStoppedExitPending = false;
+        mEndedUnderScreenAtMs = nowMs;
     }
 
     private boolean dismiss(long nowMs) {

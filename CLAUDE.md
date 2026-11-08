@@ -12983,10 +12983,12 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   fullscreen page. Residual: unfolding a foldable while in PiP keeps the
   phone resources until the next recreate. **A recreate inside PiP**
   (dark mode, locale: not handled config changes) keeps the stay
-  (`onCreate` seeds `PipSession` from `isInPictureInPictureMode()`, the
-  bucket is read at the first resume out of the window), and an open tab
-  still in DOM fullscreen attached to a new view gets the fullscreen layout
-  back in `setGeckoViewSession` (Gecko sends no second fullscreen event).
+  (`onCreate` seeds `PipSession` from a saved-state flag, or
+  `isInPictureInPictureMode()`; the bucket is read at the first resume out
+  of the window), and an open tab still in DOM fullscreen attached to a new
+  view gets the fullscreen layout back in `setGeckoViewSession` (Gecko
+  sends no second fullscreen event) — never on a tab switch, where an exit
+  may still be in flight.
 - **Aspect** comes from `MediaSession.Delegate.onFullscreen`'s element
   metadata, stored per tab and ungated (`GeckoState.setMediaFullScreenSize`)
   and clamped by `PipPolicy.aspect` — the one clamp, which `PlayerActivity`
@@ -13028,7 +13030,10 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   non-browser activities): a download notification opens Downloads into
   the pinned task, the window expands and the browser stops behind it
   unresumed; the video goes on as audio, as when the app is left without
-  PiP. **Closing removes the task, which FINISHES the browser** on AOSP:
+  PiP. That reading is provisional: a FINISHING destroy within 5 s of it
+  is a close after all (Downloads shown in a task of its own, the window
+  floating over it, then closed with X — the system removes the browser's
+  task). **Closing removes the task, which FINISHES the browser** on AOSP:
   `wasClosedFromPip()` keeps `ApplicationLifeCycleHandler.onActivityDestroyed`
   from deleting the private tabs (the finishing rule is for leaving the
   browser, not for closing a video window), only within 5 s of the close
@@ -13041,11 +13046,12 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   gated out — `MediaSession.Delegate.onFullscreen`'s orientation notify is
   gated on the current tab now (a background tab's video used to rotate
   the visible one).
-- Verify: `PipPolicyTest` + `PipSessionTest` (JVM; ten planted bugs each
-  fail the latter: a stopped exit closing at once, onStart not cancelling
-  it, no time bound, screen off read as a close, the teardown ignored, the
-  destroy not settling, onResume clearing the own start, another screen
-  ignored at the stop or the settle, a 500 ms settle),
+- Verify: `PipPolicyTest` + `PipSessionTest` (JVM; twelve planted bugs
+  each fail the latter: a stopped exit closing at once, onStart not
+  cancelling it, no time bound, screen off read as a close, the teardown
+  ignored, the destroy not settling, onResume clearing the own start,
+  another screen ignored at the stop or the settle, a 500 ms settle, no
+  provisional close, a provisional close with no time bound),
   `sh scripts/prompt-harness/run.sh`, and on
   a device `phone/BrowserPipDeviceTest` (a loopback page whose `<video>`
   goes fullscreen and plays on a real `input tap`; Home → PiP with the same

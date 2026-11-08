@@ -66,6 +66,8 @@ public class BrowserMainActivity extends BaseActivity {
     /** values-sw600dp/sw720dp bucket the activity was created with. */
     private int mWidthBucket;
 
+    private static final String STATE_IN_PIP_STAY = "firedown.pip.stay";
+
     /** Created inside a PiP window: the bucket is read at the first resume. */
     private static final int WIDTH_BUCKET_UNKNOWN = -1;
 
@@ -85,8 +87,12 @@ public class BrowserMainActivity extends BaseActivity {
         sGeckoRuntime.setDelegate(() -> mKillProcessOnDestroy = true);
 
         // Recreated while in a PiP window (dark mode, locale): the stay goes
-        // on, and the resource bucket is taken once out of the window.
-        if (isInPictureInPictureMode()) {
+        // on, and the resource bucket is taken once out of the window. The
+        // saved flag carries it whether or not the framework reports the
+        // mode before the first callback.
+        boolean recreatedInPip = savedInstanceState != null
+                && savedInstanceState.getBoolean(STATE_IN_PIP_STAY, false);
+        if (recreatedInPip || isInPictureInPictureMode()) {
             mPip.enteredPip();
             mWidthBucket = WIDTH_BUCKET_UNKNOWN;
         } else {
@@ -256,6 +262,12 @@ public class BrowserMainActivity extends BaseActivity {
     }
 
     @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(STATE_IN_PIP_STAY, mPip.inPipStay());
+    }
+
+    @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         recreateIfWidthBucketChanged(newConfig);
@@ -303,7 +315,7 @@ public class BrowserMainActivity extends BaseActivity {
         mPipHandler.removeCallbacks(mSettleStoppedExit);
         // A mode exit still settling: the ROMs that stop before reporting a
         // close destroy right after it.
-        if (mPip.onDestroy(ApplicationLifeCycleHandler.otherScreenStarted(),
+        if (mPip.onDestroy(isFinishing(), ApplicationLifeCycleHandler.otherScreenStarted(),
                 SystemClock.uptimeMillis())) {
             pipDismissed();
         }
