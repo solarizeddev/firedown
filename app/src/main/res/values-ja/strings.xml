@@ -143,6 +143,8 @@
     <string name="addons_summary">Android 向けの Firefox 拡張機能</string>
     <string name="addons_title">アドオン</string>
     <string name="addons_update_review">更新の確認が必要です</string>
+    <string name="addons_update_new_permissions">更新で新しい権限が求められています</string>
+    <string name="addons_review">確認</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="other">%d 件のアドオン更新に承認が必要です</item>
     </plurals>
@@ -1240,4 +1242,6 @@
     <string name="shield_no_blocker_title">広告ブロッカーがオフです</string>
     <string name="shield_turn_on">オンにする</string>
     <string name="stream_audio_only_title">音声のみ</string>
+    <string name="bottom_bar_downloading_percent">%1$s、ダウンロード中、%2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s、ダウンロード中</string>
 </resources>

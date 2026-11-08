@@ -132,6 +132,8 @@
     <string name="addons_summary">Tiện ích mở rộng Firefox dành cho Android</string>
     <string name="addons_title">Tiện ích</string>
     <string name="addons_update_review">Bản cập nhật cần bạn xem xét</string>
+    <string name="addons_update_new_permissions">Bản cập nhật yêu cầu quyền mới</string>
+    <string name="addons_review">Xem xét</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="other">%d bản cập nhật tiện ích cần bạn đồng ý</item>
     </plurals>
@@ -1221,4 +1223,6 @@
     <string name="webdav_trust_note">Nếu nó thay đổi, việc sao lưu sẽ dừng cho đến khi bạn kiểm tra lại.</string>
     <string name="webdav_trust_title">Tin cậy máy chủ này?</string>
     <string name="webdav_user">Tên người dùng</string>
+    <string name="bottom_bar_downloading_percent">%1$s, đang tải xuống, %2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s, đang tải xuống</string>
 </resources>

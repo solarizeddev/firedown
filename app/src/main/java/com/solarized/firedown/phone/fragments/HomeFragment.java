@@ -293,26 +293,21 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
 
         Log.d(TAG, "onViewCreated");
 
-        // Download-count badge on the bottom bar's Downloads button —
-        // same source BrowserFragment's regular-mode chrome uses
-        // (TaskRepository.getRegularCount keeps vault/incognito
-        // downloads out, so private activity never advertises itself
-        // here). Home is never incognito-themed (HomeIncognitoFragment
-        // is its own fragment), so no mIsIncognitoThemed gate is
-        // needed. This badge used to be deliberately omitted while the
-        // active-download strip card existed; with that card removed
-        // (redundant with both the ongoing download notification and
-        // the Downloads entry card), the badge is the one lightweight
-        // 'something is downloading' cue left on Home.
+        // The bottom bar's Downloads line — same source BrowserFragment's
+        // regular-mode chrome uses (TaskRepository keeps vault/incognito
+        // downloads out of the regular stream, so private activity never
+        // advertises itself here). Home is never incognito-themed
+        // (HomeIncognitoFragment is its own fragment), so no
+        // mIsIncognitoThemed gate is needed.
         // The ⋮ dot while an update is ready (its "Update ready" row).
         new UpdateReadyLiveData(requireContext()).observe(getViewLifecycleOwner(),
                 ready -> mBottomNavigationBar.setUpdateReady(Boolean.TRUE.equals(ready)));
-        mTaskViewModel.getRegularCount().observe(getViewLifecycleOwner(), count -> {
-            mBottomNavigationBar.onBadgeCount(count);
-            // Same active+queued signal drives the breathing ember behind the
-            // flame: on while something downloads, off (idle wordmark) at 0.
-            setBrandGlowActive(count != null && count > 0);
-        });
+        mTaskViewModel.getRegularProgress().observe(getViewLifecycleOwner(),
+                progress -> mBottomNavigationBar.setDownloadProgress(progress, true));
+        // The active+queued count drives the breathing ember behind the
+        // flame: on while something downloads, off (idle wordmark) at 0.
+        mTaskViewModel.getRegularCount().observe(getViewLifecycleOwner(),
+                count -> setBrandGlowActive(count != null && count > 0));
 
         // Floor the displayed count at 1: while Home is on screen the user IS
         // on the home tab, so the counter must never read 0 (it could after a

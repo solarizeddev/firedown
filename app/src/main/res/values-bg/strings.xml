@@ -144,6 +144,8 @@
     <string name="addons_summary">Разширения за Firefox, създадени за Android</string>
     <string name="addons_title">Добавки</string>
     <string name="addons_update_review">Обновлението изисква преглед</string>
+    <string name="addons_update_new_permissions">Обновлението иска нови разрешения</string>
+    <string name="addons_review">Преглед</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d обновление на добавка чака одобрение</item>
         <item quantity="other">%d обновления на добавки чакат одобрение</item>
@@ -1255,4 +1257,6 @@
     <string name="task_gif_failed">GIF не можа да бъде създаден</string>
     <string name="task_gif_finished">GIF е създаден</string>
     <string name="task_stop">Спиране</string>
+    <string name="bottom_bar_downloading_percent">%1$s, изтегляне, %2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s, изтегляне</string>
 </resources>

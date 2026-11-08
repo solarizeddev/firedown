@@ -147,6 +147,8 @@
     <string name="addons_summary">Firefox-extensies gemaakt voor Android</string>
     <string name="addons_title">Add-ons</string>
     <string name="addons_update_review">Update wacht op je controle</string>
+    <string name="addons_update_new_permissions">Update vraagt nieuwe machtigingen</string>
+    <string name="addons_review">Bekijken</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d add-on-update wacht op je akkoord</item>
         <item quantity="other">%d add-on-updates wachten op je akkoord</item>
@@ -1254,4 +1256,6 @@
     <string name="task_dismiss">Sluiten</string>
     <string name="task_gif_failed">Kan GIF niet maken</string>
     <string name="task_stop">Stoppen</string>
+    <string name="bottom_bar_downloading_percent">%1$s, bezig met downloaden, %2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s, bezig met downloaden</string>
 </resources>

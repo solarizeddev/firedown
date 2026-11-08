@@ -153,6 +153,8 @@
     <string name="addons_summary">Rozszerzenia Firefoksa przeznaczone dla Androida</string>
     <string name="addons_title">Dodatki</string>
     <string name="addons_update_review">Aktualizacja do przejrzenia</string>
+    <string name="addons_update_new_permissions">Aktualizacja prosi o nowe uprawnienia</string>
+    <string name="addons_review">Przejrzyj</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d aktualizacja dodatku czeka na Twoją zgodę</item>
         <item quantity="few">%d aktualizacje dodatków czekają na Twoją zgodę</item>
@@ -1288,4 +1290,6 @@
     <string name="task_dismiss">Zamknij</string>
     <string name="task_gif_failed">Nie udało się utworzyć GIF-u</string>
     <string name="task_stop">Zatrzymaj</string>
+    <string name="bottom_bar_downloading_percent">%1$s, pobieranie, %2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s, pobieranie</string>
 </resources>

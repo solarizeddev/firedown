@@ -20,8 +20,6 @@
     <dimen name="app_bar_fab_elevation">12dp</dimen>
     <dimen name="app_bar_fab_margin">16dp</dimen>
     <dimen name="autocomplete_elevation">20dp</dimen>
-    <dimen name="badge_horizontal_offset">20dp</dimen>
-    <dimen name="badge_vertical_offset">20dp</dimen>
     <dimen name="button_icons_padding">8dp</dimen>
     <dimen name="card_radius">8dp</dimen>
     <dimen name="dialog_padding_standard">20dp</dimen>

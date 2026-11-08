@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   The trailing slot of a CatalogPreference row (an add-on in Mozilla's
-  list): an "Add" button, the shield sheet's tonal "Turn on" shape, which
-  the BusyPreference spinner replaces while the add-on installs.
+  list): a bare "+" in the brand ink, Firefox for Android's shape, which
+  the BusyPreference spinner replaces while the add-on installs. Not a
+  filled button: the catalog lists many rows, and the screen's one filled
+  button is the installed add-on whose update waits (ReviewPreference).
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -11,17 +13,23 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/preference_action"
-        style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_gravity="center"
+        android:insetLeft="0dp"
         android:insetTop="0dp"
+        android:insetRight="0dp"
         android:insetBottom="0dp"
-        android:minWidth="0dp"
-        android:minHeight="36dp"
-        android:paddingHorizontal="12dp"
+        android:minWidth="48dp"
+        android:minHeight="48dp"
+        android:padding="0dp"
         android:importantForAccessibility="no"
-        android:text="@string/addon_prompt_add" />
+        app:icon="@drawable/add_24"
+        app:iconGravity="textStart"
+        app:iconPadding="0dp"
+        app:iconSize="24dp"
+        app:iconTint="?attr/brandInk" />
 
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/preference_busy"

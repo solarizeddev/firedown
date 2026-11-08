@@ -144,6 +144,8 @@
     <string name="addons_summary">Androidille tehtyjä Firefox-laajennuksia</string>
     <string name="addons_title">Lisäosat</string>
     <string name="addons_update_review">Päivitys odottaa tarkistustasi</string>
+    <string name="addons_update_new_permissions">Päivitys pyytää uusia oikeuksia</string>
+    <string name="addons_review">Tarkista</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d lisäosan päivitys odottaa hyväksyntääsi</item>
         <item quantity="other">%d lisäosan päivitystä odottaa hyväksyntääsi</item>
@@ -1255,4 +1257,6 @@
     <string name="task_dismiss">Sulje</string>
     <string name="task_gif_failed">GIF:in luonti epäonnistui</string>
     <string name="task_stop">Pysäytä</string>
+    <string name="bottom_bar_downloading_percent">%1$s, ladataan, %2$d %%</string>
+    <string name="bottom_bar_downloading">%1$s, ladataan</string>
 </resources>

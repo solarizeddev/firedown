@@ -8,10 +8,13 @@
 # Android-15 FGS-timeout seal (ERROR + SYSTEM_TIMEOUT,
 # and cancelAll must NOT stamp FINISHED over it), the vault/regular
 # notification split, the filename-collision loop, the main-thread guard on
-# filePathInTasks, and a final leak sweep (every started download thread
-# unwound, no handler exception swallowed).
+# filePathInTasks, the bottom bar's progress line per mode (section 16:
+# equal shares, a finished download held at 100% until the group ends, no
+# known total → indeterminate, completed vs deleted, vault vs regular), and a
+# final leak sweep (every started download thread unwound, no handler
+# exception swallowed).
 #
-#   sh scripts/engine-harness/run.sh                  # the 44-assertion suite
+#   sh scripts/engine-harness/run.sh                  # the 64-assertion suite
 #   sh scripts/engine-harness/run.sh stress [sec] [seed]   # randomized concurrency storm
 #
 # The stress mode (EngineStress) hammers the same real engine from several
@@ -46,6 +49,8 @@ cp "$SRC/manager/ServiceActions.java"  "$OUT/src/com/solarized/firedown/manager/
 cp "$SRC/IntentActions.java"           "$OUT/src/com/solarized/firedown/"
 cp "$SRC/data/Download.java"           "$OUT/src/com/solarized/firedown/data/"
 cp "$SRC/data/TaskEvent.java"          "$OUT/src/com/solarized/firedown/data/"
+cp "$SRC/data/DownloadProgress.java"   "$OUT/src/com/solarized/firedown/data/"
+cp "$SRC/manager/DownloadProgressGroup.java" "$OUT/src/com/solarized/firedown/manager/"
 cp "$SRC/utils/DebugLog.java"          "$OUT/src/com/solarized/firedown/utils/"
 javac -nowarn -d "$OUT/classes" -cp "$HERE/stub" \
       $(find "$HERE/stub" "$OUT/src" "$HERE/src" -name '*.java')

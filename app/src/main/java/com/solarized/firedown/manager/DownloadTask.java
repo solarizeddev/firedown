@@ -88,6 +88,11 @@ public class DownloadTask implements DownloadCallback {
     private DownloadRunnable runnable;
     private DownloadContext context;
 
+    /** What the bottom bar counts for this download (DownloadProgressGroup):
+     *  0..100, or {@link DownloadProgressGroup#UNKNOWN} when no total is
+     *  known. Written by the download thread, read by the engine's. */
+    private volatile int barProgress;
+
     public DownloadTask(DownloadEngine engine,
                         DownloadDataRepository repository,
                         OkHttpClient okHttpClient,
@@ -133,6 +138,7 @@ public class DownloadTask implements DownloadCallback {
             entity.setFileSize(request.getFileLength());
             entity.setFileProgress(0);
             entity.setFileErrorType(0);
+            barProgress = 0;
             entity.setFilelive(false);
             entity.setFileStatus(Download.PROGRESS);
             entity.setFileSafe(request.isSaveToVault());
@@ -168,6 +174,8 @@ public class DownloadTask implements DownloadCallback {
         mStatusBeforeFinishing = Integer.MIN_VALUE;
         mProbedFileDuration = 0;
         entity.parseDownload(existing);
+        barProgress = entity.getFileIsLive() ? DownloadProgressGroup.UNKNOWN
+                : clampPercent(entity.getFileProgress());
 
         // The cookie rides in the persisted header string (withCookie); hand it
         // back on the request too — DeezerStrategy reads request.getCookieHeader()
@@ -377,6 +385,7 @@ public class DownloadTask implements DownloadCallback {
         if (total < 0 && !entity.getFileIsLive()) {
             entity.setFilelive(true);
         }
+        setBarProgress(entity.getFileIsLive() ? DownloadProgressGroup.UNKNOWN : clampPercent(percent));
         // Update file size from disk so the UI can show current size during download.
         // For FFmpeg strategies, 'downloaded' is a timestamp not bytes, so use file length.
         String filePath = entity.getFilePath();
@@ -403,6 +412,8 @@ public class DownloadTask implements DownloadCallback {
         entity.setFileStatus(Download.PROGRESS);
         entity.setFileProgress(Download.PROCESSING_PROGRESS);
         repository.add(entity);
+        // The bytes are all here; the mux is the last step.
+        setBarProgress(100);
     }
 
     @Override
@@ -486,6 +497,27 @@ public class DownloadTask implements DownloadCallback {
         if (sealed.get()) return;
         entity.setFilelive(isLive);
         repository.add(entity);
+        setBarProgress(isLive ? DownloadProgressGroup.UNKNOWN : clampPercent(entity.getFileProgress()));
+    }
+
+    /** This download's share of the bottom bar's line; see {@link #barProgress}. */
+    public int getBarProgress() {
+        return barProgress;
+    }
+
+    private void setBarProgress(int value) {
+        if (barProgress == value) {
+            return;
+        }
+        barProgress = value;
+        engine.onTaskProgress();
+    }
+
+    private static int clampPercent(int percent) {
+        if (percent == Download.PROCESSING_PROGRESS) {
+            return 100;
+        }
+        return Math.max(0, Math.min(100, percent));
     }
 
     @Override

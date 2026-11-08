@@ -5,12 +5,15 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
+import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
@@ -23,6 +26,7 @@ import androidx.core.widget.ImageViewCompat;
 
 import com.google.android.material.badge.ExperimentalBadgeUtils;
 import com.solarized.firedown.R;
+import com.solarized.firedown.data.DownloadProgress;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.browser.TabsBrowserButton;
 
@@ -38,7 +42,17 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
 
     private TabsBrowserButton mTabsCountButton;
 
-    private BadgeDrawable mBadge;
+    /**
+     * The Downloads button's icon, which carries the group's progress line
+     * (DownloadProgressDrawable). It replaced a coral dot: one dot meant both
+     * "something is downloading" (often, for minutes) and, on ⋮, "an update
+     * needs you" (rarely), and the frequent one taught people to ignore the
+     * rare one.
+     */
+    private DownloadProgressDrawable mDownloadsIcon;
+    @Nullable private ImageView mDownloadsButton;
+    private DownloadProgress mDownloadProgress = DownloadProgress.NONE;
+    private boolean mIncognito;
     /**
      * The ⋮ dot. Two reasons share it: an app update is ready (its "Update
      * ready" row) and an add-on update waits for the user's OK (the Add-ons
@@ -122,44 +136,22 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         downloadButton.setOnLongClickListener(this);
 
         mTabsCountButton = findViewById(R.id.tab_button);
-        mBadge = BadgeDrawable.create(context);
-        mBadge.setVisible(false);
-        // The badge is a bare dot with no label — its background IS the signal,
-        // so it is ink, not a container. colorPrimary keeps it legible on the
-        // bottom bar in both themes; colorPrimaryContainer is now a proper
-        // container tone (pale in light, dark in dark) and would disappear.
-        mBadge.setBackgroundColor(IncognitoColors.getPrimary(context, false));
-        mBadge.setVerticalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_vertical_offset));
-        mBadge.setHorizontalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_horizontal_offset));
+        mDownloadsButton = (ImageView) downloadButton;
+        mDownloadsIcon = new DownloadProgressDrawable(context);
+        mDownloadsIcon.setFillColor(ContextCompat.getColor(context, R.color.progress_indicator));
+        mDownloadsButton.setImageDrawable(mDownloadsIcon);
+        refreshDownloadsDescription();
 
-        downloadButton.addOnLayoutChangeListener(new OnLayoutChangeListener() {
-            @OptIn(markerClass = ExperimentalBadgeUtils.class)
-            @Override
-            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                downloadButton.removeOnLayoutChangeListener(this);
-                BadgeUtils.attachBadgeDrawable(mBadge, downloadButton);
-            }
-        });
-
-        // The same dot on ⋮ (see mMenuBadge): an app update ready, an add-on
-        // update waiting for the user.
+        // A dot on ⋮ (see mMenuBadge): an app update ready, an add-on update
+        // waiting for the user. A bare dot with no label: its background IS
+        // the signal, so it is ink, not a container.
         mMoreButton = findViewById(R.id.more_button);
         mMenuBadge = BadgeDrawable.create(context);
         mMenuBadge.setVisible(false);
         mMenuBadge.setBackgroundColor(IncognitoColors.getPrimary(context, false));
-        mMenuBadge.setVerticalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_vertical_offset));
-        mMenuBadge.setHorizontalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_horizontal_offset));
         if (mMoreButton != null) {
             mMoreDescription = mMoreButton.getContentDescription();
-            View more = mMoreButton;
-            more.addOnLayoutChangeListener(new OnLayoutChangeListener() {
-                @OptIn(markerClass = ExperimentalBadgeUtils.class)
-                @Override
-                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                    more.removeOnLayoutChangeListener(this);
-                    BadgeUtils.attachBadgeDrawable(mMenuBadge, more);
-                }
-            });
+            pinBadgeToIcon((ImageView) mMoreButton, mMenuBadge);
         }
 
         // Top hairline divider, added as the LAST child of this FrameLayout so
@@ -222,8 +214,16 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
 
         AppCompatImageButton downloadsBtn = findViewById(R.id.downloads_button);
         if (downloadsBtn != null) {
-            downloadsBtn.setImageResource(incognito ? R.drawable.ic_lock_24 : R.drawable.download_24);
+            // Private tabs: the Safe Folder's lock at rest; it gives way to
+            // the same arrow and progress line while a download runs.
+            mIncognito = incognito;
+            mDownloadsIcon.setRestGlyph(incognito
+                    ? ContextCompat.getDrawable(context, R.drawable.ic_lock_24) : null);
+            mDownloadsIcon.setFillColor(incognito
+                    ? IncognitoColors.getPrimary(context, true)
+                    : ContextCompat.getColor(context, R.color.progress_indicator));
             ImageViewCompat.setImageTintList(downloadsBtn, iconTint);
+            refreshDownloadsDescription();
         }
 
         View moreBtn = findViewById(R.id.more_button);
@@ -238,9 +238,6 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         }
 
         // Badge color — the accent, not the container (see the create() call).
-        if (mBadge != null) {
-            mBadge.setBackgroundColor(IncognitoColors.getPrimary(context, incognito));
-        }
         if (mMenuBadge != null) {
             mMenuBadge.setBackgroundColor(IncognitoColors.getPrimary(context, incognito));
         }
@@ -271,8 +268,40 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         });
     }
 
-    public void onBadgeCount(int count){
-        mBadge.setVisible(count > 0);
+    /**
+     * The Downloads button's progress for the mode on screen. {@code animate}
+     * false for a value that is not news (a screen just bound, a switch
+     * between regular and private tabs): the icon jumps to it.
+     */
+    public void setDownloadProgress(@Nullable DownloadProgress progress, boolean animate) {
+        mDownloadProgress = progress != null ? progress : DownloadProgress.NONE;
+        mDownloadsIcon.setProgress(mDownloadProgress, animate);
+        refreshDownloadsDescription();
+    }
+
+    /**
+     * The line is drawn only: what it shows, in words. In steps of 10%: a
+     * screen reader re-reads a focused button whenever its description
+     * changes, and every percent would be a sentence a second.
+     */
+    private void refreshDownloadsDescription() {
+        if (mDownloadsButton == null) {
+            return;
+        }
+        Context context = getContext();
+        String label = context.getString(mIncognito ? R.string.navigation_vault : R.string.navigation_downloads);
+        String spoken;
+        if (mDownloadProgress.state == DownloadProgress.DETERMINATE) {
+            int step = mDownloadProgress.percent / 10 * 10;
+            spoken = context.getString(R.string.bottom_bar_downloading_percent, label, step);
+        } else if (mDownloadProgress.state == DownloadProgress.INDETERMINATE) {
+            spoken = context.getString(R.string.bottom_bar_downloading, label);
+        } else {
+            spoken = label;
+        }
+        if (!spoken.contentEquals(String.valueOf(mDownloadsButton.getContentDescription()))) {
+            mDownloadsButton.setContentDescription(spoken);
+        }
     }
 
     /** Shows the ⋮ dot while an update is ready to install. */
@@ -288,6 +317,49 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     public void setAddonAttention(boolean attention) {
         mAddonAttention = attention;
         refreshMenuBadge();
+    }
+
+    /**
+     * Puts a dot in its icon's top-end corner, Material's own place for a
+     * badge on a 24dp icon. The badge measures its offsets from the BUTTON,
+     * a fifth of the bar, so fixed offsets put the dot further from its icon
+     * the wider the bar: 7dp off on a 390dp phone, 52dp in landscape. Here
+     * they come from where the button draws its icon and from the dot's size
+     * as Material rounded it at this density ({@link IconBadgeOffsets}), on
+     * every layout: a rotation resizes the bar without recreating it, and the
+     * badge keeps the button's old bounds until told
+     * ({@code setBadgeDrawableBounds}). The math is for Material 3's badge
+     * style, the app themes'.
+     */
+    private void pinBadgeToIcon(ImageView button, BadgeDrawable badge) {
+        button.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+            private boolean mAttached;
+
+            @OptIn(markerClass = ExperimentalBadgeUtils.class)
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                       int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                if (mAttached) {
+                    BadgeUtils.setBadgeDrawableBounds(badge, button, null);
+                } else {
+                    mAttached = true;
+                    BadgeUtils.attachBadgeDrawable(badge, button);
+                }
+                Drawable icon = button.getDrawable();
+                if (icon == null) {
+                    return;
+                }
+                RectF bounds = new RectF(icon.getBounds());
+                button.getImageMatrix().mapRect(bounds);
+                bounds.offset(button.getPaddingLeft(), button.getPaddingTop());
+                boolean rtl = button.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
+                badge.setHorizontalOffset(IconBadgeOffsets.horizontal(button.getWidth(),
+                        Math.round(bounds.left), Math.round(bounds.right), rtl,
+                        badge.getIntrinsicWidth()));
+                badge.setVerticalOffset(IconBadgeOffsets.vertical(Math.round(bounds.top),
+                        badge.getIntrinsicHeight()));
+            }
+        });
     }
 
     private void refreshMenuBadge() {

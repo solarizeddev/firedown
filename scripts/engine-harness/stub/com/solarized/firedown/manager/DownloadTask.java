@@ -45,6 +45,8 @@ public class DownloadTask {
     private final AtomicBoolean terminalMessageSent = new AtomicBoolean(false);
     private volatile DownloadRunnable runnable;
     private volatile Thread currentThread;
+    /** The bar's share, as the real task keeps it (see DownloadTask.getBarProgress). */
+    private volatile int barProgress;
     /** How many times this task object was (re)used — the engine recycles tasks. */
     public int initializations;
     /** Harness-only event trace, for diagnosing a stuck row. */
@@ -59,6 +61,14 @@ public class DownloadTask {
     }
 
     public static int generateId() { return IDS.incrementAndGet(); }
+
+    public int getBarProgress() { return barProgress; }
+    /** Harness: the strategy reported a percentage (or -1, no total known). */
+    public void reportBarProgress(int value) {
+        if (barProgress == value) return;
+        barProgress = value;
+        engine.onTaskProgress();
+    }
 
     public void initialize(int id, DownloadRequest request, String filePath) {
         synchronized (engine) {

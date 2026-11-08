@@ -149,6 +149,8 @@
     <string name="addons_summary">Extensiones de Firefox hechas para Android</string>
     <string name="addons_title">Complementos</string>
     <string name="addons_update_review">La actualización necesita tu revisión</string>
+    <string name="addons_update_new_permissions">La actualización pide nuevos permisos</string>
+    <string name="addons_review">Revisar</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d actualización de complemento necesita tu aprobación</item>
         <item quantity="many">%d actualizaciones de complementos necesitan tu aprobación</item>
@@ -1259,4 +1261,6 @@
     <string name="shield_no_blocker_title">Ningún bloqueador de anuncios activado</string>
     <string name="shield_turn_on">Activar</string>
     <string name="stream_audio_only_title">Solo audio</string>
+    <string name="bottom_bar_downloading_percent">%1$s, descargando, %2$d %%</string>
+    <string name="bottom_bar_downloading">%1$s, descargando</string>
 </resources>
