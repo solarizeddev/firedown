@@ -4294,19 +4294,54 @@ before changing a flow. The rules, each easy to undo:
   one (`checkForUpdates(false)`; a "last check" in the future is a clock
   that moved back and counts as due). It used to run only once per app
   start, so a process left running for days never checked again. Updates
-  that ask nothing install silently. One asking for new permissions is
-  refused in the background, the add-on marked "Update needs your review",
-  and **a notification says so once per add-on and update**
-  (`AddonUpdateNotification`, the Updates channel, Firefox for Android's
-  "new permissions" notification): for one add-on its tap opens that
-  add-on's page AND asks again as the user's check
-  (`SettingsActivity.EXTRA_REVIEW_ADDON_UPDATE` → `reviewUpdate`, held
-  until the add-on list is loaded), so the permission question comes up at
-  once; for several it opens Settings → Add-ons. The mark is what stops a
-  repeat (the next daily check finds it already marked), and the
-  notification goes when nothing waits. Declining keeps the mark, so a
-  declined update is not asked about again every day. Gecko itself is
-  never booted for this.
+  that ask nothing install silently.
+- **An update that asks for new permissions WAITS for the user, and the
+  user is told once per version, wherever they are** (`AddonUpdateReviews`,
+  pure, in the add-ons harness; saved in `backup_local`, since the add-ons
+  themselves are not backed up). The background check refuses it and
+  records, per add-on, the VERSION offered (Gecko's update prompt carries
+  the NEW add-on, `updatePromptHandler`'s `info.addon`), whether the user
+  has SEEN the question and whether a notification NAMED it. Then:
+  - **Waiting** (the mark) is what Settings says: the add-on's row in
+    Settings → Add-ons reads "Update needs your review" and its page shows
+    "Review update" in place of "Check for update", until the update is
+    installed, the add-on removed, or no update is offered any more.
+  - **Needs attention** (waiting and not seen) is what points at it: a
+    coral dot on the bottom bar's ⋮ (`BottomNavigationBar.setAddonAttention`;
+    the one badge an app update ready also lights) and on the ⋮ menus' Add-ons row
+    (`AddonUpdateDots`, `popup_addons_dot`; the browser's and the home's),
+    each also said in words to a screen reader; the ⋮ Add-ons sheet's row
+    for that add-on reads "Update needs your review" and opens the question
+    (`R.id.addon_review_update` → `EXTRA_REVIEW_ADDON_UPDATE`) instead of
+    the add-on's own button, and "Manage add-ons" carries the dot when the
+    add-on isn't listed in this tab's mode (off, or not allowed in private
+    tabs); the Settings home's Add-ons row takes the notification's words.
+    The notification (`AddonUpdateNotification`, the Updates channel,
+    Firefox for Android's "new permissions" one; one add-on → its page with
+    the question put at once, several → Settings → Add-ons) is posted once
+    per version, and only when it can be SEEN: without the permission, with
+    the app's notifications or the Updates channel off, it stays due and
+    goes out at the next start or hourly look after they are turned on. A
+    swiped-away notification is not brought back for the same version.
+  - **Seeing the question clears every pointer, whatever the answer.**
+    Cancel (or Back) keeps the old version and the mark, but no dot, no
+    sheet line and no notification point at it any more: a dot that only
+    Update could clear would push people into granting permissions to make
+    it stop. A DIFFERENT version offered later arms all of it again.
+  - Cancel is not an error: Gecko reports a declined update as a cancelled
+    install, which used to show "Couldn't add <add-on>" right after the
+    user said no; a declined question's failure says nothing now
+    (`mDeclinedUpdates`), and a real failure of the user's check says
+    "Couldn't update <add-on>" (`Event.UPDATE_FAILED`).
+  - **A waiting add-on is checked again weekly, not daily**
+    (`RECHECK_INTERVAL_MS`): Gecko downloads an update before it asks, so a
+    daily check of a marked add-on downloaded the same refused file every
+    day. Weekly is what lets a newer version (asking for still more) be
+    noticed. The user's own check always runs.
+  - Marks from builds that kept only ids are moved over once: they need
+    attention, count as already notified, and learn their version from the
+    next check without asking again.
+  Gecko itself is never booted for any of this.
 - **Optional permissions are the user's to take back**, as in Firefox:
   the add-on's page lists each optional permission, site and data kind it
   declares as a switch, on when granted (`setOptionalPermission` →
@@ -4436,7 +4471,7 @@ before changing a flow. The rules, each easy to undo:
   them.
 - **Verify** with `sh scripts/addons-harness/run.sh /path/to/firefox-src`
   (the real pure classes against Firefox's own test fixtures and AMO
-  shapes; 96 checks without the Firefox fixtures, sixteen mutants must
+  shapes; 117 checks without the Firefox fixtures, 21 mutants must
   fail), the JUnit
   `AddonsPureTest`, and on a device `addons/AddonsDeviceTest`
   (`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.addons.AddonsDeviceTest`;
@@ -4869,7 +4904,9 @@ is **~75 MB**, the APK 205 MB.
   update waits, both ⋮ menus lead with an "Update ready" row
   (`item_popup_update_ready`, `PopupUpdateRow`) and the bottom bar's ⋮ wears
   a dot (`BottomNavigationBar.setUpdateReady`, fed by `UpdateReadyLiveData`,
-  a preference listener). The row opens the sheet on purpose
+  a preference listener; ONE badge shared with an add-on update waiting for
+  the user, `setAddonAttention`, shown while either holds, each reason said
+  in the button's spoken label). The row opens the sheet on purpose
   (`openOnPurpose`: no place, busy or snooze rule, and closing it writes no
   snooze); the sheet then says what would stop (`update_busy_*`). The
   sheet itself: no size (it is already downloaded, and the file on disk is

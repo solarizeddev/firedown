@@ -39,6 +39,7 @@
     <string name="addon_installed">Dodano %1$s. Znajdziesz go w menu ⋮.</string>
     <string name="addon_network">Nie udało się pobrać dodatku. Sprawdź połączenie.</string>
     <string name="addon_no_update">%1$s jest aktualny</string>
+    <string name="addon_update_failed">Nie udało się zaktualizować %1$s</string>
     <string name="addon_not_an_addon">Ten plik nie jest dodatkiem do Firefoksa</string>
     <string name="addon_optional_data">Udostępniaj twórcy: %1$s</string>
     <string name="addon_optional_permissions">Uprawnienia opcjonalne</string>

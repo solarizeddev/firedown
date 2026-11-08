@@ -347,9 +347,21 @@
                 app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
 
                 <TextView
+                    android:id="@+id/popup_addons_label"
                     style="@style/Firedown.Widget.SheetRowText"
                     android:text="@string/addons_title"
                     app:drawableStartCompat="@drawable/extension_24" />
+
+                <!-- An add-on update waits for the user's OK (AddonUpdateDots). -->
+                <View
+                    android:id="@+id/popup_addons_dot"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginEnd="24dp"
+                    android:background="@drawable/bg_drm_dot"
+                    android:importantForAccessibility="no"
+                    android:visibility="gone" />
 
             </com.google.android.material.card.MaterialCardView>
 

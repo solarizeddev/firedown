@@ -361,6 +361,8 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
                 return named ? getString(R.string.addon_updated, name) : null;
             case AddonManager.Event.NO_UPDATE:
                 return named ? getString(R.string.addon_no_update, name) : null;
+            case AddonManager.Event.UPDATE_FAILED:
+                return named ? getString(R.string.addon_update_failed, name) : null;
             case AddonManager.Event.REMOVED:
                 return named ? getString(R.string.addon_removed, name) : null;
             default:

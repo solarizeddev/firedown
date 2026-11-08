@@ -668,6 +668,7 @@ public class BrowserFragment extends BaseBrowserFragment
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        observeAddonAttention(mBottomNavigationBar);
         Log.d(TAG, "onViewCreated");
 
         // FRAMED chrome: the root pads itself on ALL FOUR sides by the
@@ -878,6 +879,15 @@ public class BrowserFragment extends BaseBrowserFragment
                 Intent addonsIntent = new Intent(mActivity, SettingsActivity.class);
                 addonsIntent.putExtra(SettingsActivity.EXTRA_OPEN_ADDONS, true);
                 mStartForResult.launch(addonsIntent);
+            } else if (id == R.id.addon_review_update) {
+                // The ⋮ sheet's "Update needs your review": the add-on's page,
+                // with its permission question put at once (the notification's tap).
+                String addonId = mOptionEntity.getAction();
+                if (addonId != null) {
+                    Intent reviewIntent = new Intent(mActivity, SettingsActivity.class);
+                    reviewIntent.putExtra(SettingsActivity.EXTRA_REVIEW_ADDON_UPDATE, addonId);
+                    mStartForResult.launch(reviewIntent);
+                }
             } else if (id == R.id.popup_share) {
                 GeckoState mGeckoState = peekCurrentGeckoState();
                 if (mGeckoState == null) return;

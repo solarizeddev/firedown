@@ -36,6 +36,7 @@
     <string name="addon_installed">Додаток %1$s додано. Шукайте його в меню ⋮.</string>
     <string name="addon_network">Не вдалося завантажити додаток. Перевірте з’єднання.</string>
     <string name="addon_no_update">Для %1$s немає оновлень</string>
+    <string name="addon_update_failed">Не вдалося оновити %1$s</string>
     <string name="addon_not_an_addon">Цей файл не є додатком Firefox</string>
     <string name="addon_optional_data">Передавати розробнику: %1$s</string>
     <string name="addon_optional_permissions">Необов’язкові дозволи</string>

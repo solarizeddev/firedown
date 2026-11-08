@@ -52,9 +52,22 @@
                     style="@style/Firedown.Widget.SheetRowCard">
 
                     <TextView
+                        android:id="@+id/addon_actions_manage_label"
                         style="@style/Firedown.Widget.SheetRowText"
                         android:text="@string/addons_manage"
                         app:drawableStartCompat="@drawable/ic_settings_24" />
+
+                    <!-- An add-on whose update waits is not listed above (off,
+                         or not allowed in private tabs): its door is here. -->
+                    <View
+                        android:id="@+id/addon_actions_manage_dot"
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:layout_gravity="end|center_vertical"
+                        android:layout_marginEnd="24dp"
+                        android:background="@drawable/bg_drm_dot"
+                        android:importantForAccessibility="no"
+                        android:visibility="gone" />
 
                 </com.google.android.material.card.MaterialCardView>
 

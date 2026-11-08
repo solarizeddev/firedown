@@ -39,8 +39,16 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     private TabsBrowserButton mTabsCountButton;
 
     private BadgeDrawable mBadge;
-    /** A dot on the ⋮ while an update is ready (its "Update ready" row). */
-    private BadgeDrawable mUpdateBadge;
+    /**
+     * The ⋮ dot. Two reasons share it: an app update is ready (its "Update
+     * ready" row) and an add-on update waits for the user's OK (the Add-ons
+     * row). Shown while either holds; said in words to a screen reader.
+     */
+    private BadgeDrawable mMenuBadge;
+    @Nullable private View mMoreButton;
+    @Nullable private CharSequence mMoreDescription;
+    private boolean mUpdateReady;
+    private boolean mAddonAttention;
 
     // Top hairline divider (Firefox-parity). The bar is painted the page
     // SURFACE tone (not a tonal surfaceContainer step), so it would dissolve
@@ -124,21 +132,6 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         mBadge.setVerticalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_vertical_offset));
         mBadge.setHorizontalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_horizontal_offset));
 
-        mUpdateBadge = BadgeDrawable.create(context);
-        mUpdateBadge.setVisible(false);
-        mUpdateBadge.setBackgroundColor(IncognitoColors.getPrimary(context, false));
-        mUpdateBadge.setVerticalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_vertical_offset));
-        mUpdateBadge.setHorizontalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_horizontal_offset));
-        View moreButton = findViewById(R.id.more_button);
-        moreButton.addOnLayoutChangeListener(new OnLayoutChangeListener() {
-            @OptIn(markerClass = ExperimentalBadgeUtils.class)
-            @Override
-            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                moreButton.removeOnLayoutChangeListener(this);
-                BadgeUtils.attachBadgeDrawable(mUpdateBadge, moreButton);
-            }
-        });
-
         downloadButton.addOnLayoutChangeListener(new OnLayoutChangeListener() {
             @OptIn(markerClass = ExperimentalBadgeUtils.class)
             @Override
@@ -147,6 +140,27 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
                 BadgeUtils.attachBadgeDrawable(mBadge, downloadButton);
             }
         });
+
+        // The same dot on ⋮ (see mMenuBadge): an app update ready, an add-on
+        // update waiting for the user.
+        mMoreButton = findViewById(R.id.more_button);
+        mMenuBadge = BadgeDrawable.create(context);
+        mMenuBadge.setVisible(false);
+        mMenuBadge.setBackgroundColor(IncognitoColors.getPrimary(context, false));
+        mMenuBadge.setVerticalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_vertical_offset));
+        mMenuBadge.setHorizontalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_horizontal_offset));
+        if (mMoreButton != null) {
+            mMoreDescription = mMoreButton.getContentDescription();
+            View more = mMoreButton;
+            more.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+                @OptIn(markerClass = ExperimentalBadgeUtils.class)
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    more.removeOnLayoutChangeListener(this);
+                    BadgeUtils.attachBadgeDrawable(mMenuBadge, more);
+                }
+            });
+        }
 
         // Top hairline divider, added as the LAST child of this FrameLayout so
         // it draws OVER the bar background at the very top edge. Not a child of
@@ -227,8 +241,8 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         if (mBadge != null) {
             mBadge.setBackgroundColor(IncognitoColors.getPrimary(context, incognito));
         }
-        if (mUpdateBadge != null) {
-            mUpdateBadge.setBackgroundColor(IncognitoColors.getPrimary(context, incognito));
+        if (mMenuBadge != null) {
+            mMenuBadge.setBackgroundColor(IncognitoColors.getPrimary(context, incognito));
         }
 
         // Top hairline — a soft line (outlineVariant read too prominent).
@@ -263,9 +277,41 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
 
     /** Shows the ⋮ dot while an update is ready to install. */
     public void setUpdateReady(boolean ready) {
-        if (mUpdateBadge != null) {
-            mUpdateBadge.setVisible(ready);
+        mUpdateReady = ready;
+        refreshMenuBadge();
+    }
+
+    /**
+     * An add-on update asks for new permissions and the user has not seen
+     * the question (AddonManager.getUpdateAttention).
+     */
+    public void setAddonAttention(boolean attention) {
+        mAddonAttention = attention;
+        refreshMenuBadge();
+    }
+
+    private void refreshMenuBadge() {
+        if (mMenuBadge == null) {
+            return;
         }
+        mMenuBadge.setVisible(mUpdateReady || mAddonAttention);
+        if (mMoreButton == null) {
+            return;
+        }
+        if (!mUpdateReady && !mAddonAttention) {
+            mMoreButton.setContentDescription(mMoreDescription);
+            return;
+        }
+        // The dot alone is colour only: the reasons, in words.
+        StringBuilder spoken = new StringBuilder(mMoreDescription != null ? mMoreDescription
+                : getContext().getString(R.string.tabs_more_options));
+        if (mUpdateReady) {
+            spoken.append(", ").append(getContext().getString(R.string.update_ready_title));
+        }
+        if (mAddonAttention) {
+            spoken.append(", ").append(getContext().getString(R.string.addons_update_review));
+        }
+        mMoreButton.setContentDescription(spoken);
     }
 
     public void onTabsCount(int count) {

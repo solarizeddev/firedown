@@ -36,6 +36,7 @@
     <string name="addon_installed">%1$s lisati. Leiad selle ⋮ menüüst.</string>
     <string name="addon_network">Lisa ei õnnestunud alla laadida. Kontrolli ühendust.</string>
     <string name="addon_no_update">%1$s on ajakohane</string>
+    <string name="addon_update_failed">%1$s uuendamine ebaõnnestus</string>
     <string name="addon_not_an_addon">See fail pole Firefoxi lisa</string>
     <string name="addon_optional_data">Jaga arendajaga: %1$s</string>
     <string name="addon_optional_permissions">Valikulised õigused</string>

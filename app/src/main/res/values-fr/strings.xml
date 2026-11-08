@@ -38,6 +38,7 @@
     <string name="addon_installed">%1$s ajouté. Retrouvez-le dans le menu ⋮.</string>
     <string name="addon_network">Impossible de télécharger le module complémentaire. Vérifiez votre connexion.</string>
     <string name="addon_no_update">%1$s est à jour</string>
+    <string name="addon_update_failed">Impossible de mettre à jour %1$s</string>
     <string name="addon_not_an_addon">Ce fichier n\'est pas un module complémentaire Firefox</string>
     <string name="addon_optional_data">Partager avec le développeur : %1$s</string>
     <string name="addon_optional_permissions">Autorisations facultatives</string>

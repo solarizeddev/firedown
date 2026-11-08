@@ -38,6 +38,7 @@
     <string name="addon_installed">%1$s hinzugefügt. Du findest es im Menü ⋮.</string>
     <string name="addon_network">Das Add-on konnte nicht heruntergeladen werden. Prüfe deine Verbindung.</string>
     <string name="addon_no_update">%1$s ist auf dem neuesten Stand</string>
+    <string name="addon_update_failed">%1$s konnte nicht aktualisiert werden</string>
     <string name="addon_not_an_addon">Diese Datei ist kein Firefox-Add-on</string>
     <string name="addon_optional_data">Mit dem Entwickler teilen: %1$s</string>
     <string name="addon_optional_permissions">Optionale Berechtigungen</string>

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Add-ons harness: the REAL pure add-on classes (AddonPolicy, AmoCatalog,
+# Add-ons harness: the REAL pure add-on classes (AddonPolicy, AmoCatalog, AddonUpdateReviews,
 # XpiManifest, AddonPermissions — copied from app/src, never re-typed) on a
 # plain JVM with org.json from Maven Central (sha1-checked, cached). Then
 # MUTANTS that must each fail it: the built-in ID check without our domain,
@@ -9,8 +9,11 @@
 # check, https alone taken for all sites, any add-on's "(off)" believed, a
 # running blocker hiding another's "off", the user's shield switch ignored,
 # any add-on that can block requests counted as an ad blocker, the known-ID
-# list read case-sensitively, the shield switch offered to every add-on, and
-# uBlock's per-tab title echoed under its name.
+# list read case-sensitively, the shield switch offered to every add-on,
+# uBlock's per-tab title echoed under its name, and the update reviews: a
+# newer version not arming the mark again, a declined question still
+# nagging, an old build's mark notified twice or re-armed, and a waiting
+# add-on rechecked (downloaded) every day.
 #
 # usage: sh scripts/addons-harness/run.sh [mozilla-firefox checkout]
 #   With a Firefox source checkout, Firefox's own AMO fixtures are parsed too
@@ -19,7 +22,7 @@ set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
 PKG="app/src/main/java/com/solarized/firedown/addons"
-CLASSES="AddonPolicy AmoCatalog XpiManifest AddonPermissions"
+CLASSES="AddonPolicy AmoCatalog XpiManifest AddonPermissions AddonUpdateReviews"
 BUILD="$HERE/build"
 FIREFOX_SRC="$1"
 CACHE=${FIREDOWN_HARNESS_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/firedown-harness/maven}
@@ -111,4 +114,9 @@ mutant permsblock AddonPolicy 's/return isKnownBlocker(id);/return true;/'
 mutant nocase AddonPolicy 's/KNOWN_BLOCKER_IDS.contains(id.trim().toLowerCase(Locale.ROOT))/KNOWN_BLOCKER_IDS.contains(id)/'
 mutant anyswitch AddonPolicy 's/return override != null || isKnownBlocker(id) || blocksRequests;/return true;/'
 mutant titleecho AddonPolicy 's/if (!n.isEmpty() \&\& !b.isEmpty() \&\& t.equals(n + " (" + b + ")")) {/if (false) {/'
+mutant norearm AddonUpdateReviews 's/entry.shown = false;/entry.shown = entry.shown;/'
+mutant nagdecline AddonUpdateReviews 's/entry.shown = true;/entry.shown = false;/'
+mutant legacynotify AddonUpdateReviews 's/new Entry("", false, true)/new Entry("", false, false)/'
+mutant legacyrearm AddonUpdateReviews 's/if (entry.version.isEmpty()) {/if (false) {/'
+mutant dailyrecheck AddonUpdateReviews 's/return now < lastRecheck || now - lastRecheck >= RECHECK_INTERVAL_MS;/return true;/'
 exit $status

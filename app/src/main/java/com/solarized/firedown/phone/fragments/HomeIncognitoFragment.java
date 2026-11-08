@@ -223,6 +223,7 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        observeAddonAttention(mBottomNavigationBar);
 
         Log.d(TAG, "onViewCreated");
 

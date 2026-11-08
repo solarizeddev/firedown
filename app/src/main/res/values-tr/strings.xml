@@ -39,6 +39,7 @@
     <string name="addon_installed">%1$s eklendi. ⋮ menüsünde bulabilirsiniz.</string>
     <string name="addon_network">Eklenti indirilemedi. Bağlantınızı kontrol edin.</string>
     <string name="addon_no_update">%1$s güncel</string>
+    <string name="addon_update_failed">%1$s güncellenemedi</string>
     <string name="addon_not_an_addon">Bu dosya bir Firefox eklentisi değil</string>
     <string name="addon_optional_data">Geliştiriciyle paylaş: %1$s</string>
     <string name="addon_optional_permissions">İsteğe bağlı izinler</string>

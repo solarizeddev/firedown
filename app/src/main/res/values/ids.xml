@@ -80,4 +80,6 @@
     <!-- Tag key: the card background a settings row holder is wearing, so a
          rebind with the same group position reuses it (CardPreferenceGroupAdapter). -->
     <item name="settings_card_background" type="id" />
+    <!-- The ⋮ Add-ons sheet asks BrowserFragment to open an add-on's waiting update (OptionEntity action = its id). -->
+    <item name="addon_review_update" type="id" />
 </resources>

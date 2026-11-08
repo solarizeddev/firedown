@@ -27,6 +27,7 @@
     <string name="addon_installed">Đã thêm %1$s. Tìm trong menu ⋮.</string>
     <string name="addon_network">Không thể tải tiện ích. Hãy kiểm tra kết nối.</string>
     <string name="addon_no_update">%1$s đã là phiên bản mới nhất</string>
+    <string name="addon_update_failed">Không thể cập nhật %1$s</string>
     <string name="addon_not_an_addon">Tệp này không phải là tiện ích Firefox</string>
     <string name="addon_optional_data">Chia sẻ %1$s với nhà phát triển</string>
     <string name="addon_optional_permissions">Quyền tùy chọn</string>
