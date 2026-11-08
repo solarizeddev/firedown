@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.OpenableColumns;
 import android.text.TextUtils;
 import android.util.Log;
@@ -1383,6 +1384,9 @@ public class GeckoComponents {
 
             // Always keep controller state fresh
             mGeckoMediaController.onPositionChange(mediaSession, geckoState, positionState);
+            // Per tab and ungated: the double-tap seek reads it.
+            geckoState.setMediaPosition(positionState.duration, positionState.position,
+                    positionState.playbackRate, SystemClock.elapsedRealtime());
 
 
             if (isCurrentGeckoState(geckoState))
@@ -1400,6 +1404,8 @@ public class GeckoComponents {
                 return;
 
             mGeckoMediaController.onDeactivated(geckoState);
+            geckoState.clearMediaPosition();
+            geckoState.setMediaFullScreen(false);
 
             if(isCurrentGeckoState(geckoState))
                 mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.MEDIA_DEACTIVATED, geckoState, mediaSession);
@@ -1461,6 +1467,7 @@ public class GeckoComponents {
             // Per tab and ungated, like the DOM fullscreen flag: the
             // browser's picture-in-picture window reads it when the user
             // leaves the app.
+            geckoState.setMediaFullScreen(enabled);
             if (enabled && meta != null) {
                 geckoState.setMediaFullScreenSize((int) meta.width, (int) meta.height);
             } else {

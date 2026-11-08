@@ -518,6 +518,20 @@ public class GeckoMediaController {
     }
 
     /**
+     * Seeks one tab's media to a time in seconds. The page's own "seekto"
+     * handler runs when it has one, else Gecko sets the element's time.
+     * Returns false when that tab has no media session.
+     */
+    public boolean seekTo(int sessionId, double seconds) {
+        GeckoMediaSession session = mSessionMap.get(sessionId);
+        if (session == null) {
+            return false;
+        }
+        session.getMediaSession().seekTo(seconds, false);
+        return true;
+    }
+
+    /**
      * Sends MEDIA_STOP to the playback service.
      */
     private void stopService() {

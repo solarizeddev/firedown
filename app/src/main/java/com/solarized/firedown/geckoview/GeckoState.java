@@ -716,6 +716,63 @@ public class GeckoState {
         return mMediaFullScreenHeight;
     }
 
+    /**
+     * Whether the page's media is in fullscreen (MediaSession onFullscreen),
+     * as opposed to a fullscreen page with no video in it. Gates the
+     * double-tap seek. Not persisted.
+     */
+    private boolean mMediaFullScreen;
+
+    public void setMediaFullScreen(boolean fullScreen) {
+        mMediaFullScreen = fullScreen;
+    }
+
+    public boolean isMediaFullScreen() {
+        return mMediaFullScreen;
+    }
+
+    // ── Media position (MediaSession.Delegate.onPositionState) ──────────────
+
+    /**
+     * The last position state the page's media reported, per tab, and when
+     * (elapsedRealtime). The double-tap seek moves it on by the time since.
+     * NaN duration = nothing reported.
+     */
+    private double mMediaDuration = Double.NaN;
+    private double mMediaPosition;
+    private double mMediaRate = 1.0;
+    private long mMediaPositionAt;
+
+    public void setMediaPosition(double duration, double position, double rate, long at) {
+        mMediaDuration = duration;
+        mMediaPosition = position;
+        mMediaRate = rate;
+        mMediaPositionAt = at;
+    }
+
+    public void clearMediaPosition() {
+        mMediaDuration = Double.NaN;
+        mMediaPosition = 0;
+        mMediaRate = 1.0;
+        mMediaPositionAt = 0;
+    }
+
+    public double getMediaDuration() {
+        return mMediaDuration;
+    }
+
+    public double getMediaPosition() {
+        return mMediaPosition;
+    }
+
+    public double getMediaRate() {
+        return mMediaRate;
+    }
+
+    public long getMediaPositionAt() {
+        return mMediaPositionAt;
+    }
+
     // ── Error page (see mShowingErrorPage) ───────────────────────────────────
 
     /**

@@ -36,6 +36,42 @@
 
     </com.solarized.firedown.geckoview.GeckoSwipeRefreshLayout>
 
+    <!--
+        Double-tap seek on a web video in page fullscreen
+        (WebVideoSeekGesture): the cumulative "−20 s" badge at the tapped
+        edge, the file player's. Not clickable, hidden from accessibility
+        (the gesture is off under touch exploration).
+    -->
+    <TextView
+        android:id="@+id/web_seek_feedback_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|center_vertical"
+        android:layout_marginStart="40dp"
+        android:background="@drawable/bg_seek_feedback"
+        android:fontFamily="sans-serif-medium"
+        android:importantForAccessibility="no"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="8dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/web_seek_feedback_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="40dp"
+        android:background="@drawable/bg_seek_feedback"
+        android:fontFamily="sans-serif-medium"
+        android:importantForAccessibility="no"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="8dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
 
     <com.solarized.firedown.geckoview.GeckoToolbar
         android:id="@+id/toolbar_layout"

@@ -13023,6 +13023,33 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   when the viewport shrinks into the window → answered, no dialog). Written
   for #311; not run on a device at write time.
 
+### Double-tap seek on web video in page fullscreen
+
+A web video in page fullscreen seeks ±10 s on a double tap of the left or
+right third, like the file player (feedback from 1.2.5). Pure rules in
+`phone/WebVideoSeekGesture` (`WebVideoSeekGestureTest`, JVM); wiring in
+`BrowserFragment.setupWebVideoSeek` through `NestedGeckoView.setTouchFilter`.
+- **The first tap goes to the page; the second, and every streak tap, is
+  kept from it** (a gesture is kept or passed WHOLE, decided at its first
+  down). So a site's own tap handler still shows its controls, and the page
+  never sees a double tap on the sides: no double-tap zoom, and a player
+  that seeks on double tap by itself cannot add its seek to ours. Gecko
+  delivers the lone first tap after its double-tap wait, as for any single
+  tap. The middle third is the page's.
+- **The seek is the tab's MediaSession `seekTo`**, so a page's own
+  `seekto` action handler runs when it has one. The target is the last
+  `onPositionState` (stored per tab on `GeckoState`, ungated, with the time
+  it arrived) moved on by the time since while playing, clamped to
+  [0, duration]; after a seek the stored position is set to the target so
+  the next streak tap counts from there. A live stream (no finite duration)
+  is not seekable this way.
+- **Active only** in DOM fullscreen (`mUiState` FULL_SCREEN and the tab's
+  `isFullScreen`), the tab having a media session that is the fullscreen
+  element's (`onFullscreen`, `isMediaFullScreen`) or playing (a container
+  div fullscreen), never under touch exploration (double tap is
+  TalkBack's activate) or in PiP.
+- On-device unverified at write time.
+
 ### Subtitles in the local player — side-loaded downloads, one sheet, add a file
 
 The local player (`MediaViewerFragment`) shows subtitles: the downloaded

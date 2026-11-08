@@ -1,6 +1,7 @@
 ## [1.2.8] - 2026-11-08
 
 - Fullscreen videos keep playing in a picture-in-picture window when you leave the app
+- Fullscreen web videos: double-tap the left or right side to skip back or ahead 10 seconds
 - The update prompt opens only when it interrupts nothing, and waits in the ⋮ menu
 - Add-ons: the list shows each add-on's rating and users, and its page lists permissions one by one
 
