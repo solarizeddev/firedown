@@ -6658,6 +6658,15 @@ and sketches; the rules, each from a rejected option:
 - **Spoken**: the button says "Downloads, downloading, 40%" / "Downloads,
   downloading" (`bottom_bar_downloading_percent` / `bottom_bar_downloading`,
   the Safe Folder's name in private tabs); it had no description before.
+  In steps of 10%, set only when the text changes: a screen reader re-reads
+  a focused button whenever its description changes.
+- **Rules from Fable's review of the first build** (each a real path): a
+  value that is not news (a regular/private switch) LANDS even idle → idle,
+  or the other mode's finish (fill, hold, morph back) plays on this bar; a
+  switch to "no known total" drops the old fill, or a stale 40% fades out
+  on the way back to rest; a new group cancels a way back still waiting out
+  its hold (`isStarted()`, not `isRunning()`: a delayed animator is started
+  but not running).
 - **Verify** with `sh scripts/downloads-line-harness/run.sh` (the geometry:
   the rest tray equals Material's, the line in the box and 4dp under the
   tip, fill from the start edge in RTL, minimum 2dp, the piece clipped to

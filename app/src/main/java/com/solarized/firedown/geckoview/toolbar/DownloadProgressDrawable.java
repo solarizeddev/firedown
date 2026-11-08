@@ -141,6 +141,12 @@ public final class DownloadProgressDrawable extends Drawable {
         if (!progress.isActive()) {
             stopSweep();
             if (!wasActive) {
+                // idle → idle. Not news (a switch between regular and private
+                // tabs): land, or the other mode's finish would keep playing
+                // (fill, hold, morph back) on this bar.
+                if (!motion) {
+                    jumpTo(0f, 0f);
+                }
                 return;
             }
             if (motion && progress.completed && previous.state == DownloadProgress.DETERMINATE) {
@@ -154,9 +160,11 @@ public final class DownloadProgressDrawable extends Drawable {
         }
 
         float target = progress.state == DownloadProgress.DETERMINATE ? progress.percent / 100f : 0f;
-        if (!wasActive) {
+        if (!wasActive || progress.state == DownloadProgress.INDETERMINATE) {
             // A new group: whatever the last one was doing (a finish still
-            // filling or holding) is over, and its line starts empty.
+            // filling or holding) is over, and its line starts empty. No
+            // known total: the old fill means nothing, and must not fade out
+            // on the way back to rest.
             cancel(mFillAnimator);
             mFill = 0f;
         }

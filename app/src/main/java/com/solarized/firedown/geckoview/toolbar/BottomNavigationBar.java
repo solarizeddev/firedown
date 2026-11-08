@@ -279,22 +279,29 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         refreshDownloadsDescription();
     }
 
-    /** The line is drawn only: what it shows, in words. */
+    /**
+     * The line is drawn only: what it shows, in words. In steps of 10%: a
+     * screen reader re-reads a focused button whenever its description
+     * changes, and every percent would be a sentence a second.
+     */
     private void refreshDownloadsDescription() {
         if (mDownloadsButton == null) {
             return;
         }
         Context context = getContext();
         String label = context.getString(mIncognito ? R.string.navigation_vault : R.string.navigation_downloads);
-        CharSequence spoken;
+        String spoken;
         if (mDownloadProgress.state == DownloadProgress.DETERMINATE) {
-            spoken = context.getString(R.string.bottom_bar_downloading_percent, label, mDownloadProgress.percent);
+            int step = mDownloadProgress.percent / 10 * 10;
+            spoken = context.getString(R.string.bottom_bar_downloading_percent, label, step);
         } else if (mDownloadProgress.state == DownloadProgress.INDETERMINATE) {
             spoken = context.getString(R.string.bottom_bar_downloading, label);
         } else {
             spoken = label;
         }
-        mDownloadsButton.setContentDescription(spoken);
+        if (!spoken.contentEquals(String.valueOf(mDownloadsButton.getContentDescription()))) {
+            mDownloadsButton.setContentDescription(spoken);
+        }
     }
 
     /** Shows the ⋮ dot while an update is ready to install. */
