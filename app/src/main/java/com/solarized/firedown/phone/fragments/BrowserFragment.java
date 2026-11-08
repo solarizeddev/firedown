@@ -1885,6 +1885,8 @@ public class BrowserFragment extends BaseBrowserFragment
         // left it, so there is nothing to enter again.
         if (fullScreen && mFullScreenExitDeferred && mUiState == UiState.FULL_SCREEN) {
             mFullScreenExitDeferred = false;
+            // Still a new fullscreen stint for double-tap seek.
+            mWebSeekGate.clear();
             return;
         }
         mFullScreenExitDeferred = false;
