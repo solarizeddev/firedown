@@ -146,6 +146,8 @@
     <string name="addons_summary">Firefox-Erweiterungen für Android</string>
     <string name="addons_title">Add-ons</string>
     <string name="addons_update_review">Update wartet auf deine Prüfung</string>
+    <string name="addons_update_new_permissions">Update verlangt neue Berechtigungen</string>
+    <string name="addons_review">Prüfen</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d Add-on-Update wartet auf deine Zustimmung</item>
         <item quantity="other">%d Add-on-Updates warten auf deine Zustimmung</item>

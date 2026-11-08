@@ -150,6 +150,8 @@
     <string name="addons_summary">Rozšíření Firefoxu vytvořená pro Android</string>
     <string name="addons_title">Doplňky</string>
     <string name="addons_update_review">Aktualizace čeká na posouzení</string>
+    <string name="addons_update_new_permissions">Aktualizace žádá nová oprávnění</string>
+    <string name="addons_review">Posoudit</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d aktualizace doplňku čeká na váš souhlas</item>
         <item quantity="few">%d aktualizace doplňků čekají na váš souhlas</item>

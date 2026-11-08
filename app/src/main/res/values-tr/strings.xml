@@ -147,6 +147,8 @@
     <string name="addons_summary">Android için yapılmış Firefox uzantıları</string>
     <string name="addons_title">Eklentiler</string>
     <string name="addons_update_review">Güncellemenin incelenmesi gerekiyor</string>
+    <string name="addons_update_new_permissions">Güncelleme yeni izinler istiyor</string>
+    <string name="addons_review">İncele</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d eklenti güncellemesi onayınızı bekliyor</item>
         <item quantity="other">%d eklenti güncellemesi onayınızı bekliyor</item>

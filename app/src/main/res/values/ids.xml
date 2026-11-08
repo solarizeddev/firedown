@@ -84,4 +84,6 @@
     <item name="addon_review_update" type="id" />
     <!-- A menu label's own end padding, kept while AddonUpdateDots widens it for the dot. -->
     <item name="addon_dot_label_padding" type="id" />
+    <!-- An installed add-on row's "Review update" action for screen readers (ReviewPreference). -->
+    <item name="addon_review_action" type="id" />
 </resources>

@@ -2,6 +2,7 @@ package com.solarized.firedown.settings.ui;
 
 import android.content.Context;
 import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -12,8 +13,8 @@ import androidx.preference.PreferenceViewHolder;
 import com.solarized.firedown.R;
 
 /**
- * An add-on in Mozilla's list: an "Add" button in the trailing slot, so
- * the row says what a tap does (a tap anywhere on it does the same). While
+ * An add-on in Mozilla's list: a "+" in the trailing slot, so the row
+ * says what a tap does (a tap anywhere on it does the same). While
  * the add-on installs the {@link BusyPreference} spinner takes the button's
  * place; a row that can't be added (a built-in id) shows no button.
  */
@@ -44,6 +45,17 @@ public class CatalogPreference extends BusyPreference {
         View action = holder.findViewById(R.id.preference_action);
         if (action == null) {
             return;
+        }
+        // The slot's -8dp end margin draws the button into the row's end
+        // padding; its ripple must not be cut at the frame or the padding.
+        View parent = (View) action.getParent();
+        while (parent instanceof ViewGroup) {
+            ((ViewGroup) parent).setClipChildren(false);
+            if (parent == holder.itemView) {
+                ((ViewGroup) parent).setClipToPadding(false);
+                break;
+            }
+            parent = (View) parent.getParent();
         }
         action.setVisibility(shown ? View.VISIBLE : View.GONE);
         action.setOnClickListener(shown ? v -> {

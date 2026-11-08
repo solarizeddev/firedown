@@ -144,6 +144,8 @@
     <string name="addons_summary">Androidi jaoks tehtud Firefoxi laiendused</string>
     <string name="addons_title">Lisad</string>
     <string name="addons_update_review">Uuendus vajab sinu ülevaatust</string>
+    <string name="addons_update_new_permissions">Uuendus küsib uusi õigusi</string>
+    <string name="addons_review">Vaata üle</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d lisa uuendus ootab sinu nõusolekut</item>
         <item quantity="other">%d lisa uuendust ootavad sinu nõusolekut</item>
