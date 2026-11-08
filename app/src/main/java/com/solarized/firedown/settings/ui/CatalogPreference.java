@@ -12,8 +12,8 @@ import androidx.preference.PreferenceViewHolder;
 import com.solarized.firedown.R;
 
 /**
- * An add-on in Mozilla's list: an "Add" button in the trailing slot, so
- * the row says what a tap does (a tap anywhere on it does the same). While
+ * An add-on in Mozilla's list: a "+" in the trailing slot, so the row
+ * says what a tap does (a tap anywhere on it does the same). While
  * the add-on installs the {@link BusyPreference} spinner takes the button's
  * place; a row that can't be added (a built-in id) shows no button.
  */

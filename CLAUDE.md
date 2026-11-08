@@ -4303,7 +4303,8 @@ before changing a flow. The rules, each easy to undo:
   the NEW add-on, `updatePromptHandler`'s `info.addon`), whether the user
   has SEEN the question and whether a notification NAMED it. Then:
   - **Waiting** (the mark) is what Settings says: the add-on's row in
-    Settings → Add-ons reads "Update needs your review" and its page shows
+    Settings → Add-ons reads "Update asks for new permissions" (with a
+    "Review" button while unseen, see the add-on screens' shape) and its page shows
     "Review update" in place of "Check for update", until the update is
     installed, the add-on removed, or no update is offered any more. That
     last one is believed only on a network Android has VALIDATED
@@ -4449,12 +4450,31 @@ before changing a flow. The rules, each easy to undo:
   and user count, a 12sp line, either half left out when the list doesn't
   say) over the first TWO lines of Mozilla's summary with "…" (summaries
   ran to five lines and stranded the icon beside the third; hard line
-  breaks are collapsed in `AmoCatalog`), and a tonal "Add" button in the
-  trailing slot (the shield sheet's "Turn on" shape, 12dp padding) so the
-  row says what a tap does. The meta line does NOT always fit one line:
+  breaks are collapsed in `AmoCatalog`), and a bare "+" in `?attr/brandInk`
+  in the trailing slot (`add_24` in a 48dp icon button, Firefox for
+  Android's shape) so the row says what a tap does. It was a tonal "Add"
+  pill (the shield sheet's "Turn on") until on-device it read as too loud
+  (a filled peach button on every row) and as off-brand (peach is the
+  triad's supporting hue): coral as a MARK on many rows, never a fill and
+  never coral TEXT (2.18:1 on the light card). The screen's ONE filled
+  button is an installed add-on's "Review" (`ReviewPreference`,
+  `preference_widget_review`: colorPrimary under #460005, 6.20:1 in both
+  themes), shown while that add-on's update waits AND its question is
+  unseen (`needsUpdateAttention`, the ⋮ dot's rule, so the two clear
+  together; the list re-renders on `getUpdateAttention`); it opens the
+  add-on's page with the question over it (`reviewUpdate`, the
+  notification's path), the row itself still opens the page, and a screen
+  reader gets "Review update" as the row's custom action. While the
+  update waits the row reads "Update asks for new permissions"
+  (`addons_update_new_permissions`; the ⋮ sheet keeps "Update needs your
+  review", where no button says it). If the "+" reads too faint in light
+  theme on a device, put it on a faint coral disc, never a darker coral
+  (read as brown before). Canvas "Add-ons: quieter Add, visible update".
+  The meta line does NOT always fit one line:
   measured at 360dp with ICU's compact counts and Roboto/Noto, Russian,
-  Ukrainian, Bulgarian and Dutch wrap it beside their wider "Add" (every
-  locale fits at 393dp), and a large font wraps English too. So the clamp
+  Ukrainian, Bulgarian and Dutch wrapped it beside the old wider "Add" pill
+  (every locale fits at 393dp; the 48dp "+" slot is about as wide, so
+  assume they still can), and a large font wraps English too. So the clamp
   is not "2 + 1": the meta is the summary's LEAD
   (`BusyPreference.setSummaryMaxLines(lines, leadLength)`), the limit is
   set after layout to the lines the lead takes plus the description's two

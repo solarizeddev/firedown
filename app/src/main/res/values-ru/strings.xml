@@ -153,6 +153,8 @@
     <string name="addons_summary">Расширения Firefox для Android</string>
     <string name="addons_title">Дополнения</string>
     <string name="addons_update_review">Обновление ждёт проверки</string>
+    <string name="addons_update_new_permissions">Обновление запрашивает новые разрешения</string>
+    <string name="addons_review">Проверить</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d обновление дополнений ждёт вашего подтверждения</item>
         <item quantity="few">%d обновления дополнений ждут вашего подтверждения</item>

@@ -149,6 +149,8 @@
     <string name="addons_summary">Extensions Firefox conçues pour Android</string>
     <string name="addons_title">Modules complémentaires</string>
     <string name="addons_update_review">Mise à jour à valider</string>
+    <string name="addons_update_new_permissions">La mise à jour demande de nouvelles autorisations</string>
+    <string name="addons_review">Examiner</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d mise à jour de module complémentaire attend votre accord</item>
         <item quantity="many">%d mises à jour de modules complémentaires attendent votre accord</item>

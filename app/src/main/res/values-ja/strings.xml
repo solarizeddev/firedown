@@ -143,6 +143,8 @@
     <string name="addons_summary">Android 向けの Firefox 拡張機能</string>
     <string name="addons_title">アドオン</string>
     <string name="addons_update_review">更新の確認が必要です</string>
+    <string name="addons_update_new_permissions">更新で新しい権限が求められています</string>
+    <string name="addons_review">確認</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="other">%d 件のアドオン更新に承認が必要です</item>
     </plurals>

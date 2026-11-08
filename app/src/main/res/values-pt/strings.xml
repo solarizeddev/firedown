@@ -147,6 +147,8 @@
     <string name="addons_summary">Extensões do Firefox feitas para Android</string>
     <string name="addons_title">Complementos</string>
     <string name="addons_update_review">A atualização precisa da sua revisão</string>
+    <string name="addons_update_new_permissions">A atualização pede novas permissões</string>
+    <string name="addons_review">Revisar</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d atualização de complemento precisa da sua aprovação</item>
         <item quantity="many">%d atualizações de complementos precisam da sua aprovação</item>

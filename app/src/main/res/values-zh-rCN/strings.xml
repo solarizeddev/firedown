@@ -143,6 +143,8 @@
     <string name="addons_summary">专为 Android 打造的 Firefox 扩展</string>
     <string name="addons_title">附加组件</string>
     <string name="addons_update_review">更新需要你审核</string>
+    <string name="addons_update_new_permissions">更新请求新的权限</string>
+    <string name="addons_review">审核</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="other">%d 个附加组件更新需要你确认</item>
     </plurals>

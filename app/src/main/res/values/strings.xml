@@ -1370,6 +1370,9 @@
     <!-- A rounded count ("1.2M"): always the plural form for many. -->
     <string name="addons_users_compact">%1$s users</string>
     <string name="addons_update_review">Update needs your review</string>
+    <!-- An installed add-on's row while its update waits; the row's "Review" button (addons_review) carries the action. -->
+    <string name="addons_update_new_permissions">Update asks for new permissions</string>
+    <string name="addons_review">Review</string>
     <string name="addons_disabled_blocked">Blocked by Mozilla</string>
     <string name="addons_disabled_unsupported">Doesn\'t work in this version</string>
     <string name="addons_source_file">a file on this phone</string>

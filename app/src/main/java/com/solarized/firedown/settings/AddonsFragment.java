@@ -28,6 +28,7 @@ import com.solarized.firedown.addons.AmoCatalogClient;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.settings.ui.BusyPreference;
 import com.solarized.firedown.settings.ui.CatalogPreference;
+import com.solarized.firedown.settings.ui.ReviewPreference;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import org.mozilla.geckoview.WebExtension;
@@ -95,7 +96,7 @@ public class AddonsFragment extends BasePreferenceFragment {
     /** Shown while uBlock Origin is not installed: the app's copy, no download. */
     private BusyPreference mReinstallUblock;
     /** The rows on screen, by add-on id, so a repaint updates them in place (no icon flicker). */
-    private final Map<String, Preference> mInstalledRows = new LinkedHashMap<>();
+    private final Map<String, ReviewPreference> mInstalledRows = new LinkedHashMap<>();
     private final Map<String, CatalogPreference> mCatalogRows = new LinkedHashMap<>();
     private final Map<String, AmoCatalog.Entry> mCatalogEntries = new HashMap<>();
     private PreferenceCategory mCatalogCategory;
@@ -172,6 +173,14 @@ public class AddonsFragment extends BasePreferenceFragment {
                 renderCatalog(state);
             }
         });
+        // Seeing an update's question changes no add-on, only whether its row
+        // offers "Review": the same rows, words and button again.
+        mAddonManager.getUpdateAttention().observe(getViewLifecycleOwner(), ids -> {
+            List<AddonInfo> addons = mAddonManager.getAddons().getValue();
+            if (addons != null) {
+                renderInstalled(addons);
+            }
+        });
         mAddonManager.getInstalling().observe(getViewLifecycleOwner(), this::applyInstalling);
         mCatalog.getState().observe(getViewLifecycleOwner(), this::renderCatalog);
         mCatalog.load(false);
@@ -213,10 +222,11 @@ public class AddonsFragment extends BasePreferenceFragment {
         if (ids.equals(new ArrayList<>(mInstalledRows.keySet()))) {
             // Same add-ons (one turned off, updated…): words only, icons kept.
             for (AddonInfo info : list) {
-                Preference p = mInstalledRows.get(info.id);
+                ReviewPreference p = mInstalledRows.get(info.id);
                 if (p != null) {
                     p.setTitle(info.name);
                     p.setSummary(summaryFor(info));
+                    p.setReview(mAddonManager.needsUpdateAttention(info.id));
                 }
             }
             return;
@@ -225,7 +235,7 @@ public class AddonsFragment extends BasePreferenceFragment {
         mInstalledRows.clear();
         int order = 100;
         for (AddonInfo info : list) {
-            Preference p = new Preference(requireContext());
+            ReviewPreference p = new ReviewPreference(requireContext());
             p.setKey(KEY_INSTALLED_PREFIX + info.id);
             p.setPersistent(false);
             p.setTitle(info.name);
@@ -238,6 +248,8 @@ public class AddonsFragment extends BasePreferenceFragment {
                 openDetail(id);
                 return true;
             });
+            p.setOnReviewListener(() -> reviewUpdate(id));
+            p.setReview(mAddonManager.needsUpdateAttention(info.id));
             mInstalledCategory.addPreference(p);
             mInstalledRows.put(info.id, p);
             AddonIcons.load(requireContext(), info.icon, mIconPx, icon -> {
@@ -255,7 +267,8 @@ public class AddonsFragment extends BasePreferenceFragment {
             return getString(blocked ? R.string.addons_disabled_blocked : R.string.addons_disabled_unsupported);
         }
         if (mAddonManager.isUpdateWaitingForReview(info.id)) {
-            return getString(R.string.addons_update_review);
+            // The row's button says "Review"; the words say why.
+            return getString(R.string.addons_update_new_permissions);
         }
         if (!info.enabled) {
             return getString(R.string.addons_off);
@@ -435,6 +448,15 @@ public class AddonsFragment extends BasePreferenceFragment {
                     : getResources().getQuantityString(R.plurals.addons_users, entry.users, users));
         }
         return parts.isEmpty() ? null : TextUtils.join(" · ", parts);
+    }
+
+    /**
+     * The add-on's page with its update's permission question over it, the
+     * way the notification and the ⋮ sheet open it (the user's own check).
+     */
+    private void reviewUpdate(@NonNull String id) {
+        openDetail(id);
+        mAddonManager.reviewUpdate(id);
     }
 
     private void openDetail(@NonNull String id) {

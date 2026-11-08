@@ -144,6 +144,8 @@
     <string name="addons_summary">Android के लिए बने Firefox एक्सटेंशन</string>
     <string name="addons_title">ऐड-ऑन</string>
     <string name="addons_update_review">अपडेट को आपकी समीक्षा चाहिए</string>
+    <string name="addons_update_new_permissions">अपडेट नई अनुमतियाँ माँग रहा है</string>
+    <string name="addons_review">समीक्षा करें</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="one">%d ऐड-ऑन अपडेट को आपकी मंज़ूरी चाहिए</item>
         <item quantity="other">%d ऐड-ऑन अपडेट को आपकी मंज़ूरी चाहिए</item>

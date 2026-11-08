@@ -132,6 +132,8 @@
     <string name="addons_summary">Ekstensi Firefox yang dibuat untuk Android</string>
     <string name="addons_title">Pengaya</string>
     <string name="addons_update_review">Pembaruan perlu Anda tinjau</string>
+    <string name="addons_update_new_permissions">Pembaruan meminta izin baru</string>
+    <string name="addons_review">Tinjau</string>
     <plurals name="addons_update_review_notification_many">
         <item quantity="other">%d pembaruan pengaya perlu persetujuan Anda</item>
     </plurals>
