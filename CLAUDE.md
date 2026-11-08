@@ -13040,11 +13040,26 @@ gesture from turning on; it cannot break the site.
   page: a player that pauses on a single tap does not pause and then seek,
   and a site's own double-tap zoom or seek cannot add to ours. The cost is
   a ~300 ms delay on a single tap on the sides of a fullscreen video (what
-  Chrome's own controls and the file player do). A cancelled held gesture
-  is dropped (the page never saw it start). Every held copy is handed over
-  or recycled exactly once (pinned by the random-sequence test). A held tap
-  is flushed to the old session before a tab switch, and dropped when the
-  view goes away.
+  Chrome's own controls and the file player do), and a long press there
+  reaches the page after the long-press timeout, so a page's own long
+  press takes ~1 s. The hand-over timer is set on the EVENT clock
+  (`postAtTime`, the UP's time + the double-tap timeout + 50 ms slack): the
+  pairing test compares event times, and a second tap dispatched late must
+  still find the first held. A cancelled held gesture is dropped (the page
+  never saw it start). Every held copy is handed over or recycled exactly
+  once (pinned by the random-sequence test).
+- **A held tap is DROPPED, never handed over, once what it was aimed at
+  moved** (`dropHeldWebVideoTap` → `reset()`): the page leaving fullscreen
+  (`exitFullScreen`), PiP entry, a configuration change (rotation, window
+  resize), a session swap (`setGeckoViewSession`), the view going away. Its
+  coordinates belong to the old layout. A gesture still in progress then is
+  swallowed to its end (`Mode.DROP`), so the page never gets a MOVE or UP
+  whose DOWN it never saw; a DOWN with no UP/CANCEL before the next DOWN
+  (a lost event) is dropped too.
+- **A held DOWN reaches Gecko without NestedGeckoView's APZ query**
+  (`deliverTouch`): that query's answer is asynchronous and would land after
+  the held UP delivered right behind it, or during the next gesture, and
+  overwrite that gesture's input result and nested-scroll state.
 - **The middle third and a band along the top and bottom are the page's**,
   never held: the band is 15% of the view's height, at least 64dp, where
   players keep their control bars.

@@ -34,6 +34,13 @@ public final class WebVideoSeekGesture<E> {
     /** Share of the view's height left to the page at the top and bottom. */
     public static final float BAND_FRACTION = 0.15f;
 
+    /**
+     * Extra wait before a held tap is handed over: the double-tap window is
+     * judged on event times, and a second tap within it can be dispatched a
+     * little later than its own time says.
+     */
+    public static final long TIMER_SLACK_MS = 50L;
+
     /** What the gesture asks of the view it watches. */
     public interface Host<E> {
         /** A copy the gesture may keep past the event's dispatch. */
@@ -48,13 +55,17 @@ public final class WebVideoSeekGesture<E> {
         /** Seek by one step; {@code taps} seeks in the streak so far. */
         void seek(int direction, int taps);
 
-        /** Calls {@link #onTimeout} after {@code delayMs}, replacing any earlier call. */
-        void schedule(long delayMs);
+        /**
+         * Calls {@link #onTimeout} at {@code uptimeMs} (the clock of the
+         * event times), replacing any earlier call.
+         */
+        void scheduleAt(long uptimeMs);
 
         void cancelSchedule();
     }
 
-    private enum Mode { IDLE, PASS, HOLD, KEEP }
+    /** DROP: the rest of a gesture the page never saw start, swallowed. */
+    private enum Mode { IDLE, PASS, HOLD, KEEP, DROP }
 
     private final Host<E> mHost;
     private final long mDoubleTapTimeoutMs;
@@ -144,9 +155,10 @@ public final class WebVideoSeekGesture<E> {
             }
             flushHeld();
         } else if (mHeldDown != null) {
-            // A DOWN with no UP in between: the platform lost one; hand
-            // over what is held rather than drop it.
-            flushHeld();
+            // A DOWN with no UP or CANCEL in between (Android sends one, so
+            // only a lost event gets here): the page must not see a DOWN
+            // with no end, so the held one goes.
+            dropHeld();
         }
 
         if (zone == 0) {
@@ -167,7 +179,7 @@ public final class WebVideoSeekGesture<E> {
         mHeldZone = zone;
         mHeldX = x;
         mHeldY = y;
-        mHost.schedule(mTapTimeoutMs);
+        mHost.scheduleAt(time + mTapTimeoutMs);
         return true;
     }
 
@@ -186,6 +198,8 @@ public final class WebVideoSeekGesture<E> {
                 }
                 // Within the slop the page loses nothing it would act on.
                 return true;
+            case DROP:
+                return true;
             default:
                 return false;
         }
@@ -203,6 +217,8 @@ public final class WebVideoSeekGesture<E> {
             case HOLD:
                 releaseHeldDown();
                 return false;
+            case DROP:
+                return true;
             default:
                 return false;
         }
@@ -238,9 +254,11 @@ public final class WebVideoSeekGesture<E> {
                 }
                 mHeldUp = mHost.copy(event);
                 mHeldUpTime = time;
-                mHost.schedule(mDoubleTapTimeoutMs);
+                mHost.scheduleAt(time + mDoubleTapTimeoutMs + TIMER_SLACK_MS);
                 return true;
             }
+            case DROP:
+                return true;
             default:
                 return false;
         }
@@ -258,6 +276,8 @@ public final class WebVideoSeekGesture<E> {
                 // The page never saw this gesture start.
                 dropHeld();
                 return true;
+            case DROP:
+                return true;
             default:
                 return false;
         }
@@ -274,21 +294,19 @@ public final class WebVideoSeekGesture<E> {
         }
     }
 
-    /** Hands anything held to the page and forgets the streak. */
-    public void flush() {
-        if (mMode == Mode.HOLD) {
-            releaseHeldDown();
-        } else {
-            flushHeld();
-        }
-        mStreakZone = 0;
-        mStreakTaps = 0;
-    }
-
-    /** Drops anything held without handing it over, and forgets everything. */
+    /**
+     * Drops anything held without handing it over, and forgets everything:
+     * for when what the held touch was aimed at is gone (the layout
+     * changed, the page left fullscreen, another session). A gesture the
+     * page never saw start is swallowed to its end.
+     */
     public void reset() {
         dropHeld();
-        mMode = Mode.IDLE;
+        if (mMode == Mode.HOLD || mMode == Mode.KEEP) {
+            mMode = Mode.DROP;
+        } else if (mMode != Mode.DROP) {
+            mMode = Mode.IDLE;
+        }
         mStreakZone = 0;
         mStreakTaps = 0;
     }
@@ -341,9 +359,13 @@ public final class WebVideoSeekGesture<E> {
     private void releaseHeldDown() {
         mHost.cancelSchedule();
         E down = mHeldDown;
+        E up = mHeldUp;
         mHeldDown = null;
         mHeldUp = null;
         mMode = Mode.PASS;
+        if (up != null) {
+            mHost.discard(up);
+        }
         if (down != null) {
             mHost.deliver(down);
         }

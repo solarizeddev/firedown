@@ -73,8 +73,8 @@ public class WebVideoSeekGestureTest {
         }
 
         @Override
-        public void schedule(long delayMs) {
-            scheduled = delayMs;
+        public void scheduleAt(long uptimeMs) {
+            scheduled = uptimeMs;
         }
 
         @Override
@@ -145,7 +145,8 @@ public class WebVideoSeekGestureTest {
         assertTrue(r[0]);
         assertTrue(r[1]);
         assertTrue(rec.delivered.isEmpty());
-        assertEquals(DOUBLE_TAP, rec.scheduled);
+        // Timed from the UP's own time, with slack for dispatch latency.
+        assertEquals(50 + DOUBLE_TAP + WebVideoSeekGesture.TIMER_SLACK_MS, rec.scheduled);
         g.onTimeout();
         assertEquals(List.of("D1", "U1"), rec.delivered);
         assertTrue(rec.seeks.isEmpty());
@@ -276,8 +277,8 @@ public class WebVideoSeekGestureTest {
     @Test
     public void pressHeldPastTheTapTimeoutIsHandedOver() {
         WebVideoSeekGesture<String> g = gesture();
-        down(g, RIGHT, Y, 0, true);
-        assertEquals(TAP, rec.scheduled);
+        down(g, RIGHT, Y, 1000, true);
+        assertEquals(1000 + TAP, rec.scheduled);
         g.onTimeout();
         assertEquals(List.of("D1"), rec.delivered);
         assertFalse(g.onMove(RIGHT + 2, Y));
@@ -388,7 +389,7 @@ public class WebVideoSeekGestureTest {
         assertTrue(rec.seeks.isEmpty());
     }
 
-    // ── disabled, flush, reset ───────────────────────────────────────────
+    // ── disabled, lost events, reset────────────────────────────────────────
 
     @Test
     public void disabledPassesEverythingAndHandsOverWhatIsHeld() {
@@ -416,22 +417,59 @@ public class WebVideoSeekGestureTest {
     }
 
     @Test
-    public void flushHandsOverAHeldTap() {
+    public void lostUpDropsTheHeldDown() {
         WebVideoSeekGesture<String> g = gesture();
-        tap(g, RIGHT, 0);
-        g.flush();
-        assertEquals(List.of("D1", "U1"), rec.delivered);
-        assertEquals(-1, rec.scheduled);
+        down(g, RIGHT, Y, 0, true);
+        // No UP or CANCEL: a new DOWN. The page must not get a DOWN with no end.
+        assertFalse(down(g, MIDDLE, Y, 100, true));
+        assertTrue(rec.delivered.isEmpty());
+        assertTrue(rec.log.contains("discard:D1"));
         rec.assertNothingHeld();
     }
 
     @Test
-    public void flushWithTheFingerDownHandsOverTheDownAndPassesTheRest() {
+    public void resetMidGestureSwallowsTheRestOfIt() {
         WebVideoSeekGesture<String> g = gesture();
         down(g, RIGHT, Y, 0, true);
-        g.flush();
-        assertEquals(List.of("D1"), rec.delivered);
-        assertFalse(up(g, RIGHT, Y, 50));
+        g.reset();
+        assertTrue(rec.delivered.isEmpty());
+        rec.assertNothingHeld();
+        // The page never saw this gesture start: none of it reaches the page.
+        assertTrue(g.onMove(RIGHT - 80, Y));
+        assertTrue(g.onOtherPointer());
+        assertTrue(up(g, RIGHT - 80, Y, 100));
+        // The next gesture is a gesture like any other.
+        assertFalse(down(g, MIDDLE, Y, 200, true));
+        assertFalse(up(g, MIDDLE, Y, 250));
+    }
+
+    @Test
+    public void resetDuringAKeptTapSwallowsItWithoutASeek() {
+        WebVideoSeekGesture<String> g = gesture();
+        tap(g, RIGHT, 0);
+        assertTrue(down(g, RIGHT, Y, 200, true));
+        g.reset();
+        assertTrue(up(g, RIGHT, Y, 250));
+        assertTrue(rec.seeks.isEmpty());
+        assertEquals(0, g.getStreakTaps());
+    }
+
+    @Test
+    public void resetBetweenGesturesLeavesThePassingGestureAlone() {
+        WebVideoSeekGesture<String> g = gesture();
+        assertFalse(down(g, MIDDLE, Y, 0, true));
+        g.reset();
+        assertFalse(g.onMove(MIDDLE + 50, Y));
+        assertFalse(up(g, MIDDLE + 50, Y, 60));
+    }
+
+    @Test
+    public void cancelAfterResetIsSwallowed() {
+        WebVideoSeekGesture<String> g = gesture();
+        down(g, RIGHT, Y, 0, true);
+        g.reset();
+        assertTrue(g.onCancel());
+        assertFalse(down(g, MIDDLE, Y, 100, true));
     }
 
     @Test
@@ -459,7 +497,7 @@ public class WebVideoSeekGestureTest {
      * Random touches, timers and gate changes: every copy is released
      * exactly once, a held UP is never handed over before its DOWN, a
      * gesture's DOWN reaches the page at most once, and nothing is left
-     * held once the gesture is flushed.
+     * held once the timer has run and the gesture is reset.
      */
     @Test
     public void randomSequencesBalanceEveryCopy() {
@@ -477,6 +515,14 @@ public class WebVideoSeekGestureTest {
                 if (random.nextInt(5) == 0) {
                     g.onTimeout();
                 }
+                if (random.nextInt(10) == 0) {
+                    g.reset();
+                }
+                if (random.nextInt(25) == 0) {
+                    // A DOWN whose UP was lost.
+                    down(g, x, y, t, enabled);
+                    t += 30;
+                }
                 down(g, x, y, t, enabled);
                 int kind = random.nextInt(6);
                 if (kind == 0) {
@@ -488,11 +534,14 @@ public class WebVideoSeekGestureTest {
                     continue;
                 } else if (kind == 3 && random.nextBoolean()) {
                     g.onTimeout();
+                } else if (kind == 5 && random.nextBoolean()) {
+                    g.reset();
                 }
                 t += 10 + random.nextInt(kind == 4 ? 700 : 120);
                 up(g, x, y, t);
             }
-            g.flush();
+            g.onTimeout();
+            g.reset();
             rec.assertNothingHeld();
             List<String> d = rec.delivered;
             for (int i = 0; i < d.size(); i++) {

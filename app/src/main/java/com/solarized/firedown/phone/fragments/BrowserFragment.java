@@ -526,6 +526,8 @@ public class BrowserFragment extends BaseBrowserFragment
         // activity), and "follow system" is COLOR_SCHEME_SYSTEM, which Gecko
         // tracks on its own. Re-applying here only covers the rotation path.
         mGeckoRuntimeHelper.applyPreferredColorScheme();
+        // A rotation or a window resize moves what a held tap was aimed at.
+        dropHeldWebVideoTap();
     }
 
     @Override
@@ -1539,6 +1541,7 @@ public class BrowserFragment extends BaseBrowserFragment
         mActivity.getTheme().resolveAttribute(android.R.attr.colorBackground, typedValue, true);
         decorView.setBackgroundColor(typedValue.data);
         mUiState = UiState.INIT;
+        dropHeldWebVideoTap();
         mSwipeRefreshLayout.setEnabled(true);
         mDownloadButton.show();
         enterBrowsing();
@@ -1942,9 +1945,9 @@ public class BrowserFragment extends BaseBrowserFragment
         }
 
         @Override
-        public void schedule(long delayMs) {
+        public void scheduleAt(long uptimeMs) {
             mWebSeekHandler.removeCallbacks(mWebSeekTimeout);
-            mWebSeekHandler.postDelayed(mWebSeekTimeout, delayMs);
+            mWebSeekHandler.postAtTime(mWebSeekTimeout, uptimeMs);
         }
 
         @Override
@@ -2008,10 +2011,15 @@ public class BrowserFragment extends BaseBrowserFragment
         return !Double.isNaN(duration) && !Double.isInfinite(duration) && duration > 0;
     }
 
-    /** Hands anything held to the page and leaves the gesture at rest. */
-    private void flushWebVideoSeek() {
+    /**
+     * Drops a tap held for double-tap seek: what it was aimed at is gone
+     * (the layout changed, the page left fullscreen or PiP took the
+     * window, another session is attached). A tap that late would land on
+     * whatever is at those coordinates now.
+     */
+    private void dropHeldWebVideoTap() {
         if (mWebSeekGesture != null) {
-            mWebSeekGesture.flush();
+            mWebSeekGesture.reset();
         }
     }
 
@@ -2034,6 +2042,15 @@ public class BrowserFragment extends BaseBrowserFragment
         current.setMediaPosition(current.getMediaDuration(), target,
                 current.getMediaRate(), now);
         showWebSeekFeedback(direction, taps);
+    }
+
+    private void hideWebSeekFeedback() {
+        for (TextView badge : new TextView[] {mWebSeekFeedbackLeft, mWebSeekFeedbackRight}) {
+            if (badge != null) {
+                badge.animate().cancel();
+                badge.setVisibility(View.GONE);
+            }
+        }
     }
 
     /** The cumulative badge at the tapped edge; fades once the streak ends. */
@@ -2120,6 +2137,8 @@ public class BrowserFragment extends BaseBrowserFragment
      * the transient chrome laid over the page goes.
      */
     public void onPictureInPictureEntered() {
+        dropHeldWebVideoTap();
+        hideWebSeekFeedback();
         if (mFullScreenHint != null) {
             mFullScreenHint.dismiss();
             mFullScreenHint = null;
@@ -3454,8 +3473,9 @@ public class BrowserFragment extends BaseBrowserFragment
         Log.d(TAG, "setGeckoViewSession: id=" + geckoState.getEntityId()
                 + " uri=" + geckoState.getEntityUri());
 
-        // A tap held for double-tap seek belongs to the page on screen now.
-        flushWebVideoSeek();
+        // A tap held for double-tap seek was aimed at the page on screen
+        // before this.
+        dropHeldWebVideoTap();
 
         final WebExtensionController controller =
                 mGeckoRuntimeHelper.getGeckoRuntime().getWebExtensionController();

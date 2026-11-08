@@ -97,9 +97,27 @@ public class NestedGeckoView extends GeckoView implements NestedScrollingChild {
         mTouchFilter = filter;
     }
 
-    /** Hands the page an event the filter held, past the filter. */
+    /**
+     * Hands the page an event the filter held, past the filter. A held DOWN
+     * goes straight to Gecko, without the APZ query {@link #handleTouch}
+     * makes for a live one: its answer would land after the held UP that
+     * follows it at once (or during the next gesture) and overwrite that
+     * gesture's state; a held touch needs no scroll decision.
+     */
     public void deliverTouch(MotionEvent ev) {
-        handleTouch(ev);
+        if (ev.getActionMasked() != MotionEvent.ACTION_DOWN) {
+            handleTouch(ev);
+            return;
+        }
+        ViewParent viewParent = getParent();
+        if (viewParent != null) viewParent.requestDisallowInterceptTouchEvent(true);
+        initialScrollDirection = InitialScrollDirection.NOT_YET;
+        mNestedOffsetY = 0;
+        mLastY = (int) ev.getY();
+        initialDownY = ev.getY();
+        MotionEvent event = MotionEvent.obtain(ev);
+        callSuperOnTouchEvent(event);
+        event.recycle();
     }
 
     // ── Constructors ──────────────────────────────────────────────────────────────────────────────
