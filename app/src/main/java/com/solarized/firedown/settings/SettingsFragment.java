@@ -33,6 +33,8 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.StoragePaths;
+import com.solarized.firedown.addons.AddonInfo;
+import com.solarized.firedown.addons.AddonManager;
 import com.solarized.firedown.data.DownloadBackupMirror;
 import com.solarized.firedown.data.DownloadDatabase;
 import com.solarized.firedown.data.di.Qualifiers;
@@ -46,6 +48,7 @@ import com.solarized.firedown.utils.NavigationUtils;
 import org.mozilla.geckoview.ContentBlocking;
 
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executor;
 
@@ -75,11 +78,15 @@ public class SettingsFragment extends BasePreferenceFragment
     /** Privacy → "Trackers and ads blocked": the door to BlockedStatsFragment,
      *  whose summary is the live lifetime count (see bindBlockedStats). */
     private Preference blockedStatsPreference;
+    /** General → "Add-ons": its summary names an update that waits for the user (see bindAddonsSummary). */
+    private Preference addonsPreference;
 
     private GeckoStateViewModel mGeckoStateViewModel;
 
     @Inject
     GeckoUblockHelper mGeckoUblockHelper;
+    @Inject
+    AddonManager mAddonManager;
     @Inject
     DownloadDatabase mDownloadDatabase;
     @Inject
@@ -115,6 +122,7 @@ public class SettingsFragment extends BasePreferenceFragment
         autoFillPreference = preferenceScreen.findPreference(Preferences.SETTINGS_AUTOFILL);
         notificationsPreference = preferenceScreen.findPreference(Preferences.SETTINGS_NOTIFICATIONS);
         blockedStatsPreference = preferenceScreen.findPreference(Preferences.SETTINGS_BLOCKED_STATS_SCREEN);
+        addonsPreference = preferenceScreen.findPreference(Preferences.SETTINGS_ADDONS_SCREEN);
 
         if (downloadsPreference != null) {
             downloadsPreference.setSummary(StoragePaths.getDownloadPath(mActivity));
@@ -134,6 +142,50 @@ public class SettingsFragment extends BasePreferenceFragment
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         bindBlockedStats();
+        bindAddonsSummary();
+    }
+
+    /**
+     * The "Add-ons" row while an add-on update asks for new permissions and
+     * the user has not seen the question: the notification's words in place
+     * of the row's description ("Reader Tools wants new permissions", or "2
+     * add-on updates need your OK"); the description again once seen.
+     */
+    private void bindAddonsSummary() {
+        if (addonsPreference == null) {
+            return;
+        }
+        mAddonManager.getUpdateAttention().observe(getViewLifecycleOwner(), ids -> renderAddonsSummary());
+        mAddonManager.getAddons().observe(getViewLifecycleOwner(), addons -> renderAddonsSummary());
+    }
+
+    private void renderAddonsSummary() {
+        if (addonsPreference == null || !isAdded()) {
+            return;
+        }
+        List<String> ids = mAddonManager.getUpdateAttention().getValue();
+        if (ids == null || ids.isEmpty()) {
+            addonsPreference.setSummary(R.string.addons_summary);
+            return;
+        }
+        if (ids.size() > 1) {
+            addonsPreference.setSummary(getResources().getQuantityString(
+                    R.plurals.addons_update_review_notification_many, ids.size(), ids.size()));
+            return;
+        }
+        String name = null;
+        List<AddonInfo> addons = mAddonManager.getAddons().getValue();
+        if (addons != null) {
+            for (AddonInfo info : addons) {
+                if (info.id.equals(ids.get(0))) {
+                    name = info.name;
+                    break;
+                }
+            }
+        }
+        addonsPreference.setSummary(name != null
+                ? getString(R.string.addons_update_review_notification_one, name)
+                : getString(R.string.addons_update_review));
     }
 
     /**

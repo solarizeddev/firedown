@@ -39,6 +39,7 @@
     <string name="addon_installed">Дополнение %1$s добавлено. Ищите его в меню ⋮.</string>
     <string name="addon_network">Не удалось загрузить дополнение. Проверьте подключение.</string>
     <string name="addon_no_update">Для %1$s обновлений нет</string>
+    <string name="addon_update_failed">Не удалось обновить %1$s</string>
     <string name="addon_not_an_addon">Этот файл не является дополнением Firefox</string>
     <string name="addon_optional_data">Передавать разработчику: %1$s</string>
     <string name="addon_optional_permissions">Необязательные разрешения</string>

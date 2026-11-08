@@ -38,6 +38,7 @@
     <string name="addon_installed">%1$s añadido. Lo encontrarás en el menú ⋮.</string>
     <string name="addon_network">No se pudo descargar el complemento. Comprueba tu conexión.</string>
     <string name="addon_no_update">%1$s está actualizado</string>
+    <string name="addon_update_failed">No se pudo actualizar %1$s</string>
     <string name="addon_not_an_addon">Este archivo no es un complemento de Firefox</string>
     <string name="addon_optional_data">Compartir con el desarrollador: %1$s</string>
     <string name="addon_optional_permissions">Permisos opcionales</string>

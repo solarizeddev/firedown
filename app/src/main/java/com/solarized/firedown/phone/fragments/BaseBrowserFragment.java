@@ -8,6 +8,7 @@ import android.view.KeyEvent;
 import android.view.PointerIcon;
 import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -435,5 +436,15 @@ public class BaseBrowserFragment extends BaseFocusFragment implements AutoComple
             mFaviconStore.clear();
         }
         mActivity.finishAndRemoveTask();
+    }
+
+    /**
+     * The ⋮ dot: an add-on update asks for new permissions and the user has
+     * not seen the question (AddonManager.getUpdateAttention). Observed on
+     * the view's lifecycle by every screen with the bottom bar.
+     */
+    protected void observeAddonAttention(@NonNull BottomNavigationBar bar) {
+        mAddonManager.getUpdateAttention().observe(getViewLifecycleOwner(),
+                ids -> bar.setMenuAttention(ids != null && !ids.isEmpty()));
     }
 }

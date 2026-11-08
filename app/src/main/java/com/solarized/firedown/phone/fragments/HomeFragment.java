@@ -275,6 +275,7 @@ public class HomeFragment extends BaseBrowserFragment implements BottomNavigatio
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        observeAddonAttention(mBottomNavigationBar);
 
         Log.d(TAG, "onViewCreated");
 

@@ -33,6 +33,7 @@ import com.solarized.firedown.GlideHelper;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.addons.AddonManager;
+import com.solarized.firedown.addons.AddonUpdateDots;
 import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.GeckoStateEntity;
 import com.solarized.firedown.data.entity.OptionEntity;
@@ -892,6 +893,7 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
         if (row == null) return;
         row.setOnClickListener(view -> dispatch(mAddonManager.hasAddonsFor(mIsIncognito)
                 ? R.id.popup_addons : R.id.addon_actions_manage));
+        AddonUpdateDots.bindMenuRow(row, mAddonManager.getUpdateAttention().getValue());
     }
 
 

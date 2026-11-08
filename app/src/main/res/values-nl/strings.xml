@@ -39,6 +39,7 @@
     <string name="addon_installed">%1$s toegevoegd. Je vindt hem in het ⋮-menu.</string>
     <string name="addon_network">Kan de add-on niet downloaden. Controleer je verbinding.</string>
     <string name="addon_no_update">%1$s is up-to-date</string>
+    <string name="addon_update_failed">Kan %1$s niet bijwerken</string>
     <string name="addon_not_an_addon">Dit bestand is geen Firefox-add-on</string>
     <string name="addon_optional_data">%1$s delen met de ontwikkelaar</string>
     <string name="addon_optional_permissions">Optionele toestemmingen</string>

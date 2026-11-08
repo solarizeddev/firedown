@@ -89,7 +89,16 @@ public class AddonManager {
     static final long MAX_XPI_BYTES = 100L * 1024 * 1024;
     private static final String XPI_DIR = "addons-xpi";
     private static final String PREF_LAST_UPDATE_CHECK = "com.solarized.firedown.addons.update.last";
-    private static final String PREF_UPDATE_REVIEW = "com.solarized.firedown.addons.update.review";
+    /** The ids of add-ons whose update waited, as builds before AddonUpdateReviews kept them (moved on load). */
+    private static final String PREF_UPDATE_REVIEW_LEGACY = "com.solarized.firedown.addons.update.review";
+    /**
+     * Updates that wait for the user (AddonUpdateReviews' saved form). In
+     * {@code backup_local} like the uBlock flag: the add-ons themselves are in
+     * the Gecko profile, which is not backed up.
+     */
+    private static final String PREF_UPDATE_REVIEWS = "com.solarized.firedown.addons.update.reviews";
+    /** When a background check last looked again at add-ons whose update waits. */
+    private static final String PREF_REVIEW_RECHECK = "com.solarized.firedown.addons.update.review.recheck";
     private static final long UPDATE_INTERVAL_MS = TimeUnit.DAYS.toMillis(1);
     /** While the app runs, whether a check is due is looked at this often (uptime: a sleeping phone is not woken). */
     private static final long UPDATE_POLL_MS = TimeUnit.HOURS.toMillis(1);
@@ -180,6 +189,8 @@ public class AddonManager {
         public static final int REMOVED = 12;
         /** Downloaded or picked, but damaged: a broken signature or a wrong hash. */
         public static final int CORRUPT = 13;
+        /** The user's update check of an add-on failed (not one they declined). */
+        public static final int UPDATE_FAILED = 14;
 
         public final int type;
         @Nullable public final String name;
@@ -317,6 +328,9 @@ public class AddonManager {
     private final Map<String, InstallContext> mInstallContexts = new HashMap<>();
     @Nullable private InstallContext mLastFileContext;
     private final Set<String> mInteractiveUpdates = new HashSet<>();
+    /** Add-ons whose update question the user just said no to: their check's failure says nothing. */
+    private final Set<String> mDeclinedUpdates = new HashSet<>();
+    private final AddonUpdateReviews mReviews;
     private final Set<String> mRefusedBuiltIn = new HashSet<>();
     /** Installs that say nothing when they land (the first run's uBlock Origin). */
     private final Set<String> mQuietInstalls = new HashSet<>();
@@ -340,6 +354,8 @@ public class AddonManager {
     private final MutableLiveData<Popup> mPopup = new MutableLiveData<>(null);
     private final MutableLiveData<Integer> mInstallsInFlight = new MutableLiveData<>(0);
     private final MutableLiveData<Set<String>> mInstalling = new MutableLiveData<>(Collections.emptySet());
+    /** Add-ons whose update waits and whose question the user has not seen (the dots). */
+    private final MutableLiveData<List<String>> mUpdateAttention;
 
     @Inject
     public AddonManager(@ApplicationContext Context context,
@@ -355,6 +371,25 @@ public class AddonManager {
         mIncognitoRepository = incognitoRepository;
         mComponents = components;
         mHeavyExecutor = heavyExecutor;
+        mReviews = loadReviews();
+        // Built with its value: the singleton may be made off the main thread.
+        mUpdateAttention = new MutableLiveData<>(mReviews.attention());
+    }
+
+    /** The saved reviews, moving the id-only marks of older builds over once. */
+    @NonNull
+    private AddonUpdateReviews loadReviews() {
+        String saved = mLocalPrefs.getString(PREF_UPDATE_REVIEWS, null);
+        if (saved != null) {
+            return AddonUpdateReviews.decode(saved);
+        }
+        Set<String> legacy = mPrefs.getStringSet(PREF_UPDATE_REVIEW_LEGACY, null);
+        AddonUpdateReviews reviews = AddonUpdateReviews.fromLegacy(legacy);
+        mLocalPrefs.edit().putString(PREF_UPDATE_REVIEWS, reviews.encode()).apply();
+        if (legacy != null) {
+            mPrefs.edit().remove(PREF_UPDATE_REVIEW_LEGACY).apply();
+        }
+        return reviews;
     }
 
     // ── Wiring ──────────────────────────────────────────────────────────
@@ -386,7 +421,13 @@ public class AddonManager {
                 }
                 mLoaded = true;
                 mLoadedLiveData.setValue(true);
+                if (mReviews.retainOnly(mInstalled.keySet())) {
+                    saveReviews();
+                }
                 publish();
+                // A notification that could not be posted before (no
+                // permission then) goes out now, once.
+                refreshReviewNotification();
                 scheduleUpdateCheck();
                 ensureUblock(controller, legacyUblock);
                 if (mPendingReview != null) {
@@ -580,8 +621,20 @@ public class AddonManager {
         return override.withDefault(fallback);
     }
 
+    /** An update of this add-on waits for the user (the Settings rows say so). */
     public boolean isUpdateWaitingForReview(@NonNull String id) {
-        return mPrefs.getStringSet(PREF_UPDATE_REVIEW, Collections.emptySet()).contains(id);
+        return mReviews.isWaiting(id);
+    }
+
+    /** ...and the user has not seen its question yet (the dots, the ⋮ sheet's line). */
+    public boolean needsUpdateAttention(@NonNull String id) {
+        return mReviews.needsAttention(id);
+    }
+
+    /** The add-ons that need attention: empty when no dot shows. */
+    @NonNull
+    public LiveData<List<String>> getUpdateAttention() {
+        return mUpdateAttention;
     }
 
     // ── uBlock Origin ───────────────────────────────────────────────────
@@ -1321,7 +1374,10 @@ public class AddonManager {
      * Asks Gecko to update add-ons. {@code interactive} is the user's tap:
      * an update that asks for new permissions is then put to the user; in
      * the daily background check it is refused and the add-on is marked
-     * "update needs review" until the user looks.
+     * "update needs review" (AddonUpdateReviews) until the user looks.
+     * Gecko downloads an update before it asks, so the background check
+     * leaves a marked add-on alone except once a week, to learn of a newer
+     * version.
      */
     @UiThread
     public void checkForUpdates(boolean interactive, @Nullable String onlyId) {
@@ -1329,20 +1385,33 @@ public class AddonManager {
         if (runtime == null) {
             return;
         }
-        mPrefs.edit().putLong(PREF_LAST_UPDATE_CHECK, System.currentTimeMillis()).apply();
+        long now = System.currentTimeMillis();
+        mPrefs.edit().putLong(PREF_LAST_UPDATE_CHECK, now).apply();
+        boolean recheck = false;
+        if (!interactive && !mReviews.isEmpty()) {
+            recheck = AddonUpdateReviews.recheckDue(mLocalPrefs.getLong(PREF_REVIEW_RECHECK, 0L), now);
+            if (recheck) {
+                mLocalPrefs.edit().putLong(PREF_REVIEW_RECHECK, now).apply();
+            }
+        }
         for (WebExtension extension : new ArrayList<>(mInstalled.values())) {
             if (onlyId != null && !onlyId.equals(extension.id)) {
                 continue;
             }
             String id = extension.id;
+            if (!interactive && !recheck && mReviews.isWaiting(id)) {
+                continue;
+            }
             String name = AddonInfo.from(extension).name;
             if (interactive) {
                 mInteractiveUpdates.add(id);
             }
             runtime.getWebExtensionController().update(extension).accept(updated -> {
                 mInteractiveUpdates.remove(id);
+                mDeclinedUpdates.remove(id);
+                // Updated, or no update offered any more: nothing waits.
+                clearReview(id);
                 if (updated != null) {
-                    clearReview(id);
                     onChanged(updated);
                     if (interactive) {
                         emit(Event.UPDATED, name);
@@ -1352,11 +1421,14 @@ public class AddonManager {
                 }
             }, e -> {
                 mInteractiveUpdates.remove(id);
+                // A declined question ends the install as cancelled, which
+                // Gecko reports as a failure: the user's no is not an error.
+                boolean declined = mDeclinedUpdates.remove(id);
                 if (BuildConfig.DEBUG) {
-                    Log.w(TAG, "update failed: " + id, e);
+                    Log.w(TAG, "update failed: " + id + (declined ? " (declined)" : ""), e);
                 }
-                if (interactive) {
-                    emit(Event.FAILED, name);
+                if (interactive && !declined) {
+                    emit(Event.UPDATE_FAILED, name);
                 }
             });
         }
@@ -1390,12 +1462,15 @@ public class AddonManager {
         if (now - last >= UPDATE_INTERVAL_MS || now < last) {
             checkForUpdates(false, null);
         }
+        // Notifications turned on while the app runs: a due one goes out.
+        refreshReviewNotification();
         mMain.postDelayed(mUpdateTick, UPDATE_POLL_MS);
     }
 
     /**
-     * The review notification's tap: the update asked for again, as the
-     * user's own check, so its permission question is put to them.
+     * The review notification's tap, or the ⋮ sheet's row: the update asked
+     * for again, as the user's own check, so its permission question is put
+     * to them.
      */
     @UiThread
     public void reviewUpdate(@NonNull String id) {
@@ -1406,30 +1481,71 @@ public class AddonManager {
         checkForUpdates(true, id);
     }
 
-    private void markReview(@NonNull String id) {
-        Set<String> ids = new HashSet<>(mPrefs.getStringSet(PREF_UPDATE_REVIEW, Collections.emptySet()));
-        if (ids.add(id)) {
-            mPrefs.edit().putStringSet(PREF_UPDATE_REVIEW, ids).apply();
+    /** The background check refused an update that asks for more. */
+    private void onUpdateRefused(@NonNull String id, @Nullable String version) {
+        if (mReviews.offer(id, version)) {
+            saveReviews();
             publish();
-            // Once per add-on and update: the daily check that finds it again
-            // finds it already marked and says nothing.
-            AddonUpdateNotification.show(mContext, reviewNames(ids), ids.size() == 1 ? id : null);
         }
+        refreshReviewNotification();
+    }
+
+    /** The user saw the update question and did not update. */
+    private void onUpdateDeclined(@NonNull String id, @Nullable String version) {
+        mDeclinedUpdates.add(id);
+        if (mReviews.answered(id, version)) {
+            saveReviews();
+            publish();
+        }
+        refreshReviewNotification();
     }
 
     private void clearReview(@NonNull String id) {
-        Set<String> ids = new HashSet<>(mPrefs.getStringSet(PREF_UPDATE_REVIEW, Collections.emptySet()));
-        if (ids.remove(id)) {
-            mPrefs.edit().putStringSet(PREF_UPDATE_REVIEW, ids).apply();
-            if (ids.isEmpty()) {
-                AddonUpdateNotification.cancel(mContext);
-            }
+        if (mReviews.remove(id)) {
+            saveReviews();
+            // The Settings rows read the mark when the list is published.
+            publish();
+            refreshReviewNotification();
         }
     }
 
-    /** The names of the add-ons whose update waits for the user, for the notification. */
+    private void saveReviews() {
+        mLocalPrefs.edit().putString(PREF_UPDATE_REVIEWS, mReviews.encode()).apply();
+        mUpdateAttention.setValue(mReviews.attention());
+    }
+
+    /**
+     * The notification follows the add-ons that need attention: it goes
+     * once some add-on in it has not been named yet (a new mark, or one that
+     * could not be posted before), it is kept in step while it shows, and it
+     * goes away when none is left. A swiped-away notification is not
+     * brought back for the same update.
+     */
+    private void refreshReviewNotification() {
+        List<String> ids = new ArrayList<>();
+        for (String id : mReviews.attention()) {
+            if (mInstalled.containsKey(id)) {
+                ids.add(id);
+            }
+        }
+        if (ids.isEmpty()) {
+            AddonUpdateNotification.cancel(mContext);
+            return;
+        }
+        boolean due = mReviews.notificationDue();
+        if (!due && !AddonUpdateNotification.isShowing(mContext)) {
+            return;
+        }
+        boolean posted = AddonUpdateNotification.show(mContext, reviewNames(ids),
+                ids.size() == 1 ? ids.get(0) : null);
+        if (posted && mReviews.markNotified(ids)) {
+            saveReviews();
+        }
+    }
+
+    /** The names of these add-ons, sorted, for the notification. */
     @NonNull
-    private List<String> reviewNames(@NonNull Set<String> ids) {
+    private List<String> reviewNames(@NonNull List<String> ids) {
         List<String> names = new ArrayList<>();
         for (String id : ids) {
             WebExtension extension = mInstalled.get(id);
@@ -1448,7 +1564,13 @@ public class AddonManager {
             mPromptQueue.add(prompt);
         } else {
             // Nobody answers a pile of questions: Gecko gets its "no" now.
+            // An update question the user never saw waits like a refused one,
+            // and its check's failure says nothing.
             complete(prompt, false, false, false);
+            if (prompt.type == Prompt.UPDATE) {
+                mDeclinedUpdates.add(prompt.addon.id);
+                onUpdateRefused(prompt.addon.id, prompt.addon.version);
+            }
         }
     }
 
@@ -1481,8 +1603,12 @@ public class AddonManager {
             return;
         }
         complete(current, allow, allowPrivate, allowTechnicalData && current.offersTechnicalData);
-        if (allow && current.type == Prompt.UPDATE) {
-            clearReview(current.addon.id);
+        if (current.type == Prompt.UPDATE) {
+            if (allow) {
+                clearReview(current.addon.id);
+            } else {
+                onUpdateDeclined(current.addon.id, current.addon.version);
+            }
         }
         if (current.pageHost != null) {
             mPageInstallInFlight = false;
@@ -1540,7 +1666,10 @@ public class AddonManager {
                 @NonNull String[] newOrigins, @NonNull String[] newDataCollectionPermissions) {
             GeckoResult<AllowOrDeny> result = new GeckoResult<>();
             if (!mInteractiveUpdates.contains(extension.id)) {
-                markReview(extension.id);
+                // Gecko passes the NEW version here (AddonManager.sys.mjs
+                // updatePromptHandler: info.addon), so a later update that
+                // asks for still more is told apart.
+                onUpdateRefused(extension.id, AddonInfo.from(extension).version);
                 result.complete(AllowOrDeny.DENY);
                 return result;
             }

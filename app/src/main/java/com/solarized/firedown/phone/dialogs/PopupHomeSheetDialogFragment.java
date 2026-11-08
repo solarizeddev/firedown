@@ -12,6 +12,8 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.R;
+import com.solarized.firedown.addons.AddonManager;
+import com.solarized.firedown.addons.AddonUpdateDots;
 import com.solarized.firedown.data.entity.OptionEntity;
 import com.solarized.firedown.data.models.BrowserDialogViewModel;
 import com.solarized.firedown.utils.NavigationUtils;
@@ -44,6 +46,7 @@ public class PopupHomeSheetDialogFragment extends BaseBottomSheetDialogFragment
     private BrowserDialogViewModel mBrowserDialogViewModel;
 
     @Inject SharedPreferences mSharedPreferences;
+    @Inject AddonManager mAddonManager;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -80,7 +83,9 @@ public class PopupHomeSheetDialogFragment extends BaseBottomSheetDialogFragment
         mView.findViewById(R.id.popup_sync).setOnClickListener(this);
         mView.findViewById(R.id.popup_settings).setOnClickListener(this);
         // No page on home: Add-ons is the door to Settings → Add-ons.
-        mView.findViewById(R.id.popup_addons).setOnClickListener(v -> dispatch(R.id.addon_actions_manage));
+        View addons = mView.findViewById(R.id.popup_addons);
+        addons.setOnClickListener(v -> dispatch(R.id.addon_actions_manage));
+        AddonUpdateDots.bindMenuRow(addons, mAddonManager.getUpdateAttention().getValue());
         mView.findViewById(R.id.popup_quit).setOnClickListener(this);
         mView.findViewById(R.id.popup_history).setOnClickListener(this);
         mView.findViewById(R.id.popup_vault).setOnClickListener(this);

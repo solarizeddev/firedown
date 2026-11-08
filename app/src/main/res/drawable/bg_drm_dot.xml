@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The shield's DRM dot (browser_address_bar.xml security_dot): the brand
-     coral, the app's "needs you" mark. -->
+<!-- The app's "needs you" dot, the brand coral: the shield's DRM dot
+     (browser_address_bar.xml security_dot) and the menus' Add-ons row when
+     an add-on update waits for the user (AddonUpdateDots). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
     <solid android:color="?attr/brandInk" />

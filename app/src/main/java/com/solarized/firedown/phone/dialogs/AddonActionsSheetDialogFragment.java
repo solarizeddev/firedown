@@ -93,6 +93,7 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mAddonManager.getActionsVersion().observe(getViewLifecycleOwner(), version -> render());
+        mAddonManager.getUpdateAttention().observe(getViewLifecycleOwner(), ids -> render());
     }
 
     /** The rows on screen, by add-on id, in the order shown. */
@@ -136,8 +137,41 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
         }
         mList.setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
         mEmpty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+        bindManageRow(ids);
         SheetGroups.applyCorners(mList);
         SheetGroups.applyCorners(mView.findViewById(R.id.addon_actions_manage_group));
+    }
+
+    /**
+     * An add-on whose update waits but which this page does not list (it is
+     * off, or not allowed in private tabs): the dot that brought the user
+     * here goes on "Manage add-ons", where Settings names it.
+     */
+    private void bindManageRow(@NonNull List<String> listed) {
+        View manage = mView.findViewById(R.id.addon_actions_manage);
+        View dot = mView.findViewById(R.id.addon_actions_manage_dot);
+        boolean elsewhere = false;
+        List<String> attention = mAddonManager.getUpdateAttention().getValue();
+        if (attention != null) {
+            for (String id : attention) {
+                if (!listed.contains(id)) {
+                    elsewhere = true;
+                    break;
+                }
+            }
+        }
+        dot.setVisibility(elsewhere ? View.VISIBLE : View.GONE);
+        manage.setContentDescription(elsewhere
+                ? getString(R.string.addons_manage) + ", " + getString(R.string.addons_update_review) : null);
+    }
+
+    /** The add-on's waiting update: Settings opens its page and puts the question. */
+    private void openReview(@NonNull String addonId) {
+        OptionEntity entity = new OptionEntity();
+        entity.setId(R.id.addon_review_update);
+        entity.setAction(addonId);
+        NavigationUtils.popBackStackSafe(mNavController, R.id.dialog_addon_actions);
+        mBrowserDialogViewModel.onOptionSelected(entity);
     }
 
     /** uBlock also says "(off)" on pages it never filters (about:, an add-on's page): not a site the user turned it off for. */
@@ -162,7 +196,12 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
 
         String sub = null;
         boolean usable = action != null && !Boolean.FALSE.equals(action.enabled);
-        if (action == null) {
+        // Its update asks for new permissions and the user has not seen the
+        // question: the row says so and opens it, instead of the add-on's button.
+        boolean review = mAddonManager.needsUpdateAttention(item.addon.id);
+        if (review) {
+            sub = getString(R.string.addons_update_review);
+        } else if (action == null) {
             sub = getString(R.string.addons_no_button);
         } else if (!usable) {
             sub = getString(R.string.addons_not_here);
@@ -205,7 +244,10 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
             });
         }
 
-        if (usable) {
+        String id = item.addon.id;
+        if (review) {
+            card.setOnClickListener(v -> openReview(id));
+        } else if (usable) {
             card.setOnClickListener(v -> {
                 // The add-on's own click: it runs its handler, or Gecko asks
                 // for its popup (AddonManager), which the browser then shows.
@@ -216,8 +258,9 @@ public class AddonActionsSheetDialogFragment extends BaseBottomSheetDialogFragme
             card.setOnClickListener(null);
         }
         // After the listener: setOnClickListener makes a view clickable.
-        card.setEnabled(usable);
-        card.setClickable(usable);
-        card.setAlpha(usable ? 1f : 0.6f);
+        boolean tappable = review || usable;
+        card.setEnabled(tappable);
+        card.setClickable(tappable);
+        card.setAlpha(tappable ? 1f : 0.6f);
     }
 }

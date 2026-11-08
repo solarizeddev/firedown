@@ -27,6 +27,7 @@
     <string name="addon_installed">%1$s ditambahkan. Temukan di menu ⋮.</string>
     <string name="addon_network">Tidak dapat mengunduh pengaya. Periksa koneksi Anda.</string>
     <string name="addon_no_update">%1$s sudah versi terbaru</string>
+    <string name="addon_update_failed">Tidak dapat memperbarui %1$s</string>
     <string name="addon_not_an_addon">Berkas ini bukan pengaya Firefox</string>
     <string name="addon_optional_data">Bagikan %1$s dengan pengembang</string>
     <string name="addon_optional_permissions">Izin opsional</string>

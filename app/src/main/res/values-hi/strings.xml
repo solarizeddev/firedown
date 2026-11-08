@@ -36,6 +36,7 @@
     <string name="addon_installed">%1$s जोड़ा गया। इसे ⋮ मेनू में देखें।</string>
     <string name="addon_network">ऐड-ऑन डाउनलोड नहीं हो सका। अपना कनेक्शन जाँचें।</string>
     <string name="addon_no_update">%1$s अप-टू-डेट है</string>
+    <string name="addon_update_failed">%1$s अपडेट नहीं हो सका</string>
     <string name="addon_not_an_addon">यह फ़ाइल Firefox ऐड-ऑन नहीं है</string>
     <string name="addon_optional_data">डेवलपर के साथ %1$s साझा करें</string>
     <string name="addon_optional_permissions">वैकल्पिक अनुमतियाँ</string>

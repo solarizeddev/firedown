@@ -36,6 +36,7 @@
     <string name="addon_installed">%1$s lisätty. Löydät sen ⋮-valikosta.</string>
     <string name="addon_network">Lisäosaa ei voitu ladata. Tarkista yhteytesi.</string>
     <string name="addon_no_update">%1$s on ajan tasalla</string>
+    <string name="addon_update_failed">Kohteen %1$s päivitys epäonnistui</string>
     <string name="addon_not_an_addon">Tämä tiedosto ei ole Firefox-lisäosa</string>
     <string name="addon_optional_data">Jaa kehittäjälle: %1$s</string>
     <string name="addon_optional_permissions">Valinnaiset käyttöoikeudet</string>

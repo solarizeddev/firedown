@@ -36,6 +36,7 @@
     <string name="addon_installed">Doplněk %1$s byl přidán. Najdete ho v nabídce ⋮.</string>
     <string name="addon_network">Doplněk se nepodařilo stáhnout. Zkontrolujte připojení.</string>
     <string name="addon_no_update">%1$s je aktuální</string>
+    <string name="addon_update_failed">%1$s se nepodařilo aktualizovat</string>
     <string name="addon_not_an_addon">Tento soubor není doplněk pro Firefox</string>
     <string name="addon_optional_data">Sdílet s vývojářem: %1$s</string>
     <string name="addon_optional_permissions">Volitelná oprávnění</string>

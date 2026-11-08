@@ -1413,6 +1413,7 @@
     <string name="addon_incompatible">%1$s doesn\'t work in this version of Firedown</string>
     <string name="addon_updated">%1$s updated</string>
     <string name="addon_no_update">%1$s is up to date</string>
+    <string name="addon_update_failed">Couldn\'t update %1$s</string>
     <string name="addon_removed">%1$s removed</string>
 
     <string name="addon_perm_all_sites">Access your data for all websites</string>

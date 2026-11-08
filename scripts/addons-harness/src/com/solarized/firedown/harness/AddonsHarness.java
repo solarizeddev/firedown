@@ -2,6 +2,7 @@ package com.solarized.firedown.harness;
 
 import com.solarized.firedown.addons.AddonPermissions;
 import com.solarized.firedown.addons.AddonPolicy;
+import com.solarized.firedown.addons.AddonUpdateReviews;
 import com.solarized.firedown.addons.AmoCatalog;
 import com.solarized.firedown.addons.XpiManifest;
 
@@ -44,6 +45,7 @@ public final class AddonsHarness {
             realFixtures(args.length > 0 ? args[0] : null);
             manifest();
             permissions();
+            reviews();
         } catch (Throwable t) {
             failures++;
             System.out.println("FAIL harness threw: " + t);
@@ -452,5 +454,73 @@ public final class AddonsHarness {
                         .equals(Arrays.asList("healthInfo", "websiteContent")));
         check("perm: 'none' collects nothing",
                 AddonPermissions.dataCollection(Collections.singletonList("none")).isEmpty());
+    }
+
+    // ---------------------------------------------------------------- update reviews
+
+    private static void reviews() {
+        AddonUpdateReviews r = AddonUpdateReviews.decode(null);
+        check("reviews: nothing saved reads as nothing waiting", r.isEmpty() && r.attention().isEmpty());
+
+        check("reviews: a refused update is a new mark", r.offer("a@x", "2.0"));
+        check("reviews: it waits, needs attention and is due a notification",
+                r.isWaiting("a@x") && r.needsAttention("a@x") && r.notificationDue()
+                        && r.attention().equals(Collections.singletonList("a@x")));
+        check("reviews: the same version offered again changes nothing", !r.offer("a@x", "2.0"));
+        check("reviews: an empty version never re-arms a mark", !r.offer("a@x", ""));
+
+        check("reviews: once named in a notification it is not due again",
+                r.markNotified(Collections.singletonList("a@x")) && !r.notificationDue()
+                        && r.needsAttention("a@x"));
+
+        check("reviews: declining marks the question seen, the update still waits",
+                r.answered("a@x", "2.0") && r.isWaiting("a@x") && !r.needsAttention("a@x")
+                        && r.attention().isEmpty() && !r.notificationDue());
+        check("reviews: the daily check finding the declined version again does not nag",
+                !r.offer("a@x", "2.0") && !r.needsAttention("a@x") && !r.notificationDue());
+
+        check("reviews: a newer version asking for more arms the mark again",
+                r.offer("a@x", "3.0") && r.needsAttention("a@x") && r.notificationDue());
+
+        // A declined question for an add-on the background never marked (the
+        // user's own check): it waits, with no dot and no notification.
+        check("reviews: a decline with no mark yet waits quietly",
+                r.answered("c@x", "4.0") && r.isWaiting("c@x") && !r.needsAttention("c@x"));
+
+        r.offer("b@x", "1.0");
+        AddonUpdateReviews back = AddonUpdateReviews.decode(r.encode());
+        check("reviews: the saved form round-trips every flag",
+                back.encode().equals(r.encode())
+                        && back.needsAttention("a@x") && back.notificationDue()
+                        && back.isWaiting("c@x") && !back.needsAttention("c@x")
+                        && back.attention().equals(Arrays.asList("a@x", "b@x")));
+
+        AddonUpdateReviews legacy = AddonUpdateReviews.fromLegacy(Arrays.asList("old@x", "", "bad\tid"));
+        check("reviews: an old build's mark needs attention but its notification already went",
+                legacy.isWaiting("old@x") && legacy.needsAttention("old@x") && !legacy.notificationDue()
+                        && legacy.attention().equals(Collections.singletonList("old@x")));
+        check("reviews: an old mark learns its version without asking again",
+                legacy.offer("old@x", "1.5") && !legacy.notificationDue());
+        check("reviews: ...and a later version then arms it",
+                legacy.offer("old@x", "1.6") && legacy.notificationDue());
+
+        check("reviews: remove ends the wait", r.remove("b@x") && !r.isWaiting("b@x") && !r.remove("b@x"));
+        check("reviews: marks of add-ons no longer installed are dropped",
+                r.retainOnly(Collections.singletonList("a@x")) && r.isWaiting("a@x") && !r.isWaiting("c@x")
+                        && !r.retainOnly(Collections.singletonList("a@x")));
+
+        AddonUpdateReviews junk = AddonUpdateReviews.decode("x\ty\n\t1.0\t0\t0\nok@x\t1.0\t0\t1\nshort\t1");
+        check("reviews: malformed saved lines are skipped, good ones kept",
+                junk.isWaiting("ok@x") && !junk.isWaiting("x") && !junk.isWaiting("short")
+                        && junk.needsAttention("ok@x") && !junk.notificationDue());
+        check("reviews: an id that cannot be saved is refused", !r.offer("tab\tid", "1") && !r.isWaiting("tab\tid"));
+
+        long day = 24L * 60 * 60 * 1000;
+        long now = 100L * day;
+        check("reviews: a waiting add-on is rechecked once a week, not daily",
+                AddonUpdateReviews.recheckDue(0L, now) && !AddonUpdateReviews.recheckDue(now - 6 * day, now)
+                        && AddonUpdateReviews.recheckDue(now - 7 * day, now));
+        check("reviews: a last recheck in the future (clock moved back) rechecks",
+                AddonUpdateReviews.recheckDue(now + day, now));
     }
 }

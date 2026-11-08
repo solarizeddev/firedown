@@ -39,6 +39,10 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     private TabsBrowserButton mTabsCountButton;
 
     private BadgeDrawable mBadge;
+    /** The ⋮ button's dot: an add-on update waits for the user (see setMenuAttention). */
+    private BadgeDrawable mMenuBadge;
+    @Nullable private View mMoreButton;
+    @Nullable private CharSequence mMoreDescription;
 
     // Top hairline divider (Firefox-parity). The bar is painted the page
     // SURFACE tone (not a tonal surfaceContainer step), so it would dissolve
@@ -131,6 +135,26 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             }
         });
 
+        // The same dot on ⋮, the door to the menu's Add-ons row.
+        mMoreButton = findViewById(R.id.more_button);
+        mMenuBadge = BadgeDrawable.create(context);
+        mMenuBadge.setVisible(false);
+        mMenuBadge.setBackgroundColor(IncognitoColors.getPrimary(context, false));
+        mMenuBadge.setVerticalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_vertical_offset));
+        mMenuBadge.setHorizontalOffset(getResources().getDimensionPixelOffset(R.dimen.badge_horizontal_offset));
+        if (mMoreButton != null) {
+            mMoreDescription = mMoreButton.getContentDescription();
+            View more = mMoreButton;
+            more.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+                @OptIn(markerClass = ExperimentalBadgeUtils.class)
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    more.removeOnLayoutChangeListener(this);
+                    BadgeUtils.attachBadgeDrawable(mMenuBadge, more);
+                }
+            });
+        }
+
         // Top hairline divider, added as the LAST child of this FrameLayout so
         // it draws OVER the bar background at the very top edge. Not a child of
         // the inflated button row, so the click-listener loop above never sees
@@ -210,6 +234,9 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         if (mBadge != null) {
             mBadge.setBackgroundColor(IncognitoColors.getPrimary(context, incognito));
         }
+        if (mMenuBadge != null) {
+            mMenuBadge.setBackgroundColor(IncognitoColors.getPrimary(context, incognito));
+        }
 
         // Top hairline — a soft line (outlineVariant read too prominent).
         // Any dark surface (system-dark OR incognito) gets a translucent-WHITE
@@ -239,6 +266,24 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
 
     public void onBadgeCount(int count){
         mBadge.setVisible(count > 0);
+    }
+
+    /**
+     * An add-on update waits for the user and they have not seen its
+     * question: a dot on ⋮, said in words to a screen reader too (the dot
+     * alone is colour only). The menu's Add-ons row carries the same dot.
+     */
+    public void setMenuAttention(boolean attention) {
+        if (mMenuBadge == null) {
+            return;
+        }
+        mMenuBadge.setVisible(attention);
+        if (mMoreButton != null) {
+            CharSequence base = mMoreDescription != null ? mMoreDescription
+                    : getContext().getString(R.string.tabs_more_options);
+            mMoreButton.setContentDescription(attention
+                    ? base + ", " + getContext().getString(R.string.addons_update_review) : mMoreDescription);
+        }
     }
 
     public void onTabsCount(int count) {

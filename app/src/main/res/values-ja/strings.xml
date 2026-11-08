@@ -38,6 +38,7 @@
     <string name="addon_installed">%1$s を追加しました。⋮ メニューにあります。</string>
     <string name="addon_network">アドオンをダウンロードできませんでした。接続を確認してください。</string>
     <string name="addon_no_update">%1$s は最新です</string>
+    <string name="addon_update_failed">%1$s を更新できませんでした</string>
     <string name="addon_not_an_addon">このファイルは Firefox アドオンではありません</string>
     <string name="addon_optional_data">%1$s を開発者と共有</string>
     <string name="addon_optional_permissions">任意の権限</string>

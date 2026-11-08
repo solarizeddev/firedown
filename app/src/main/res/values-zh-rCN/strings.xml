@@ -38,6 +38,7 @@
     <string name="addon_installed">已添加 %1$s。可在 ⋮ 菜单中找到它。</string>
     <string name="addon_network">无法下载附加组件。请检查网络连接。</string>
     <string name="addon_no_update">%1$s 已是最新版本</string>
+    <string name="addon_update_failed">无法更新 %1$s</string>
     <string name="addon_not_an_addon">此文件不是 Firefox 附加组件</string>
     <string name="addon_optional_data">与开发者共享%1$s</string>
     <string name="addon_optional_permissions">可选权限</string>
