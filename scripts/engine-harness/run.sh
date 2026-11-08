@@ -10,7 +10,7 @@
 # notification split, the filename-collision loop, the main-thread guard on
 # filePathInTasks, the bottom bar's progress line per mode (section 16:
 # equal shares, a finished download held at 100% until the group ends, no
-# known total → indeterminate, completed vs deleted, vault vs regular), and a
+# known total or nothing moved yet → indeterminate, vault vs regular), and a
 # final leak sweep (every started download thread unwound, no handler
 # exception swallowed).
 #

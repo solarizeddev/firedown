@@ -233,6 +233,9 @@ public class HomeIncognitoFragment extends BaseBrowserFragment implements
         // The ⋮ dot while an update is ready (its "Update ready" row).
         new UpdateReadyLiveData(requireContext()).observe(getViewLifecycleOwner(),
                 ready -> mBottomNavigationBar.setUpdateReady(Boolean.TRUE.equals(ready)));
+        // Safe Folder downloads, as the private browser's bar shows them.
+        mTaskViewModel.getSafeProgress().observe(getViewLifecycleOwner(),
+                progress -> mBottomNavigationBar.setDownloadProgress(progress, true));
         mIncognitoStateViewModel.getTabsCount().observe(getViewLifecycleOwner(), count -> {
             mBottomNavigationBar.onTabsCount(count);
             if (count == 0) {

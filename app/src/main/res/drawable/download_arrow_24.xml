@@ -1,0 +1,13 @@
+<!-- download_24 without its tray: the bottom bar's Downloads icon while
+     something downloads, with Material's progress bar under it. Same
+     viewport and arrow path, so the arrow does not move on the swap. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960"
+    android:tint="?attr/colorOnSurfaceVariant">
+  <path
+      android:fillColor="@android:color/white"
+      android:pathData="M480,640L280,440L336,382L440,486L440,160L520,160L520,486L624,382L680,440L480,640Z"/>
+</vector>
