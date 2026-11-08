@@ -1474,6 +1474,11 @@ public class BrowserFragment extends BaseBrowserFragment
         // spinner must not appear over.
         mSwipeRefreshLayout.setEnabled(false);
         mDownloadButton.hide();
+        // Not inside a picture-in-picture window: nothing but the video
+        // belongs there.
+        if (mActivity.isInPictureInPictureMode()) {
+            return;
+        }
         mFullScreenHint = makeSnackbar(mBottomNavigationBar,
                 R.string.exit_fullscreen_with_back_button_short, mIsIncognitoThemed);
         mFullScreenHint.show();
@@ -1926,6 +1931,24 @@ public class BrowserFragment extends BaseBrowserFragment
         }
     }
 
+    /**
+     * The tab on screen lost its content process while in page fullscreen
+     * (a crash or a kill): the reopened page is not fullscreen and Gecko
+     * sends no exit for the dead one, so the chrome comes back here (when
+     * the window leaves PiP, if it is in one). The media's orientation
+     * lock goes with it.
+     */
+    private void pageLostFullScreen(GeckoState geckoState) {
+        if (geckoState.isIncognito() != mIsIncognitoThemed
+                || geckoState != peekCurrentGeckoState()
+                || mUiState != UiState.FULL_SCREEN
+                || getView() == null) {
+            return;
+        }
+        onFullScreen(geckoState, false);
+        mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
+    }
+
     /** The chrome back from page fullscreen: bars, layout, system bars, rotation. */
     private void leaveFullScreenUi() {
         final Window window = mActivity.getWindow();
@@ -2233,6 +2256,10 @@ public class BrowserFragment extends BaseBrowserFragment
      */
     private void showTranslateOffer(@NonNull GeckoState geckoState) {
         if (mTranslateOfferCard == null) return;
+        // Not inside a picture-in-picture window (a playlist moving on to a
+        // page in another language): dropped like a background tab's offer,
+        // the popup row stays the door.
+        if (mActivity.isInPictureInPictureMode()) return;
         String from = TranslationLanguages.displayName(geckoState.getDetectedDocLanguage());
         String toTag = geckoState.getDetectedUserLanguage();
         if (TextUtils.isEmpty(toTag)) toTag = Locale.getDefault().toLanguageTag();
@@ -2756,6 +2783,7 @@ public class BrowserFragment extends BaseBrowserFragment
     @Override
     public void onCrash(GeckoState geckoState) {
         stopMedia(mGeckoMediaController, geckoState);
+        pageLostFullScreen(geckoState);
         // The dead session was already discarded at the DATA layer
         // (GeckoComponents.onCrash) — it must happen even when no fragment
         // view is alive, or the closed session reference survives and a later
@@ -2773,6 +2801,11 @@ public class BrowserFragment extends BaseBrowserFragment
         // A page that crashes on every load is reopened once, then left for
         // the user: it used to reload in a loop.
         if (geckoState.isCrashLooping()) {
+            // Not inside a picture-in-picture window; the page stays blank
+            // there and reopens when the tab is shown again.
+            if (mActivity.isInPictureInPictureMode()) {
+                return;
+            }
             Snackbar snackbar = makeAnchoredSnackbar(R.string.tab_crashed_again);
             snackbar.setDuration(Snackbar.LENGTH_INDEFINITE);
             snackbar.setAction(R.string.tab_crashed_reload, v -> {
@@ -3092,6 +3125,7 @@ public class BrowserFragment extends BaseBrowserFragment
     public void onKill(GeckoState geckoState) {
         super.onKill(geckoState);
         stopMedia(mGeckoMediaController, geckoState);
+        pageLostFullScreen(geckoState);
         // A killed content process never delivers onPageStop — if the killed
         // tab is the one this fragment is showing, drop the load-pin or the
         // bars stay pinned for a load that no longer exists. (GeckoComponents
@@ -3276,8 +3310,14 @@ public class BrowserFragment extends BaseBrowserFragment
             if (previousSession.isOpen()) {
                 previousSession.exitFullScreen();
             }
-            mFullScreenExitDeferred = false;
-            leaveFullScreenUi();
+            // In a PiP window (a crashed page reopened, a page's new
+            // window): the chrome comes back when the window leaves PiP.
+            if (mActivity.isInPictureInPictureMode()) {
+                mFullScreenExitDeferred = true;
+            } else {
+                mFullScreenExitDeferred = false;
+                leaveFullScreenUi();
+            }
             // The old tab's media fullscreen exit, which resets a landscape
             // lock, is gated out too.
             mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);

@@ -1014,6 +1014,9 @@ public class GeckoComponents {
             geckoState.clearPendingUserLoad();
             geckoState.setShowingErrorPage(false);
             geckoState.recordCrash();
+            // The dead document's fullscreen is gone with it, and Gecko
+            // sends no exit for it.
+            geckoState.setEntityFullScreen(false);
             // Discard at the DATA layer, before notify: the observer is
             // view-lifecycle scoped, so a crash landing while the browser view
             // is destroyed (user in Settings) used to skip the fragment's
@@ -1053,6 +1056,7 @@ public class GeckoComponents {
             geckoState.setLoading(false);
             geckoState.clearPendingUserLoad();
             geckoState.setShowingErrorPage(false);
+            geckoState.setEntityFullScreen(false);
             geckoState.discardGeckoSession();
             mGeckoObserverRegistry.notifyObservers(GeckoObserverInvoker.KILL_SESSION, geckoState);
         }
