@@ -6652,10 +6652,11 @@ first check is `adb shell dumpsys window | grep -i animator`. The rules:
 - **The layout** (`bottom_bar.xml`): the button sits in a `FrameLayout`
   (`downloads_cell`, which takes no clicks: the loop in
   `BottomNavigationBar` skips it and the button gets its own listeners), with
-  the indicator over it: 18dp wide, 3dp thick, round ends, centred on the
-  icon and moved 9.5dp down to where the tray's base is. Material's 2024 gap
-  between fill and track and its stop dot are set to 0: at this size they
-  split the bar into separate pills. Disjoint indeterminate animation,
+  the indicator over it: 18dp wide, 3dp thick, round ends (the style's own
+  `50%`, see the next rule), centred on the icon and moved 9.5dp down to
+  where the tray's base is. Material's 2024 gap between fill and track and
+  its stop dot are set to 0: at this size they split the bar into separate
+  pills. Disjoint indeterminate animation,
   start-to-end (mirrors in RTL), hidden from screen readers (the button says
   it, below).
 - **The icon swaps** (`refreshDownloadsIcon`): `download_arrow_24` (the
@@ -12644,6 +12645,19 @@ here:
   satisfies both. The prerequisite for ever moving it is splitting use (2) onto
   its own on-dark ink resource. Two consumers *would* improve (the progress
   track and `bg_icon_container_primary`) — that is what makes it tempting.
+- **A progress bar's round ends are `trackCornerRadius="50%"`, never a
+  dimension.** Material 1.14 draws a bar with stroke caps only when the
+  radius is the FRACTION 0.5 (`useStrokeCap`). A dimension (`3dp` on a 5dp
+  bar, even one equal to half the thickness) makes it draw a butt-capped line
+  between the end centres PLUS a rounded block at each end, which overlap by
+  the radius. With an opaque colour that is invisible; with a see-through
+  track (every bar here: the ink at 30% or `0x33`) the overlap is painted
+  twice and reads as a bright blob at each end. Shipped on the bottom bar's
+  Downloads button (`1.5dp`, reported from a device as "glyphs at the start
+  and the end"); the Downloads row, the Backups transfer rows, the update
+  sheet and the P2P bars carried the same latent shape. The M3 style already
+  sets `50%`, so a bar that wants round ends sets nothing; `0dp` (square,
+  no blocks) is the other safe value.
 - **A progress indicator can NEVER be `colorPrimary` in light theme — the
   maths forbids it.** A determinate bar has to separate from its own track by
   3:1 (WCAG 1.4.11). Against `#ff716c` that is unreachable with ANY lighter

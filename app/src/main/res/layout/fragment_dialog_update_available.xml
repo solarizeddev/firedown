@@ -269,7 +269,7 @@
                 android:max="100"
                 app:indicatorColor="@color/progress_indicator"
                 app:indicatorTrackGapSize="0dp"
-                app:trackCornerRadius="3dp"
+                app:trackCornerRadius="50%"
                 app:trackStopIndicatorSize="0dp"
                 app:trackThickness="5dp" />
 
