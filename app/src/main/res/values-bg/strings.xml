@@ -1255,4 +1255,6 @@
     <string name="task_gif_failed">GIF не можа да бъде създаден</string>
     <string name="task_gif_finished">GIF е създаден</string>
     <string name="task_stop">Спиране</string>
+    <string name="bottom_bar_downloading_percent">%1$s, изтегляне, %2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s, изтегляне</string>
 </resources>

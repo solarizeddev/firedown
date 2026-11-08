@@ -1240,4 +1240,6 @@
     <string name="shield_no_blocker_title">広告ブロッカーがオフです</string>
     <string name="shield_turn_on">オンにする</string>
     <string name="stream_audio_only_title">音声のみ</string>
+    <string name="bottom_bar_downloading_percent">%1$s、ダウンロード中、%2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s、ダウンロード中</string>
 </resources>

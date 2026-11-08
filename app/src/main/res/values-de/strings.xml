@@ -1254,4 +1254,6 @@
     <string name="shield_no_blocker_title">Kein Werbeblocker aktiv</string>
     <string name="shield_turn_on">Einschalten</string>
     <string name="stream_audio_only_title">Nur Audio</string>
+    <string name="bottom_bar_downloading_percent">%1$s, wird heruntergeladen, %2$d %%</string>
+    <string name="bottom_bar_downloading">%1$s, wird heruntergeladen</string>
 </resources>

@@ -51,7 +51,7 @@ EOF
 
 mutant "rtl ignored" "rtl ? iconLeft : buttonWidth - iconRight" "buttonWidth - iconRight"
 mutant "rtl corner swapped" "rtl ? iconLeft : buttonWidth - iconRight" "rtl ? buttonWidth - iconRight : iconLeft"
-mutant "dot centred on the top edge" "return iconTop + dotHeight;" "return iconTop + dotHeight / 2;"
-mutant "dot centred on the end edge" "return fromEnd + dotWidth;" "return fromEnd + dotWidth / 2;"
+mutant "dot inside the top edge" "return iconTop + dotHeight / 2;" "return iconTop + dotHeight;"
+mutant "dot inside the end edge" "return fromEnd + dotWidth / 2;" "return fromEnd + dotWidth;"
 mutant "offset from the button, not the icon" "int fromEnd = rtl ? iconLeft : buttonWidth - iconRight;" "int fromEnd = rtl ? iconLeft : buttonWidth / 4;"
 echo "all mutants killed"

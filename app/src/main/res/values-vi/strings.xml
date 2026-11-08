@@ -1221,4 +1221,6 @@
     <string name="webdav_trust_note">Nếu nó thay đổi, việc sao lưu sẽ dừng cho đến khi bạn kiểm tra lại.</string>
     <string name="webdav_trust_title">Tin cậy máy chủ này?</string>
     <string name="webdav_user">Tên người dùng</string>
+    <string name="bottom_bar_downloading_percent">%1$s, đang tải xuống, %2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s, đang tải xuống</string>
 </resources>

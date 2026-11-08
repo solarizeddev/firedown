@@ -1255,4 +1255,6 @@
     <string name="trackers_info_type_images">Pildid ja majakad</string>
     <string name="trackers_info_type_other">Muud päringud</string>
     <string name="trackers_info_type_scripts">Skriptid</string>
+    <string name="bottom_bar_downloading_percent">%1$s, allalaadimine, %2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s, allalaadimine</string>
 </resources>

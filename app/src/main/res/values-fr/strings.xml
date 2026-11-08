@@ -1261,4 +1261,6 @@
     <string name="shield_no_blocker_title">Aucun bloqueur de publicités activé</string>
     <string name="shield_turn_on">Activer</string>
     <string name="stream_audio_only_title">Audio uniquement</string>
+    <string name="bottom_bar_downloading_percent">%1$s, téléchargement en cours, %2$d %%</string>
+    <string name="bottom_bar_downloading">%1$s, téléchargement en cours</string>
 </resources>

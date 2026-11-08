@@ -1254,4 +1254,6 @@
     <string name="task_dismiss">Sluiten</string>
     <string name="task_gif_failed">Kan GIF niet maken</string>
     <string name="task_stop">Stoppen</string>
+    <string name="bottom_bar_downloading_percent">%1$s, bezig met downloaden, %2$d%%</string>
+    <string name="bottom_bar_downloading">%1$s, bezig met downloaden</string>
 </resources>

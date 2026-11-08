@@ -61,6 +61,7 @@ import com.solarized.firedown.applinks.AppLinkTarget;
 import com.solarized.firedown.autocomplete.AutoCompleteEditText;
 import com.solarized.firedown.autocomplete.AutoCompleteView;
 import com.solarized.firedown.autocomplete.AutoCompleteViewBehavior;
+import com.solarized.firedown.data.DownloadProgress;
 import com.solarized.firedown.data.entity.AutoCompleteEntity;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.entity.CertificateInfoEntity;
@@ -713,20 +714,19 @@ public class BrowserFragment extends BaseBrowserFragment
             mAccessibilityManager.addTouchExplorationStateChangeListener(mTouchExplorationListener);
         }
 
-        // Download badge: subscribe to both count streams and gate on
-        // mIsIncognitoThemed (same pattern as the tab-count observers
-        // below). Without this, an incognito-tab download would surface
-        // its badge in the regular BrowserFragment chrome and vice
-        // versa — the bottom bar is a single instance shared across
-        // both modes.
+        // The Downloads button's progress line: subscribe to both modes and
+        // gate on mIsIncognitoThemed (same pattern as the tab-count observers
+        // below). Without this, an incognito-tab download would surface in
+        // the regular BrowserFragment chrome and vice versa — the bottom bar
+        // is a single instance shared across both modes.
         // The ⋮ dot while an update is ready (its "Update ready" row).
         new UpdateReadyLiveData(requireContext()).observe(getViewLifecycleOwner(),
                 ready -> mBottomNavigationBar.setUpdateReady(Boolean.TRUE.equals(ready)));
-        mTaskViewModel.getRegularCount().observe(getViewLifecycleOwner(), count -> {
-            if (!mIsIncognitoThemed) mBottomNavigationBar.onBadgeCount(count);
+        mTaskViewModel.getRegularProgress().observe(getViewLifecycleOwner(), progress -> {
+            if (!mIsIncognitoThemed) mBottomNavigationBar.setDownloadProgress(progress, true);
         });
-        mTaskViewModel.getSafeCount().observe(getViewLifecycleOwner(), count -> {
-            if (mIsIncognitoThemed) mBottomNavigationBar.onBadgeCount(count);
+        mTaskViewModel.getSafeProgress().observe(getViewLifecycleOwner(), progress -> {
+            if (mIsIncognitoThemed) mBottomNavigationBar.setDownloadProgress(progress, true);
         });
 
         mGeckoStateViewModel.getTabsCount().observe(getViewLifecycleOwner(), count -> {
@@ -3533,15 +3533,14 @@ public class BrowserFragment extends BaseBrowserFragment
                 : mGeckoStateViewModel.getTabsCount().getValue();
         if (count != null) mBottomNavigationBar.onTabsCount(count);
 
-        // Mirror the tab-count refresh for the download badge: the
-        // observers above only fire on LiveData emission, so a mode
-        // switch without a count change would leave the badge stale
-        // (e.g. regular shows 1 → switch to incognito → still 1 until
-        // a vault download lands).
-        Integer badge = incognito
-                ? mTaskViewModel.getSafeCount().getValue()
-                : mTaskViewModel.getRegularCount().getValue();
-        mBottomNavigationBar.onBadgeCount(badge != null ? badge : 0);
+        // Mirror the tab-count refresh for the Downloads line: the
+        // observers above only fire on LiveData emission, so a mode switch
+        // without a change would leave the other mode's progress showing.
+        // Not news, so no animation.
+        DownloadProgress progress = incognito
+                ? mTaskViewModel.getSafeProgress().getValue()
+                : mTaskViewModel.getRegularProgress().getValue();
+        mBottomNavigationBar.setDownloadProgress(progress, false);
     }
 
     private void recreateSession(GeckoState geckoState) {
