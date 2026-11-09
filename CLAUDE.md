@@ -1403,7 +1403,7 @@ title — each fails). The backbone's generic capture is `pageTitled`, so a
 reader finishing after the wait renames it; a URL with no `efg` is cached by
 its file path. A node serialized INTO a JSON string is not seen (the
 backbone covers it). On a device: `CaptureLiveTest` t6 (live network, a
-pinned public reel), not yet run at write time; desktop pages and `plugins/video.php` embeds are
+pinned public reel; it counts the reel's video and audio captures, not the page's pictures), green on SM-A426B (Android 12); desktop pages and `plugins/video.php` embeds are
 read by the same scanner but no HAR of them was checked.
 
 ### Skip the capture probe when the parser already has the metadata
