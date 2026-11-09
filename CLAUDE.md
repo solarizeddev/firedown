@@ -7008,6 +7008,18 @@ script that left it there), and the first check is
   size, moved 2dp down to the box's centre. Same 2dp shaft as the glyph, so
   ring and arrow read as one weight. (The board drew a smaller arrow; Chrome
   draws a full-size standalone arrow inside its ring, and so does this.)
+  **The tray stays out of the ring, decided after asking (Claude and Fable,
+  separately).** It was first dropped because a linear bar took its base;
+  with the ring that reason is gone, but the whole glyph does not fit: the
+  tray's rounded bottom corners reach 10.5dp from the centre and the ring's
+  stroke spans 9–11dp. Shrunk to fit (about 76%, 12dp) it is smaller than
+  every icon on the bar, its lines thin to ~1.5dp beside the ring's 2dp,
+  and a tray nested in a ring is two containers in 24dp; a ring pushed out
+  to clear it (~27dp) is the heaviest icon on the bar again. So the states
+  change one thing each: at rest the tray, while running it becomes the
+  ring, when finished the tray comes back in coral. Reopen it only on a
+  device read where the ringed arrow is mistaken for reload or "scroll
+  down".
 - **Finished** (`DownloadProgress.FINISHED`): a group that ends with at
   least one download saved turns the usual icon the ring's colour. Nothing
   says "failed" on the button (Chrome's rule; the notification and the row
