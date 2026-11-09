@@ -147,6 +147,40 @@ url_ok() {
     done
 }
 
+# github_digests: every file status.json lists on the GitHub release is the
+# file it names, by the SHA-256 GitHub computes for each asset. A size check
+# cannot tell a stale asset from the new one: two builds of one version can
+# differ by a few bytes or not at all. An asset GitHub reports no digest for
+# (one uploaded before it computed them) is checked by size only.
+github_digests() {
+    local list name want got wanted i=0
+    list=$(gh api "repos/$GH_REPO/releases/tags/v$NAME" --jq '.assets[] | .name + " " + (.digest // "")') \
+        || die "gh cannot read the files of the release v$NAME"
+    # "name sha256" per line: the APK, then the .xz and patches.
+    wanted="app-release.apk $APK_SHA"
+    while [ "$i" -lt "${#F_SHA[@]}" ]; do
+        wanted="$wanted
+${F_GITHUB[$i]##*/} ${F_SHA[$i]}"
+        i=$((i + 1))
+    done
+    while read -r name want; do
+        [ -n "$name" ] || continue
+        if ! printf '%s\n' "$list" | awk -v n="$name" '$1 == n { found = 1 } END { exit !found }'; then
+            die "the release v$NAME has no $name"
+        fi
+        got=$(printf '%s\n' "$list" | awk -v n="$name" '$1 == n { print $2; exit }')
+        if [ -z "$got" ]; then
+            note "GitHub reports no SHA-256 for $name: checked by size only"
+        elif [ "$got" != "sha256:$want" ]; then
+            die "$name on the release v$NAME is not the file status.json names (GitHub's SHA-256 is ${got#sha256:}). Upload it again: ./gradlew uploadUpdateRelease"
+        else
+            ok "$name on GitHub has the SHA-256 status.json names"
+        fi
+    done <<WANTED
+$wanted
+WANTED
+}
+
 need_url() {
     if url_ok "$1" "$2" "${3:-1}"; then
         ok "$1"
@@ -356,6 +390,7 @@ if runs github; then
         need_url "${F_GITHUB[$i]}" "${F_SIZE[$i]}" 6
         i=$((i + 1))
     done
+    github_digests
 fi
 
 # ---- fdroid ------------------------------------------------------------------
@@ -419,6 +454,11 @@ if runs manifest; then
         fi
         i=$((i + 1))
     done
+    if command -v gh >/dev/null 2>&1; then
+        github_digests
+    else
+        note "gh is not installed: the GitHub files are checked by size only"
+    fi
     ask "Offer Firedown $NAME to every phone now?" || die "status.json not published. Run again with: $0 --from manifest"
 
     if git -C "$ROOT" diff --quiet HEAD -- status.json release-history.json; then

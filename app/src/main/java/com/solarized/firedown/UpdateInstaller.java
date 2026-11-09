@@ -59,10 +59,15 @@ public final class UpdateInstaller {
         return sState;
     }
 
+    /** An install is copying the APK or waiting for Android's answer, in this process. */
+    public static boolean isInstalling() {
+        return sProgress.current().busy();
+    }
+
     /**
      * Copies the verified APK into a PackageInstaller session and commits it.
-     * Runs synchronously — the caller is responsible for threading (see
-     * {@link UpdateInstallReceiver#handleUserTapInstall}, which uses goAsync).
+     * Runs synchronously — the caller is responsible for threading (the
+     * sheet and About use a thread, the notification {@link UpdateInstallWorker}).
      * One install at a time: a call while another runs does nothing.
      *
      * @param fromNotification the update notification turns into the progress
@@ -172,6 +177,14 @@ public final class UpdateInstaller {
             // IllegalStateException (session cap reached), neither of which is
             // an IOException.
             Log.e(TAG, "Error during APK installation", e);
+            if (!committed) {
+                // Written just before the commit; a commit that never happened
+                // must not make a later, unrelated app update announce this name.
+                PreferenceManager.getDefaultSharedPreferences(context)
+                        .edit()
+                        .remove(Keys.UPDATE_META)
+                        .apply();
+            }
             publish(context, sProgress.failed(generation));
             UpdateNotification.showNotificationFailed(context);
         } finally {

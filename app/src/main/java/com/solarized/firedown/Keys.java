@@ -71,6 +71,11 @@ public class Keys {
     public static final String UPDATE_READY = "com.solarized.firedown.UPDATE_READY";
     public static final String UPDATE_READY_VERSION_CODE = "com.solarized.firedown.UPDATE_READY_VERSION_CODE";
     public static final String UPDATE_READY_NAME = "com.solarized.firedown.UPDATE_READY_NAME";
+    // When status.json was first seen naming a version OLDER than the ready
+    // APK (the release was pulled). The ready APK is dropped only when a later
+    // check still says so, an hour on, so a stale copy of status.json (a CDN
+    // edge, a mirror deploying minutes behind) never deletes a good update.
+    public static final String UPDATE_PULLED_SEEN_AT = "com.solarized.firedown.UPDATE_PULLED_SEEN_AT";
     // Per-version SNOOZE bookkeeping for the in-app update sheet: which version
     // the snooze belongs to, the wall-clock time the sheet may show again, and
     // how many times it has been dismissed for that version (the last dismissal

@@ -14,5 +14,20 @@ case "$1 $2" in
             *" --draft=false "*) rm -f "$FAKE_WORLD/github/$3.draft" ;;
         esac
         ;;
+    "api repos/"*/releases/tags/*)
+        # The release's assets as the script's --jq prints them: "name
+        # sha256:<hex>" ("name " with FAKE_GH_NO_DIGEST=1). A draft is not
+        # found, as on GitHub.
+        tag=${2##*/}
+        [ -d "$FAKE_WORLD/github/$tag" ] && [ ! -e "$FAKE_WORLD/github/$tag.draft" ] \
+            || { echo "HTTP 404: Not Found" >&2; exit 1; }
+        for f in "$FAKE_WORLD/github/$tag"/*; do
+            if [ "${FAKE_GH_NO_DIGEST:-0}" = 1 ]; then
+                printf '%s \n' "${f##*/}"
+            else
+                printf '%s sha256:%s\n' "${f##*/}" "$(sha256sum "$f" | cut -d' ' -f1)"
+            fi
+        done
+        ;;
     *) echo "fake gh: unexpected: $*" >&2; exit 2 ;;
 esac

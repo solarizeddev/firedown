@@ -54,7 +54,13 @@ public class DownloadManager {
         };
     }
 
+    /** The Download Manager app disabled: remove() throws, as the real one does then. */
+    public boolean removeThrows;
+
     public int remove(long... ids) {
+        if (removeThrows) {
+            throw new IllegalArgumentException("Unknown URL content://downloads/my_downloads");
+        }
         int n = 0;
         for (long id : ids) {
             Row row = rows.remove(id);

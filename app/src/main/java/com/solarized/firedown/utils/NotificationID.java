@@ -11,6 +11,15 @@ public class NotificationID {
 
     public static final int APK_UPDATE_SUCCESSFUL_INSTALL     = 668;
 
+    /**
+     * Android's own install confirmation, when Firedown could not open it
+     * (the app was in the background): its tap opens that dialog.
+     */
+    public static final int APK_UPDATE_CONFIRM_INSTALL        = 669;
+
+    /** An update check run as an expedited job on Android 11 and older (its foreground notice). */
+    public static final int APK_UPDATE_CHECK                  = 670;
+
     public static final int    MEDIA_ID    = 102;
 
     /**

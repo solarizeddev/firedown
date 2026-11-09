@@ -79,6 +79,10 @@ public final class UpdateFlowHarness {
         clearPendingRemovesTheDownload();
         noPatchForAnotherInstalledApk();
         aSignatureFailureOnTheApkTriesTheNextMirror();
+        aNewerReleaseRetiresTheReadyOne();
+        aClockSetBackNeverHoldsAVersion();
+        aPulledReleaseStopsBeingOffered();
+        aDisabledDownloadManagerNeverThrows();
 
         System.out.println("update-flow: " + pass + " passed, " + fail + " failed");
         System.exit(fail == 0 ? 0 : 1);
@@ -369,6 +373,117 @@ public final class UpdateFlowHarness {
         check(current().url.equals("https://fd/app.apk") && !apk().exists(), s + "refused, the next mirror tried");
     }
 
+    /**
+     * 1206 verified and waiting; status.json moves on to 1207 before it is
+     * installed. The 1207 download is written to the same path the 1206 APK
+     * was at: from the moment it starts nothing may offer "1206 is ready"
+     * over that partial file.
+     */
+    private static void aNewerReleaseRetiresTheReadyOne() throws Exception {
+        String s = "newer release: ";
+        phone();
+        verifiedApkOnly();
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206), s + "1206 is verified and ready");
+        byte[] next = newApk.clone();
+        next[2000] ^= 0x55;
+        server.put("https://gh/app-1207.apk", next);
+        startUpdate("{\"versionCode\":1207,\"versionName\":\"Firedown 1.2.7\","
+                + "\"updateUrl\":\"https://gh/app-1207.apk\",\"sha256\":\"" + sha(next) + "\"}");
+        DownloadManager.Row row = current();
+        check(row != null && row.dest.equals(apk()), s + "1207 downloads to the APK's own path");
+        // DownloadManager writes the destination as it downloads.
+        Files.write(row.dest.toPath(), Arrays.copyOf(next, next.length / 3));
+        check(!UpdateDownloader.isVerifiedReady(ctx, 1206), s + "1206 is no longer offered over the partial file");
+        check(!prefs().contains(Keys.UPDATE_READY) && UpdateDownloader.readyVersionCode(ctx) == -1,
+                s + "its ready record is gone");
+        // The belt: a ready record an older build left beside a download.
+        prefs().edit().putBoolean(Keys.UPDATE_READY, true).putInt(Keys.UPDATE_READY_VERSION_CODE, 1206).apply();
+        check(!UpdateDownloader.isVerifiedReady(ctx, 1206), s + "a ready record beside a recorded download is not trusted");
+        prefs().edit().remove(Keys.UPDATE_READY).remove(Keys.UPDATE_READY_VERSION_CODE).apply();
+        Files.delete(row.dest.toPath());
+        finish(row);
+        runWorker(row.id);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1207) && Arrays.equals(next, Files.readAllBytes(apk().toPath())),
+                s + "then 1207 is verified and ready");
+    }
+
+    /** Retry times and claims written under a wrong clock. */
+    private static void aClockSetBackNeverHoldsAVersion() throws Exception {
+        String s = "clock: ";
+        long now = System.currentTimeMillis();
+        long hour = 60L * 60L * 1000L;
+        check(UpdateDownloader.backoffActive(now, now + hour), s + "a retry an hour away waits");
+        check(UpdateDownloader.backoffActive(now, now + 7L * hour), s + "the longest backoff (6 h + jitter) waits");
+        check(!UpdateDownloader.backoffActive(now, now + 365L * 24L * hour),
+                s + "a retry a year away (written under a clock set ahead) does not");
+        check(!UpdateDownloader.backoffActive(now, now - 1), s + "a retry time passed does not");
+        check(UpdateDownloader.claimLive(-60_000L), s + "a claim a minute in the future (clock set back a little) holds");
+        check(!UpdateDownloader.claimLive(-2L * hour), s + "a claim two hours in the future does not");
+        check(!UpdateDownloader.claimLive(31L * 60_000L), s + "a claim 31 minutes old does not");
+
+        phone();
+        prefs().edit().putInt(Keys.UPDATE_FAILED_VERSION_CODE, 1206).putInt(Keys.UPDATE_FAILED_COUNT, 3)
+                .putLong(Keys.UPDATE_NEXT_RETRY_AT, now + 365L * 24L * hour).apply();
+        startUpdate(manifest());
+        check(current() != null, s + "after the clock is corrected the version downloads again");
+
+        // A finished APK-step download claimed "two hours from now".
+        phone();
+        startUpdate(apkOnlyManifest());
+        DownloadManager.Row row = current();
+        finish(row);
+        prefs().edit().putLong(Keys.UPDATE_DOWNLOAD_FINALIZING_AT, now + 2L * hour).apply();
+        WorkManager.INSTANCE.unique.clear();
+        startUpdate(apkOnlyManifest());
+        check(current().id == row.id && WorkManager.INSTANCE.unique.containsKey("update_finalize_" + row.id),
+                s + "a claim from the future is stale: the APK is handed over again, not left forever");
+    }
+
+    /** A verified 1207 waits; status.json goes back to 1206 (the release was pulled). */
+    private static void aPulledReleaseStopsBeingOffered() throws Exception {
+        String s = "pulled release: ";
+        phone();
+        verifiedApkOnly();
+        prefs().edit().putInt(Keys.UPDATE_READY_VERSION_CODE, 1207).apply();
+        UpdateDownloader.onManifestSeen(ctx, 1206);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1207) && apk().exists(),
+                s + "one sighting changes nothing (a stale mirror can serve the old file)");
+        UpdateDownloader.onManifestSeen(ctx, 1206);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1207), s + "nor a second one minutes later");
+        UpdateDownloader.onManifestSeen(ctx, 1207);
+        check(!prefs().contains(Keys.UPDATE_PULLED_SEEN_AT), s + "seeing the release again forgets the first sighting");
+        UpdateDownloader.onManifestSeen(ctx, 1206);
+        prefs().edit().putLong(Keys.UPDATE_PULLED_SEEN_AT, System.currentTimeMillis() + 3_600_000L).apply();
+        UpdateDownloader.onManifestSeen(ctx, 1206);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1207), s + "a first sighting in the future (clock moved back) restarts the count");
+        prefs().edit().putLong(Keys.UPDATE_PULLED_SEEN_AT,
+                System.currentTimeMillis() - UpdateDownloader.PULLED_CONFIRM_MS - 1).apply();
+        UpdateDownloader.onManifestSeen(ctx, 1206);
+        check(!UpdateDownloader.isVerifiedReady(ctx, 1207) && !apk().exists()
+                && !prefs().contains(Keys.UPDATE_READY) && !prefs().contains(Keys.UPDATE_PULLED_SEEN_AT),
+                s + "an hour later the APK and its record are dropped");
+        phone();
+        verifiedApkOnly();
+        UpdateDownloader.onManifestSeen(ctx, 1206);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206) && !prefs().contains(Keys.UPDATE_PULLED_SEEN_AT),
+                s + "status.json naming the ready version is no sighting");
+    }
+
+    private static void aDisabledDownloadManagerNeverThrows() throws Exception {
+        String s = "disabled DownloadManager: ";
+        phone();
+        startUpdate(apkOnlyManifest());
+        dm.removeThrows = true;
+        boolean threw = false;
+        try {
+            UpdateDownloader.clearPending(ctx);
+        } catch (RuntimeException e) {
+            threw = true;
+        }
+        check(!threw && prefs().getLong(Keys.UPDATE_DOWNLOAD_ID, -1) == -1,
+                s + "clearPending (run on the main thread after an update) clears the record without throwing");
+    }
+
     // ── the phone, the server, the steps ─────────────────────────────────
 
     private static void phone() throws IOException {
@@ -408,6 +523,20 @@ public final class UpdateFlowHarness {
                 + "\"urls\":[\"https://gh/p\",\"https://m/p\"],\"sha256\":\"" + patchSha + "\",\"size\":" + patchSize + "}],"
                 + "\"compressed\":{\"format\":\"xz\",\"urls\":[\"https://gh/x\",\"https://m/x\"],"
                 + "\"sha256\":\"" + sha(xz) + "\",\"size\":" + xz.length + "}}";
+    }
+
+    /** 1206 from the APK alone (no patch, no .xz). */
+    private static String apkOnlyManifest() {
+        return "{\"versionCode\":1206,\"versionName\":\"Firedown 1.2.6\","
+                + "\"updateUrl\":\"https://gh/app.apk\",\"sha256\":\"" + sha(newApk) + "\"}";
+    }
+
+    /** Downloads and verifies 1206 from the APK step. */
+    private static void verifiedApkOnly() throws IOException {
+        startUpdate(apkOnlyManifest());
+        DownloadManager.Row row = current();
+        finish(row);
+        runWorker(row.id);
     }
 
     /** What UpdateWorker does for a newer release that isn't ready yet. */

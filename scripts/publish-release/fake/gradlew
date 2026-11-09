@@ -11,4 +11,10 @@ if [ ! -d "$dir" ]; then
     : > "$dir.draft"
 fi
 cp app/build/outputs/update/v"$name"/* "$dir"/
+# FAKE_STALE_ASSET=<file>: that asset ends up the same size with other bytes
+# (an earlier build left on the release).
+if [ -n "${FAKE_STALE_ASSET:-}" ]; then
+    size=$(wc -c < "$dir/$FAKE_STALE_ASSET")
+    head -c "$size" /dev/urandom > "$dir/$FAKE_STALE_ASSET"
+fi
 echo "Uploaded to v$name"

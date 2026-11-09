@@ -6,12 +6,14 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.hilt.work.HiltWorker;
 import androidx.work.Data;
+import androidx.work.ForegroundInfo;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.utils.BrowserHeaders;
+import com.solarized.firedown.utils.NotificationID;
 
 import java.io.IOException;
 
@@ -80,6 +82,10 @@ public class UpdateWorker extends Worker {
                 manifest.versionName, manifest.changelog);
 
         try {
+            // A verified APK newer than what status.json now names belongs to
+            // a pulled release: stop offering it (after a second sighting).
+            UpdateDownloader.onManifestSeen(mContext, manifest.versionCode);
+
             boolean newer = manifest.isNewerThan(mCurrentVersion);
 
             if (newer) {
@@ -87,7 +93,11 @@ public class UpdateWorker extends Worker {
                     // Already downloaded AND verified on a previous cycle —
                     // re-surface the (silent) install prompt. The in-app sheet
                     // additionally shows on resume while the app is in use.
-                    UpdateNotification.showInstallPrompt(mContext, manifest.versionName);
+                    // Not while an install runs: the prompt's id is the one
+                    // its progress is shown on.
+                    if (!UpdateInstaller.isInstalling()) {
+                        UpdateNotification.showInstallPrompt(mContext, manifest.versionName);
+                    }
                 } else {
                     // Hand the download to the system DownloadManager and
                     // return — when the broadcast arrives (which can cold-start
@@ -120,6 +130,19 @@ public class UpdateWorker extends Worker {
             Log.e("UpdateWorker", "Update check failed", e);
             return Result.retry();
         }
+    }
+
+    /**
+     * Never called today: no check is expedited (UpdateScheduler). Here so
+     * that an expedited check added later works on Android 11 and older,
+     * where WorkManager runs expedited work as a foreground service and the
+     * default implementation throws.
+     */
+    @NonNull
+    @Override
+    public ForegroundInfo getForegroundInfo() {
+        return UpdateInstallWorker.foregroundInfo(NotificationID.APK_UPDATE_CHECK,
+                UpdateNotification.buildCheckRunning(mContext));
     }
 
     /**

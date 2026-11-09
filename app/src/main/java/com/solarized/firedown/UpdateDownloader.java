@@ -339,7 +339,20 @@ public final class UpdateDownloader {
         if (p.getInt(Keys.UPDATE_FAILED_VERSION_CODE, -1) != versionCode) {
             return false;
         }
-        return System.currentTimeMillis() < p.getLong(Keys.UPDATE_NEXT_RETRY_AT, 0L);
+        return backoffActive(System.currentTimeMillis(), p.getLong(Keys.UPDATE_NEXT_RETRY_AT, 0L));
+    }
+
+    /**
+     * True while {@code nextRetryAt} is still ahead of {@code now}, and no
+     * further ahead than a backoff can be. A retry time further out was written
+     * under a clock that was later set back (a phone that booted in 2030 and
+     * then got the network time): believed, it would hold this version back
+     * until the clock caught up, since only a newer release escapes it. The
+     * window then counts as over.
+     */
+    static boolean backoffActive(long now, long nextRetryAt) {
+        long remaining = nextRetryAt - now;
+        return remaining > 0 && remaining <= BACKOFF_MAX_MS + BACKOFF_MAX_MS / 5;
     }
 
     /**
@@ -400,8 +413,11 @@ public final class UpdateDownloader {
                 UpdateFinalizeWorker.enqueue(context, previousId);
                 return true;
             }
-            // A clock set back makes the age negative: still a live claim.
-            if (age < FINALIZE_CLAIM_MS) {
+            // A clock set back makes the age negative. A little is a live
+            // claim; more than a claim's whole lifetime says nothing about when
+            // it was taken, and believed, it would stop every download for as
+            // long as the clock was off. Such a claim counts as stale.
+            if (claimLive(age)) {
                 Log.d(TAG, "a finished download is being verified; not enqueuing again");
                 return true;
             }
@@ -420,6 +436,11 @@ public final class UpdateDownloader {
         return false;
     }
 
+    /** A finalize claim {@code age} ms old (negative: the clock moved back) still holds. */
+    static boolean claimLive(long age) {
+        return age > -FINALIZE_CLAIM_MS && age < FINALIZE_CLAIM_MS;
+    }
+
     /** Must be called under LOCK. Enqueues the plan's current step and records it. */
     private static void enqueueLocked(Context context, UpdatePlan plan, String apkSha256,
                                       String name, int versionCode) {
@@ -433,10 +454,7 @@ public final class UpdateDownloader {
         }
 
         SharedPreferences p = prefs(context);
-        long previousId = p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1);
-        if (previousId != -1) {
-            dm.remove(previousId);
-        }
+        removeDownload(context, p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1));
 
         // DownloadManager refuses to overwrite an existing destination, so clear
         // any stale/partial file first — and the APK, which a patch or an .xz
@@ -446,6 +464,12 @@ public final class UpdateDownloader {
         if (apk.exists()) {
             apk.delete();
         }
+        // That file may have been a verified update of an older version (a
+        // newer release came out before it was installed): the record that
+        // vouched for it goes with it. Left behind, it would offer "Update to
+        // <older>" over the next download's PARTIAL file, which this same path
+        // is now being written to.
+        clearReadyRecordLocked(context);
 
         // A patch or .xz needs room for itself AND the APK rebuilt from it.
         // When there isn't, go to the APK now: DownloadManager checks the
@@ -576,8 +600,62 @@ public final class UpdateDownloader {
         if (p.getInt(Keys.UPDATE_READY_VERSION_CODE, -1) < atLeastVersion) {
             return false;
         }
+        // A recorded download writes to the APK's own path (the APK step), or
+        // is about to rebuild it there (a patch or an .xz). The enqueue clears
+        // the ready record; this is the belt for a record left by an older
+        // build of this class.
+        if (p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1) != -1) {
+            return false;
+        }
         File apk = Preferences.getUpdateApkFile(context);
         return apk != null && apk.exists();
+    }
+
+    /**
+     * How long status.json must keep naming a version older than the ready
+     * APK before that APK is dropped as a pulled release. Two checks this far
+     * apart are needed: a mirror or a CDN edge can serve the previous file for
+     * minutes after a release, and dropping a good update costs a full
+     * download.
+     */
+    static final long PULLED_CONFIRM_MS = 60L * 60L * 1000L;
+
+    /**
+     * status.json, as just fetched, names {@code manifestVersionCode}. When a
+     * verified APK of a NEWER version waits on disk, that release was pulled
+     * (status.json went back): the first sighting is remembered, and a later
+     * check at least {@link #PULLED_CONFIRM_MS} on drops the APK and its
+     * record, so the sheet, the menu row and About stop offering it. Any
+     * sighting of that version or a newer one forgets the first.
+     */
+    public static void onManifestSeen(Context context, int manifestVersionCode) {
+        synchronized (LOCK) {
+            SharedPreferences p = prefs(context);
+            if (!p.getBoolean(Keys.UPDATE_READY, false)
+                    || p.getInt(Keys.UPDATE_READY_VERSION_CODE, -1) <= manifestVersionCode) {
+                if (p.contains(Keys.UPDATE_PULLED_SEEN_AT)) {
+                    p.edit().remove(Keys.UPDATE_PULLED_SEEN_AT).apply();
+                }
+                return;
+            }
+            long now = System.currentTimeMillis();
+            long seenAt = p.getLong(Keys.UPDATE_PULLED_SEEN_AT, 0L);
+            // Unset, or in the future (the clock moved back): start counting now.
+            if (seenAt <= 0L || seenAt > now) {
+                p.edit().putLong(Keys.UPDATE_PULLED_SEEN_AT, now).apply();
+                return;
+            }
+            if (now - seenAt < PULLED_CONFIRM_MS) {
+                return;
+            }
+            Log.w(TAG, "the ready update " + p.getInt(Keys.UPDATE_READY_VERSION_CODE, -1)
+                    + " is no longer offered (status.json names " + manifestVersionCode + "); dropping it");
+            clearReadyRecordLocked(context);
+            File apk = Preferences.getUpdateApkFile(context);
+            if (apk != null && apk.exists()) {
+                apk.delete();
+            }
+        }
     }
 
     public static int readyVersionCode(Context context) {
@@ -653,17 +731,23 @@ public final class UpdateDownloader {
     /** Drop the verified "ready" record and delete the APK from disk. */
     public static void clearReady(Context context) {
         synchronized (LOCK) {
-            prefs(context).edit()
-                    .remove(Keys.UPDATE_READY)
-                    .remove(Keys.UPDATE_READY_VERSION_CODE)
-                    .remove(Keys.UPDATE_READY_NAME)
-                    .apply();
+            clearReadyRecordLocked(context);
             File apk = Preferences.getUpdateApkFile(context);
             if (apk != null && apk.exists()) {
                 apk.delete();
             }
             deleteArtifacts(context);
         }
+    }
+
+    /** Must be called under LOCK. The ready record only; the file is the caller's. */
+    private static void clearReadyRecordLocked(Context context) {
+        prefs(context).edit()
+                .remove(Keys.UPDATE_READY)
+                .remove(Keys.UPDATE_READY_VERSION_CODE)
+                .remove(Keys.UPDATE_READY_NAME)
+                .remove(Keys.UPDATE_PULLED_SEEN_AT)
+                .apply();
     }
 
     /** The patch, the .xz and a half-rebuilt APK: never needed once a step is over. */
@@ -686,8 +770,15 @@ public final class UpdateDownloader {
             return;
         }
         DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-        if (dm != null) {
+        if (dm == null) {
+            return;
+        }
+        try {
             dm.remove(id);
+        } catch (RuntimeException e) {
+            // The Download Manager app disabled by the user throws here; one of
+            // the callers (the app-replaced receiver) runs on the main thread.
+            Log.w(TAG, "could not remove download " + id, e);
         }
     }
 

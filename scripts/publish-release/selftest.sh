@@ -347,6 +347,29 @@ case_no_login() {
     check "uploads nothing" no_event nologin "gradlew"
 }
 
+case_stale_asset() {
+    say "a GitHub file of the right size but other bytes"
+    world stale
+    EXTRA=(FAKE_STALE_ASSET=patch-1205-1206.fdpatch)
+    run stale 'y\ny\ny\n'
+    EXTRA=()
+    check "stops" rc_is stale 1
+    check "names the file" said stale "patch-1205-1206.fdpatch on the release v1.2.6 is not the file status.json names"
+    check "F-Droid untouched" no_event stale "publish.sh"
+    check "website unchanged" website_old stale
+    check "firedown unchanged" firedown_old stale
+}
+
+case_no_digest() {
+    say "GitHub reports no SHA-256 (an older release): checked by size"
+    world nodigest
+    EXTRA=(FAKE_GH_NO_DIGEST=1)
+    run nodigest 'y\ny\ny\n'
+    EXTRA=()
+    check "finishes" rc_is nodigest 0
+    check "says so" said nodigest "GitHub reports no SHA-256 for app-release.apk"
+}
+
 say() { [ "$QUIET" = 1 ] || printf '%s\n' "$*"; }
 
 case_clean
@@ -362,6 +385,8 @@ case_no_agent
 case_agent_has_key
 case_ssh_down
 case_no_login
+case_stale_asset
+case_no_digest
 
 # mutant NAME CASE FROM TO: a copy of the script with FROM replaced by TO;
 # CASE must fail against it.
@@ -390,6 +415,7 @@ mutant "no last look before status.json" case_manifest_on_draft '    say "Every 
 mutant "no checksum on the server" case_corrupt_mirror '[ "$got" = "${F_SHA[$i]}" ] ||' 'true ||'
 mutant "rsync without --delete" case_clean 'rsync -e "ssh $SSH_OPTS" -rtpv --chmod=D755,F644 --delete' 'rsync -e "ssh $SSH_OPTS" -rtpv --chmod=D755,F644'
 mutant "a login made up when none is set" case_no_login '[ -n "$REMOTE" ] || die "no server login' 'REMOTE=deploy@firedown.app; true || die "no server login'
+mutant "no GitHub digest check" case_stale_asset '            die "$name on the release v$NAME is not the file' '            note "$name on the release v$NAME is not the file'
 mutant "no agent started" case_no_agent 'if [ "$agent_state" = 2 ] && command -v ssh-agent' 'if false && command -v ssh-agent'
 
 say ""

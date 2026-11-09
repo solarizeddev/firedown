@@ -5155,6 +5155,47 @@ is **~75 MB**, the APK 205 MB.
   checks the fallback tap. The results file opens with the
   phone's model and Android version. Cancelling Android's dialog posts the "update failed" notification
   (the session reports ABORTED); the script flags it as a WARN.
+- **Invariants from the 2026-11 review** (why 1.1.88 installs stopped
+  updating, and what the current client still got wrong), each pinned by
+  the flow harness with a mutant:
+  - **A download that starts clears the ready record**
+    (`enqueueLocked` → `clearReadyRecordLocked`). The APK step downloads to
+    the ready APK's own path, so a verified 1.2.7 left uninstalled when 1.2.8
+    came out was offered over 1.2.8's PARTIAL file ("Update to 1.2.7", then
+    "Update failed"). `isVerifiedReady` is also false while a download is
+    recorded (the belt), and `UpdateReadyLiveData` listens to the download id.
+  - **A wrong clock never holds a version**: a retry time more than one
+    backoff (6 h + 20%) away and a finalize claim more than its lifetime in
+    the future count as expired (`backoffActive`, `claimLive`). A phone that
+    booted in the future used to wait until the clock caught up.
+  - **A pulled release stops being offered** (`onManifestSeen`): when
+    status.json names a version OLDER than the ready APK on two checks an
+    hour apart, the APK and its record are dropped. One sighting is not
+    enough: a mirror or a CDN edge can serve the previous file for minutes
+    after a release, and dropping a good update costs a full download.
+  - **The notification's Install runs in `UpdateInstallWorker`** (expedited,
+    unique, KEEP), not the receiver's `goAsync`: a broadcast is killed after
+    60 s, mid-copy on a slow phone, leaving the installer session open. On
+    Android 11 and older the worker is a foreground service whose notice is
+    the install's own progress notification (same id).
+  - **Android's confirmation dialog has a notification fallback**
+    (`STATUS_PENDING_USER_ACTION` → `showConfirmInstall`, id
+    `APK_UPDATE_CONFIRM_INSTALL`): Android drops an activity start from the
+    background without a word, so with no activity of the app on screen the
+    dialog is also offered as a notification, removed by any outcome. This
+    is not only Android 10–11: `USER_ACTION_NOT_REQUIRED` holds only when
+    Firedown is the installer of record, so the FIRST self-update of an
+    install a browser or file manager put on the phone asks on every
+    version.
+  - **No update check is expedited** (`UpdateScheduler`): on Android 11 and
+    older WorkManager runs expedited work as a foreground service and calls
+    `getForegroundInfo()`, which no worker implemented (the default throws).
+    `UpdateWorker` implements it anyway, for a future expedited check.
+  - Smaller: `UPDATE_META` is removed when a commit never happened (a later
+    unrelated update announced the old name); the periodic check doesn't
+    re-post the prompt over a running install's progress (same id);
+    `removeDownload` catches the disabled-DownloadManager throw (it runs on
+    the main thread from the app-replaced receiver).
 - **Verify** with `sh scripts/update-harness/run.sh` (JDK only, ~6 min): the
   JUnit tests on a plain JVM (UpdatePatchTest, UpdatePlanTest,
   UpdateManifestTest — the same ones `testDebugUnitTest` runs); **the state
@@ -5163,10 +5204,15 @@ is **~75 MB**, the APK 205 MB.
   SharedPreferences — the ladder, mirrors, a patch for another base, device
   failures, no room, the claim live / stale / unclaimed, a stopped worker,
   stale broadcasts, a record from before plans, an unreadable record,
-  clearPending; 51 checks, written after review found the device-failure
-  loop the other tests all passed on); a fuzz of the real generator and
+  clearPending, a newer release over a ready one, a wrong clock, a pulled
+  release, a disabled DownloadManager; 73 checks, written after review found
+  the device-failure loop the other tests all passed on); **the Android
+  compile check** (section 0: the installer, receiver, workers,
+  notifications and scheduler compiled against Robolectric's android-all,
+  API 35, with signature stubs of the androidx and app classes in
+  `android-stub/`; `ANDROID_COMPILE=0` skips the ~190 MB jar); a fuzz of the real generator and
   applier (300 random edits, 3000 random corruptions, 500 random headers, an
-  APK-shaped file, the CLI); 30 planted bugs that must each fail
+  APK-shaped file, the CLI); 36 planted bugs that must each fail
   (`MUTANTS=0` skips); the REAL `releaseStatus` in a scratch Gradle
   project (offline, file:// history URLs: status.json blocks, history,
   SHA256SUMS, each patch re-applied, a mismatched history entry skipped, the
@@ -5236,7 +5282,10 @@ tasks, not hand edits:
   `app/build/outputs/update/v<name>/`. **`./gradlew uploadUpdateRelease`**
   uploads that folder to the GitHub release with `gh` (creating it as a DRAFT
   with the changelog as notes when missing; publishing stays a click on
-  GitHub).
+  GitHub). **Patches come only from releases whose app can apply one**
+  (`defaultPatchMinFrom`, 1206 = 1.2.6, the first app that reads `patches`;
+  `-Pfiredown.patchMinFrom` overrides): 1.2.7 shipped patches from 1.2.4 and
+  1.2.5, ~110 MB and ~12 minutes of build for apps that ignore the block.
 - **`scripts/publish-release.sh` publishes a built release, in the order
   phones need it** (it replaced a list of manual steps): `uploadUpdateRelease`
   and the draft published after asking (a draft's files answer 404 to
@@ -5247,7 +5296,10 @@ tasks, not hand edits:
   names (older releases' files removed, each file's SHA-256 checked on the
   server; no login there or in the environment stops it, by design: the
   server's address and user live only in that uncommitted file, never in
-  this public repo); then, once every URL in status.json answers 200 with its size and
+  this public repo); then, once every URL in status.json answers 200 with its size (and
+  every GitHub asset has the SHA-256 status.json names — `github_digests`,
+  from the release API's `digest`; a size alone can't tell a stale asset of
+  the same length, and two builds of one version differed by 4 bytes) and
   after one last question, status.json and release-history.json committed and
   pushed to firedown's main and status.json to the website's main
   (`WEBSITE_DIR`, default `../firedown-website`), whose push deploys; last it
@@ -5266,8 +5318,8 @@ tasks, not hand edits:
   Never BatchMode for the login check: it cannot prompt, and a passphrase
   key read as "cannot log in". Verify with
   `bash scripts/publish-release/selftest.sh` (a simulated GitHub, server,
-  `publish.sh`, ssh, ssh-agent and rsync, real git remotes; 75 checks, and
-  six planted faults that must each be caught).
+  `publish.sh`, ssh, ssh-agent and rsync, real git remotes; 83 checks, and
+  seven planted faults that must each be caught).
 
 ### CHANGELOG entries — short, important changes only (HARD RULE)
 

@@ -7,7 +7,6 @@ import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
-import androidx.work.OutOfQuotaPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
@@ -68,6 +67,10 @@ public class UpdateScheduler {
      * (getWorkInfoByIdLiveData) — observing the unique-work name would first
      * replay the previous check's terminal state.
      */
+    // Neither one-time check is expedited: on Android 11 and older WorkManager
+    // runs expedited work as a foreground service, which needs a notification
+    // for a check that takes a second, and a check made while the app is open
+    // starts at once anyway.
     public UUID enqueueManualCheck() {
         Constraints constraints = new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -75,7 +78,6 @@ public class UpdateScheduler {
 
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(UpdateWorker.class)
                 .setConstraints(constraints)
-                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
 
         WorkManager.getInstance(context).enqueueUniqueWork(
@@ -94,7 +96,6 @@ public class UpdateScheduler {
 
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(UpdateWorker.class)
                 .setConstraints(constraints)
-                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
 
         WorkManager.getInstance(context).enqueueUniqueWork(
