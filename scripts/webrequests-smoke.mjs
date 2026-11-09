@@ -101,7 +101,7 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 45, `webRequest.onBeforeRequest registrations == 45 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 47, `webRequest.onBeforeRequest registrations == 47 (got ${count("webRequest.onBeforeRequest")})`);
 // The snapshot archiver's Referer rewrite for its own privileged fetches
 // (requests.js snapshotReferers) — the one blocking onBeforeSendHeaders.
 expect(count("webRequest.onBeforeSendHeaders") === 1, `webRequest.onBeforeSendHeaders registrations == 1 (got ${count("webRequest.onBeforeSendHeaders")})`);
@@ -550,6 +550,12 @@ expect(matchInParserBlocklist("https://static.kick.com/ads/black_2s.mp4"),
   "kick: ad filler is parser-block-listed");
 expect(!matchInParserBlocklist("https://stream.kick.com/thumbnails/livestream/1/thumb0/video_thumbnail/thumb0.jpg"),
   "kick: stream thumbnail is NOT block-listed");
+expect(matchInParserBlocklist("https://video.fvlc5-1.fna.fbcdn.net/o1/v/t2/f2/m366/AQO7.mp4?efg=x&tag=dash_h264-basic-gen2_720p")
+    && matchInParserBlocklist("https://video-mad1-1.xx.fbcdn.net/v/t42.1790-2/1_n.mp4?bytestart=0&byteend=900"),
+  "facebook: the video CDN is parser-block-listed");
+expect(!matchInParserBlocklist("https://scontent.fvlc5-1.fna.fbcdn.net/v/t15.5256-10/839_n.jpg")
+    && !matchInParserBlocklist("https://example.com/video.fbcdn.net/x.mp4"),
+  "facebook: images and a lookalike path are NOT block-listed");
 
 // Embed-widget metadata extraction (the iframe carries the <video> but NO og:
 // tags, so title/author/thumb come from the tgme widget markup). Mirrors the

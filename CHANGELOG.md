@@ -7,6 +7,7 @@
 - Add-ons: an update asking for new permissions shows a dot on the ⋮ menu and a Review button until you review it
 - Add-ons: updates that ask for nothing new install without a review
 - Backup: a simpler status card, with one button to set it up
+- Reels and short videos appear once, titled by their caption
 
 ## [1.2.7] - 2026-11-06
 

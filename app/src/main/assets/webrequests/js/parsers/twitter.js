@@ -1,4 +1,5 @@
 // Twitter / X parser — split verbatim out of the former parser-background.js.
+import { parseJsValue } from './js-literal.js';
 import { log, sendVariants, sendSubtitles, cacheTabUrl, readFilteredJson, readFilteredBody, enumerateMasterNative, MetaCache, tabUrls, allTabUrls, tabClaims, tabOfDetails } from './common.js';
 
 // ============================================================================
@@ -639,7 +640,7 @@ browser.webRequest.onBeforeRequest.addListener(
 //       scripts of one document, parsed in document order.
 //       parseTwitterSsrStreamValues. The loader object ALSO holds live JS
 //       (arrow functions building a ReadableStream, `new ...`), which is why
-//       parseRelayValue skips an unknown token as a balanced JS expression
+//       parseJsValue (js-literal.js) skips an unknown token as a balanced JS expression
 //       instead of stopping the enclosing object short.
 //   (c) the streamed router with each GraphQL body as a JSON STRING: the
 //       same `GraphQLRequestStream.Completed` messages (in the router's
@@ -667,7 +668,7 @@ browser.webRequest.onBeforeRequest.addListener(
 // The store is serialized as a JS OBJECT LITERAL, not JSON, so JSON.parse and
 // the GraphQL walkers (collectTweetResults — tweet_results.result /
 // legacy.extended_entities) don't apply. Quirks of the format, all handled by
-// parseRelayValue:
+// parseJsValue (js-literal.js, shared with facebook.js):
 //   - unquoted identifier object keys (quoted keys still appear — the
 //     "client:..." record ids, and the tweet_result_by_rest_id(...) field key);
 //   - `void 0` for undefined and the minified booleans `!0`/`!1`;
@@ -682,153 +683,6 @@ browser.webRequest.onBeforeRequest.addListener(
 // GraphQL path already reads). Per-media-item shape (video_info.variants
 // {content_type,url,bitrate}, media_url_https) is identical, so emitTweetMedia
 // is shared.
-
-// Recursive-descent parser for the restricted grammar above. Returns the value
-// starting at `state.i`, advancing the index. `state.R` is the per-parse $R
-// capture table (numeric id -> already-parsed value). Bounded by the input
-// length (the document is a single bounded response body).
-function parseRelayValue(src, state) {
-    skipWs(src, state);
-    // $R[n]  (back-reference)  or  $R[n]=<value>  (capture).
-    if (src.startsWith("$R[", state.i)) {
-        const close = src.indexOf("]", state.i);
-        const n = src.slice(state.i + 3, close);
-        state.i = close + 1;
-        skipWs(src, state);
-        if (src[state.i] === "=") {
-            state.i++;
-            const v = parseRelayValue(src, state);
-            state.R[n] = v;
-            return v;
-        }
-        return state.R[n]; // may be undefined if it points outside relayRecords
-    }
-    const c = src[state.i];
-    if (c === "{") return parseRelayObject(src, state);
-    if (c === "[") return parseRelayArray(src, state);
-    if (c === '"') return parseRelayString(src, state);
-    if (src.startsWith("!0", state.i)) { state.i += 2; return true; }   // minified true
-    if (src.startsWith("!1", state.i)) { state.i += 2; return false; }  // minified false
-    if (src.startsWith("void 0", state.i)) { state.i += 6; return undefined; }
-    if (src.startsWith("true", state.i)) { state.i += 4; return true; }
-    if (src.startsWith("false", state.i)) { state.i += 5; return false; }
-    if (src.startsWith("null", state.i)) { state.i += 4; return null; }
-    if (c === "-" || c === "+" || c === "." || (c >= "0" && c <= "9")) return parseRelayNumber(src, state);
-    // Anything else is live JS the streamed router embeds beside the data
-    // (an arrow function, `new ReadableStream(...)`, an IIFE). Skip it as one
-    // balanced expression so the ENCLOSING object keeps parsing; the value is
-    // undefined. Before this, the object ended at the first such value and
-    // every later key was lost.
-    return skipJsExpression(src, state);
-}
-
-// Advance past one JS expression: balanced ()/[]/{} with string literals
-// skipped, stopping at a top-level `,` `}` `]` `)` or the end. Bounded by the
-// script length. Returns undefined (the value is not data we can use).
-function skipJsExpression(src, state) {
-    let depth = 0;
-    while (state.i < src.length) {
-        const c = src[state.i];
-        if (c === '"' || c === "'" || c === "`") {
-            state.i++;
-            while (state.i < src.length && src[state.i] !== c) {
-                if (src[state.i] === "\\") state.i++;
-                state.i++;
-            }
-            state.i++;
-            continue;
-        }
-        if (c === "(" || c === "[" || c === "{") depth++;
-        else if (c === ")" || c === "]" || c === "}") {
-            if (depth === 0) break;
-            depth--;
-        } else if (c === "," && depth === 0) break;
-        state.i++;
-    }
-    return undefined;
-}
-
-function skipWs(src, state) {
-    while (state.i < src.length) {
-        const c = src[state.i];
-        if (c === " " || c === "\n" || c === "\t" || c === "\r") state.i++;
-        else break;
-    }
-}
-
-function parseRelayObject(src, state) {
-    const o = {};
-    state.i++; // {
-    skipWs(src, state);
-    if (src[state.i] === "}") { state.i++; return o; }
-    while (state.i < src.length) {
-        skipWs(src, state);
-        let key;
-        if (src[state.i] === '"') {
-            key = parseRelayString(src, state);
-        } else {
-            let j = state.i;
-            while (j < src.length && src[j] !== ":" && !/\s/.test(src[j])) j++;
-            key = src.slice(state.i, j);
-            state.i = j;
-        }
-        skipWs(src, state);
-        state.i++; // :
-        o[key] = parseRelayValue(src, state);
-        skipWs(src, state);
-        if (src[state.i] === ",") { state.i++; continue; }
-        if (src[state.i] === "}") { state.i++; break; }
-        break; // unexpected token — stop this object (caller decides)
-    }
-    return o;
-}
-
-function parseRelayArray(src, state) {
-    const a = [];
-    state.i++; // [
-    skipWs(src, state);
-    if (src[state.i] === "]") { state.i++; return a; }
-    while (state.i < src.length) {
-        a.push(parseRelayValue(src, state));
-        skipWs(src, state);
-        if (src[state.i] === ",") { state.i++; skipWs(src, state); continue; }
-        if (src[state.i] === "]") { state.i++; break; }
-        break;
-    }
-    return a;
-}
-
-function parseRelayString(src, state) {
-    state.i++; // opening "
-    let s = "";
-    while (state.i < src.length) {
-        const c = src[state.i];
-        if (c === "\\") {
-            const n = src[state.i + 1];
-            if (n === "n") s += "\n";
-            else if (n === "t") s += "\t";
-            else if (n === "r") s += "\r";
-            else if (n === "u") { s += String.fromCharCode(parseInt(src.slice(state.i + 2, state.i + 6), 16)); state.i += 4; }
-            else s += n; // \" \\ \/ etc. -> the literal char
-            state.i += 2;
-            continue;
-        }
-        if (c === '"') { state.i++; break; }
-        s += c;
-        state.i++;
-    }
-    return s;
-}
-
-function parseRelayNumber(src, state) {
-    let j = state.i;
-    while (j < src.length && /[-+0-9.eEnx]/.test(src[j])) j++;
-    const t = src.slice(state.i, j);
-    if (j === state.i) return skipJsExpression(src, state); // never stall on an unknown token
-    state.i = j;
-    if (t.endsWith("n")) return Number(t.slice(0, -1)); // BigInt literal
-    return Number(t);
-}
 
 // Pull every SSR script body out of the document, in document order: the
 // <script class="$tsr"> store scripts (shape a) AND every inline script that
@@ -871,7 +725,7 @@ function parseTwitterSsrStreamValues(html) {
             if (at === -1) break;
             state.i = at;
             let v;
-            try { v = parseRelayValue(script, state); }
+            try { v = parseJsValue(script, state); }
             catch (e) { break; }
             if (v && typeof v === "object") values.push(v);
             if (state.i <= at) state.i = at + 3; // never stall
@@ -959,7 +813,7 @@ function parseTwitterSsrRecords(html) {
         if (at === -1) continue;
         const state = { i: at + "relayRecords:".length, R: {} };
         let map;
-        try { map = parseRelayValue(script, state); }
+        try { map = parseJsValue(script, state); }
         catch (e) { continue; }
         if (map && typeof map === "object") {
             for (const id in map) records[id] = map[id];
