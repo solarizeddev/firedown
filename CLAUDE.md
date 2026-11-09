@@ -6703,13 +6703,14 @@ nothing to take down — Firedown stays not-a-host.
 
 While anything downloads, the Downloads button is Chrome's download button
 (Chrome for Android draws it on large screens; Chromium's own numbers): the
-arrow alone, centred, inside a 24dp ring that fills clockwise from 12
-o'clock; from two downloads, how many, on a disc at the ring's top-end
-corner; when a group finishes, the usual icon in the ring's colour for a
-minute or until Downloads is opened. Otherwise the usual icon (`download_24`,
-the Safe Folder lock in private tabs). Canvas "Downloads indicator", board 4
-("Chrome's ring"), picked 2026-11 over keeping the tray and filling it (the
-two picks Claude and Fable drew from scratch). It replaced, in turn, a coral
+arrow alone, centred, inside a ring that fills clockwise from 12 o'clock;
+several downloads are one ring, their average; when a group finishes, the
+usual icon in the ring's colour for a minute or until Downloads is opened.
+Otherwise the usual icon (`download_24`, the Safe Folder lock in private
+tabs). Canvas "Downloads indicator", board 4 ("Chrome's ring"), picked
+2026-11 over keeping the tray and filling it (the two picks Claude and Fable
+drew from scratch); board 6 ("The final look") is the ring after the device
+review below. It replaced, in turn, a coral
 dot (one dot meant "downloading" here and "an update needs you" on ⋮, and the
 frequent meaning taught people to ignore the rare one, so a dot lives on ⋮
 only), then a hand-drawn line, then Material's linear bar under the arrow.
@@ -6721,7 +6722,7 @@ its own `ValueAnimator`). On a device the live download's piece stood still
 in the middle of the line with animations on, and neither Claude's nor
 Fable's reading of the visibility and animator-scale paths found the
 sequence; it was deleted. The ring is Material's `CircularProgressIndicator`
-and the count a plain `TextView`. Don't bring hand-drawn progress back to
+and nothing else is drawn. Don't bring hand-drawn progress back to
 this button; if the ring ever stands still, that is Material's (or the
 phone's: Material, like every Android animator, stops when the window
 manager's animator scale is 0, e.g. Samsung's "Remove animations", or a test
@@ -6731,25 +6732,39 @@ script that left it there), and the first check is
 - **The layout** (`bottom_bar.xml`): the button sits in a `FrameLayout`
   (`downloads_cell`, which takes no clicks: the loop in
   `BottomNavigationBar` skips it and the button gets its own listeners); the
-  ring (`downloads_progress`) and the count (`downloads_count`) are centred
-  over it, so icon, ring and disc share one centre, and neither takes
-  touches. Ring: `indicatorSize` 24dp (the icon's own box), inset 0,
-  `trackThickness` 2.5dp, round ends (`trackCornerRadius="50%"`, never a
-  dimension), Material's 2024 gap between arc and track set to 0 (Chrome's
-  ring is continuous), clockwise. Track: the icon colour at 30% (Chrome's);
-  arc: `progress_indicator`, `incognito_primary` in private tabs. Hidden from
-  screen readers (the button says it, below).
+  ring (`downloads_progress`) is centred over it, so icon and ring share one
+  centre, and it takes no touches. Ring: `indicatorSize` 22dp across with a
+  2dp `trackThickness`, the tab counter's size and weight, inset 0, round
+  ends (`trackCornerRadius="50%"`, never a dimension), Material's 2024 gap
+  between arc and track set to 0 (Chrome's ring is continuous), clockwise,
+  and `indeterminateTrackVisible="true"`. Track: the icon colour at 30%
+  (Chrome's); arc: `progress_indicator`, `incognito_primary` in private
+  tabs. Hidden from screen readers (the button says it, below).
+- **Four things the first device run changed** (canvas board 6, Claude and
+  Fable agreeing on the screenshots), each a rule now:
+  - **The track stays while the arc turns.** Material 1.14's
+    `Widget.Material3.CircularProgressIndicator` sets
+    `indeterminateTrackVisible` false, and a lone coral arc of 200–300°
+    round an arrow is a circular-arrow glyph: reload, right under the
+    address bar's reload button, and the loudest state on the bar for as
+    long as a live stream runs.
+  - **The arc never shows less than 8%** (`MIN_ARC_PERCENT`, drawing only;
+    the spoken percentage stays exact). Material draws round ends INSIDE the
+    arc's length and shrinks an arc shorter than its two ends to a dot
+    (`CircularDrawingDelegate`, under ~3.7% at 24dp), and a coral dot on
+    this bar is ⋮'s "needs you".
+  - **No count on the button.** It shipped as a disc in the bar's colour at
+    the ring's top-end corner with the number in coral: the disc hid the
+    ring from about 4° to 86°, so with two downloads no progress showed
+    until ~24%; the ring read as a broken "C"; and the coral "2" beside the
+    tab counter's "2" read as an exponent. How many is spoken (below) and
+    shown by the notification and Downloads.
+  - **22dp / 2dp, not 24dp / 2.5dp.** At 24dp the ring was the heaviest
+    icon on the bar; 22dp with a 2dp line is the tab counter's square.
 - **The arrow** (`download_arrow_24`): `download_24`'s arrow path at full
   size, moved 2dp down to the box's centre. Same 2dp shaft as the glyph, so
   ring and arrow read as one weight. (The board drew a smaller arrow; Chrome
   draws a full-size standalone arrow inside its ring, and so does this.)
-- **The count** (`refreshDownloadsCount`): from two downloads still running
-  or queued, a 14dp disc filled with the BAR's colour (it reads as a hole cut
-  in the ring), the number in the ring's colour at 9dp bold, "9+" past nine
-  (Chrome's), its centre 7.6dp up and to the end of the ring's (45 degrees,
-  on the ring; mirrored in RTL). dp, not sp: the disc is fixed and the button
-  says the count in words. It sits next to ⋮'s dot, which still means "needs
-  you"; the count is a number, never a bare dot.
 - **Finished** (`DownloadProgress.FINISHED`): a group that ends with at
   least one download saved turns the usual icon the ring's colour. Nothing
   says "failed" on the button (Chrome's rule; the notification and the row
@@ -6762,9 +6777,9 @@ script that left it there), and the first check is
   observer when a group finishes while the list is showing). A group whose
   every download failed or was deleted ends idle.
 - **Four values** (`data/DownloadProgress`): idle, a percentage, INDETERMINATE
-  (no percentage to show), FINISHED; the two running ones carry `count`.
-  Idle or finished hides the ring and resets it to 0; a percentage is
-  `setProgressCompat(p, animate)` (from the turning arc, Material switches at
+  (no percentage to show), FINISHED; the two running ones carry `count`
+  (spoken only). Idle or finished hides the ring and resets it to 0; a
+  percentage is `setProgressCompat(max(8, p), animate)` (from the turning arc, Material switches at
   the end of its current cycle); indeterminate is `setIndeterminate(true)`,
   Material's own turning arc (Chrome turns a fixed quarter arc every 2.5 s;
   the stock one is kept, see the stock-parts rule).
@@ -6807,8 +6822,8 @@ script that left it there), and the first check is
   one, the group ending FINISHED and staying so through the engine's later
   idle reports, a deleted-only group ending idle, vault vs regular; mutants:
   no finished state fails 16f and 16h, a count fixed at 1 fails 16c). The
-  layout, the ring and the count were not built or run at write time;
-  on-device unverified.
+  ring ran on a device once (the run that found the four changes above);
+  the changed ring is on-device unverified at write time.
 
 ### Home — the address bar and the mark (home v6, frame N2): the field IS the browser's bar, nothing moves
 

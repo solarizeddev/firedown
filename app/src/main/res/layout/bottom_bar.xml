@@ -1,6 +1,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="@dimen/app_bar_size"
@@ -43,10 +42,11 @@
 
     <!-- The Downloads button. While anything downloads it is Chrome's
          download button (BottomNavigationBar.setDownloadProgress): the arrow
-         alone, centred, inside a 24dp ring, the icon's own box; from two
-         downloads, how many on a disc at the ring's top-end corner. The ring
-         and the disc are centred on the icon like the button's drawable, so
-         the three share one centre. -->
+         alone, centred, inside a ring 22dp across with a 2dp line, the tab
+         counter's size and weight. The ring is centred on the icon like the
+         button's drawable, so the two share one centre, and its grey track
+         stays while the arc turns (the M3 style hides it, and a lone turning
+         arc round an arrow reads as reload). -->
     <FrameLayout
         android:id="@+id/downloads_cell"
         android:layout_width="0dp"
@@ -72,28 +72,12 @@
             android:visibility="gone"
             app:indicatorDirectionCircular="clockwise"
             app:indicatorInset="0dp"
-            app:indicatorSize="24dp"
+            app:indeterminateTrackVisible="true"
+            app:indicatorSize="22dp"
             app:indicatorTrackGapSize="0dp"
             app:trackCornerRadius="50%"
-            app:trackThickness="2.5dp" />
+            app:trackThickness="2dp" />
 
-        <!-- A disc in the bar's colour, so it reads as a hole cut in the
-             ring; the number in the ring's colour. Sized in dp, not sp: the
-             disc is fixed and the button says the count in words. -->
-        <TextView
-            android:id="@+id/downloads_count"
-            android:layout_width="14dp"
-            android:layout_height="14dp"
-            android:layout_gravity="center"
-            android:background="@drawable/bottom_bar_count_disc"
-            android:gravity="center"
-            android:importantForAccessibility="no"
-            android:includeFontPadding="false"
-            android:maxLines="1"
-            android:textSize="9dp"
-            android:textStyle="bold"
-            android:visibility="gone"
-            tools:ignore="SpUsage" />
     </FrameLayout>
 
     <androidx.appcompat.widget.AppCompatImageButton
