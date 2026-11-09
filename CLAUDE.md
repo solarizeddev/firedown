@@ -5210,10 +5210,47 @@ is **~75 MB**, the APK 205 MB.
     re-post the prompt over a running install's progress (same id);
     `removeDownload` catches the disabled-DownloadManager throw (it runs on
     the main thread from the app-replaced receiver).
-- **Known, not fixed**: with the Download Manager app disabled by the user,
-  `DownloadManager.enqueue` throws on every check and no update downloads,
-  silently; a fallback (an OkHttp download, or a line in About) is open.
-  On Android 8–11 the install worker's foreground notice shares the
+- **When the Download Manager can't take a download, it is DIRECT**
+  (`UpdateDirectDownload`, run by `UpdateDirectDownloadWorker` over the
+  app's OkHttp client). The user disabling the Download Manager app makes
+  `enqueue` throw on every check, and until 1.2.8 no update ever downloaded,
+  silently; no external files dir (where the Download Manager writes) was
+  the same dead end. Now `enqueueLocked` falls back to a direct download of
+  the same step, recorded under a NEGATIVE id (`isDirect`: below -1; the
+  Download Manager's ids are positive), and everything after the transport
+  is unchanged: the plan, the files, the claim, the finalize worker, the
+  backoff. Rules:
+  - **Bytes go to a part file per download** (`firedown.apk.dl<id>`) and
+    are moved to the step's file only by `completeDirect`, under the lock,
+    while the record still names that id — a stale run (its record moved
+    on: a check, its own failed attempt, `clearPending`) deletes its part
+    and writes nothing where a newer download is going. `deleteArtifacts`
+    deletes every part file; `removeDownload` of a direct id cancels its
+    work and deletes its part.
+  - **Resumable across runs**: WorkManager stops a run after ten minutes or
+    when the network goes, so a 205 MB APK on a slow link is several runs.
+    A run keeps what it wrote; the next asks `Range: bytes=<have>-` and
+    appends only to a 206 whose Content-Range starts there. A 200 starts the
+    file over; a 206 for another range drops the part. `Accept-Encoding:
+    identity` always (a gzipped answer has no length and counts other
+    bytes). The SHA-256 check in the finalize worker still decides.
+  - **Failures map to the Download Manager's**: a refusal (4xx), a
+    Content-Length or body longer than status.json's size → the next
+    mirror; a run that downloads nothing (no connection, a 5xx, 408, 429,
+    416, a wrong range) is a stall, and `MAX_STALLS` (6) in a row, with
+    WorkManager's 30 s doubling backoff, ends the attempt — any progress
+    resets the count, a run the system stopped is not one; no room → a
+    device failure.
+  - **A check never starts it twice**: `inFlightLocked` re-enqueues the
+    recorded direct download's work with KEEP (a no-op while it is queued,
+    running or waiting out a retry; it resumes the part if the work was
+    lost) and, once `UPDATE_DIRECT_DONE` names it, hands an unclaimed one to
+    the finalize worker like a finished Download Manager download.
+  - Not roaming (the Download Manager request's rule), no notification (the
+    Download Manager download is hidden too). A Download Manager disabled
+    after its download was recorded: `queryStatus` answers unknown instead
+    of throwing, and the next check downloads directly.
+- **Known, not fixed**: on Android 8–11 the install worker's foreground notice shares the
   progress notification's id, so "Installing…" can vanish when the worker
   returns, before Android answers.
 - **Verify** with `sh scripts/update-harness/run.sh` (JDK only, ~6 min): the
@@ -5225,14 +5262,17 @@ is **~75 MB**, the APK 205 MB.
   failures, no room, the claim live / stale / unclaimed, a stopped worker,
   stale broadcasts, a record from before plans, an unreadable record,
   clearPending, a newer release over a ready one, a wrong clock, a pulled
-  release, a disabled DownloadManager; 73 checks, written after review found
+  release, a disabled DownloadManager, and the direct download — disabled,
+  absent, no external dir, disabled mid-download, resume, a stopped run,
+  Range ignored, a wrong range, refused, never connecting, a 5xx, too long,
+  stale runs, in flight, all failing; 134 checks, written after review found
   the device-failure loop the other tests all passed on); **the Android
   compile check** (section 0: the installer, receiver, workers,
   notifications and scheduler compiled against Robolectric's android-all,
   API 35, with signature stubs of the androidx and app classes in
   `android-stub/`; `ANDROID_COMPILE=0` skips the ~190 MB jar); a fuzz of the real generator and
   applier (300 random edits, 3000 random corruptions, 500 random headers, an
-  APK-shaped file, the CLI); 37 planted bugs that must each fail
+  APK-shaped file, the CLI); 51 planted bugs that must each fail
   (`MUTANTS=0` skips); the REAL `releaseStatus` in a scratch Gradle
   project (offline, file:// history URLs: status.json blocks, history,
   SHA256SUMS, each patch re-applied, a mismatched history entry skipped, the

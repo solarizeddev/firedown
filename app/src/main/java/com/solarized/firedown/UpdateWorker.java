@@ -107,7 +107,8 @@ public class UpdateWorker extends Worker {
                     // is copying; the next check starts it.
                     Log.d("UpdateWorker", "an install is running; not downloading now");
                 } else {
-                    // Hand the download to the system DownloadManager and
+                    // Hand the download to the system DownloadManager (or,
+                    // when it refuses, to UpdateDirectDownloadWorker) and
                     // return — when the broadcast arrives (which can cold-start
                     // the app, so a download surviving a process eviction still
                     // ends in a notification) UpdateDownloadReceiver hands it to

@@ -19,8 +19,11 @@ import org.tukaani.xz.XZOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -83,6 +86,22 @@ public final class UpdateFlowHarness {
         aClockSetBackNeverHoldsAVersion();
         aPulledReleaseStopsBeingOffered();
         aDisabledDownloadManagerNeverThrows();
+        aDisabledDownloadManagerDownloadsDirectly();
+        noDownloadManagerAtAll();
+        noExternalStorageDownloadsIntoTheFilesDir();
+        aDownloadManagerDisabledMidDownload();
+        anInterruptedDirectDownloadResumes();
+        aStoppedDirectRunKeepsItsFile();
+        aServerIgnoringRangeStartsOver();
+        aWrongRangeStartsOver();
+        aRefusedDirectDownloadTriesTheNextMirror();
+        aDirectDownloadThatNeverConnectsGivesUp();
+        aServerErrorIsRetriedNotSkipped();
+        aDirectFileLongerThanStatusJsonSays();
+        aStaleDirectRunWritesNothing();
+        aDirectDownloadInFlightIsNotStartedTwice();
+        everyDirectStepFailingBacksOff();
+        contentRangeParsing();
 
         System.out.println("update-flow: " + pass + " passed, " + fail + " failed");
         System.exit(fail == 0 ? 0 : 1);
@@ -495,6 +514,441 @@ public final class UpdateFlowHarness {
                 s + "clearPending (run on the main thread after an update) clears the record without throwing");
     }
 
+    // ── direct downloads (the Download Manager can't take them) ──────────
+
+    private static void aDisabledDownloadManagerDownloadsDirectly() throws Exception {
+        String s = "direct: ";
+        phone();
+        dm.disabled = true;
+        startUpdate(manifest());
+        long id = recordedId();
+        check(UpdateDownloader.isDirect(id) && dm.rows.isEmpty(),
+                s + "a disabled Download Manager: the download is recorded as a direct one, no row");
+        check(WorkManager.INSTANCE.unique.containsKey("update_direct_" + id), s + "and its worker is enqueued");
+        FakeHttp http = new FakeHttp();
+        check(runDirect(id, http) == UpdateDirectDownload.Outcome.DONE && http.froms.equals(List.of(0L)),
+                s + "one run downloads the patch, no Range");
+        check(UpdateDownloader.fileFor(ctx, UpdatePlan.Kind.PATCH).isFile()
+                        && !UpdateDownloader.directPartFile(ctx, id).exists(),
+                s + "the part file is moved to the patch's own file");
+        check(WorkManager.INSTANCE.unique.containsKey("update_finalize_" + id), s + "and handed to the finalize worker");
+        runWorker(id);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206) && Arrays.equals(newApk, Files.readAllBytes(apk().toPath())),
+                s + "rebuilt and verified as a Download Manager download is");
+        check(UpdateNotification.prompts == 1 && !prefs().contains(Keys.UPDATE_DIRECT_DONE)
+                        && prefs().getLong(Keys.UPDATE_DOWNLOAD_ID, -1) == -1,
+                s + "the prompt is posted, the record and its direct keys cleared");
+        check(noPartFiles(), s + "no part file is left");
+    }
+
+    private static void noDownloadManagerAtAll() throws Exception {
+        String s = "no Download Manager: ";
+        phone();
+        ctx.downloadManager = null;
+        startUpdate(apkOnlyManifest());
+        long id = recordedId();
+        check(UpdateDownloader.isDirect(id), s + "the APK is downloaded directly");
+        check(runDirect(id, new FakeHttp()) == UpdateDirectDownload.Outcome.DONE, s + "in one run");
+        runWorker(id);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206) && apk().isFile(), s + "verified; the APK stays in place");
+    }
+
+    private static void noExternalStorageDownloadsIntoTheFilesDir() throws Exception {
+        String s = "no external files dir: ";
+        phone();
+        File internal = new File(ctx.externalFilesDir.getParentFile(), "internal");
+        internal.mkdirs();
+        ctx.externalFilesDir = null;
+        ctx.filesDir = internal;
+        startUpdate(manifest());
+        long id = recordedId();
+        check(UpdateDownloader.isDirect(id) && dm.rows.isEmpty(),
+                s + "the Download Manager can't write there: the download is direct");
+        check(UpdateDownloader.directPartFile(ctx, id).getParentFile().equals(internal),
+                s + "into the app's own files dir");
+        FakeHttp http = new FakeHttp();
+        runDirect(id, http);
+        check(http.urls.equals(List.of("https://gh/p")), s + "the patch is still tried first (room is measured there)");
+        runWorker(id);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206) && new File(internal, "firedown.apk").isFile(),
+                s + "verified in the files dir");
+    }
+
+    private static void aDownloadManagerDisabledMidDownload() throws Exception {
+        String s = "disabled mid-download: ";
+        phone();
+        startUpdate(apkOnlyManifest());
+        long first = recordedId();
+        check(!UpdateDownloader.isDirect(first) && dm.rows.containsKey(first), s + "a Download Manager download");
+        dm.disabled = true;
+        dm.removeThrows = true;
+        boolean threw = false;
+        try {
+            startUpdate(apkOnlyManifest());
+        } catch (RuntimeException e) {
+            threw = true;
+        }
+        long second = recordedId();
+        check(!threw && UpdateDownloader.isDirect(second),
+                s + "the next check can't read it and downloads again, directly, without throwing");
+        check(runDirect(second, new FakeHttp()) == UpdateDirectDownload.Outcome.DONE, s + "which finishes");
+        runWorker(second);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206), s + "and is verified");
+    }
+
+    private static void anInterruptedDirectDownloadResumes() throws Exception {
+        String s = "resume: ";
+        phone();
+        dm.disabled = true;
+        startUpdate(apkOnlyManifest());
+        long id = recordedId();
+        FakeHttp http = new FakeHttp();
+        http.cutAfter = 150_000;
+        check(runDirect(id, http) == UpdateDirectDownload.Outcome.RETRY, s + "a dropped connection: run again");
+        File part = UpdateDownloader.directPartFile(ctx, id);
+        check(part.length() == 150_000 && !prefs().contains(Keys.UPDATE_DIRECT_STALLS),
+                s + "the bytes so far are kept, and progress is no stall");
+        check(runDirect(id, http) == UpdateDirectDownload.Outcome.DONE && http.froms.equals(List.of(0L, 150_000L)),
+                s + "the next run asks for the rest only");
+        runWorker(id);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206) && Arrays.equals(newApk, Files.readAllBytes(apk().toPath())),
+                s + "the joined file is the APK byte for byte");
+    }
+
+    private static void aStoppedDirectRunKeepsItsFile() throws Exception {
+        String s = "stopped run: ";
+        phone();
+        dm.disabled = true;
+        startUpdate(apkOnlyManifest());
+        long id = recordedId();
+        FakeHttp http = new FakeHttp();
+        http.stopAfter = 100_000;
+        check(runDirect(id, http) == UpdateDirectDownload.Outcome.RETRY, s + "stopped by the system: run again");
+        check(UpdateDownloader.directPartFile(ctx, id).length() == 100_000
+                        && !prefs().contains(Keys.UPDATE_DIRECT_STALLS),
+                s + "what it wrote is kept; not a stall");
+        stopFlag = false;
+        check(runDirect(id, http) == UpdateDirectDownload.Outcome.DONE && http.froms.get(1) == 100_000L,
+                s + "the next run resumes");
+        runWorker(id);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206), s + "verified");
+    }
+
+    private static void aServerIgnoringRangeStartsOver() throws Exception {
+        String s = "Range ignored: ";
+        phone();
+        dm.disabled = true;
+        startUpdate(apkOnlyManifest());
+        long id = recordedId();
+        FakeHttp http = new FakeHttp();
+        http.cutAfter = 150_000;
+        runDirect(id, http);
+        http.ignoreRange = true;
+        check(runDirect(id, http) == UpdateDirectDownload.Outcome.DONE, s + "a 200 to a Range request");
+        runWorker(id);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206) && Arrays.equals(newApk, Files.readAllBytes(apk().toPath())),
+                s + "the whole file replaces the kept part, nothing appended");
+    }
+
+    private static void aWrongRangeStartsOver() throws Exception {
+        String s = "wrong range: ";
+        phone();
+        dm.disabled = true;
+        startUpdate(apkOnlyManifest());
+        long id = recordedId();
+        FakeHttp http = new FakeHttp();
+        http.cutAfter = 150_000;
+        runDirect(id, http);
+        http.wrongStart = 10;
+        check(runDirect(id, http) == UpdateDirectDownload.Outcome.RETRY
+                        && !UpdateDownloader.directPartFile(ctx, id).exists()
+                        && prefs().getInt(Keys.UPDATE_DIRECT_STALLS, 0) == 1,
+                s + "a 206 for another range: the part is dropped, retried");
+        http.wrongStart = -1;
+        check(runDirect(id, http) == UpdateDirectDownload.Outcome.DONE && http.froms.get(2) == 0L,
+                s + "the next run starts from the first byte");
+        runWorker(id);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206), s + "verified");
+    }
+
+    private static void aRefusedDirectDownloadTriesTheNextMirror() throws Exception {
+        String s = "refused: ";
+        phone();
+        dm.disabled = true;
+        server.remove("https://gh/p");
+        startUpdate(manifest());
+        long first = recordedId();
+        FakeHttp http = new FakeHttp();
+        check(runDirect(first, http) == UpdateDirectDownload.Outcome.FINISHED, s + "a 404 ends the attempt");
+        long second = recordedId();
+        check(second != first && UpdateDownloader.isDirect(second)
+                        && WorkManager.INSTANCE.cancelled.contains("update_direct_" + first)
+                        && WorkManager.INSTANCE.unique.containsKey("update_direct_" + second),
+                s + "the next mirror is a new direct download; the old work is cancelled");
+        runDirect(second, http);
+        check(http.urls.get(1).equals("https://m/p"), s + "of the same patch");
+        runWorker(second);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206), s + "verified");
+    }
+
+    private static void aDirectDownloadThatNeverConnectsGivesUp() throws Exception {
+        String s = "stalls: ";
+        phone();
+        dm.disabled = true;
+        startUpdate(manifest());
+        long id = recordedId();
+        FakeHttp http = new FakeHttp();
+        http.failConnects = 100;
+        for (int i = 1; i < UpdateDirectDownload.MAX_STALLS; i++) {
+            runDirect(id, http);
+        }
+        check(recordedId() == id && prefs().getInt(Keys.UPDATE_DIRECT_STALLS, 0) == UpdateDirectDownload.MAX_STALLS - 1,
+                s + (UpdateDirectDownload.MAX_STALLS - 1) + " runs that never connect keep the attempt");
+        // Progress in between starts the count over.
+        http.failConnects = 0;
+        http.cutAfter = 50;
+        check(runDirect(id, http) == UpdateDirectDownload.Outcome.RETRY && !prefs().contains(Keys.UPDATE_DIRECT_STALLS),
+                s + "a run that downloads something resets the count");
+        http.failConnects = 100;
+        for (int i = 1; i < UpdateDirectDownload.MAX_STALLS; i++) {
+            runDirect(id, http);
+        }
+        check(recordedId() == id, s + "so the count starts again");
+        check(runDirect(id, http) == UpdateDirectDownload.Outcome.FINISHED && recordedId() != id,
+                s + UpdateDirectDownload.MAX_STALLS + " in a row: the next mirror");
+        check(!UpdateDownloader.directPartFile(ctx, id).exists(), s + "the abandoned part file is deleted");
+    }
+
+    private static void aServerErrorIsRetriedNotSkipped() throws Exception {
+        String s = "server error: ";
+        phone();
+        dm.disabled = true;
+        startUpdate(manifest());
+        long id = recordedId();
+        FakeHttp http = new FakeHttp();
+        http.code = 503;
+        check(runDirect(id, http) == UpdateDirectDownload.Outcome.RETRY && recordedId() == id
+                        && prefs().getInt(Keys.UPDATE_DIRECT_STALLS, 0) == 1,
+                s + "a 503 is retried as a stall, not a refusal");
+    }
+
+    private static void aDirectFileLongerThanStatusJsonSays() throws Exception {
+        String s = "too long: ";
+        phone();
+        dm.disabled = true;
+        byte[] longer = Arrays.copyOf(patch, patch.length + 10);
+        server.put("https://gh/p", longer);
+        startUpdate(manifest());
+        long id = recordedId();
+        FakeHttp http = new FakeHttp();
+        http.noLength = true;
+        check(runDirect(id, http) == UpdateDirectDownload.Outcome.FINISHED && recordedId() != id
+                        && !UpdateDownloader.directPartFile(ctx, id).exists(),
+                s + "a body past status.json's size ends the attempt, the part deleted");
+        phone();
+        dm.disabled = true;
+        server.put("https://gh/p", longer);
+        startUpdate(manifest());
+        id = recordedId();
+        FakeHttp honest = new FakeHttp();
+        check(runDirect(id, honest) == UpdateDirectDownload.Outcome.FINISHED && recordedId() != id
+                        && honest.bodyReads == 0,
+                s + "and so does a Content-Length that says so, before a byte is read");
+    }
+
+    private static void aStaleDirectRunWritesNothing() throws Exception {
+        String s = "stale run: ";
+        phone();
+        dm.disabled = true;
+        startUpdate(manifest());
+        long id = recordedId();
+        FakeHttp http = new FakeHttp();
+        http.cutAfter = 100;
+        runDirect(id, http);
+        UpdateDownloader.clearPending(ctx);
+        check(!UpdateDownloader.directPartFile(ctx, id).exists()
+                        && WorkManager.INSTANCE.cancelled.contains("update_direct_" + id),
+                s + "clearPending cancels the work and deletes its part file");
+        check(runDirect(id, new FakeHttp()) == UpdateDirectDownload.Outcome.STALE
+                        && !UpdateDownloader.fileFor(ctx, UpdatePlan.Kind.PATCH).exists(),
+                s + "a run of it that starts anyway writes nothing");
+        // A run that was already downloading when the record moved on.
+        phone();
+        dm.disabled = true;
+        startUpdate(manifest());
+        id = recordedId();
+        File part = UpdateDownloader.directPartFile(ctx, id);
+        Files.write(part.toPath(), patch);
+        prefs().edit().putLong(Keys.UPDATE_DOWNLOAD_ID, -7L).apply();
+        check(!UpdateDownloader.completeDirect(ctx, id, part) && !part.exists()
+                        && !UpdateDownloader.fileFor(ctx, UpdatePlan.Kind.PATCH).exists(),
+                s + "a finished run whose record moved on is not handed over, nor moved into place");
+    }
+
+    private static void aDirectDownloadInFlightIsNotStartedTwice() throws Exception {
+        String s = "direct in flight: ";
+        phone();
+        dm.disabled = true;
+        startUpdate(manifest());
+        long id = recordedId();
+        WorkManager.INSTANCE.unique.clear();
+        startUpdate(manifest());
+        check(recordedId() == id && WorkManager.INSTANCE.unique.containsKey("update_direct_" + id),
+                s + "a check keeps the download, and enqueues its lost work again (KEEP)");
+        FakeHttp http = new FakeHttp();
+        http.cutAfter = 100;
+        runDirect(id, http);
+        startUpdate(manifest());
+        check(recordedId() == id && UpdateDownloader.directPartFile(ctx, id).length() == 100,
+                s + "its part file survives a check");
+        runDirect(id, http);
+        WorkManager.INSTANCE.unique.clear();
+        startUpdate(manifest());
+        check(recordedId() == id && WorkManager.INSTANCE.unique.containsKey("update_finalize_" + id)
+                        && !WorkManager.INSTANCE.unique.containsKey("update_direct_" + id),
+                s + "finished but unclaimed: handed to the finalize worker, not downloaded again");
+        runWorker(id);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206), s + "verified");
+    }
+
+    private static void everyDirectStepFailingBacksOff() throws Exception {
+        String s = "direct, all fail: ";
+        phone();
+        dm.disabled = true;
+        server.clear();
+        startUpdate(manifest());
+        int runs = 0;
+        while (prefs().getLong(Keys.UPDATE_DOWNLOAD_ID, -1) != -1 && runs < 20) {
+            runDirect(recordedId(), new FakeHttp());
+            runs++;
+        }
+        check(runs == 6, s + "two patch mirrors, two .xz mirrors, two APK URLs");
+        check(UpdateDownloader.isBackingOff(ctx, 1206) && WorkManager.INSTANCE.unique.containsKey("update_retry"),
+                s + "then the backoff, as for the Download Manager");
+        boolean anyDirect = false;
+        for (String name : WorkManager.INSTANCE.unique.keySet()) {
+            anyDirect |= name.startsWith("update_direct_");
+        }
+        check(!anyDirect && noPartFiles(), s + "no direct work and no part file left");
+    }
+
+    private static void contentRangeParsing() {
+        String s = "Content-Range: ";
+        check(Arrays.equals(UpdateDirectDownload.parseContentRange("bytes 100-199/1000"), new long[] {100, 1000}),
+                s + "start and total");
+        check(Arrays.equals(UpdateDirectDownload.parseContentRange("bytes 5-9/*"), new long[] {5, -1}),
+                s + "unknown total");
+        check(Arrays.equals(UpdateDirectDownload.parseContentRange("bytes */1000"), new long[] {-1, -1})
+                        && Arrays.equals(UpdateDirectDownload.parseContentRange(null), new long[] {-1, -1})
+                        && Arrays.equals(UpdateDirectDownload.parseContentRange("items 1-2/3"), new long[] {-1, -1})
+                        && Arrays.equals(UpdateDirectDownload.parseContentRange("bytes x-2/3"), new long[] {-1, -1}),
+                s + "anything else is unreadable");
+    }
+
+    // ── a fake update server for direct downloads ────────────────────────
+
+    private static volatile boolean stopFlag;
+
+    private static final class FakeHttp implements UpdateDirectDownload.Http {
+        final List<Long> froms = new ArrayList<>();
+        final List<String> urls = new ArrayList<>();
+        int code;
+        boolean ignoreRange;
+        boolean noLength;
+        long wrongStart = -1;
+        int failConnects;
+        /** Throw after this many body bytes (once). */
+        long cutAfter = -1;
+        /** Set the stop flag after this many body bytes (once). */
+        long stopAfter = -1;
+        /** Body reads served, over all answers. */
+        int bodyReads;
+
+        @Override
+        public UpdateDirectDownload.Answer open(String url, long from) throws IOException {
+            froms.add(from);
+            urls.add(url);
+            if (failConnects > 0) {
+                failConnects--;
+                throw new IOException("connection refused");
+            }
+            if (code != 0) {
+                return new UpdateDirectDownload.Answer(code, -1, -1, body(new byte[0]), null);
+            }
+            byte[] file = server.get(url);
+            if (file == null) {
+                return new UpdateDirectDownload.Answer(404, -1, -1, body(new byte[0]), null);
+            }
+            if (from > 0 && !ignoreRange) {
+                long start = wrongStart >= 0 ? wrongStart : from;
+                byte[] rest = Arrays.copyOfRange(file, (int) start, file.length);
+                return new UpdateDirectDownload.Answer(206, start, file.length, body(rest), null);
+            }
+            return new UpdateDirectDownload.Answer(200, -1, noLength ? -1 : file.length, body(file), null);
+        }
+
+        private InputStream body(byte[] data) {
+            long cut = cutAfter;
+            long stop = stopAfter;
+            cutAfter = -1;
+            stopAfter = -1;
+            return new InputStream() {
+                int pos;
+
+                @Override
+                public int read() {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public int read(byte[] b, int off, int len) throws IOException {
+                    bodyReads++;
+                    if (cut >= 0 && pos >= cut) {
+                        throw new IOException("connection reset");
+                    }
+                    if (pos >= data.length) {
+                        return -1;
+                    }
+                    int n = Math.min(len, data.length - pos);
+                    if (cut >= 0) {
+                        n = (int) Math.min(n, cut - pos);
+                    }
+                    if (stop >= 0) {
+                        n = (int) Math.min(n, Math.max(1, stop - pos));
+                    }
+                    System.arraycopy(data, pos, b, off, n);
+                    pos += n;
+                    if (stop >= 0 && pos >= stop) {
+                        stopFlag = true;
+                    }
+                    return n;
+                }
+            };
+        }
+    }
+
+    private static UpdateDirectDownload.Outcome runDirect(long id, FakeHttp http) {
+        return UpdateDirectDownload.run(ctx, id, http, () -> stopFlag);
+    }
+
+    private static long recordedId() {
+        return prefs().getLong(Keys.UPDATE_DOWNLOAD_ID, -1);
+    }
+
+    private static boolean noPartFiles() {
+        File dir = apk().getParentFile();
+        String[] names = dir.list();
+        if (names == null) {
+            return true;
+        }
+        for (String n : names) {
+            if (n.startsWith("firedown.apk.dl")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // ── the phone, the server, the steps ─────────────────────────────────
 
     private static void phone() throws IOException {
@@ -515,6 +969,8 @@ public final class UpdateFlowHarness {
         UpdateNotification.cancelled = 0;
         UpdateInstaller.installing = false;
         UpdateApkVerifier.signatureOk = true;
+        WorkManager.INSTANCE.cancelled.clear();
+        stopFlag = false;
         server.clear();
         server.put("https://gh/p", patch);
         server.put("https://m/p", patch);

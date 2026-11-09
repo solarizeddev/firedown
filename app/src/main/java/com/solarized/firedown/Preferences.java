@@ -27,8 +27,8 @@ public class Preferences {
      * APK download now goes through DownloadManager (so it survives the app
      * process being evicted mid-download). App-specific external storage needs
      * no runtime permission. Falls back to internal storage only on the rare
-     * device with no external volume mounted (DownloadManager is skipped
-     * there — see UpdateWorker). The path matches
+     * device with no external volume mounted (DownloadManager can't write
+     * there; the download is direct — see UpdateDirectDownload). The path matches
      * DownloadManager.Request.setDestinationInExternalFilesDir(ctx, null,
      * UPDATE_APK) so the receiver reads exactly what was written.
      */

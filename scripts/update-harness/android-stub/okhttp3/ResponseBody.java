@@ -1,1 +1,6 @@
-package okhttp3; public abstract class ResponseBody { public final String string() throws java.io.IOException { return null; } }
+package okhttp3;
+public abstract class ResponseBody {
+    public final String string() throws java.io.IOException { return null; }
+    public final java.io.InputStream byteStream() { return null; }
+    public abstract long contentLength();
+}

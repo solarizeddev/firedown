@@ -52,6 +52,11 @@ public class Keys {
     // When UpdateFinalizeWorker started rebuilding/verifying the finished
     // download: while it is recent, a new check must not remove that download.
     public static final String UPDATE_DOWNLOAD_FINALIZING_AT = "com.solarized.firedown.UPDATE_DOWNLOAD_FINALIZING_AT";
+    // A direct download (UpdateDirectDownload, when the Download Manager
+    // can't take it): the id it finished as, and its runs in a row that
+    // downloaded nothing. Both belong to the recorded download and go with it.
+    public static final String UPDATE_DIRECT_DONE = "com.solarized.firedown.UPDATE_DIRECT_DONE";
+    public static final String UPDATE_DIRECT_STALLS = "com.solarized.firedown.UPDATE_DIRECT_STALLS";
     // The version whose patch / .xz failed to rebuild the expected APK, so the
     // next round goes straight to the next step for that version.
     public static final String UPDATE_PATCH_FAILED_VERSION = "com.solarized.firedown.UPDATE_PATCH_FAILED_VERSION";

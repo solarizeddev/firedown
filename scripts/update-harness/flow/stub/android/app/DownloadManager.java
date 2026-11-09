@@ -35,7 +35,13 @@ public class DownloadManager {
     public final java.util.List<Long> removed = new java.util.ArrayList<>();
     private long nextId = 100;
 
+    /** The Download Manager app disabled: enqueue() and query() throw, as the real ones do then. */
+    public boolean disabled;
+
     public long enqueue(Request request) {
+        if (disabled) {
+            throw new IllegalArgumentException("Unknown URL content://downloads/my_downloads");
+        }
         if (request.dest.exists()) {
             throw new IllegalStateException("destination exists: " + request.dest);
         }
@@ -45,6 +51,9 @@ public class DownloadManager {
     }
 
     public Cursor query(Query query) {
+        if (disabled) {
+            throw new IllegalArgumentException("Unknown URL content://downloads/my_downloads");
+        }
         Row row = rows.get(query.id);
         return new Cursor() {
             public boolean moveToFirst() { return row != null; }

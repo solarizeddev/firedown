@@ -17,6 +17,9 @@ import androidx.work.WorkManager;
 import com.solarized.firedown.utils.BrowserHeaders;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -33,6 +36,12 @@ import java.util.concurrent.TimeUnit;
  * UpdateFinalizeWorker, which rebuilds the APK when the download was a patch
  * or an .xz, verifies it and reports back here; UpdateInstallReceiver clears
  * the ready record on install.
+ *
+ * When the Download Manager can't take a download (the user disabled the
+ * Download Manager app, or there is no external files dir), the same step
+ * is downloaded by UpdateDirectDownloadWorker instead. Its id is negative
+ * ({@link #isDirect}); everything else, the plan, the files, the claim and
+ * the verification, is the same.
  *
  * Why a single class: the enqueue path must be atomic (the one-time check on
  * app open and the 6h periodic can fire close together — without serialization
@@ -174,24 +183,29 @@ public final class UpdateDownloader {
                 Log.w(TAG, "device failure for a download no longer recorded; ignored");
                 return;
             }
-            UpdatePlan.Kind kind = pending.plan.current().kind;
-            if (kind != UpdatePlan.Kind.APK) {
-                SharedPreferences p = prefs(context);
-                String step = pending.versionCode + ":" + kind.name();
-                int count = (step.equals(p.getString(Keys.UPDATE_DEVICE_FAILED_STEP, null))
-                        ? p.getInt(Keys.UPDATE_DEVICE_FAILED_COUNT, 0) : 0) + 1;
-                if (count >= MAX_DEVICE_FAILURES) {
-                    p.edit().remove(Keys.UPDATE_DEVICE_FAILED_STEP)
-                            .remove(Keys.UPDATE_DEVICE_FAILED_COUNT).apply();
-                    Log.w(TAG, kind + " failed on this device " + count + " times; skipping it");
-                    stepFailedLocked(context, pending);
-                    return;
-                }
-                p.edit().putString(Keys.UPDATE_DEVICE_FAILED_STEP, step)
-                        .putInt(Keys.UPDATE_DEVICE_FAILED_COUNT, count).apply();
-            }
-            backOffLocked(context, pending.versionCode);
+            deviceFailedLocked(context, pending);
         }
+    }
+
+    /** Must be called under LOCK. See {@link #onDeviceFailed}. */
+    private static void deviceFailedLocked(Context context, Pending pending) {
+        UpdatePlan.Kind kind = pending.plan.current().kind;
+        if (kind != UpdatePlan.Kind.APK) {
+            SharedPreferences p = prefs(context);
+            String step = pending.versionCode + ":" + kind.name();
+            int count = (step.equals(p.getString(Keys.UPDATE_DEVICE_FAILED_STEP, null))
+                    ? p.getInt(Keys.UPDATE_DEVICE_FAILED_COUNT, 0) : 0) + 1;
+            if (count >= MAX_DEVICE_FAILURES) {
+                p.edit().remove(Keys.UPDATE_DEVICE_FAILED_STEP)
+                        .remove(Keys.UPDATE_DEVICE_FAILED_COUNT).apply();
+                Log.w(TAG, kind + " failed on this device " + count + " times; skipping it");
+                stepFailedLocked(context, pending);
+                return;
+            }
+            p.edit().putString(Keys.UPDATE_DEVICE_FAILED_STEP, step)
+                    .putInt(Keys.UPDATE_DEVICE_FAILED_COUNT, count).apply();
+        }
+        backOffLocked(context, pending.versionCode);
     }
 
     /** Must be called under LOCK. Records the step's kind as failed and moves on. */
@@ -272,7 +286,7 @@ public final class UpdateDownloader {
 
     /** True when the files dir can hold the step's download and the APK rebuilt from it. */
     private static boolean roomForStep(Context context, UpdatePlan.Step step) {
-        File dir = context.getExternalFilesDir(null);
+        File dir = Preferences.getUpdateApkFile(context).getParentFile();
         if (dir == null) {
             return false;
         }
@@ -402,18 +416,32 @@ public final class UpdateDownloader {
             clearPendingLocked(context);
             return false;
         }
-        DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-        if (dm == null) {
-            return false;
+        boolean finished;
+        if (isDirect(previousId)) {
+            if (p.getLong(Keys.UPDATE_DIRECT_DONE, 0L) != previousId) {
+                // Queued, running or waiting out a retry; enqueued again
+                // (KEEP: a no-op then) so a download whose work was lost
+                // resumes its part file instead of standing still.
+                Log.d(TAG, "a direct download is in flight; not enqueuing again");
+                UpdateDirectDownloadWorker.enqueue(context, previousId);
+                return true;
+            }
+            finished = true;
+        } else {
+            DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+            if (dm == null) {
+                return false;
+            }
+            int status = queryStatus(dm, previousId);
+            if (status == DownloadManager.STATUS_PENDING
+                    || status == DownloadManager.STATUS_RUNNING
+                    || status == DownloadManager.STATUS_PAUSED) {
+                Log.d(TAG, "a download is already in flight; not enqueuing again");
+                return true;
+            }
+            finished = status == DownloadManager.STATUS_SUCCESSFUL;
         }
-        int status = queryStatus(dm, previousId);
-        if (status == DownloadManager.STATUS_PENDING
-                || status == DownloadManager.STATUS_RUNNING
-                || status == DownloadManager.STATUS_PAUSED) {
-            Log.d(TAG, "a download is already in flight; not enqueuing again");
-            return true;
-        }
-        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+        if (finished) {
             long claimedAt = p.getLong(Keys.UPDATE_DOWNLOAD_FINALIZING_AT, 0L);
             long age = System.currentTimeMillis() - claimedAt;
             if (claimedAt == 0L) {
@@ -453,14 +481,6 @@ public final class UpdateDownloader {
     private static void enqueueLocked(Context context, UpdatePlan plan, String apkSha256,
                                       String name, int versionCode) {
         DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-        // DownloadManager can be disabled by the user, and it needs an external
-        // files dir to write to. If either is unavailable, skip quietly — the
-        // next periodic check tries again.
-        if (dm == null || context.getExternalFilesDir(null) == null) {
-            Log.w(TAG, "DownloadManager/external storage unavailable; skipping");
-            return;
-        }
-
         SharedPreferences p = prefs(context);
         removeDownload(context, p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1));
 
@@ -488,7 +508,42 @@ public final class UpdateDownloader {
         }
         File dest = fileFor(context, plan.current().kind);
 
-        long downloadId;
+        // The Download Manager when it can take the download: it survives the
+        // app's process and needs nothing of ours to run. It can't when the
+        // user disabled the Download Manager app (enqueue throws, every time)
+        // or there is no external files dir for it to write to; then the
+        // download is direct (UpdateDirectDownloadWorker), into the same file.
+        long downloadId = -1;
+        if (dm != null && context.getExternalFilesDir(null) != null) {
+            downloadId = enqueueSystemLocked(context, dm, plan, dest);
+        }
+        boolean direct = downloadId == -1;
+        if (direct) {
+            downloadId = newDirectId();
+        }
+
+        Log.d(TAG, "downloading " + plan.current().kind + " for version " + versionCode
+                + " from mirror " + plan.urlIndex() + (direct ? " directly" : ""));
+        p.edit()
+                .putLong(Keys.UPDATE_DOWNLOAD_ID, downloadId)
+                .putString(Keys.UPDATE_DOWNLOAD_PLAN, plan.toJson())
+                .putString(Keys.UPDATE_DOWNLOAD_SHA, apkSha256)
+                .putString(Keys.UPDATE_DOWNLOAD_NAME, name == null ? "" : name)
+                .putInt(Keys.UPDATE_DOWNLOAD_VERSION_CODE, versionCode)
+                .remove(Keys.UPDATE_DOWNLOAD_FINALIZING_AT)
+                .remove(Keys.UPDATE_DOWNLOAD_URLS)
+                .remove(Keys.UPDATE_DOWNLOAD_URL_INDEX)
+                .remove(Keys.UPDATE_DIRECT_DONE)
+                .remove(Keys.UPDATE_DIRECT_STALLS)
+                .apply();
+        // After the record: the worker reads it.
+        if (direct) {
+            UpdateDirectDownloadWorker.enqueue(context, downloadId);
+        }
+    }
+
+    /** Must be called under LOCK. A Download Manager download of {@code dest}, or -1 when it refused. */
+    private static long enqueueSystemLocked(Context context, DownloadManager dm, UpdatePlan plan, File dest) {
         try {
             DownloadManager.Request request = new DownloadManager.Request(Uri.parse(plan.currentUrl()));
             // Same browser UA + X-App-Version as the status fetch so the
@@ -504,27 +559,114 @@ public final class UpdateDownloader {
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
             request.setAllowedOverMetered(true);
             request.setAllowedOverRoaming(false);
-            downloadId = dm.enqueue(request);
+            return dm.enqueue(request);
         } catch (Exception e) {
-            // Bad URL scheme, DownloadManager disabled mid-call, etc. Drop the
-            // pending record so the next check starts clean.
-            Log.e(TAG, "enqueue failed", e);
-            clearPendingLocked(context);
-            return;
+            // The Download Manager app disabled by the user throws here, on
+            // every check; so does one disabled mid-call.
+            Log.w(TAG, "the Download Manager refused the update download; downloading directly", e);
+            return -1;
         }
+    }
 
-        Log.d(TAG, "downloading " + plan.current().kind + " for version " + versionCode
-                + " from mirror " + plan.urlIndex());
-        p.edit()
-                .putLong(Keys.UPDATE_DOWNLOAD_ID, downloadId)
-                .putString(Keys.UPDATE_DOWNLOAD_PLAN, plan.toJson())
-                .putString(Keys.UPDATE_DOWNLOAD_SHA, apkSha256)
-                .putString(Keys.UPDATE_DOWNLOAD_NAME, name == null ? "" : name)
-                .putInt(Keys.UPDATE_DOWNLOAD_VERSION_CODE, versionCode)
-                .remove(Keys.UPDATE_DOWNLOAD_FINALIZING_AT)
-                .remove(Keys.UPDATE_DOWNLOAD_URLS)
-                .remove(Keys.UPDATE_DOWNLOAD_URL_INDEX)
-                .apply();
+    // ── direct downloads (UpdateDirectDownload) ──────────────────────────
+
+    /** True for the id of a direct download: negative, and never -1 ("none"). */
+    public static boolean isDirect(long downloadId) {
+        return downloadId < -1;
+    }
+
+    private static long newDirectId() {
+        return -2L - ThreadLocalRandom.current().nextLong(1L << 48);
+    }
+
+    /** Where a direct download writes until it is complete: one file per download. */
+    public static File directPartFile(Context context, long downloadId) {
+        File apk = Preferences.getUpdateApkFile(context);
+        return new File(apk.getParentFile(), Preferences.UPDATE_APK + ".dl" + (-downloadId));
+    }
+
+    /** The record, when it is about the direct download {@code downloadId}; else null. */
+    static Pending directPending(Context context, long downloadId) {
+        synchronized (LOCK) {
+            Pending pending = readPendingLocked(context);
+            if (pending == null || pending.downloadId != downloadId || !isDirect(downloadId)) {
+                return null;
+            }
+            return pending;
+        }
+    }
+
+    /**
+     * The direct download {@code downloadId} wrote all of {@code part}: moves
+     * it to the step's file and hands it to UpdateFinalizeWorker, as the
+     * Download Manager's completion broadcast does. Only while the record
+     * names this download; a stale one's part is deleted. False when nothing
+     * was handed over.
+     */
+    static boolean completeDirect(Context context, long downloadId, File part) {
+        synchronized (LOCK) {
+            Pending pending = readPendingLocked(context);
+            if (pending == null || pending.downloadId != downloadId) {
+                part.delete();
+                return false;
+            }
+            File dest = fileFor(context, pending.plan.current().kind);
+            try {
+                Files.move(part.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException | RuntimeException e) {
+                Log.e(TAG, "could not move the finished update download into place", e);
+                part.delete();
+                deviceFailedLocked(context, pending);
+                return false;
+            }
+            prefs(context).edit()
+                    .putLong(Keys.UPDATE_DIRECT_DONE, downloadId)
+                    .remove(Keys.UPDATE_DIRECT_STALLS)
+                    .apply();
+            UpdateFinalizeWorker.enqueue(context, downloadId);
+            return true;
+        }
+    }
+
+    /**
+     * One more run of the direct download that downloaded nothing; the count
+     * so far, or -1 when the record names another download.
+     */
+    static int countDirectStall(Context context, long downloadId) {
+        synchronized (LOCK) {
+            SharedPreferences p = prefs(context);
+            if (p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1) != downloadId) {
+                return -1;
+            }
+            int count = p.getInt(Keys.UPDATE_DIRECT_STALLS, 0) + 1;
+            p.edit().putInt(Keys.UPDATE_DIRECT_STALLS, count).apply();
+            return count;
+        }
+    }
+
+    /** The direct download {@code downloadId} made progress. */
+    static void resetDirectStalls(Context context, long downloadId) {
+        synchronized (LOCK) {
+            SharedPreferences p = prefs(context);
+            if (p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1) == downloadId) {
+                p.edit().remove(Keys.UPDATE_DIRECT_STALLS).apply();
+            }
+        }
+    }
+
+    /**
+     * True when the download {@code downloadId} finished: the Download
+     * Manager says so, or a direct download handed its file over.
+     */
+    public static boolean isDownloadComplete(Context context, long downloadId) {
+        if (isDirect(downloadId)) {
+            return prefs(context).getLong(Keys.UPDATE_DIRECT_DONE, 0L) == downloadId;
+        }
+        DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (dm == null) {
+            return false;
+        }
+        return queryStatus(dm, downloadId) == DownloadManager.STATUS_SUCCESSFUL;
     }
 
     /**
@@ -582,6 +724,8 @@ public final class UpdateDownloader {
                     .remove(Keys.UPDATE_DOWNLOAD_NAME)
                     .remove(Keys.UPDATE_DOWNLOAD_VERSION_CODE)
                     .remove(Keys.UPDATE_DOWNLOAD_FINALIZING_AT)
+                    .remove(Keys.UPDATE_DIRECT_DONE)
+                    .remove(Keys.UPDATE_DIRECT_STALLS)
                     .remove(Keys.UPDATE_DEVICE_FAILED_STEP)
                     .remove(Keys.UPDATE_DEVICE_FAILED_COUNT)
                     // Success — drop the backoff state so it can't carry over to
@@ -735,6 +879,8 @@ public final class UpdateDownloader {
                 .remove(Keys.UPDATE_DOWNLOAD_NAME)
                 .remove(Keys.UPDATE_DOWNLOAD_VERSION_CODE)
                 .remove(Keys.UPDATE_DOWNLOAD_FINALIZING_AT)
+                .remove(Keys.UPDATE_DIRECT_DONE)
+                .remove(Keys.UPDATE_DIRECT_STALLS)
                 .apply();
     }
 
@@ -781,11 +927,27 @@ public final class UpdateDownloader {
                 f.delete();
             }
         }
+        // Direct downloads' part files, whichever download wrote them (a
+        // cancelled run can still be writing one for a moment).
+        File dir = Preferences.getUpdateApkFile(context).getParentFile();
+        String[] names = dir == null ? null : dir.list();
+        if (names != null) {
+            for (String n : names) {
+                if (n.startsWith(Preferences.UPDATE_APK + ".dl")) {
+                    new File(dir, n).delete();
+                }
+            }
+        }
     }
 
     /** Remove a DownloadManager row (and its file) by id; no-op for -1. */
     private static void removeDownload(Context context, long id) {
         if (id == -1) {
+            return;
+        }
+        if (isDirect(id)) {
+            UpdateDirectDownloadWorker.cancel(context, id);
+            directPartFile(context, id).delete();
             return;
         }
         DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -810,6 +972,10 @@ public final class UpdateDownloader {
                     return cursor.getInt(col);
                 }
             }
+        } catch (RuntimeException e) {
+            // A Download Manager disabled after the download was recorded:
+            // unknown, so the next check downloads again (directly).
+            Log.w(TAG, "could not read download " + id, e);
         }
         return -1;
     }

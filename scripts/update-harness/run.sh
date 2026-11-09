@@ -12,7 +12,9 @@
 #      mirrors, a patch for another base, device failures (retry once, then
 #      skip), no room for a delta step, the finalize claim (live, stale,
 #      unclaimed), a stopped worker, stale broadcasts, a record from before
-#      plans, an unreadable record, clearPending — plus planted bugs.
+#      plans, an unreadable record, clearPending, and the direct download
+#      the Download Manager can't take (UpdateDirectDownload against a fake
+#      server: resume, stalls, stale runs) — plus planted bugs.
 #   2. Fuzz (UpdateFuzz): 300 random edits round-tripped through the real
 #      generator (app/src/updatetool) and the app's applier (UpdatePatch);
 #      3000 random corruptions of a real patch and 500 random headers, every
@@ -145,7 +147,7 @@ if [ "${ANDROID_COMPILE:-1}" != 0 ]; then
     cp -r "$HERE/android-stub/." "$AC/src/"
     for f in Keys UpdateInstaller UpdateInstallReceiver UpdateNotification UpdateInstallWorker UpdateWorker \
              UpdateScheduler UpdateReadyLiveData UpdateDownloader UpdateInstallProgress UpdateFinalizeWorker \
-             UpdateManifest UpdatePlan UpdateInstalledApk; do
+             UpdateManifest UpdatePlan UpdateInstalledApk UpdateDirectDownload UpdateDirectDownloadWorker; do
         cp "$ROOT/app/src/main/java/com/solarized/firedown/$f.java" "$AC/src/com/solarized/firedown/"
     done
     cp "$ROOT/app/src/main/java/com/solarized/firedown/utils/NotificationID.java" "$AC/src/com/solarized/firedown/utils/"
@@ -182,7 +184,7 @@ echo "== 1b. The download state machine (UpdateFlowHarness)"
 FLOW="$OUT/flow-src"
 mkdir -p "$FLOW/com/solarized/firedown/update"
 cp -r "$HERE/flow/stub/." "$HERE/flow/src/." "$FLOW/"
-for f in Keys UpdateManifest UpdatePlan UpdateDownloader UpdateFinalizeWorker UpdateInstalledApk; do
+for f in Keys UpdateManifest UpdatePlan UpdateDownloader UpdateFinalizeWorker UpdateInstalledApk UpdateDirectDownload; do
     cp "$ROOT/app/src/main/java/com/solarized/firedown/$f.java" "$FLOW/com/solarized/firedown/"
 done
 cp "$ROOT/app/src/main/java/com/solarized/firedown/update/UpdatePatch.java" \
@@ -237,8 +239,23 @@ if [ "${MUTANTS:-1}" != 0 ]; then
     fmutant 'a cleared ready record leaves its notification' $D 's/\n(\s*)UpdateNotification\.cancelInstallProgress\(context\);\n/\n/'
     fmutant 'one sighting drops a pulled release' $D 's/if \(now - seenAt < PULLED_CONFIRM_MS\) \{/if (false) {/'
     fmutant 'a disabled DownloadManager throws out of clearPending' $D 's/\} catch \(RuntimeException e\) \{\n(\s*)\/\/ The Download Manager app disabled/} catch (IllegalStateException e) {\n$1\/\/ The Download Manager app disabled/'
+    fmutant 'a refused Download Manager download is not downloaded directly' $D 's/if \(direct\) \{\n(\s*)downloadId = newDirectId\(\);/if (direct) {\n$1return;/'
+    fmutant 'a direct download in flight is started again' $D 's/UpdateDirectDownloadWorker\.enqueue\(context, previousId\);\n(\s*)return true;/return false;/'
+    fmutant 'a moved-on record still takes a finished direct file' $D 's/if \(pending == null \|\| pending\.downloadId != downloadId\) \{\n(\s*)part\.delete\(\);\n(\s*)return false;/if (pending == null) {\n$1part.delete();\n$2return false;/'
+    fmutant 'a removed direct download keeps running' $D 's/\n(\s*)UpdateDirectDownloadWorker\.cancel\(context, id\);//'
+    fmutant 'a disabled Download Manager throws out of a status query' $D 's/\} catch \(RuntimeException e\) \{\n(\s*)\/\/ A Download Manager disabled after/} catch (IllegalStateException e) {\n$1\/\/ A Download Manager disabled after/'
+    fmutant 'room for a delta measured on external storage only' $D 's/File dir = Preferences\.getUpdateApkFile\(context\)\.getParentFile\(\);\n(\s*)if \(dir == null\) \{\n(\s*)return false;\n(\s*)\}\n(\s*)return dir\.getUsableSpace\(\) >= step\.size/File dir = context.getExternalFilesDir(null);\n$1if (dir == null) {\n$2return false;\n$3}\n$4return dir.getUsableSpace() >= step.size/'
+    X=com/solarized/firedown/UpdateDirectDownload.java
+    fmutant 'a resume overwrites what it kept' $X 's/new FileOutputStream\(part, have > 0\)/new FileOutputStream(part, false)/'
+    fmutant 'a 200 to a resume is appended' $X 's/have = 0L;\n(\s*)start = 0L;\n//'
+    fmutant 'a 206 for another range is appended' $X 's/if \(answer\.rangeStart != have\) \{/if (false) {/'
+    fmutant 'a direct download never gives up' $X 's/MAX_STALLS = 6;/MAX_STALLS = 1000;/'
+    fmutant 'progress does not reset the stall count' $X 's/if \(progressed\) \{/if (false) {/'
+    fmutant 'a 5xx is a refusal' $X 's/ \|\| answer\.code >= 500\)/)/'
+    fmutant 'a Content-Length past status.json is read anyway' $X 's/if \(expected > 0 && total > 0 && total != expected\) \{/if (false) {/'
     W=com/solarized/firedown/UpdateFinalizeWorker.java
     fmutant 'a device failure walks the plan' $W 's/UpdateDownloader\.onDeviceFailed\(context, pending\.downloadId\);\n(\s*)return Result\.success\(\);\n(\s*)\}\n(\s*)\}/UpdateDownloader.onStepFailed(context, pending.downloadId);\n$1return Result.success();\n$2}\n$3}/'
+    fmutant 'a finished direct download reads as failed' $W 's/return UpdateDownloader\.isDownloadComplete\(context, downloadId\);/return !UpdateDownloader.isDirect(downloadId) \&\& UpdateDownloader.isDownloadComplete(context, downloadId);/'
     fmutant 'a wrong download skips the whole step' $W 's/downloaded\.delete\(\);\n(\s*)UpdateDownloader\.onAttemptFailed\(context, downloadId\);/downloaded.delete();\n$1UpdateDownloader.onStepFailed(context, downloadId);/'
 fi
 
