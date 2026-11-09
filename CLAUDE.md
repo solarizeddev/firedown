@@ -5335,8 +5335,10 @@ is **~75 MB**, the APK 205 MB.
   process) only re-posts a prompt instead of downloading the live release
   over the test's file. The app's update
   preferences and any update APK are set aside and put back. Compiled
-  against android-all in the harness's section 0; not yet run on a device
-  at write time.
+  against android-all in the harness's section 0. Green on SM-A426B
+  (Android 12), 39 s. Not covered by it: a Download Manager actually
+  disabled by the user (`pm disable-user com.android.providers.downloads`)
+  rather than hidden from the test's context.
 
 ## Releasing — `bumpVersion` and `releaseStatus` (app/release.gradle)
 
