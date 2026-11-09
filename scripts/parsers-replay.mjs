@@ -424,8 +424,9 @@ async function drive(url, type, tabId, requestId, body) {
         check("fb: canonical watch origin", m.origin === "https://www.facebook.com/watch/?v=1000001", m.origin);
         check("fb: HD+SD variants best-first",
             JSON.stringify(m.variants.map(v => v.height)) === "[1080,480]", JSON.stringify(m.variants.map(v => v.height)));
-        check("fb: owner + duration", m.name === "Sample Page" && m.duration === 32000,
-            JSON.stringify([m.name, m.duration]));
+        check("fb: titled by its words, author as description, duration",
+            m.name === "A sample description" && m.description === "Sample Page" && m.duration === 32000,
+            JSON.stringify([m.name, m.description, m.duration]));
     }
 
     // Streamed (NDJSON) GraphQL — each line an independent object.
@@ -440,9 +441,150 @@ async function drive(url, type, tabId, requestId, body) {
             id: "1000004", playable_url_dash_hd: "https://video.xx.fbcdn.example/v/dash-1000004.mpd",
             owner: { name: "Sample Page" },
         } } }));
-    check("fb: DASH-only node emits the manifest variant",
-        dash.emits.length === 1 && dash.emits[0].msg.variants[0].url.endsWith("dash-1000004.mpd"),
+    check("fb: DASH-only node emits the manifest variant, declared a manifest",
+        dash.emits.length === 1 && dash.emits[0].msg.variants[0].url.endsWith("dash-1000004.mpd")
+            && dash.emits[0].msg.manifest === true,
         JSON.stringify(dash.emits.map(s => s.msg.variants?.[0]?.url)));
+
+    // ---- The mobile ("weblite") reels viewer -------------------------------
+    // fbcdn URLs carry `efg`: base64url JSON naming the asset, the encode tag
+    // (short side) and the duration.
+    const efg = (asset, tag, dur) => Buffer.from(JSON.stringify({
+        vencode_tag: tag, xpv_asset_id: asset, duration_s: dur, urlgen_source: "www",
+    })).toString("base64url");
+    const fbcdn = (path, asset, tag, dur) =>
+        `https://video.fxyz1-1.fna.fbcdn.net/o1/v/t2/f2/m366/${path}.mp4?_nc_cat=103&efg=${efg(asset, tag, dur)}&oh=00_X&oe=6AF7&tag=x`;
+    const HD = fbcdn("AQhdReelA", 111, "xpv_progressive.FACEBOOK..C3.720.dash_h264-basic-gen2_720p", 47);
+    const SD = fbcdn("AQsdReelA", 111, "xpv_progressive.FACEBOOK..C3.360.sve_sd", 47);
+    const reelLiteral = (id, url) => `{id:"${id}",tracking:"{\\"top\\":{\\"x\\":1}}",player_origin:"video_home",`
+        + `is_reels_video:true,video_dash_manifest:null,dash_prefetch_json:"",playable_url:"${url}",`
+        + `video_versions:[{url:"${url}",type:1}],video_duration:47850,aspect_ratio:0.5625,`
+        + `cover_image_url:"https://scontent.fxyz1-1.fna.fbcdn.net/v/t15/c-${id}.jpg",`
+        + `contextual_search_prompt:{prompt_text:"q",video_id:"${id}"},`
+        + `user:{name:"Sample Account",username:"Sample Account",owner_id:"42"},`
+        + `caption:{text:"First line of the caption\\n\\nmore words",spans:[]},`
+        + `story_url:"https://www.facebook.com/reel/${id}/",warning_screen:null}`;
+    // The reel sits in a JS object literal inside a script that also holds
+    // a regex literal with a quote in it (the scanner must not lose its place).
+    const reelHtml = `<!DOCTYPE html><html><head>`
+        + `<meta property="og:video" content="${SD.replace(/&/g, "&amp;")}" />`
+        + `<meta property="og:video:url" content="${SD.replace(/&/g, "&amp;")}" />`
+        + `<title>Loading</title></head><body><video src="${HD.replace(/&/g, "&amp;")}"></video>`
+        + `<script>var re=/["{]/g;/* it's a comment */ function f(a){return/["]/.test(a)} require("X").handle({data:[{id:"a",type:"ls",data:{initial:`
+        + reelLiteral("9001", HD) + `}}],tree:{"\\u3408":{"&":"${HD}"}}});</script></body></html>`;
+    const docRun = await drive("https://www.facebook.com/reel/9001/", "main_frame", 60, "fbDoc", reelHtml);
+    check("fb doc: the reel page document routes to the document listener", docRun.matched === 1, docRun.matched);
+    check("fb doc: the JS-literal reel is emitted once", docRun.emits.length === 1, docRun.emits.length);
+    if (docRun.emits.length === 1) {
+        const m = docRun.emits[0].msg;
+        check("fb doc: origin is the reel's own page", m.origin === "https://www.facebook.com/reel/9001/", m.origin);
+        check("fb doc: HD from the node + SD from og:video, sized from their tags",
+            JSON.stringify(m.variants.map(v => [v.width, v.height])) === "[[720,1280],[360,640]]"
+                && m.variants[1].url === SD,
+            JSON.stringify(m.variants.map(v => [v.width, v.height, v.url.slice(0, 70)])));
+        check("fb doc: caption's first line titles it, the account describes it, ms duration, cover",
+            m.name === "First line of the caption" && m.description === "Sample Account" && m.duration === 47850
+                && m.img === "https://scontent.fxyz1-1.fna.fbcdn.net/v/t15/c-9001.jpg" && m.skipProbe === true,
+            JSON.stringify([m.name, m.description, m.duration, m.img, m.skipProbe]));
+    }
+
+    // The viewer's pagination (Bloks, JSON behind for(;;);) carries the next
+    // reels; one sits 30 levels deep to prove there is no depth cap.
+    const reelJson = (id, url, caption) => ({
+        id, playable_url: url, video_versions: [{ url, type: 1 }], video_duration: 21966, aspect_ratio: 0.5625,
+        cover_image_url: `https://scontent.fxyz1-1.fna.fbcdn.net/v/t15/c-${id}.jpg`,
+        user: { name: "Other Account" }, caption: { text: caption }, story_url: `https://www.facebook.com/reel/${id}/`,
+    });
+    const B = fbcdn("AQreelB", 222, "xpv_progressive.FACEBOOK..C3.668.dash_h264-basic-gen2_720p", 21);
+    const C = fbcdn("AQreelC", 333, "xpv_progressive.FACEBOOK..C3.720.progressive_h264-basic-gen2_720p", 39);
+    let deep = reelJson("9003", C, "Deep one");
+    for (let d = 0; d < 30; d++) deep = { w: deep };
+    const page = "for (;;);" + JSON.stringify({ payload: { layout: { bloks_payload: {
+        data: [{ id: "x1", type: "ls", data: { initial: reelJson("9002", B, "Second reel") } }, { id: "x2", data: deep }],
+        tree: { "\u3408": { "&": B } },
+    } } } });
+    const pageRun = await drive("https://www.facebook.com/async/wbloks/fetch/?appid=com.bloks.www.fblox.reels.pagination&type=action",
+        "xmlhttprequest", 60, "fbPage", page);
+    check("fb pagination: every reel of the page emits, no depth cap", pageRun.emits.length === 2,
+        JSON.stringify(pageRun.emits.map(e => e.msg.name)));
+    check("fb pagination: 668-wide portrait sized 668x1188",
+        pageRun.emits.some(e => e.msg.name === "Second reel" && e.msg.variants[0].width === 668 && e.msg.variants[0].height === 1188),
+        JSON.stringify(pageRun.emits.map(e => e.msg.variants.map(v => [v.width, v.height]))));
+
+    // A Bloks response with no reel is read and passed through quietly.
+    const share = await drive("https://www.facebook.com/async/wbloks/fetch/?appid=com.bloks.www.screen_query.Share&type=app",
+        "xmlhttprequest", 60, "fbShare", "for (;;);" + JSON.stringify({ payload: { layout: { bloks_payload: { tree: {} } } } }));
+    check("fb pagination: a Bloks body without a node emits nothing", share.matched === 1 && share.emits.length === 0,
+        JSON.stringify([share.matched, share.emits.length]));
+
+    // ---- The wire backbone ---------------------------------------------------
+    async function fbWire(url, tabId, requestId, extra = {}) {
+        const matching = listenersMatching(url, "media");
+        const before = nativeSent.length;
+        matching.map(r => r.fn({ url, type: "media", tabId, requestId, method: "GET", frameId: 0,
+            documentUrl: "https://www.facebook.com/reel/9002/", originUrl: "https://www.facebook.com/reel/9002/", ...extra }));
+        await new Promise(r => setTimeout(r, 80));
+        return { matched: matching.length, emits: nativeSent.slice(before).filter(isCapture) };
+    }
+    const played = await fbWire(B, 60, "fbW1");
+    check("fb wire: the played reel the pagination already sent is not sent again", played.matched === 1 && played.emits.length === 0,
+        JSON.stringify([played.matched, played.emits.length]));
+    const other = await fbWire(B, 61, "fbW2");
+    check("fb wire: a second tab playing it captures it, titled from its node",
+        other.emits.length === 1 && other.emits[0].msg.name === "Second reel"
+            && other.emits[0].msg.origin === "https://www.facebook.com/reel/9002/" && other.emits[0].msg.tabId === 61,
+        JSON.stringify(other.emits.map(e => [e.msg.name, e.msg.origin, e.msg.tabId])));
+    const rangeAgain = await fbWire(B, 61, "fbW3");
+    check("fb wire: the same file again in that tab is not decided twice", rangeAgain.emits.length === 0, rangeAgain.emits.length);
+
+    const prevSend = browser.tabs.sendMessage;
+    browser.tabs.sendMessage = async () => undefined;
+    const UNSEEN = fbcdn("AQunseen", 444, "xpv_progressive.FACEBOOK..C3.720.progressive_h264-basic-gen2_720p", 12);
+    const lone = await fbWire(UNSEEN, 62, "fbW4", { documentUrl: "https://www.facebook.com/reel/7777/" });
+    check("fb wire: a file no reader saw still lands, generic title (renamable), under the reel page",
+        lone.emits.length === 1 && lone.emits[0].msg.name === "Facebook video" && lone.emits[0].msg.pageTitled === true
+            && lone.emits[0].msg.origin === "https://www.facebook.com/reel/7777/" && lone.emits[0].msg.duration === 12000,
+        JSON.stringify(lone.emits.map(e => [e.msg.name, e.msg.origin, e.msg.duration])));
+    const dashTrack = await fbWire(fbcdn("AQdashV", 555, "dash_vp9-basic-gen2_720p", 30), 62, "fbW5");
+    const ranged = await fbWire(UNSEEN.replace("AQunseen", "AQranged") + "&bytestart=0&byteend=800", 62, "fbW6");
+    check("fb wire: a DASH track or a byte-range segment is never captured",
+        dashTrack.emits.length === 0 && ranged.emits.length === 0, JSON.stringify([dashTrack.emits.length, ranged.emits.length]));
+    const ig = await fbWire(fbcdn("AQigx", 666, "xpv_progressive.INSTAGRAM..C3.720.x", 9), 62, "fbW7",
+        { documentUrl: "https://www.instagram.com/reel/abc/", originUrl: "https://www.instagram.com/reel/abc/" });
+    const own = await fbWire(fbcdn("AQown", 777, "xpv_progressive.FACEBOOK..C3.720.x", 9), -1, "fbW8");
+    check("fb wire: Instagram's pages and our own probes are left alone", ig.emits.length === 0 && own.emits.length === 0,
+        JSON.stringify([ig.emits.length, own.emits.length]));
+    // A node whose URL carries no efg is found by its file path, though the
+    // played URL is signed differently.
+    await drive("https://www.facebook.com/api/graphql/", "xmlhttprequest", 64, "fbNoEfg",
+        JSON.stringify({ data: { video: { id: "1000009", playable_url: "https://video-mad1-1.xx.fbcdn.net/v/t42.1790-2/noefg_n.mp4?_nc_gid=A&oh=1",
+            owner: { name: "Sample Page" }, message: { text: "Signed twice" }, playable_duration_in_ms: 5000 } } }));
+    const resigned = await fbWire("https://video-mad1-1.xx.fbcdn.net/v/t42.1790-2/noefg_n.mp4?_nc_gid=B&oh=2", 65, "fbW10");
+    check("fb wire: a played file with no efg is titled from its node by path",
+        resigned.emits.length === 1 && resigned.emits[0].msg.name === "Signed twice"
+            && resigned.emits[0].msg.origin === "https://www.facebook.com/watch/?v=1000009",
+        JSON.stringify(resigned.emits.map(e => [e.msg.name, e.msg.origin])));
+    browser.tabs.sendMessage = prevSend;
+
+    // The player fetches the file while the document is still being read:
+    // the backbone waits for it, and the reel lands once, titled.
+    const D = fbcdn("AQreelD", 888, "xpv_progressive.FACEBOOK..C3.720.dash_h264-basic-gen2_720p", 30);
+    const before = nativeSent.length;
+    for (const r of listenersMatching("https://www.facebook.com/reel/9004/", "main_frame")) {
+        r.fn({ url: "https://www.facebook.com/reel/9004/", type: "main_frame", tabId: 63, requestId: "fbDoc2", method: "GET" });
+    }
+    const racing = fbWire(D, 63, "fbW9", { documentUrl: "https://www.facebook.com/reel/9004/" });
+    await new Promise(r => setTimeout(r, 300));
+    const f = filters.get("fbDoc2");
+    f.ondata({ data: new TextEncoder().encode(`<script>x(${reelLiteral("9004", D)})</script>`).buffer });
+    f.onstop();
+    await racing;
+    await new Promise(r => setTimeout(r, 200));
+    const raced = nativeSent.slice(before).filter(isCapture);
+    check("fb wire: a file fetched before its document is read waits for it, one titled capture",
+        raced.length === 1 && raced[0].msg.name === "First line of the caption"
+            && raced[0].msg.origin === "https://www.facebook.com/reel/9004/",
+        JSON.stringify(raced.map(e => [e.msg.name, e.msg.origin])));
 }
 
 // ---------------------------------------------------------------------------

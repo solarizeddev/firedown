@@ -1356,6 +1356,56 @@ nothing. Pinned by `parsers-replay.mjs` (`vimeo:` / `vimeo backbone:`;
 mutants: no grace wait, no claims, no block rule, always re-fetch, no
 per-clip master claim — each fails). On-device unverified at write time.
 
+### Facebook — one text scanner, four producers, a wire backbone
+
+`js/parsers/facebook.js`. A video node is any object that DIRECTLY holds a
+player URL key (`playable_url`, `browser_native_hd_url`/`_sd_url`,
+`playable_url_quality_hd`, `video_versions`, `playable_url_dash*`). Every
+body is read by ONE forward text scanner (`findNodeStarts`: strings,
+comments, regex literals and the `{`/`[` stack tracked; each `{` holding a
+node key recorded) and each recorded object read with `parseJsValue`
+(`js/parsers/js-literal.js`, the JS-object-literal reader lifted out of
+twitter.js, which imports it too). There is no JSON walk and so no depth cap
+(the Threads lesson). Producers:
+
+- **GraphQL** (`/api/graphql`, desktop Comet; NDJSON, `for (;;);` prefix).
+- **Bloks** (`/async/wbloks/fetch/`, the mobile "weblite" app): the reels
+  viewer's pagination is JSON holding the NEXT reels (`video_duration` in
+  MILLISECONDS, `user.name`, `caption.text`, `cover_image_url`, `story_url`).
+- **The document** (`*.facebook.com` main_frame + sub_frame, inline scripts
+  only): a mobile `/reel/<id>/` page renders its reel server-side as a JS
+  OBJECT LITERAL (unquoted keys) and fires no API call for it. Its og:video
+  is the reel's SD rendition, attached to the node whose asset id it names.
+  Found on a HAR (2026-11): before this the reel page landed as six tiles,
+  each rendition twice, titled by the page.
+- **The wire backbone** (`video*.fbcdn.net` progressive mp4s, observe-only):
+  titled from `fbAssetCache` (node by asset id), after waiting up to 3 s for
+  a reader still parsing a body in that tab, else from the frame's
+  `get-page-metadata`, else "Facebook video". Load-bearing: the block rule
+  below covers the whole video CDN, so a file no reader saw (an embed, a
+  cached document, a renamed field) would otherwise be lost. DASH tracks
+  (`efg` tag `dash…` without `xpv_progressive`, or a `bytestart` segment)
+  are never captured: a video-only track is a silent file. Pages on
+  instagram.com / threads are left to their parsers.
+
+Every fbcdn video URL carries `efg`, base64url JSON with `xpv_asset_id`,
+`vencode_tag` (`…C3.<short side>…`) and `duration_s` (`fbcdnInfo`): the
+asset id pairs renditions and keys the cache, the short side plus the node's
+`aspect_ratio` gives each variant its frame size. Origin is the node's
+`story_url` (a reel's own page, so the Captured sheet's origin test pins it),
+else `/watch/?v=<id>`. A clip is titled by its title or its caption's first
+line (cut at 120 chars), the author as description, like X. Block rule:
+`parser-blocklist.js` `facebook`, `^https?://video[.-]…\.fbcdn\.net/`.
+Pinned by `parsers-replay.mjs` (`fb doc:` / `fb pagination:` / `fb wire:`;
+mutants: no regex-literal skip, no keyword-before-regex rule, no grace
+wait, no og:video pairing, DASH captured, no Instagram guard, author as
+title — each fails). The backbone's generic capture is `pageTitled`, so a
+reader finishing after the wait renames it; a URL with no `efg` is cached by
+its file path. A node serialized INTO a JSON string is not seen (the
+backbone covers it). On-device
+unverified at write time; desktop pages and `plugins/video.php` embeds are
+read by the same scanner but no HAR of them was checked.
+
 ### Skip the capture probe when the parser already has the metadata
 
 A parser that supplies url + resolution + duration does **not** need the ffmpeg
