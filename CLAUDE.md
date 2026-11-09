@@ -1397,8 +1397,12 @@ else `/watch/?v=<id>`. A clip is titled by its title or its caption's first
 line (cut at 120 chars), the author as description, like X. Block rule:
 `parser-blocklist.js` `facebook`, `^https?://video[.-]…\.fbcdn\.net/`.
 Pinned by `parsers-replay.mjs` (`fb doc:` / `fb pagination:` / `fb wire:`;
-mutants: no regex-literal skip, no grace wait, no og:video pairing, DASH
-captured, no Instagram guard, author as title — each fails). On-device
+mutants: no regex-literal skip, no keyword-before-regex rule, no grace
+wait, no og:video pairing, DASH captured, no Instagram guard, author as
+title — each fails). The backbone's generic capture is `pageTitled`, so a
+reader finishing after the wait renames it; a URL with no `efg` is cached by
+its file path. A node serialized INTO a JSON string is not seen (the
+backbone covers it). On-device
 unverified at write time; desktop pages and `plugins/video.php` embeds are
 read by the same scanner but no HAR of them was checked.
 

@@ -104,16 +104,23 @@ function isFacebookVideoNode(obj) {
     return false;
 }
 
+// Keywords after which a `/` starts a regex literal, not a division.
+const REGEX_AFTER_WORDS = new Set(["return", "typeof", "case", "in", "of", "do", "else", "void",
+    "delete", "throw", "new", "instanceof", "yield", "await"]);
+
 // ---- The scanner ----------------------------------------------------------
 // One forward pass over JS or JSON text, tracking strings, comments, regex
 // literals and the open {/[ stack. Every `{` that DIRECTLY holds one of the
 // node keys (quoted or not, followed by `:`) is recorded; each is then read
-// with parseJsValue. A depth-capped walk of the parsed tree was how the
+// with parseJsValue. A node serialized INTO a string (a JSON payload kept
+// as text) is skipped with the string; the wire backbone covers it. A
+// depth-capped walk of the parsed tree was how the
 // Threads parser missed items two levels too deep; this has no depth.
 function findNodeStarts(src, out) {
     const stack = [];
     const n = Math.min(src.length, FB_MAX_SCAN_CHARS);
     let lastSig = "";       // last significant char outside strings/comments
+    let lastWord = "";      // the identifier that char ended, if any
     let i = 0;
     const isIdStart = (c) => (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "_" || c === "$";
     const isId = (c) => isIdStart(c) || (c >= "0" && c <= "9");
@@ -141,6 +148,7 @@ function findNodeStarts(src, out) {
             i++;
             if (end - start <= 40 && FB_NODE_KEYS.has(src.slice(start, end)) && followedByColon(i)) record();
             lastSig = c;
+            lastWord = "";
             continue;
         }
         if (c === "/") {
@@ -155,7 +163,7 @@ function findNodeStarts(src, out) {
                 continue;
             }
             // A regex literal can only start where a value can.
-            if (lastSig === "" || "(,=:[!&|?{};".includes(lastSig)) {
+            if (lastSig === "" || "(,=:[!&|?{};".includes(lastSig) || REGEX_AFTER_WORDS.has(lastWord)) {
                 i++;
                 let inClass = false;
                 while (i < n && src[i] !== "\n") {
@@ -168,21 +176,25 @@ function findNodeStarts(src, out) {
                 }
                 i++;
                 lastSig = "/";
+                lastWord = "";
                 continue;
             }
             lastSig = c;
+            lastWord = "";
             i++;
             continue;
         }
         if (c === "{" || c === "[") {
             stack.push({ ch: c, at: i, recorded: false });
             lastSig = c;
+            lastWord = "";
             i++;
             continue;
         }
         if (c === "}" || c === "]") {
             stack.pop();
             lastSig = c;
+            lastWord = "";
             i++;
             continue;
         }
@@ -191,10 +203,11 @@ function findNodeStarts(src, out) {
             while (j < n && isId(src[j])) j++;
             if (j - i <= 40 && FB_NODE_KEYS.has(src.slice(i, j)) && followedByColon(j)) record();
             lastSig = src[j - 1];
+            lastWord = src.slice(i, j);
             i = j;
             continue;
         }
-        if (c !== " " && c !== "\n" && c !== "\t" && c !== "\r") lastSig = c;
+        if (c !== " " && c !== "\n" && c !== "\t" && c !== "\r") { lastSig = c; lastWord = ""; }
         i++;
     }
     return out;
@@ -438,17 +451,28 @@ function facebookVariants(video, extraUrls = []) {
     return out;
 }
 
+// Keyed by asset id, and by file path for a URL with no efg (the played URL
+// can differ from the node's only by its signature parameters).
 function rememberFacebookNode(video, extraUrls) {
-    for (const id of nodeAssetIds(video)) fbAssetCache.set(id, { video, extraUrls });
+    const entry = { video, extraUrls };
+    for (const id of nodeAssetIds(video)) fbAssetCache.set(id, entry);
+    for (const url of nodeUrls(video)) {
+        const info = fbcdnInfo(url);
+        if (info && !info.assetId) fbAssetCache.set(info.path, entry);
+    }
 }
 
 function sendFacebookVideo(details, video, pageUrl, extraUrls = []) {
     let variants = facebookVariants(video, extraUrls);
+    let manifest = false;
 
     // DASH manifest fallback: the native side muxes a manifest itself.
     if (variants.length === 0) {
         const dashUrl = video.playable_url_dash_hd || video.playable_url_dash;
-        if (nonEmpty(dashUrl)) variants = [{ url: dashUrl, width: 0, height: 0 }];
+        if (nonEmpty(dashUrl)) {
+            variants = [{ url: dashUrl, width: 0, height: 0 }];
+            manifest = true;
+        }
     }
     if (variants.length === 0) return false;
 
@@ -462,6 +486,7 @@ function sendFacebookVideo(details, video, pageUrl, extraUrls = []) {
         img: extractFacebookThumbnail(video),
         name,
         duration: facebookDuration(video, variants.map(v => v.url)),
+        manifest,
     });
     return true;
 }
@@ -555,21 +580,22 @@ async function facebookFrameMeta(details, tabId) {
     };
 }
 
-async function waitForFacebookAsset(assetId, tabId) {
+async function waitForFacebookAsset(key, tabId) {
     const deadline = Date.now() + fbWireGraceMs;
     while (Date.now() < deadline) {
-        const hit = assetId ? fbAssetCache.get(assetId) : undefined;
+        const hit = fbAssetCache.get(key);
         if (hit) return hit;
         if (!hasLive(fbPending(tabId))) return null;
         await new Promise((r) => setTimeout(r, 100));
     }
-    return assetId ? (fbAssetCache.get(assetId) || null) : null;
+    return fbAssetCache.get(key) || null;
 }
 
 async function captureFacebookWire(details, tabId, info) {
     const pageUrl = details.documentUrl || details.originUrl || "";
-    let hit = info.assetId ? fbAssetCache.get(info.assetId) : undefined;
-    if (!hit) hit = await waitForFacebookAsset(info.assetId, tabId);
+    const key = info.assetId || info.path;
+    let hit = fbAssetCache.get(key);
+    if (!hit) hit = await waitForFacebookAsset(key, tabId);
     if (hit) {
         // Emitted under the node's own origin, so a reader's earlier emit
         // in this tab already covers it (the origin dedup).
@@ -591,7 +617,10 @@ async function captureFacebookWire(details, tabId, info) {
         description: frame?.description,
         img: frame?.img,
         duration: info.durationS > 0 ? info.durationS * 1000 : 0,
-        dedupKey: `${origin}#${info.assetId || info.path}`,
+        dedupKey: `${origin}#${key}`,
+        // A reader that finishes after the wait names the same file; the
+        // repository then renames this copy.
+        pageTitled: true,
     });
 }
 

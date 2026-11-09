@@ -441,8 +441,9 @@ async function drive(url, type, tabId, requestId, body) {
             id: "1000004", playable_url_dash_hd: "https://video.xx.fbcdn.example/v/dash-1000004.mpd",
             owner: { name: "Sample Page" },
         } } }));
-    check("fb: DASH-only node emits the manifest variant",
-        dash.emits.length === 1 && dash.emits[0].msg.variants[0].url.endsWith("dash-1000004.mpd"),
+    check("fb: DASH-only node emits the manifest variant, declared a manifest",
+        dash.emits.length === 1 && dash.emits[0].msg.variants[0].url.endsWith("dash-1000004.mpd")
+            && dash.emits[0].msg.manifest === true,
         JSON.stringify(dash.emits.map(s => s.msg.variants?.[0]?.url)));
 
     // ---- The mobile ("weblite") reels viewer -------------------------------
@@ -469,7 +470,7 @@ async function drive(url, type, tabId, requestId, body) {
         + `<meta property="og:video" content="${SD.replace(/&/g, "&amp;")}" />`
         + `<meta property="og:video:url" content="${SD.replace(/&/g, "&amp;")}" />`
         + `<title>Loading</title></head><body><video src="${HD.replace(/&/g, "&amp;")}"></video>`
-        + `<script>var re=/["{]/g;/* it's a comment */ require("X").handle({data:[{id:"a",type:"ls",data:{initial:`
+        + `<script>var re=/["{]/g;/* it's a comment */ function f(a){return/["]/.test(a)} require("X").handle({data:[{id:"a",type:"ls",data:{initial:`
         + reelLiteral("9001", HD) + `}}],tree:{"\\u3408":{"&":"${HD}"}}});</script></body></html>`;
     const docRun = await drive("https://www.facebook.com/reel/9001/", "main_frame", 60, "fbDoc", reelHtml);
     check("fb doc: the reel page document routes to the document listener", docRun.matched === 1, docRun.matched);
@@ -540,8 +541,8 @@ async function drive(url, type, tabId, requestId, body) {
     browser.tabs.sendMessage = async () => undefined;
     const UNSEEN = fbcdn("AQunseen", 444, "xpv_progressive.FACEBOOK..C3.720.progressive_h264-basic-gen2_720p", 12);
     const lone = await fbWire(UNSEEN, 62, "fbW4", { documentUrl: "https://www.facebook.com/reel/7777/" });
-    check("fb wire: a file no reader saw still lands, generic title, under the reel page",
-        lone.emits.length === 1 && lone.emits[0].msg.name === "Facebook video"
+    check("fb wire: a file no reader saw still lands, generic title (renamable), under the reel page",
+        lone.emits.length === 1 && lone.emits[0].msg.name === "Facebook video" && lone.emits[0].msg.pageTitled === true
             && lone.emits[0].msg.origin === "https://www.facebook.com/reel/7777/" && lone.emits[0].msg.duration === 12000,
         JSON.stringify(lone.emits.map(e => [e.msg.name, e.msg.origin, e.msg.duration])));
     const dashTrack = await fbWire(fbcdn("AQdashV", 555, "dash_vp9-basic-gen2_720p", 30), 62, "fbW5");
@@ -553,6 +554,16 @@ async function drive(url, type, tabId, requestId, body) {
     const own = await fbWire(fbcdn("AQown", 777, "xpv_progressive.FACEBOOK..C3.720.x", 9), -1, "fbW8");
     check("fb wire: Instagram's pages and our own probes are left alone", ig.emits.length === 0 && own.emits.length === 0,
         JSON.stringify([ig.emits.length, own.emits.length]));
+    // A node whose URL carries no efg is found by its file path, though the
+    // played URL is signed differently.
+    await drive("https://www.facebook.com/api/graphql/", "xmlhttprequest", 64, "fbNoEfg",
+        JSON.stringify({ data: { video: { id: "1000009", playable_url: "https://video-mad1-1.xx.fbcdn.net/v/t42.1790-2/noefg_n.mp4?_nc_gid=A&oh=1",
+            owner: { name: "Sample Page" }, message: { text: "Signed twice" }, playable_duration_in_ms: 5000 } } }));
+    const resigned = await fbWire("https://video-mad1-1.xx.fbcdn.net/v/t42.1790-2/noefg_n.mp4?_nc_gid=B&oh=2", 65, "fbW10");
+    check("fb wire: a played file with no efg is titled from its node by path",
+        resigned.emits.length === 1 && resigned.emits[0].msg.name === "Signed twice"
+            && resigned.emits[0].msg.origin === "https://www.facebook.com/watch/?v=1000009",
+        JSON.stringify(resigned.emits.map(e => [e.msg.name, e.msg.origin])));
     browser.tabs.sendMessage = prevSend;
 
     // The player fetches the file while the document is still being read:
