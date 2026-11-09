@@ -14,7 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
@@ -43,8 +42,12 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
 
     /** The ring's track: the icons' colour at 30% (Chrome's). */
     private static final int TRACK_ALPHA = 77;
-    /** Where the count disc's centre sits from the ring's: 45 degrees up and to the end, on the ring. */
-    private static final float COUNT_OFFSET_DP = 7.6f;
+    /**
+     * The least of the ring the arc shows. Material draws an arc shorter
+     * than its two round ends as a dot, and a coral dot on this bar means
+     * "needs you" (the ⋮ badge). The spoken percentage stays exact.
+     */
+    private static final int MIN_ARC_PERCENT = 8;
 
     private OnBottomBarListener mOnBottomBarListener;
 
@@ -53,16 +56,15 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     /**
      * Chrome's download button. While anything downloads: the arrow alone
      * inside a ring that fills clockwise (a turning arc while there is no
-     * percentage), and from two downloads their number on a disc at the
-     * ring's top-end corner. When a group finishes: the usual icon in the
-     * ring's colour, for a minute or until Downloads is opened. Otherwise
-     * the usual icon. It replaced a coral dot: one dot meant both "something
+     * percentage, over the same grey ring). Several downloads are one ring,
+     * their average; how many is said, not drawn. When a group finishes:
+     * the usual icon in the ring's colour, for a minute or until Downloads
+     * is opened. Otherwise the usual icon. It replaced a coral dot: one dot meant both "something
      * is downloading" (often, for minutes) and, on ⋮, "an update needs you"
      * (rarely), and the frequent one taught people to ignore the rare one.
      */
     @Nullable private ImageView mDownloadsButton;
     @Nullable private CircularProgressIndicator mDownloadsRing;
-    @Nullable private TextView mDownloadsCount;
     private int mDownloadsIconRes;
     private int mIconColor;
     private int mAccentColor;
@@ -160,7 +162,6 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         mTabsCountButton = findViewById(R.id.tab_button);
         mDownloadsButton = (ImageView) downloadButton;
         mDownloadsRing = findViewById(R.id.downloads_progress);
-        mDownloadsCount = findViewById(R.id.downloads_count);
         refreshDownloadsIcon();
         refreshDownloadsDescription();
 
@@ -245,10 +246,6 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             mDownloadsRing.setIndicatorColor(mAccentColor);
             mDownloadsRing.setTrackColor(ColorUtils.setAlphaComponent(iconColor, TRACK_ALPHA));
         }
-        if (mDownloadsCount != null) {
-            mDownloadsCount.setBackgroundTintList(ColorStateList.valueOf(surfaceColor));
-            mDownloadsCount.setTextColor(mAccentColor);
-        }
         refreshDownloadsIcon();
         refreshDownloadsDescription();
 
@@ -313,12 +310,12 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
                 } else {
                     // From the turning arc, Material switches at the end of
                     // its current cycle.
-                    mDownloadsRing.setProgressCompat(mDownloadProgress.percent, animate);
+                    mDownloadsRing.setProgressCompat(
+                            Math.max(MIN_ARC_PERCENT, mDownloadProgress.percent), animate);
                 }
                 mDownloadsRing.setVisibility(View.VISIBLE);
             }
         }
-        refreshDownloadsCount();
         refreshDownloadsDescription();
     }
 
@@ -349,30 +346,9 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         }
     }
 
-    /** From two downloads, how many, on the disc at the ring's top-end corner (Chrome's "9+" cap). */
-    private void refreshDownloadsCount() {
-        if (mDownloadsCount == null) {
-            return;
-        }
-        int count = mDownloadProgress.isActive() ? mDownloadProgress.count : 0;
-        if (count < 2) {
-            mDownloadsCount.setVisibility(View.GONE);
-            return;
-        }
-        String text = count > 9 ? "9+" : String.valueOf(count);
-        if (!text.contentEquals(mDownloadsCount.getText())) {
-            mDownloadsCount.setText(text);
-        }
-        float offset = COUNT_OFFSET_DP * getResources().getDisplayMetrics().density;
-        boolean rtl = getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
-        mDownloadsCount.setTranslationX(rtl ? -offset : offset);
-        mDownloadsCount.setTranslationY(-offset);
-        mDownloadsCount.setVisibility(View.VISIBLE);
-    }
-
     /**
-     * The ring and the count are hidden from screen readers: the button says
-     * what they show, in words. Percentages in steps of 10%: a screen reader
+     * The ring is hidden from screen readers: the button says what it shows,
+     * in words, and how many are running (the ring does not draw that). Percentages in steps of 10%: a screen reader
      * re-reads a focused button whenever its description changes, and every
      * percent would be a sentence a second.
      */
