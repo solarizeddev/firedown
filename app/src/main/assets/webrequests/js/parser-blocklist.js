@@ -63,6 +63,15 @@ const PARSER_BLOCKLIST = {
     'instagram.*\\.mp4',
   ],
 
+  // Facebook — every file on the video CDN (video.<pop>.fna.fbcdn.net,
+  // video-<pop>.xx.fbcdn.net): the progressive renditions the parser emits
+  // (playable_url, video_versions, og:video) and the DASH tracks the desktop
+  // player streams (a video-only track is a silent file). A played file no
+  // reader saw is still captured, by the parser's wire backbone.
+  facebook: [
+    '^https?:\\/\\/video[.-][^/]*\\.fbcdn\\.net\\/',
+  ],
+
   // Bilibili.tv — the DASH video+audio .m4s baseUrls the page-state bridge emits
   // on the upos/bilivideo bstar CDN (iupxcodeboss path).
   bilibili: [
