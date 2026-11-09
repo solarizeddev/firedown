@@ -17,6 +17,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.solarized.firedown.data.di.RepositoryEntryPoint;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.repository.BrowserDownloadRepository;
+import com.solarized.firedown.utils.FileUriHelper;
 
 import org.json.JSONObject;
 import org.junit.AfterClass;
@@ -273,7 +274,10 @@ public class CaptureLiveTest {
     public void t6_facebookReelCapture() throws Exception {
         loadPage(FACEBOOK_REEL);
         String reelPage = "/reel/" + FACEBOOK_REEL_ID;
-        BrowserDownloadEntity hit = awaitCapture(e -> originContains(e, reelPage), CAPTURE_TIMEOUT_MS);
+        // The page's pictures (avatars, the cookie banner, sprites) are
+        // captured under the same page; only the media counts here.
+        Check reelMedia = e -> originContains(e, reelPage) && isMedia(e);
+        BrowserDownloadEntity hit = awaitCapture(reelMedia, CAPTURE_TIMEOUT_MS);
         if (hit == null) {
             String at = sLocation.get();
             assumeFalse("Facebook sent the page to a login wall (" + at + "); nothing to measure",
@@ -286,7 +290,7 @@ public class CaptureLiveTest {
         // Let the player fetch the file and every other path have its say;
         // none of them may add a second capture of this reel.
         Thread.sleep(10_000);
-        List<BrowserDownloadEntity> reel = capturesWhere(e -> originContains(e, reelPage));
+        List<BrowserDownloadEntity> reel = capturesWhere(reelMedia);
         assertEquals("the reel was captured more than once: " + describe(reel), 1, reel.size());
         BrowserDownloadEntity only = reel.get(0);
         assertTrue("the capture is not on Facebook's video CDN: " + only.getFileUrl(),
@@ -316,6 +320,11 @@ public class CaptureLiveTest {
         return origin != null && origin.contains(needle);
     }
 
+    private static boolean isMedia(BrowserDownloadEntity e) {
+        String mime = e.getMimeType();
+        return FileUriHelper.isVideo(mime) || FileUriHelper.isAudio(mime);
+    }
+
     private interface Check { boolean ok(BrowserDownloadEntity entity); }
 
     /** Every entity the Captured repository holds now that passes {@code check}. */
@@ -337,7 +346,7 @@ public class CaptureLiveTest {
     private static String describe(List<BrowserDownloadEntity> list) {
         StringBuilder sb = new StringBuilder();
         for (BrowserDownloadEntity e : list) {
-            sb.append("\n  ").append(e.getFileName()).append(" | ").append(e.getFileUrl());
+            sb.append("\n  ").append(e.getFileName()).append(" | ").append(e.getMimeType()).append(" | ").append(e.getFileUrl());
         }
         return sb.toString();
     }
