@@ -5164,15 +5164,25 @@ is **~75 MB**, the APK 205 MB.
     came out was offered over 1.2.8's PARTIAL file ("Update to 1.2.7", then
     "Update failed"). `isVerifiedReady` is also false while a download is
     recorded (the belt), and `UpdateReadyLiveData` listens to the download id.
+    Clearing the record takes down the "Tap to update" notification that
+    offered it (not while an install runs: the same id is then its
+    progress), and `UpdateInstaller.install` itself refuses anything but a
+    verified ready APK, so a sheet opened before the download began can't
+    copy the partial file either. A check starts no download while an
+    install copies (the download would begin by deleting that file).
   - **A wrong clock never holds a version**: a retry time more than one
-    backoff (6 h + 20%) away and a finalize claim more than its lifetime in
-    the future count as expired (`backoffActive`, `claimLive`). A phone that
-    booted in the future used to wait until the clock caught up.
+    backoff (6 h + 20%) away and a finalize claim more than 6 h in the
+    future count as expired (`backoffActive`, `claimLive`). A phone that
+    booted in the future used to wait until the clock caught up. A claim a
+    few hours ahead still holds: a clock set back while a rebuild runs must
+    not have `start` take the download from under the worker.
   - **A pulled release stops being offered** (`onManifestSeen`): when
-    status.json names a version OLDER than the ready APK on two checks an
-    hour apart, the APK and its record are dropped. One sighting is not
-    enough: a mirror or a CDN edge can serve the previous file for minutes
-    after a release, and dropping a good update costs a full download.
+    status.json names a version OLDER than the ready APK on two checks a
+    day apart, the APK and its record are dropped. Not sooner:
+    publish-release.sh updates the GitHub copy before the website's deploy,
+    a phone that can't reach firedown.app reads the GitHub copy, and a
+    deploy can lag or fail, so a phone can verify a release the primary
+    endpoint doesn't list yet; dropping a good update costs a full download.
   - **The notification's Install runs in `UpdateInstallWorker`** (expedited,
     unique, KEEP), not the receiver's `goAsync`: a broadcast is killed after
     60 s, mid-copy on a slow phone, leaving the installer session open. On
@@ -5185,17 +5195,27 @@ is **~75 MB**, the APK 205 MB.
     dialog is also offered as a notification, removed by any outcome. This
     is not only Android 10–11: `USER_ACTION_NOT_REQUIRED` holds only when
     Firedown is the installer of record, so the FIRST self-update of an
-    install a browser or file manager put on the phone asks on every
-    version.
+    install a browser or file manager put on the phone asks, on every
+    Android version. The periodic check doesn't re-post "Tap to update"
+    beside it (a tap would start a second session), and the prompt is named
+    after the APK on disk, not status.json's version.
   - **No update check is expedited** (`UpdateScheduler`): on Android 11 and
     older WorkManager runs expedited work as a foreground service and calls
-    `getForegroundInfo()`, which no worker implemented (the default throws).
-    `UpdateWorker` implements it anyway, for a future expedited check.
+    `getForegroundInfo()`, which `UpdateWorker` doesn't implement (the
+    default throws): 1.2.7's startup and "Check for updates" runs failed on
+    Android 8–11, leaving the 6-hour periodic check. An expedited worker
+    must implement it (`UpdateInstallWorker` does).
   - Smaller: `UPDATE_META` is removed when a commit never happened (a later
     unrelated update announced the old name); the periodic check doesn't
     re-post the prompt over a running install's progress (same id);
     `removeDownload` catches the disabled-DownloadManager throw (it runs on
     the main thread from the app-replaced receiver).
+- **Known, not fixed**: with the Download Manager app disabled by the user,
+  `DownloadManager.enqueue` throws on every check and no update downloads,
+  silently; a fallback (an OkHttp download, or a line in About) is open.
+  On Android 8–11 the install worker's foreground notice shares the
+  progress notification's id, so "Installing…" can vanish when the worker
+  returns, before Android answers.
 - **Verify** with `sh scripts/update-harness/run.sh` (JDK only, ~6 min): the
   JUnit tests on a plain JVM (UpdatePatchTest, UpdatePlanTest,
   UpdateManifestTest — the same ones `testDebugUnitTest` runs); **the state
@@ -5212,7 +5232,7 @@ is **~75 MB**, the APK 205 MB.
   API 35, with signature stubs of the androidx and app classes in
   `android-stub/`; `ANDROID_COMPILE=0` skips the ~190 MB jar); a fuzz of the real generator and
   applier (300 random edits, 3000 random corruptions, 500 random headers, an
-  APK-shaped file, the CLI); 36 planted bugs that must each fail
+  APK-shaped file, the CLI); 37 planted bugs that must each fail
   (`MUTANTS=0` skips); the REAL `releaseStatus` in a scratch Gradle
   project (offline, file:// history URLs: status.json blocks, history,
   SHA256SUMS, each patch re-applied, a mismatched history entry skipped, the
@@ -5284,7 +5304,8 @@ tasks, not hand edits:
   with the changelog as notes when missing; publishing stays a click on
   GitHub). **Patches come only from releases whose app can apply one**
   (`defaultPatchMinFrom`, 1206 = 1.2.6, the first app that reads `patches`;
-  `-Pfiredown.patchMinFrom` overrides): 1.2.7 shipped patches from 1.2.4 and
+  `-Pfiredown.patchMinFrom` overrides; the build names the releases left
+  out): 1.2.7 shipped patches from 1.2.4 and
   1.2.5, ~110 MB and ~12 minutes of build for apps that ignore the block.
 - **`scripts/publish-release.sh` publishes a built release, in the order
   phones need it** (it replaced a list of manual steps): `uploadUpdateRelease`

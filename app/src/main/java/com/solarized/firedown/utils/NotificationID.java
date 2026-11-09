@@ -17,9 +17,6 @@ public class NotificationID {
      */
     public static final int APK_UPDATE_CONFIRM_INSTALL        = 669;
 
-    /** An update check run as an expedited job on Android 11 and older (its foreground notice). */
-    public static final int APK_UPDATE_CHECK                  = 670;
-
     public static final int    MEDIA_ID    = 102;
 
     /**

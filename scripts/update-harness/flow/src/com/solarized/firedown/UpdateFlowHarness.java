@@ -396,6 +396,7 @@ public final class UpdateFlowHarness {
         check(!UpdateDownloader.isVerifiedReady(ctx, 1206), s + "1206 is no longer offered over the partial file");
         check(!prefs().contains(Keys.UPDATE_READY) && UpdateDownloader.readyVersionCode(ctx) == -1,
                 s + "its ready record is gone");
+        check(UpdateNotification.cancelled == 1, s + "and the \"Tap to update\" notification that offered it");
         // The belt: a ready record an older build left beside a download.
         prefs().edit().putBoolean(Keys.UPDATE_READY, true).putInt(Keys.UPDATE_READY_VERSION_CODE, 1206).apply();
         check(!UpdateDownloader.isVerifiedReady(ctx, 1206), s + "a ready record beside a recorded download is not trusted");
@@ -418,7 +419,9 @@ public final class UpdateFlowHarness {
                 s + "a retry a year away (written under a clock set ahead) does not");
         check(!UpdateDownloader.backoffActive(now, now - 1), s + "a retry time passed does not");
         check(UpdateDownloader.claimLive(-60_000L), s + "a claim a minute in the future (clock set back a little) holds");
-        check(!UpdateDownloader.claimLive(-2L * hour), s + "a claim two hours in the future does not");
+        check(UpdateDownloader.claimLive(-2L * hour),
+                s + "a claim two hours in the future holds (a clock set back while a rebuild runs)");
+        check(!UpdateDownloader.claimLive(-7L * hour), s + "a claim seven hours in the future does not");
         check(!UpdateDownloader.claimLive(31L * 60_000L), s + "a claim 31 minutes old does not");
 
         phone();
@@ -432,11 +435,18 @@ public final class UpdateFlowHarness {
         startUpdate(apkOnlyManifest());
         DownloadManager.Row row = current();
         finish(row);
-        prefs().edit().putLong(Keys.UPDATE_DOWNLOAD_FINALIZING_AT, now + 2L * hour).apply();
+        prefs().edit().putLong(Keys.UPDATE_DOWNLOAD_FINALIZING_AT, now + 30L * 24L * hour).apply();
         WorkManager.INSTANCE.unique.clear();
         startUpdate(apkOnlyManifest());
         check(current().id == row.id && WorkManager.INSTANCE.unique.containsKey("update_finalize_" + row.id),
-                s + "a claim from the future is stale: the APK is handed over again, not left forever");
+                s + "a claim a month in the future is stale: the APK is handed over again, not left forever");
+        // While an install copies, the notification is its progress: never taken down.
+        phone();
+        verifiedApkOnly();
+        UpdateInstaller.installing = true;
+        UpdateNotification.cancelled = 0;
+        UpdateDownloader.clearReady(ctx);
+        check(UpdateNotification.cancelled == 0, "install: clearing a ready record while an install runs leaves its progress notification alone");
     }
 
     /** A verified 1207 waits; status.json goes back to 1206 (the release was pulled). */
@@ -461,7 +471,8 @@ public final class UpdateFlowHarness {
         UpdateDownloader.onManifestSeen(ctx, 1206);
         check(!UpdateDownloader.isVerifiedReady(ctx, 1207) && !apk().exists()
                 && !prefs().contains(Keys.UPDATE_READY) && !prefs().contains(Keys.UPDATE_PULLED_SEEN_AT),
-                s + "an hour later the APK and its record are dropped");
+                s + "a day later the APK and its record are dropped");
+        check(UpdateNotification.cancelled == 1, s + "with the notification that offered it");
         phone();
         verifiedApkOnly();
         UpdateDownloader.onManifestSeen(ctx, 1206);
@@ -501,6 +512,8 @@ public final class UpdateFlowHarness {
         WorkManager.INSTANCE.unique.clear();
         WorkManager.INSTANCE.log.clear();
         UpdateNotification.prompts = 0;
+        UpdateNotification.cancelled = 0;
+        UpdateInstaller.installing = false;
         UpdateApkVerifier.signatureOk = true;
         server.clear();
         server.put("https://gh/p", patch);

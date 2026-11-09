@@ -2,10 +2,12 @@ package com.solarized.firedown;
 
 import android.Manifest;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.service.notification.StatusBarNotification;
 import android.text.TextUtils;
 
 import androidx.core.app.ActivityCompat;
@@ -141,16 +143,22 @@ public class UpdateNotification {
         NotificationManagerCompat.from(context).cancel(NotificationID.APK_UPDATE_CONFIRM_INSTALL);
     }
 
-    /** The foreground notice of an update check run as an expedited job on Android 11 and older. */
-    public static Notification buildCheckRunning(Context context) {
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, App.UPDATES_NOTIFICATION_ID);
-        mBuilder.setSmallIcon(R.drawable.ic_firedown_notification);
-        mBuilder.setOnlyAlertOnce(true);
-        mBuilder.setSilent(true);
-        mBuilder.setOngoing(true);
-        mBuilder.setShowWhen(false);
-        mBuilder.setContentTitle(context.getText(R.string.update_check_running));
-        return mBuilder.build();
+    /** Android's confirmation is waiting in the shade (see {@link #showConfirmInstall}). */
+    public static boolean isConfirmInstallShowing(Context context) {
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) {
+            return false;
+        }
+        try {
+            for (StatusBarNotification n : nm.getActiveNotifications()) {
+                if (n.getId() == NotificationID.APK_UPDATE_CONFIRM_INSTALL) {
+                    return true;
+                }
+            }
+        } catch (RuntimeException e) {
+            return false;
+        }
+        return false;
     }
 
     /** Android answered (or never did): the progress has nothing left to say. */

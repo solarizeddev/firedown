@@ -455,8 +455,13 @@ tasks.register('releaseStatus') {
                                              && (it.versionCode as int) >= patchMinFrom }
                     .sort { -(it.versionCode as int) }
                     .take(maxPatches)
-            if (history.any { (it.versionCode as int) < patchMinFrom }) {
-                logger.lifecycle("No patches from releases before ${patchMinFrom}: their app reads none")
+            List skipped = history.findAll { (it.versionCode as int) < (versionCode as int) }
+                    .sort { -(it.versionCode as int) }
+                    .take(maxPatches)
+                    .findAll { (it.versionCode as int) < patchMinFrom }
+            if (!skipped.isEmpty()) {
+                logger.lifecycle("No patch from ${skipped.collect { it.versionCode }.join(', ')}: " +
+                        "apps before ${patchMinFrom} read no patches")
             }
             List jobs = []
             for (Map entry : sources) {

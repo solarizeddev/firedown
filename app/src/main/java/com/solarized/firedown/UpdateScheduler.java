@@ -68,9 +68,10 @@ public class UpdateScheduler {
      * replay the previous check's terminal state.
      */
     // Neither one-time check is expedited: on Android 11 and older WorkManager
-    // runs expedited work as a foreground service, which needs a notification
-    // for a check that takes a second, and a check made while the app is open
-    // starts at once anyway.
+    // runs expedited work as a foreground service and asks the worker for
+    // getForegroundInfo(), which UpdateWorker doesn't implement (the default
+    // throws, and the check fails: 1.2.7's two one-time checks on Android
+    // 8–11). A check made while the app is open starts at once anyway.
     public UUID enqueueManualCheck() {
         Constraints constraints = new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)

@@ -233,7 +233,8 @@ if [ "${MUTANTS:-1}" != 0 ]; then
     fmutant 'a new download keeps the old ready record' $D 's/clearReadyRecordLocked\(context\);\n\n(\s*)\/\/ A patch or \.xz needs room/\n$1\/\/ A patch or .xz needs room/'
     fmutant 'ready trusted beside a recorded download' $D 's/if \(p\.getLong\(Keys\.UPDATE_DOWNLOAD_ID, -1\) != -1\) \{\n(\s*)return false;/if (false) {\n$1return false;/'
     fmutant 'a retry time a year away is believed' $D 's/return remaining > 0 && remaining <= BACKOFF_MAX_MS \+ BACKOFF_MAX_MS \/ 5;/return remaining > 0;/'
-    fmutant 'a claim from the future is believed' $D 's/return age > -FINALIZE_CLAIM_MS && age < FINALIZE_CLAIM_MS;/return age < FINALIZE_CLAIM_MS;/'
+    fmutant 'a claim from the future is believed' $D 's/return age > -CLAIM_CLOCK_SLACK_MS && age < FINALIZE_CLAIM_MS;/return age < FINALIZE_CLAIM_MS;/'
+    fmutant 'a cleared ready record leaves its notification' $D 's/\n(\s*)UpdateNotification\.cancelInstallProgress\(context\);\n/\n/'
     fmutant 'one sighting drops a pulled release' $D 's/if \(now - seenAt < PULLED_CONFIRM_MS\) \{/if (false) {/'
     fmutant 'a disabled DownloadManager throws out of clearPending' $D 's/\} catch \(RuntimeException e\) \{\n(\s*)\/\/ The Download Manager app disabled/} catch (IllegalStateException e) {\n$1\/\/ The Download Manager app disabled/'
     W=com/solarized/firedown/UpdateFinalizeWorker.java
@@ -427,7 +428,7 @@ EOF
         if rg_default; then
             if ! grep -q '"patches"' "$PROJ/status.json" && grep -q '"compressed"' "$PROJ/status.json" \
                 && ! ls "$PROJ/app/build/outputs/update/v1.2.6/" | grep -q fdpatch \
-                && grep -q 'No patches from releases before 1206' "$OUT/gradle.log"; then
+                && grep -q 'apps before 1206 read no patches' "$OUT/gradle.log"; then
                 ok "no patch from a release whose app reads none (before 1206)"
             else
                 bad "patches were made for releases that can't apply them"

@@ -87,8 +87,13 @@ public final class UpdateInstaller {
 
         File updateFile = Preferences.getUpdateApkFile(context);
 
-        if (updateFile == null || !updateFile.exists()) {
-            Log.e(TAG, "Update APK not found");
+        // Only the APK the finalize worker verified (SHA-256 + signature).
+        // The path also holds a newer release while it downloads, and an
+        // install started from a notification or a sheet shown before that
+        // download began would copy the partial file.
+        if (updateFile == null || !updateFile.exists()
+                || !UpdateDownloader.isVerifiedReady(context, App.getVersionCode() + 1)) {
+            Log.e(TAG, "no verified update APK");
             publish(context, sProgress.failed(generation));
             UpdateNotification.showNotificationFailed(context);
             return;

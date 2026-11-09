@@ -67,6 +67,14 @@ public final class UpdateDownloader {
     private static final long FINALIZE_CLAIM_MS = 30L * 60L * 1000L;
 
     /**
+     * How far in the future a claim may be and still hold: a clock set back
+     * while a rebuild runs (a network time correction) must not have
+     * start() take the download from under a live worker. Hours beyond it
+     * can only be a claim written under a clock that was far ahead.
+     */
+    private static final long CLAIM_CLOCK_SLACK_MS = 6L * 60L * 60L * 1000L;
+
+    /**
      * Free space kept beyond what a patch or .xz step needs (the downloaded
      * file plus the APK it is rebuilt into), so an update never fills the
      * phone to the byte.
@@ -438,7 +446,7 @@ public final class UpdateDownloader {
 
     /** A finalize claim {@code age} ms old (negative: the clock moved back) still holds. */
     static boolean claimLive(long age) {
-        return age > -FINALIZE_CLAIM_MS && age < FINALIZE_CLAIM_MS;
+        return age > -CLAIM_CLOCK_SLACK_MS && age < FINALIZE_CLAIM_MS;
     }
 
     /** Must be called under LOCK. Enqueues the plan's current step and records it. */
@@ -614,11 +622,13 @@ public final class UpdateDownloader {
     /**
      * How long status.json must keep naming a version older than the ready
      * APK before that APK is dropped as a pulled release. Two checks this far
-     * apart are needed: a mirror or a CDN edge can serve the previous file for
-     * minutes after a release, and dropping a good update costs a full
-     * download.
+     * apart are needed: a mirror or a CDN edge can serve the previous file
+     * after a release (publish-release.sh updates the GitHub copy before the
+     * website's deploy, and a deploy can fail), and dropping a good update
+     * costs a full download. A day: a pulled release stays offered at most a
+     * day longer, which costs nothing that matters.
      */
-    static final long PULLED_CONFIRM_MS = 60L * 60L * 1000L;
+    static final long PULLED_CONFIRM_MS = 24L * 60L * 60L * 1000L;
 
     /**
      * status.json, as just fetched, names {@code manifestVersionCode}. When a
@@ -740,8 +750,17 @@ public final class UpdateDownloader {
         }
     }
 
-    /** Must be called under LOCK. The ready record only; the file is the caller's. */
+    /**
+     * Must be called under LOCK. The ready record only; the file is the
+     * caller's. The "Tap to update" notification that offered it goes too:
+     * tapped later, it would install whatever is at the APK's path by then.
+     * Nothing is done while an install runs (that notification is then its
+     * progress, and the record is not cleared on that path).
+     */
     private static void clearReadyRecordLocked(Context context) {
+        if (prefs(context).getBoolean(Keys.UPDATE_READY, false) && !UpdateInstaller.isInstalling()) {
+            UpdateNotification.cancelInstallProgress(context);
+        }
         prefs(context).edit()
                 .remove(Keys.UPDATE_READY)
                 .remove(Keys.UPDATE_READY_VERSION_CODE)
