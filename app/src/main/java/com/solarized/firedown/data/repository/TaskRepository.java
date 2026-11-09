@@ -50,9 +50,17 @@ public class TaskRepository {
             new MutableLiveData<>(DownloadProgress.NONE);
     private final MutableLiveData<DownloadProgress> mSafeProgress =
             new MutableLiveData<>(DownloadProgress.NONE);
-    /** Last values posted; the engine's thread is the only writer. */
+    /**
+     * Last values posted. Written by the engine's thread and, to end a
+     * finished mark, by the main thread: under {@link #mProgressLock}.
+     */
+    private final Object mProgressLock = new Object();
     private DownloadProgress mLastRegularProgress = DownloadProgress.NONE;
     private DownloadProgress mLastSafeProgress = DownloadProgress.NONE;
+    /** How long the Downloads button stays coral after a group finishes (Chrome's minute). */
+    private static final long FINISHED_SHOWN_MS = 60_000L;
+    private final Runnable mEndRegularFinished = () -> endFinished(false);
+    private final Runnable mEndSafeFinished = () -> endFinished(true);
 
     /**
      * One-shot task events (Started / Progress / Finished / Deleted / Error
@@ -99,18 +107,58 @@ public class TaskRepository {
 
     /**
      * Both modes' lines at once, from the download engine's thread. A value
-     * equal to the last one posted is dropped. postValue keeps only the
+     * equal to the last one posted is dropped, and idle does not replace a
+     * finished mark ({@link DownloadProgress#next}). postValue keeps only the
      * newest of quick changes, which is right for a progress line (a stale
      * percent is never worth showing).
      */
     public void updateProgress(DownloadProgress regular, DownloadProgress safe) {
-        if (!regular.equals(mLastRegularProgress)) {
-            mLastRegularProgress = regular;
-            mRegularProgress.postValue(regular);
+        synchronized (mProgressLock) {
+            regular = DownloadProgress.next(mLastRegularProgress, regular);
+            if (!regular.equals(mLastRegularProgress)) {
+                mLastRegularProgress = regular;
+                mRegularProgress.postValue(regular);
+                timeFinished(mEndRegularFinished, regular);
+            }
+            safe = DownloadProgress.next(mLastSafeProgress, safe);
+            if (!safe.equals(mLastSafeProgress)) {
+                mLastSafeProgress = safe;
+                mSafeProgress.postValue(safe);
+                timeFinished(mEndSafeFinished, safe);
+            }
         }
-        if (!safe.equals(mLastSafeProgress)) {
-            mLastSafeProgress = safe;
-            mSafeProgress.postValue(safe);
+    }
+
+    /**
+     * Downloads (or the Safe Folder, {@code safe}) is on screen: a finished
+     * mark has said what it had to say. Main thread.
+     */
+    public void markDownloadsSeen(boolean safe) {
+        endFinished(safe);
+    }
+
+    private void timeFinished(Runnable end, DownloadProgress shown) {
+        mMainHandler.removeCallbacks(end);
+        if (shown.isFinished()) {
+            mMainHandler.postDelayed(end, FINISHED_SHOWN_MS);
+        }
+    }
+
+    private void endFinished(boolean safe) {
+        synchronized (mProgressLock) {
+            if (safe) {
+                if (mLastSafeProgress.isFinished()) {
+                    mLastSafeProgress = DownloadProgress.NONE;
+                    mSafeProgress.postValue(DownloadProgress.NONE);
+                }
+                mMainHandler.removeCallbacks(mEndSafeFinished);
+            } else {
+                if (mLastRegularProgress.isFinished()) {
+                    mLastRegularProgress = DownloadProgress.NONE;
+                    mRegularProgress.postValue(DownloadProgress.NONE);
+                }
+                mMainHandler.removeCallbacks(mEndRegularFinished);
+            }
         }
     }
 

@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
@@ -33,30 +34,39 @@ import com.solarized.firedown.ui.browser.TabsBrowserButton;
 
 import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.badge.BadgeUtils;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 
 
 public class BottomNavigationBar extends FrameLayout implements View.OnClickListener, View.OnLongClickListener {
 
     private static final String TAG = BottomNavigationBar.class.getName();
 
-    /** The progress bar's track: the icons' colour at about 30%. */
+    /** The ring's track: the icons' colour at 30% (Chrome's). */
     private static final int TRACK_ALPHA = 77;
+    /** Where the count disc's centre sits from the ring's: 45 degrees up and to the end, on the ring. */
+    private static final float COUNT_OFFSET_DP = 7.6f;
 
     private OnBottomBarListener mOnBottomBarListener;
 
     private TabsBrowserButton mTabsCountButton;
 
     /**
-     * While anything downloads, the Downloads button shows a plain arrow with
-     * Material's progress bar under it; otherwise its usual icon. It replaced
-     * a coral dot: one dot meant both "something is downloading" (often, for
-     * minutes) and, on ⋮, "an update needs you" (rarely), and the frequent one
-     * taught people to ignore the rare one.
+     * Chrome's download button. While anything downloads: the arrow alone
+     * inside a ring that fills clockwise (a turning arc while there is no
+     * percentage), and from two downloads their number on a disc at the
+     * ring's top-end corner. When a group finishes: the usual icon in the
+     * ring's colour, for a minute or until Downloads is opened. Otherwise
+     * the usual icon. It replaced a coral dot: one dot meant both "something
+     * is downloading" (often, for minutes) and, on ⋮, "an update needs you"
+     * (rarely), and the frequent one taught people to ignore the rare one.
      */
     @Nullable private ImageView mDownloadsButton;
-    @Nullable private LinearProgressIndicator mDownloadsBar;
+    @Nullable private CircularProgressIndicator mDownloadsRing;
+    @Nullable private TextView mDownloadsCount;
     private int mDownloadsIconRes;
+    private int mIconColor;
+    private int mAccentColor;
+    private int mDownloadsTint;
     private DownloadProgress mDownloadProgress = DownloadProgress.NONE;
     private boolean mIncognito;
     /**
@@ -149,7 +159,8 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
 
         mTabsCountButton = findViewById(R.id.tab_button);
         mDownloadsButton = (ImageView) downloadButton;
-        mDownloadsBar = findViewById(R.id.downloads_progress);
+        mDownloadsRing = findViewById(R.id.downloads_progress);
+        mDownloadsCount = findViewById(R.id.downloads_count);
         refreshDownloadsIcon();
         refreshDownloadsDescription();
 
@@ -223,21 +234,23 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             ImageViewCompat.setImageTintList(searchBtn, iconTint);
         }
 
-        AppCompatImageButton downloadsBtn = findViewById(R.id.downloads_button);
-        if (downloadsBtn != null) {
-            // Private tabs: the Safe Folder's lock at rest; it gives way to
-            // the same arrow and progress line while a download runs.
-            mIncognito = incognito;
-            ImageViewCompat.setImageTintList(downloadsBtn, iconTint);
-            refreshDownloadsIcon();
-            refreshDownloadsDescription();
+        // Private tabs: the Safe Folder's lock at rest; it gives way to the
+        // same arrow and ring while a download runs.
+        mIncognito = incognito;
+        mIconColor = iconColor;
+        mAccentColor = incognito
+                ? IncognitoColors.getPrimary(context, true)
+                : ContextCompat.getColor(context, R.color.progress_indicator);
+        if (mDownloadsRing != null) {
+            mDownloadsRing.setIndicatorColor(mAccentColor);
+            mDownloadsRing.setTrackColor(ColorUtils.setAlphaComponent(iconColor, TRACK_ALPHA));
         }
-        if (mDownloadsBar != null) {
-            mDownloadsBar.setIndicatorColor(incognito
-                    ? IncognitoColors.getPrimary(context, true)
-                    : ContextCompat.getColor(context, R.color.progress_indicator));
-            mDownloadsBar.setTrackColor(ColorUtils.setAlphaComponent(iconColor, TRACK_ALPHA));
+        if (mDownloadsCount != null) {
+            mDownloadsCount.setBackgroundTintList(ColorStateList.valueOf(surfaceColor));
+            mDownloadsCount.setTextColor(mAccentColor);
         }
+        refreshDownloadsIcon();
+        refreshDownloadsDescription();
 
         View moreBtn = findViewById(R.id.more_button);
         if (moreBtn instanceof AppCompatImageButton) {
@@ -284,31 +297,35 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
     /**
      * The Downloads button's progress for the mode on screen. {@code animate}
      * false for a value that is not news (a screen just bound, a switch
-     * between regular and private tabs): the icon jumps to it.
+     * between regular and private tabs): the ring jumps to it.
      */
     public void setDownloadProgress(@Nullable DownloadProgress progress, boolean animate) {
         mDownloadProgress = progress != null ? progress : DownloadProgress.NONE;
         refreshDownloadsIcon();
-        if (mDownloadsBar != null) {
+        if (mDownloadsRing != null) {
             if (!mDownloadProgress.isActive()) {
-                mDownloadsBar.setVisibility(View.GONE);
-                // The next group starts from an empty bar, not this one's end.
-                mDownloadsBar.setProgressCompat(0, false);
+                mDownloadsRing.setVisibility(View.GONE);
+                // The next group starts from an empty ring, not this one's end.
+                mDownloadsRing.setProgressCompat(0, false);
             } else {
                 if (mDownloadProgress.state == DownloadProgress.INDETERMINATE) {
-                    mDownloadsBar.setIndeterminate(true);
+                    mDownloadsRing.setIndeterminate(true);
                 } else {
-                    // From the moving bar, Material switches at the end of
+                    // From the turning arc, Material switches at the end of
                     // its current cycle.
-                    mDownloadsBar.setProgressCompat(mDownloadProgress.percent, animate);
+                    mDownloadsRing.setProgressCompat(mDownloadProgress.percent, animate);
                 }
-                mDownloadsBar.setVisibility(View.VISIBLE);
+                mDownloadsRing.setVisibility(View.VISIBLE);
             }
         }
+        refreshDownloadsCount();
         refreshDownloadsDescription();
     }
 
-    /** The arrow over the bar while anything downloads; the mode's own icon otherwise. */
+    /**
+     * The arrow inside the ring while anything downloads; the mode's own
+     * icon otherwise, in the ring's colour for a group that just finished.
+     */
     private void refreshDownloadsIcon() {
         if (mDownloadsButton == null) {
             return;
@@ -325,13 +342,39 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
             mDownloadsIconRes = res;
             mDownloadsButton.setImageResource(res);
         }
+        int tint = mDownloadProgress.isFinished() ? mAccentColor : mIconColor;
+        if (tint != 0 && tint != mDownloadsTint) {
+            mDownloadsTint = tint;
+            ImageViewCompat.setImageTintList(mDownloadsButton, ColorStateList.valueOf(tint));
+        }
+    }
+
+    /** From two downloads, how many, on the disc at the ring's top-end corner (Chrome's "9+" cap). */
+    private void refreshDownloadsCount() {
+        if (mDownloadsCount == null) {
+            return;
+        }
+        int count = mDownloadProgress.isActive() ? mDownloadProgress.count : 0;
+        if (count < 2) {
+            mDownloadsCount.setVisibility(View.GONE);
+            return;
+        }
+        String text = count > 9 ? "9+" : String.valueOf(count);
+        if (!text.contentEquals(mDownloadsCount.getText())) {
+            mDownloadsCount.setText(text);
+        }
+        float offset = COUNT_OFFSET_DP * getResources().getDisplayMetrics().density;
+        boolean rtl = getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
+        mDownloadsCount.setTranslationX(rtl ? -offset : offset);
+        mDownloadsCount.setTranslationY(-offset);
+        mDownloadsCount.setVisibility(View.VISIBLE);
     }
 
     /**
-     * The bar is hidden from screen readers: the button says what it shows,
-     * in words. In steps of 10%: a screen reader re-reads a focused button
-     * whenever its description changes, and every percent would be a
-     * sentence a second.
+     * The ring and the count are hidden from screen readers: the button says
+     * what they show, in words. Percentages in steps of 10%: a screen reader
+     * re-reads a focused button whenever its description changes, and every
+     * percent would be a sentence a second.
      */
     private void refreshDownloadsDescription() {
         if (mDownloadsButton == null) {
@@ -339,12 +382,23 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         }
         Context context = getContext();
         String label = context.getString(mIncognito ? R.string.navigation_vault : R.string.navigation_downloads);
+        int count = mDownloadProgress.count;
+        String several = count >= 2
+                ? context.getResources().getQuantityString(R.plurals.safe_folder_downloading, count, count)
+                : null;
         String spoken;
         if (mDownloadProgress.state == DownloadProgress.DETERMINATE) {
             int step = mDownloadProgress.percent / 10 * 10;
-            spoken = context.getString(R.string.bottom_bar_downloading_percent, label, step);
+            spoken = several != null
+                    ? context.getString(R.string.bottom_bar_downloading_count_percent, label, several, step)
+                    : context.getString(R.string.bottom_bar_downloading_percent, label, step);
         } else if (mDownloadProgress.state == DownloadProgress.INDETERMINATE) {
-            spoken = context.getString(R.string.bottom_bar_downloading, label);
+            spoken = several != null
+                    ? context.getString(R.string.bottom_bar_downloads_status, label, several)
+                    : context.getString(R.string.bottom_bar_downloading, label);
+        } else if (mDownloadProgress.isFinished()) {
+            spoken = context.getString(R.string.bottom_bar_downloads_status, label,
+                    context.getString(R.string.download_finished));
         } else {
             spoken = label;
         }

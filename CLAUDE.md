@@ -4336,7 +4336,7 @@ before changing a flow. The rules, each easy to undo:
     dot and read as a fourth dot of the glyph. Verify with
     `sh scripts/badge-harness/run.sh`, every density from 120 to 640 dpi
     against AOSP's and Material 1.14's rounding, five mutants. It is the
-    bar's ONLY dot: the Downloads button shows a progress bar, see "The
+    bar's ONLY dot: the Downloads button shows a ring, see "The
     bottom bar's Downloads button") and on the ⋮ menus' Add-ons row
     (`AddonUpdateDots`, `popup_addons_dot`; the browser's and the home's),
     each also said in words to a screen reader; the ⋮ Add-ons sheet's row
@@ -6649,81 +6649,116 @@ nothing to take down — Firedown stays not-a-host.
   that delivers them puts bytes on a public URL and brings the whole abuse desk
   with it. Accept the loss explicitly rather than reopening it.
 
-### The bottom bar's Downloads button: an arrow and Material's progress bar
+### The bottom bar's Downloads button: Chrome's ring
 
-While anything downloads, the Downloads button shows a plain arrow with
-Material's own `LinearProgressIndicator` under it; otherwise its usual icon
-(`download_24`, the Safe Folder lock in private tabs). Canvas "Add-on update
-review", boards 14-21. It replaced a coral dot that meant "something is
-downloading" on Downloads and "an update needs you" on ⋮: the frequent meaning
-taught people to ignore the rare one, so a dot now lives on ⋮ only.
+While anything downloads, the Downloads button is Chrome's download button
+(Chrome for Android draws it on large screens; Chromium's own numbers): the
+arrow alone, centred, inside a 24dp ring that fills clockwise from 12
+o'clock; from two downloads, how many, on a disc at the ring's top-end
+corner; when a group finishes, the usual icon in the ring's colour for a
+minute or until Downloads is opened. Otherwise the usual icon (`download_24`,
+the Safe Folder lock in private tabs). Canvas "Downloads indicator", board 4
+("Chrome's ring"), picked 2026-11 over keeping the tray and filling it (the
+two picks Claude and Fable drew from scratch). It replaced, in turn, a coral
+dot (one dot meant "downloading" here and "an update needs you" on ⋮, and the
+frequent meaning taught people to ignore the rare one, so a dot lives on ⋮
+only), then a hand-drawn line, then Material's linear bar under the arrow.
 
-**Stock parts only, on purpose.** The first build drew it all by hand
+**Stock parts only, on purpose.** The first line was drawn by hand
 (`DownloadProgressDrawable`, ~480 lines: the tray's base turning into the
 line, the fill, a sliding piece for live downloads and a pause at 100%, each
 its own `ValueAnimator`). On a device the live download's piece stood still
-in the middle of the line with animations on; the drawable could only draw
-it there with its sweep off, and neither Claude's nor Fable's reading of the
-visibility and animator-scale paths found the sequence. The maintainer asked
-for "elegant, simple" instead (board 21) and the drawable, its geometry
-class and its harness were deleted. Don't bring hand-drawn progress back to
-this button; if the bar ever stands still again, that is Material's (or the
+in the middle of the line with animations on, and neither Claude's nor
+Fable's reading of the visibility and animator-scale paths found the
+sequence; it was deleted. The ring is Material's `CircularProgressIndicator`
+and the count a plain `TextView`. Don't bring hand-drawn progress back to
+this button; if the ring ever stands still, that is Material's (or the
 phone's: Material, like every Android animator, stops when the window
-manager's animator scale is 0, e.g. Samsung's "Remove animations"), and the
-first check is `adb shell dumpsys window | grep -i animator`. The rules:
+manager's animator scale is 0, e.g. Samsung's "Remove animations", or a test
+script that left it there), and the first check is
+`adb shell dumpsys window | grep -i animator`. The rules:
 
 - **The layout** (`bottom_bar.xml`): the button sits in a `FrameLayout`
   (`downloads_cell`, which takes no clicks: the loop in
-  `BottomNavigationBar` skips it and the button gets its own listeners), with
-  the indicator over it: 18dp wide, 3dp thick, round ends (the style's own
-  `50%`, see the next rule), centred on the icon and moved 9.5dp down to
-  where the tray's base is. Material's 2024 gap between fill and track and
-  its stop dot are set to 0: at this size they split the bar into separate
-  pills. Disjoint indeterminate animation,
-  start-to-end (mirrors in RTL), hidden from screen readers (the button says
-  it, below).
-- **The icon swaps** (`refreshDownloadsIcon`): `download_arrow_24` (the
-  download glyph's own arrow path, same viewport, so the arrow doesn't move)
-  while active; `download_24` or `ic_lock_24` at rest. No transition.
-- **Three values** (`data/DownloadProgress`): idle, a percentage, or
-  INDETERMINATE (no percentage to show). Idle hides the bar and resets it to
-  0; a percentage is `setProgressCompat(p, animate)` (from the moving bar,
-  Material switches at the end of its current cycle); indeterminate is
-  `setIndeterminate(true)` (allowed while visible in Material 1.14).
+  `BottomNavigationBar` skips it and the button gets its own listeners); the
+  ring (`downloads_progress`) and the count (`downloads_count`) are centred
+  over it, so icon, ring and disc share one centre, and neither takes
+  touches. Ring: `indicatorSize` 24dp (the icon's own box), inset 0,
+  `trackThickness` 2.5dp, round ends (`trackCornerRadius="50%"`, never a
+  dimension), Material's 2024 gap between arc and track set to 0 (Chrome's
+  ring is continuous), clockwise. Track: the icon colour at 30% (Chrome's);
+  arc: `progress_indicator`, `incognito_primary` in private tabs. Hidden from
+  screen readers (the button says it, below).
+- **The arrow** (`download_arrow_24`): `download_24`'s arrow path at full
+  size, moved 2dp down to the box's centre. Same 2dp shaft as the glyph, so
+  ring and arrow read as one weight. (The board drew a smaller arrow; Chrome
+  draws a full-size standalone arrow inside its ring, and so does this.)
+- **The count** (`refreshDownloadsCount`): from two downloads still running
+  or queued, a 14dp disc filled with the BAR's colour (it reads as a hole cut
+  in the ring), the number in the ring's colour at 9dp bold, "9+" past nine
+  (Chrome's), its centre 7.6dp up and to the end of the ring's (45 degrees,
+  on the ring; mirrored in RTL). dp, not sp: the disc is fixed and the button
+  says the count in words. It sits next to ⋮'s dot, which still means "needs
+  you"; the count is a number, never a bare dot.
+- **Finished** (`DownloadProgress.FINISHED`): a group that ends with at
+  least one download saved turns the usual icon the ring's colour. Nothing
+  says "failed" on the button (Chrome's rule; the notification and the row
+  do). The engine reports FINISHED once (`DownloadProgressGroup.update` on
+  empty lists) and idle on every later look at its empty lists, so
+  `TaskRepository` keeps it (`DownloadProgress.next`: idle never replaces
+  it, a new download does) and ends it after `FINISHED_SHOWN_MS` (60 s, a
+  main-thread timer) or when Downloads / the Safe Folder is on screen
+  (`markDownloadsSeen`, from `BaseDownloadFragment.onResume`, and from its
+  observer when a group finishes while the list is showing). A group whose
+  every download failed or was deleted ends idle.
+- **Four values** (`data/DownloadProgress`): idle, a percentage, INDETERMINATE
+  (no percentage to show), FINISHED; the two running ones carry `count`.
+  Idle or finished hides the ring and resets it to 0; a percentage is
+  `setProgressCompat(p, animate)` (from the turning arc, Material switches at
+  the end of its current cycle); indeterminate is `setIndeterminate(true)`,
+  Material's own turning arc (Chrome turns a fixed quarter arc every 2.5 s;
+  the stock one is kept, see the stock-parts rule).
 - **Several downloads are one group per browsing mode**
   (`manager/DownloadProgressGroup`, fed by `DownloadEngine.publishProgress`):
   each download an equal share (streams report percent of running time, not
   bytes), averaged; a finished one stays at 100% until nothing runs, so the
-  bar never steps back when a short one finishes; a new one joins and the bar
-  drops a step (Chrome and Firefox do the same); a queued one counts 0%; one
-  with no known total is left out; a failed or deleted one leaves the group.
-  **No percentage to show = the moving bar**: every running one has no known
-  total (live), OR nothing has moved yet (all at 0%, none finished). The
-  second is from the device report: a YouTube download sits at 0% while it
-  mints its token and opens the stream, and a 2dp stub there read as stuck.
-  Known trade-off (Fable's objection, not taken): after many short downloads
-  a long one sits near the top of the bar, because finished ones count as
-  100%; averaging running ones only (Chrome) would step back instead.
+  ring never steps back when a short one finishes; a new one joins and the
+  ring drops a step (Chrome and Firefox do the same); a queued one counts 0%;
+  one with no known total is left out; a failed or deleted one leaves the
+  group. **No percentage to show = the turning arc**: every running one has
+  no known total (live), OR nothing has moved yet (all at 0%, none
+  finished). The second is from a device report: a YouTube download sits at
+  0% while it mints its token and opens the stream, and an empty ring there
+  reads as stuck. Known trade-off (Fable's objection, not taken): after many
+  short downloads a long one sits near the end of the ring, because finished
+  ones count as 100%; averaging running ones only (Chrome) would step back
+  instead.
 - **Plumbing**: each `DownloadTask` keeps its share (`getBarProgress`,
   volatile, set by `onProgress` / `onLiveStream` / `onProcessing` = 100) and
   pokes `DownloadEngine.onTaskProgress`, which coalesces into one
   `MSG_PROGRESS` on the engine thread; list changes publish too
   (`publishTaskCounts`). `TaskRepository.updateProgress` posts a mode's value
-  only when it changed (`getRegularProgress` / `getSafeProgress`).
+  only when it changed (`getRegularProgress` / `getSafeProgress`), under a
+  lock it shares with the main-thread end of a finished mark.
   `BrowserFragment` shows the mode on screen (re-read without animation on a
   mode switch), `HomeFragment` the regular one, `HomeIncognitoFragment` the
   Safe Folder one.
 - **Spoken**: the button says "Downloads, downloading, 40%" / "Downloads,
-  downloading" (`bottom_bar_downloading_percent` / `bottom_bar_downloading`,
-  the Safe Folder's name in private tabs). In steps of 10%, set only when the
-  text changes: a screen reader re-reads a focused button whenever its
-  description changes.
+  downloading" (`bottom_bar_downloading_percent` / `bottom_bar_downloading`),
+  from two "Downloads, 3 downloading, 40%" / "Downloads, 3 downloading"
+  (`bottom_bar_downloading_count_percent` / `bottom_bar_downloads_status`
+  with the `safe_folder_downloading` plural), and "Downloads, Download
+  finished" while finished; the Safe Folder's name in private tabs. In steps
+  of 10%, set only when the text changes: a screen reader re-reads a focused
+  button whenever its description changes.
 - **Verify** with `sh scripts/engine-harness/run.sh` section 16 (equal
-  shares, nothing moved yet → indeterminate, a finished one counting as moved
-  and held at 100%, live → indeterminate beside a finished one, vault vs
-  regular; the mutant without the nothing-moved rule fails 16a and 16h). The
-  layout and the bar were not built or run at write time; on-device
-  unverified.
+  shares and the count, nothing moved yet → indeterminate, a finished one
+  counting as moved and held at 100%, live → indeterminate beside a finished
+  one, the group ending FINISHED and staying so through the engine's later
+  idle reports, a deleted-only group ending idle, vault vs regular; mutants:
+  no finished state fails 16f and 16h, a count fixed at 1 fails 16c). The
+  layout, the ring and the count were not built or run at write time;
+  on-device unverified.
 
 ### Home — the address bar and the mark (home v6, frame N2): the field IS the browser's bar, nothing moves
 

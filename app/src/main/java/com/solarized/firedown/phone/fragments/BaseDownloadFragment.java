@@ -160,6 +160,15 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         observeBackupCompletions();
+        // The bottom bar's Downloads button stays coral for a minute after
+        // a group finishes, or until this list has been seen: a group that
+        // finishes while the list is on screen ends it at once.
+        (isSafeFolder() ? mTaskViewModel.getSafeProgress() : mTaskViewModel.getRegularProgress())
+                .observe(getViewLifecycleOwner(), progress -> {
+                    if (progress != null && progress.isFinished() && isResumed()) {
+                        mTaskViewModel.markDownloadsSeen(isSafeFolder());
+                    }
+                });
     }
 
     @Override
@@ -167,6 +176,12 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         super.onResume();
         mPaused = false;
         refreshCloudBadges();
+        mTaskViewModel.markDownloadsSeen(isSafeFolder());
+    }
+
+    /** The Safe Folder's list ({@code VaultFragment}) rather than Downloads. */
+    protected boolean isSafeFolder() {
+        return false;
     }
 
     /**

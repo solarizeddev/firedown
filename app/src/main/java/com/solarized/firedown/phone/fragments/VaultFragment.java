@@ -70,6 +70,11 @@ public class VaultFragment extends BaseDownloadFragment implements OnItemClickLi
     }
 
     @Override
+    protected boolean isSafeFolder() {
+        return true;
+    }
+
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_vault, container, false);
         initViews(v);

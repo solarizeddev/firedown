@@ -1,5 +1,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="@dimen/app_bar_size"
@@ -40,10 +41,12 @@
         android:tint="?attr/colorOnSurface"
         android:src="@drawable/ic_bookmark_border_24" />
 
-    <!-- The Downloads button and, under its icon while anything downloads,
-         Material's progress bar (BottomNavigationBar.setDownloadProgress).
-         The bar is centred on the icon and moved down to where the icon's
-         tray is: 18dp wide, 3dp thick, its centre 9.5dp below the icon's. -->
+    <!-- The Downloads button. While anything downloads it is Chrome's
+         download button (BottomNavigationBar.setDownloadProgress): the arrow
+         alone, centred, inside a 24dp ring, the icon's own box; from two
+         downloads, how many on a disc at the ring's top-end corner. The ring
+         and the disc are centred on the icon like the button's drawable, so
+         the three share one centre. -->
     <FrameLayout
         android:id="@+id/downloads_cell"
         android:layout_width="0dp"
@@ -60,20 +63,37 @@
             android:tint="?attr/colorOnSurface"
             android:src="@drawable/download_24" />
 
-        <com.google.android.material.progressindicator.LinearProgressIndicator
+        <com.google.android.material.progressindicator.CircularProgressIndicator
             android:id="@+id/downloads_progress"
-            style="@style/Widget.Material3.LinearProgressIndicator"
-            android:layout_width="18dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:translationY="9.5dp"
             android:importantForAccessibility="no"
             android:visibility="gone"
-            app:indeterminateAnimationType="disjoint"
-            app:indicatorDirectionLinear="startToEnd"
+            app:indicatorDirectionCircular="clockwise"
+            app:indicatorInset="0dp"
+            app:indicatorSize="24dp"
             app:indicatorTrackGapSize="0dp"
-            app:trackStopIndicatorSize="0dp"
-            app:trackThickness="3dp" />
+            app:trackCornerRadius="50%"
+            app:trackThickness="2.5dp" />
+
+        <!-- A disc in the bar's colour, so it reads as a hole cut in the
+             ring; the number in the ring's colour. Sized in dp, not sp: the
+             disc is fixed and the button says the count in words. -->
+        <TextView
+            android:id="@+id/downloads_count"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bottom_bar_count_disc"
+            android:gravity="center"
+            android:importantForAccessibility="no"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textSize="9dp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            tools:ignore="SpUsage" />
     </FrameLayout>
 
     <androidx.appcompat.widget.AppCompatImageButton

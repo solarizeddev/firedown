@@ -1488,4 +1488,8 @@
     <!-- The bottom bar's Downloads button, spoken: %1$s is the button (Downloads, or Safe Folder in private tabs), %2$d the whole group's percentage. The progress itself is a drawn line. -->
     <string name="bottom_bar_downloading_percent">%1$s, downloading, %2$d%%</string>
     <string name="bottom_bar_downloading">%1$s, downloading</string>
+    <!-- Spoken by a screen reader for the Downloads button: "Downloads, 3 downloading, 40%". %2$s is safe_folder_downloading ("3 downloading"). -->
+    <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
+    <!-- Spoken by a screen reader for the Downloads button: "Downloads, 3 downloading", "Downloads, Download finished". -->
+    <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
 </resources>

@@ -21,6 +21,12 @@ import com.solarized.firedown.data.DownloadProgress;
  *       never as a bar stuck at 0%. A download with no known total is left
  *       out of the average.</li>
  *   <li>A failed or deleted download leaves the group.</li>
+ *   <li>{@link DownloadProgress#count} is how many still run or wait: the
+ *       number on the ring from two.</li>
+ *   <li>A group that ends with at least one download saved reports
+ *       {@link DownloadProgress#FINISHED} once; the repository holds it for a
+ *       minute. One that ends with every download failed or deleted reports
+ *       idle.</li>
  * </ul>
  *
  * Not thread-safe: the engine calls it on its own thread only.
@@ -45,8 +51,9 @@ final class DownloadProgressGroup {
      */
     DownloadProgress update(int[] running) {
         if (running.length == 0) {
+            boolean saved = mDone > 0;
             mDone = 0;
-            return DownloadProgress.NONE;
+            return saved ? DownloadProgress.finished() : DownloadProgress.NONE;
         }
         long sum = 100L * mDone;
         int known = mDone;
@@ -60,8 +67,8 @@ final class DownloadProgressGroup {
             known++;
         }
         if (!anyRunningKnown || sum == 0) {
-            return DownloadProgress.indeterminate();
+            return DownloadProgress.indeterminate(running.length);
         }
-        return DownloadProgress.determinate((int) (sum / known));
+        return DownloadProgress.determinate((int) (sum / known), running.length);
     }
 }

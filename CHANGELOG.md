@@ -2,6 +2,7 @@
 
 - Fullscreen videos keep playing in a picture-in-picture window when you leave the app
 - The update prompt opens only when it interrupts nothing, and waits in the ⋮ menu
+- The Downloads button shows progress in a ring, and lights up when downloads finish
 - Add-ons: the list shows each add-on's rating and users, and its page lists permissions one by one
 - Add-ons: an update asking for new permissions shows a dot on the ⋮ menu and a Review button until you review it
 - Add-ons: updates that ask for nothing new install without a review
