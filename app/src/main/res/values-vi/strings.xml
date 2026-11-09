@@ -1225,4 +1225,6 @@
     <string name="webdav_user">Tên người dùng</string>
     <string name="bottom_bar_downloading_percent">%1$s, đang tải xuống, %2$d%%</string>
     <string name="bottom_bar_downloading">%1$s, đang tải xuống</string>
+    <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
+    <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
 </resources>

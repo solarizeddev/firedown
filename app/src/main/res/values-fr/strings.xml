@@ -1265,4 +1265,6 @@
     <string name="stream_audio_only_title">Audio uniquement</string>
     <string name="bottom_bar_downloading_percent">%1$s, téléchargement en cours, %2$d %%</string>
     <string name="bottom_bar_downloading">%1$s, téléchargement en cours</string>
+    <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d %%</string>
+    <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
 </resources>

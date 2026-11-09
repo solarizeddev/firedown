@@ -16,6 +16,9 @@ public class TaskRepository {
     public volatile DownloadProgress regularProgress = DownloadProgress.NONE, safeProgress = DownloadProgress.NONE;
     public final List<DownloadProgress> regularHistory = Collections.synchronizedList(new ArrayList<>());
     public void updateProgress(DownloadProgress regular, DownloadProgress safe) {
+        // The real repository's rule: idle does not replace a finished mark.
+        regular = DownloadProgress.next(regularProgress, regular);
+        safe = DownloadProgress.next(safeProgress, safe);
         if (!regular.equals(regularProgress)) { regularProgress = regular; regularHistory.add(regular); }
         if (!safe.equals(safeProgress)) safeProgress = safe;
     }

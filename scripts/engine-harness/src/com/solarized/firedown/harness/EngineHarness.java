@@ -514,54 +514,61 @@ public class EngineHarness {
         }
         host.await("idle");
 
-        // ── 16. the bottom bar's progress line: one group per mode ─
+        // ── 16. the bottom bar's ring: one group per mode ─
         freshEngine();
         DownloadTask p1 = startAndWait("https://cdn.example/p/1.mp4", "p1.mp4", false);
-        check("16a a download that has not moved yet shows no percentage (the moving bar), not 0%",
-                waitUntil(() -> DownloadProgress.indeterminate().equals(taskRepo.regularProgress)),
+        check("16a a download that has not moved yet shows no percentage (the turning arc), not 0%",
+                waitUntil(() -> DownloadProgress.indeterminate(1).equals(taskRepo.regularProgress)),
                 String.valueOf(taskRepo.regularProgress));
         p1.reportBarProgress(40);
-        check("16b its percentage reaches the line",
-                waitUntil(() -> DownloadProgress.determinate(40).equals(taskRepo.regularProgress)),
+        check("16b its percentage reaches the ring",
+                waitUntil(() -> DownloadProgress.determinate(40, 1).equals(taskRepo.regularProgress)),
                 String.valueOf(taskRepo.regularProgress));
         DownloadTask p2 = POOL > 1 ? startAndWait("https://cdn.example/p/2.mp4", "p2.mp4", false) : null;
         if (p2 != null) {
-            check("16c a second download joins the group as an equal share: (40 + 0) / 2",
-                    waitUntil(() -> DownloadProgress.determinate(20).equals(taskRepo.regularProgress)),
+            check("16c a second download joins the group as an equal share, (40 + 0) / 2, and the count is 2",
+                    waitUntil(() -> DownloadProgress.determinate(20, 2).equals(taskRepo.regularProgress)),
                     String.valueOf(taskRepo.regularProgress));
             p1.getRunnable().finishNaturally();
             host.await("finished:");
-            check("16c2 a finished one counts as moved: (100 + 0) / 2, a percentage",
-                    waitUntil(() -> DownloadProgress.determinate(50).equals(taskRepo.regularProgress)),
+            check("16c2 a finished one counts as moved, (100 + 0) / 2, and no longer in the count",
+                    waitUntil(() -> DownloadProgress.determinate(50, 1).equals(taskRepo.regularProgress)),
                     String.valueOf(taskRepo.regularProgress));
             p2.reportBarProgress(50);
             check("16d a finished one stays in the group at 100%: (100 + 50) / 2",
-                    waitUntil(() -> DownloadProgress.determinate(75).equals(taskRepo.regularProgress)),
+                    waitUntil(() -> DownloadProgress.determinate(75, 1).equals(taskRepo.regularProgress)),
                     String.valueOf(taskRepo.regularProgress));
             p2.reportBarProgress(-1);
             check("16e no running download knows its total → indeterminate, not the finished one's 100%",
-                    waitUntil(() -> DownloadProgress.indeterminate().equals(taskRepo.regularProgress)),
+                    waitUntil(() -> DownloadProgress.indeterminate(1).equals(taskRepo.regularProgress)),
                     String.valueOf(taskRepo.regularProgress));
             p2.getRunnable().finishNaturally();
         } else {
             p1.getRunnable().finishNaturally();
         }
-        check("16f the group ends with its last download finished → idle",
-                waitUntil(() -> DownloadProgress.NONE.equals(taskRepo.regularProgress)),
+        check("16f the group ends with its last download finished → finished",
+                waitUntil(() -> taskRepo.regularProgress.isFinished()),
                 String.valueOf(taskRepo.regularProgress));
-        check("16g the safe line never moved for regular downloads",
-                DownloadProgress.NONE.equals(taskRepo.safeProgress), String.valueOf(taskRepo.safeProgress));
         host.await("idle");
+        check("16f2 idle does not replace a finished mark; a new download does",
+                DownloadProgress.next(DownloadProgress.finished(), DownloadProgress.NONE).isFinished()
+                        && DownloadProgress.next(DownloadProgress.finished(), DownloadProgress.indeterminate(1)).isActive()
+                        && !DownloadProgress.next(DownloadProgress.determinate(40, 1), DownloadProgress.NONE).isActive(),
+                "");
+        check("16g the safe ring never moved for regular downloads",
+                DownloadProgress.NONE.equals(taskRepo.safeProgress), String.valueOf(taskRepo.safeProgress));
 
         DownloadTask p3 = startAndWait("https://cdn.example/p/3.mp4", "p3.mp4", true);
-        check("16h a vault download moves the safe line only",
-                waitUntil(() -> DownloadProgress.indeterminate().equals(taskRepo.safeProgress))
-                        && !taskRepo.regularProgress.isActive(),
+        // Starting it publishes the regular group again (empty, so idle): the
+        // finished mark must survive that report.
+        check("16h a vault download moves the safe ring only, and the regular finished mark stays",
+                waitUntil(() -> DownloadProgress.indeterminate(1).equals(taskRepo.safeProgress))
+                        && taskRepo.regularProgress.isFinished(),
                 taskRepo.safeProgress + " / " + taskRepo.regularProgress);
         p3.reportBarProgress(30);
-        waitUntil(() -> DownloadProgress.determinate(30).equals(taskRepo.safeProgress));
+        waitUntil(() -> DownloadProgress.determinate(30, 1).equals(taskRepo.safeProgress));
         engine.dispatch(withEntities(IntentActions.DOWNLOAD_DELETE, List.of(new DownloadEntity(p3.entity()))), 1);
-        check("16i a group whose last download is deleted ends idle",
+        check("16i a group whose last download is deleted ends idle, not finished",
                 waitUntil(() -> DownloadProgress.NONE.equals(taskRepo.safeProgress)),
                 String.valueOf(taskRepo.safeProgress));
         host.await("idle");

@@ -1,13 +1,17 @@
-<!-- download_24 without its tray: the bottom bar's Downloads icon while
-     something downloads, with Material's progress bar under it. Same
-     viewport and arrow path, so the arrow does not move on the swap. -->
+<!-- download_24's arrow without its tray, moved 2dp down so it sits at the
+     centre of the 24dp box: the bottom bar's Downloads icon while something
+     downloads, inside the progress ring (Chrome's download button). Same
+     path and weight as download_24's arrow, so the ring's 2.5dp stroke and
+     the arrow's 2dp shaft read as one glyph. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="960"
     android:viewportHeight="960"
     android:tint="?attr/colorOnSurfaceVariant">
-  <path
-      android:fillColor="@android:color/white"
-      android:pathData="M480,640L280,440L336,382L440,486L440,160L520,160L520,486L624,382L680,440L480,640Z"/>
+  <group android:translateY="80">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M480,640L280,440L336,382L440,486L440,160L520,160L520,486L624,382L680,440L480,640Z"/>
+  </group>
 </vector>

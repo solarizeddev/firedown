@@ -46,6 +46,11 @@ public class TaskViewModel extends ViewModel {
         return mTaskRepository.getSafeProgress();
     }
 
+    /** Downloads (or the Safe Folder) is on screen: ends the Downloads button's finished mark. */
+    public void markDownloadsSeen(boolean safe) {
+        mTaskRepository.markDownloadsSeen(safe);
+    }
+
     // --- Type-safe events (preferred) ---
 
     public LiveData<TaskEvent> getObservableEvent() {

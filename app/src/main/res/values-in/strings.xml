@@ -1224,4 +1224,6 @@
     <string name="webdav_user">Nama pengguna</string>
     <string name="bottom_bar_downloading_percent">%1$s, mengunduh, %2$d%%</string>
     <string name="bottom_bar_downloading">%1$s, mengunduh</string>
+    <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
+    <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
 </resources>
