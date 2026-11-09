@@ -5237,10 +5237,44 @@ is **~75 MB**, the APK 205 MB.
   - **Failures map to the Download Manager's**: a refusal (4xx), a
     Content-Length or body longer than status.json's size → the next
     mirror; a run that downloads nothing (no connection, a 5xx, 408, 429,
-    416, a wrong range) is a stall, and `MAX_STALLS` (6) in a row, with
-    WorkManager's 30 s doubling backoff, ends the attempt — any progress
-    resets the count, a run the system stopped is not one; no room → a
-    device failure.
+    a 416 for another length, a wrong range) is a stall, and `MAX_STALLS`
+    (6) in a row, with WorkManager's 30 s doubling backoff, ends the
+    attempt — any progress resets the count, a run the system stopped is
+    not one; no room → a device failure.
+  - **Progress is continued, not retried, and bounded by bytes**: a
+    connection that ends after some bytes returns CONTINUE, and the worker
+    queues the same unique work again (APPEND_OR_REPLACE, 30 s) and
+    succeeds. `Result.retry()` there grew WorkManager's backoff (its
+    attempt count never resets for a one-time request) toward five hours
+    over a download that was progressing. What bounds it instead: an
+    attempt that has written `BYTES_CAP_FACTOR` (3) times the file (status.
+    json's size, else the installed APK + a tenth) ends — a server that
+    ignores Range on a connection that keeps dropping starts over every run
+    and would otherwise loop forever. A resume that works writes the file
+    once.
+  - **A 416 naming the part's own length hands it over**: the APK step has
+    no size in the plan, so a run that wrote the last byte and died before
+    `completeDirect` left a complete part the next Range request is refused
+    for; it used to be deleted and fetched again from zero.
+  - **No byte after a stop, no second writer**: the stop flag is checked
+    again after each read (a read can block, and WorkManager may already
+    run this download again), a part file that grew under the run is left
+    to the other writer, a run that finds the DONE marker (restarted
+    after the one that finished, or a continuation behind it) fetches
+    nothing, and a run whose record left during the transfer deletes its
+    part and queues no continuation.
+  - **A Download Manager row the disabled Download Manager would not
+    remove is remembered** (`UPDATE_ORPHAN_DM_IDS`) and removed again where
+    the step files are deleted anyway (a new download, the backoff,
+    `clearPending`): enabled again, it would resume the row into the update
+    APK's path, over a file a direct download may have verified there
+    since. Never from a check's first lines: `remove` deletes the row's
+    destination, which is where a finished direct download waits for the
+    finalize worker (a review found that ordering threw it away). The belt: `markReady` keeps the digest it verified
+    (`UPDATE_READY_SHA`) and `UpdateInstaller` hashes the bytes as it
+    copies them into the session; a mismatch drops the ready APK and fails
+    before Android sees it. A record from an older build has no digest and
+    is installed as before.
   - **A check never starts it twice**: `inFlightLocked` re-enqueues the
     recorded direct download's work with KEEP (a no-op while it is queued,
     running or waiting out a retry; it resumes the part if the work was
@@ -5265,14 +5299,16 @@ is **~75 MB**, the APK 205 MB.
   release, a disabled DownloadManager, and the direct download — disabled,
   absent, no external dir, disabled mid-download, resume, a stopped run,
   Range ignored, a wrong range, refused, never connecting, a 5xx, too long,
-  stale runs, in flight, all failing; 134 checks, written after review found
+  stale runs, in flight, all failing, the 416 cases, the bytes cap, a stop
+  inside a read, a second writer, a late run, orphaned rows, and the REAL
+  worker over real OkHttp against a raw-socket HTTP server; 168 checks, written after review found
   the device-failure loop the other tests all passed on); **the Android
   compile check** (section 0: the installer, receiver, workers,
   notifications and scheduler compiled against Robolectric's android-all,
   API 35, with signature stubs of the androidx and app classes in
   `android-stub/`; `ANDROID_COMPILE=0` skips the ~190 MB jar); a fuzz of the real generator and
   applier (300 random edits, 3000 random corruptions, 500 random headers, an
-  APK-shaped file, the CLI); 51 planted bugs that must each fail
+  APK-shaped file, the CLI); 70 planted bugs that must each fail
   (`MUTANTS=0` skips); the REAL `releaseStatus` in a scratch Gradle
   project (offline, file:// history URLs: status.json blocks, history,
   SHA256SUMS, each patch re-applied, a mismatched history entry skipped, the
@@ -5288,6 +5324,19 @@ is **~75 MB**, the APK 205 MB.
   unverified anywhere: DownloadManager with the new file names, the worker
   hand-off, and `base.apk` equal to the published file on a real install
   (the hash comparison makes that last one safe either way).
+  **The direct download's device test is
+  `update/UpdateDirectDownloadDeviceTest`**: `UpdateDownloader.start` with a
+  context whose Download Manager is gone, the real worker run by the app's
+  WorkManager with its Hilt OkHttp client, the installed APK served from
+  127.0.0.1 and cut at 20 MB, the continuation resuming with Range 30 s
+  later, the finalize worker verifying it, then the installer refusing the
+  ready APK once its stored digest no longer matches. Its version code is
+  `Integer.MAX_VALUE - 1`, so the app's own update check (started with the
+  process) only re-posts a prompt instead of downloading the live release
+  over the test's file. The app's update
+  preferences and any update APK are set aside and put back. Compiled
+  against android-all in the harness's section 0; not yet run on a device
+  at write time.
 
 ## Releasing — `bumpVersion` and `releaseStatus` (app/release.gradle)
 

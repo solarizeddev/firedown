@@ -57,6 +57,16 @@ public class Keys {
     // downloaded nothing. Both belong to the recorded download and go with it.
     public static final String UPDATE_DIRECT_DONE = "com.solarized.firedown.UPDATE_DIRECT_DONE";
     public static final String UPDATE_DIRECT_STALLS = "com.solarized.firedown.UPDATE_DIRECT_STALLS";
+    // The bytes the recorded direct download has written over all its runs
+    // (a cap ends an attempt that keeps starting over).
+    public static final String UPDATE_DIRECT_BYTES = "com.solarized.firedown.UPDATE_DIRECT_BYTES";
+    // Download Manager rows whose remove() failed (the Download Manager app
+    // disabled): removed again on each check, since a re-enabled Download
+    // Manager would resume one into the update APK's path.
+    public static final String UPDATE_ORPHAN_DM_IDS = "com.solarized.firedown.UPDATE_ORPHAN_DM_IDS";
+    // The SHA-256 the ready APK was verified against; the installer hashes
+    // the file again while it copies it.
+    public static final String UPDATE_READY_SHA = "com.solarized.firedown.UPDATE_READY_SHA";
     // The version whose patch / .xz failed to rebuild the expected APK, so the
     // next round goes straight to the next step for that version.
     public static final String UPDATE_PATCH_FAILED_VERSION = "com.solarized.firedown.UPDATE_PATCH_FAILED_VERSION";

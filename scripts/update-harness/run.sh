@@ -97,6 +97,11 @@ CP="$XZJAR"
 CP="$CP:$(fetch org.json json 20260814)" || exit 1
 CP="$CP:$(fetch junit junit 4.13.2)" || exit 1
 CP="$CP:$(fetch org.hamcrest hamcrest-core 1.3)" || exit 1
+# The app's OkHttp (app/build.gradle) and what it needs, for the direct
+# download's real worker in the flow harness.
+CP="$CP:$(fetch com.squareup.okhttp3 okhttp-jvm 5.5.1)" || exit 1
+CP="$CP:$(fetch com.squareup.okio okio-jvm 3.18.1)" || exit 1
+CP="$CP:$(fetch org.jetbrains.kotlin kotlin-stdlib 2.1.21)" || exit 1
 
 # The real sources, copied: main, the release tool, the JUnit tests, plus
 # this harness's own checks and an androidx.annotation stub.
@@ -159,6 +164,21 @@ if [ "${ANDROID_COMPILE:-1}" != 0 ]; then
         bad "the update classes do not compile against the Android framework"
         grep -v JAVA_TOOL_OPTIONS "$AC/log" | head -30 | sed 's/^/     | /'
     fi
+    # The device tests of the update path, against the same classes plus
+    # JUnit and signature stubs of androidx.test (android-test-stub).
+    AT="$AC/test"
+    mkdir -p "$AT/src/com/solarized/firedown/update" "$AT/out"
+    cp -r "$HERE/android-test-stub/." "$AT/src/"
+    for f in UpdateDirectDownloadDeviceTest; do
+        cp "$ROOT/app/src/androidTest/java/com/solarized/firedown/update/$f.java" "$AT/src/com/solarized/firedown/update/"
+    done
+    if javac -nowarn -proc:none -encoding UTF-8 -d "$AT/out" -cp "$AC/out:$AALL:$XZJAR:$CP" $(find "$AT/src" -name '*.java') \
+            > "$AT/log" 2>&1; then
+        ok "the update device tests compile against the Android framework"
+    else
+        bad "the update device tests do not compile against the Android framework"
+        grep -v JAVA_TOOL_OPTIONS "$AT/log" | head -30 | sed 's/^/     | /'
+    fi
 else
     echo "skip: ANDROID_COMPILE=0"
 fi
@@ -184,7 +204,8 @@ echo "== 1b. The download state machine (UpdateFlowHarness)"
 FLOW="$OUT/flow-src"
 mkdir -p "$FLOW/com/solarized/firedown/update"
 cp -r "$HERE/flow/stub/." "$HERE/flow/src/." "$FLOW/"
-for f in Keys UpdateManifest UpdatePlan UpdateDownloader UpdateFinalizeWorker UpdateInstalledApk UpdateDirectDownload; do
+for f in Keys UpdateManifest UpdatePlan UpdateDownloader UpdateFinalizeWorker UpdateInstalledApk UpdateDirectDownload \
+         UpdateDirectDownloadWorker; do
     cp "$ROOT/app/src/main/java/com/solarized/firedown/$f.java" "$FLOW/com/solarized/firedown/"
 done
 cp "$ROOT/app/src/main/java/com/solarized/firedown/update/UpdatePatch.java" \
@@ -229,7 +250,7 @@ if [ "${MUTANTS:-1}" != 0 ]; then
     fmutant 'a dead rebuild is downloaded again' $D 's/if \(pending\.plan\.current\(\)\.kind != UpdatePlan\.Kind\.APK\) \{\n(\s*)Log\.w\(TAG, "the "/if (false) {\n$1Log.w(TAG, "the "/'
     fmutant 'an unclaimed finished download is downloaded again' $D 's/UpdateFinalizeWorker\.enqueue\(context, previousId\);\n(\s*)return true;/return false;/'
     fmutant 'markReady removes the APK step'"'"'s row' $D 's/if \(pending\.plan\.current\(\)\.kind != UpdatePlan\.Kind\.APK\) \{\n(\s*)removeDownload\(context, downloadId\);/if (true) {\n$1removeDownload(context, downloadId);/'
-    fmutant 'clearPending leaves the download' $D 's/removeDownload\(context, prefs\(context\)\.getLong\(Keys\.UPDATE_DOWNLOAD_ID, -1\)\);\n(\s*)deleteArtifacts\(context\);\n(\s*)clearPendingLocked/deleteArtifacts(context);\n$2clearPendingLocked/'
+    fmutant 'clearPending leaves the download' $D 's/removeDownload\(context, prefs\(context\)\.getLong\(Keys\.UPDATE_DOWNLOAD_ID, -1\)\);\n(\s*)removeOrphansLocked\(context\);\n(\s*)deleteArtifacts\(context\);\n(\s*)clearPendingLocked/removeOrphansLocked(context);\n$2deleteArtifacts(context);\n$3clearPendingLocked/'
     fmutant 'no space check before a delta step' $D 's/return dir\.getUsableSpace\(\) >= step\.size/return true || dir.getUsableSpace() >= step.size/'
     fmutant 'an unreadable record is kept' $D 's/if \(pending == null\) \{\n(\s*)\/\/ An id with no readable record/if (false) {\n$1\/\/ An id with no readable record/'
     fmutant 'a new download keeps the old ready record' $D 's/clearReadyRecordLocked\(context\);\n\n(\s*)\/\/ A patch or \.xz needs room/\n$1\/\/ A patch or .xz needs room/'
@@ -247,10 +268,26 @@ if [ "${MUTANTS:-1}" != 0 ]; then
     fmutant 'room for a delta measured on external storage only' $D 's/File dir = Preferences\.getUpdateApkFile\(context\)\.getParentFile\(\);\n(\s*)if \(dir == null\) \{\n(\s*)return false;\n(\s*)\}\n(\s*)return dir\.getUsableSpace\(\) >= step\.size/File dir = context.getExternalFilesDir(null);\n$1if (dir == null) {\n$2return false;\n$3}\n$4return dir.getUsableSpace() >= step.size/'
     X=com/solarized/firedown/UpdateDirectDownload.java
     fmutant 'a resume overwrites what it kept' $X 's/new FileOutputStream\(part, have > 0\)/new FileOutputStream(part, false)/'
-    fmutant 'a 200 to a resume is appended' $X 's/have = 0L;\n(\s*)start = 0L;\n//'
+    fmutant 'a 200 to a resume is appended' $X 's/have = 0L;\n(\s*)total = answer\.total;/total = answer.total;/'
     fmutant 'a 206 for another range is appended' $X 's/if \(answer\.rangeStart != have\) \{/if (false) {/'
     fmutant 'a direct download never gives up' $X 's/MAX_STALLS = 6;/MAX_STALLS = 1000;/'
-    fmutant 'progress does not reset the stall count' $X 's/if \(progressed\) \{/if (false) {/'
+    fmutant 'progress does not reset the stall count' $X 's/if \(written > 0\) \{\n(\s*)UpdateDownloader\.resetDirectStalls/if (false) {\n$1UpdateDownloader.resetDirectStalls/'
+    fmutant 'an attempt that keeps starting over never ends' $X 's/if \(UpdateDownloader\.directBytes\(context, downloadId\) > cap\) \{/if (false) {/'
+    fmutant 'a complete part is fetched again on a 416' $X 's/\} else if \(answer\.code == 416 && have > 0 && answer\.total == have\) \{/} else if (false) {/'
+    fmutant 'the bytes read after a stop are written' $X 's/\n\s*\/\/ Checked again: a read can block for long, and the system\n\s*\/\/ may already be running this download.s next run\.\n\s*if \(stopped\.getAsBoolean\(\)\) \{\n\s*return interrupted\(context, downloadId, written, true\);\n\s*\}//'
+    fmutant 'another writer is not noticed' $X 's/if \(part\.length\(\) != have\) \{/if (false) {/'
+    fmutant 'progress pays the stall backoff' $X 's/return written > 0 \? Outcome\.CONTINUE/return written > 0 ? Outcome.RETRY/'
+    fmutant 'a run after the hand-over downloads again' $X 's/if \(UpdateDownloader\.isDownloadComplete\(context, downloadId\)\) \{/if (false) {/'
+    fmutant 'orphaned Download Manager rows are never removed' $D 's/removeDownload\(context, p\.getLong\(Keys\.UPDATE_DOWNLOAD_ID, -1\)\);\n(\s*)removeOrphansLocked\(context\);/removeDownload(context, p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1));/'
+    fmutant 'orphans removed before the in-flight check' $D 's/synchronized \(LOCK\) \{\n(\s*)if \(isBackingOff\(context, versionCode\)\) \{/synchronized (LOCK) {\n$1removeOrphansLocked(context);\n$1if (isBackingOff(context, versionCode)) {/'
+    fmutant 'clearPending leaves the orphans' $D 's/removeDownload\(context, prefs\(context\)\.getLong\(Keys\.UPDATE_DOWNLOAD_ID, -1\)\);\n(\s*)removeOrphansLocked\(context\);\n(\s*)deleteArtifacts\(context\);\n(\s*)clearPendingLocked/removeDownload(context, prefs(context).getLong(Keys.UPDATE_DOWNLOAD_ID, -1));\n$2deleteArtifacts(context);\n$3clearPendingLocked/'
+    fmutant 'markReady forgets the digest' $D 's/\.putString\(Keys\.UPDATE_READY_SHA, pending\.apkSha256\)//'
+    K=com/solarized/firedown/UpdateDirectDownloadWorker.java
+    fmutant 'a progressed run is not continued' $K 's/\n(\s*)continueLater\(getApplicationContext\(\), downloadId\);\n/\n/'
+    fmutant 'the worker accepts gzip' $K 's/\.addHeader\("Accept-Encoding", "identity"\)/.addHeader("X-No", "x")/'
+    fmutant 'a 416'"'"'s Content-Range is not read' $K 's/response\.code\(\) == 206 \|\| response\.code\(\) == 416/response.code() == 206/'
+    fmutant 'a run whose record left is continued' $X 's/if \(UpdateDownloader\.directPending\(context, downloadId\) == null\) \{\n(\s*)\/\/ The record left during the run/if (false) {\n$1\/\/ The record left during the run/'
+    fmutant 'the continuation asks no Range' $K 's/if \(from > 0\) \{/if (false) {/'
     fmutant 'a 5xx is a refusal' $X 's/ \|\| answer\.code >= 500\)/)/'
     fmutant 'a Content-Length past status.json is read anyway' $X 's/if \(expected > 0 && total > 0 && total != expected\) \{/if (false) {/'
     W=com/solarized/firedown/UpdateFinalizeWorker.java

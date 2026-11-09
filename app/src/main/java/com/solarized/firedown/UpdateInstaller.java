@@ -14,6 +14,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.preference.PreferenceManager;
 
+import com.solarized.firedown.update.UpdatePatch;
 import com.solarized.firedown.utils.BuildUtils;
 
 import java.io.File;
@@ -21,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.MessageDigest;
 
 public final class UpdateInstaller {
 
@@ -119,6 +121,13 @@ public final class UpdateInstaller {
             // leaked the stream as well as the session.
             long total = updateFile.length();
             long lastNotified = 0;
+            // The bytes Android gets are hashed on their way: the file must
+            // still be the one the finalize worker verified. Something else
+            // can write that path after the check (a Download Manager row
+            // left behind while it was disabled, resumed once it is enabled
+            // again).
+            String verifiedSha = UpdateDownloader.readySha256(context);
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
             try (InputStream in = new FileInputStream(updateFile);
                  OutputStream out = session.openWrite("package", 0, total)) {
                 byte[] buffer = new byte[65536];
@@ -126,6 +135,7 @@ public final class UpdateInstaller {
                 int bytesRead;
                 while ((bytesRead = in.read(buffer)) != -1) {
                     out.write(buffer, 0, bytesRead);
+                    digest.update(buffer, 0, bytesRead);
                     copied += bytesRead;
                     UpdateInstallProgress.Snapshot moved = sProgress.copied(generation, copied, total);
                     if (moved != null) {
@@ -142,6 +152,11 @@ public final class UpdateInstaller {
                     }
                 }
                 session.fsync(out);
+            }
+            if (!verifiedSha.isEmpty() && !verifiedSha.equalsIgnoreCase(UpdatePatch.toHex(digest.digest()))) {
+                // Dropped, so the next check downloads it again.
+                UpdateDownloader.clearReady(context);
+                throw new IOException("the update APK changed since it was verified");
             }
 
             PendingIntent pendingIntent = PendingIntent.getBroadcast(

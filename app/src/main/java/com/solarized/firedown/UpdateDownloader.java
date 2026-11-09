@@ -319,6 +319,7 @@ public final class UpdateDownloader {
         // it any more; a SUCCESSFUL download is only removed once its file has
         // been used or refused (DownloadManager.remove deletes the file).
         removeDownload(context, prefs(context).getLong(Keys.UPDATE_DOWNLOAD_ID, -1));
+        removeOrphansLocked(context);
         deleteArtifacts(context);
         scheduleBackoff(context, versionCode);
         clearPendingLocked(context);
@@ -483,6 +484,7 @@ public final class UpdateDownloader {
         DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
         SharedPreferences p = prefs(context);
         removeDownload(context, p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1));
+        removeOrphansLocked(context);
 
         // DownloadManager refuses to overwrite an existing destination, so clear
         // any stale/partial file first — and the APK, which a patch or an .xz
@@ -535,6 +537,7 @@ public final class UpdateDownloader {
                 .remove(Keys.UPDATE_DOWNLOAD_URL_INDEX)
                 .remove(Keys.UPDATE_DIRECT_DONE)
                 .remove(Keys.UPDATE_DIRECT_STALLS)
+                .remove(Keys.UPDATE_DIRECT_BYTES)
                 .apply();
         // After the record: the worker reads it.
         if (direct) {
@@ -622,7 +625,7 @@ public final class UpdateDownloader {
             prefs(context).edit()
                     .putLong(Keys.UPDATE_DIRECT_DONE, downloadId)
                     .remove(Keys.UPDATE_DIRECT_STALLS)
-                    .apply();
+                    .commit();
             UpdateFinalizeWorker.enqueue(context, downloadId);
             return true;
         }
@@ -641,6 +644,30 @@ public final class UpdateDownloader {
             int count = p.getInt(Keys.UPDATE_DIRECT_STALLS, 0) + 1;
             p.edit().putInt(Keys.UPDATE_DIRECT_STALLS, count).apply();
             return count;
+        }
+    }
+
+    /** The bytes the direct download {@code downloadId} wrote so far, over all its runs. */
+    static long directBytes(Context context, long downloadId) {
+        synchronized (LOCK) {
+            SharedPreferences p = prefs(context);
+            if (p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1) != downloadId) {
+                return 0L;
+            }
+            return p.getLong(Keys.UPDATE_DIRECT_BYTES, 0L);
+        }
+    }
+
+    /** A run of the direct download {@code downloadId} wrote {@code bytes}. */
+    static void addDirectBytes(Context context, long downloadId, long bytes) {
+        if (bytes <= 0) {
+            return;
+        }
+        synchronized (LOCK) {
+            SharedPreferences p = prefs(context);
+            if (p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1) == downloadId) {
+                p.edit().putLong(Keys.UPDATE_DIRECT_BYTES, p.getLong(Keys.UPDATE_DIRECT_BYTES, 0L) + bytes).apply();
+            }
         }
     }
 
@@ -716,6 +743,7 @@ public final class UpdateDownloader {
                     .putBoolean(Keys.UPDATE_READY, true)
                     .putInt(Keys.UPDATE_READY_VERSION_CODE, versionCode)
                     .putString(Keys.UPDATE_READY_NAME, name == null ? "" : name)
+                    .putString(Keys.UPDATE_READY_SHA, pending.apkSha256)
                     .remove(Keys.UPDATE_DOWNLOAD_ID)
                     .remove(Keys.UPDATE_DOWNLOAD_PLAN)
                     .remove(Keys.UPDATE_DOWNLOAD_URLS)
@@ -726,6 +754,7 @@ public final class UpdateDownloader {
                     .remove(Keys.UPDATE_DOWNLOAD_FINALIZING_AT)
                     .remove(Keys.UPDATE_DIRECT_DONE)
                     .remove(Keys.UPDATE_DIRECT_STALLS)
+                    .remove(Keys.UPDATE_DIRECT_BYTES)
                     .remove(Keys.UPDATE_DEVICE_FAILED_STEP)
                     .remove(Keys.UPDATE_DEVICE_FAILED_COUNT)
                     // Success — drop the backoff state so it can't carry over to
@@ -850,6 +879,11 @@ public final class UpdateDownloader {
         return prefs(context).getString(Keys.UPDATE_CHANGELOG_NAME, "");
     }
 
+    /** The SHA-256 the ready APK was verified against, or "" (a record from before it was kept). */
+    public static String readySha256(Context context) {
+        return prefs(context).getString(Keys.UPDATE_READY_SHA, "");
+    }
+
     public static String readyVersionName(Context context) {
         return prefs(context).getString(Keys.UPDATE_READY_NAME, "");
     }
@@ -864,6 +898,7 @@ public final class UpdateDownloader {
     public static void clearPending(Context context) {
         synchronized (LOCK) {
             removeDownload(context, prefs(context).getLong(Keys.UPDATE_DOWNLOAD_ID, -1));
+            removeOrphansLocked(context);
             deleteArtifacts(context);
             clearPendingLocked(context);
         }
@@ -881,6 +916,7 @@ public final class UpdateDownloader {
                 .remove(Keys.UPDATE_DOWNLOAD_FINALIZING_AT)
                 .remove(Keys.UPDATE_DIRECT_DONE)
                 .remove(Keys.UPDATE_DIRECT_STALLS)
+                .remove(Keys.UPDATE_DIRECT_BYTES)
                 .apply();
     }
 
@@ -911,6 +947,7 @@ public final class UpdateDownloader {
                 .remove(Keys.UPDATE_READY)
                 .remove(Keys.UPDATE_READY_VERSION_CODE)
                 .remove(Keys.UPDATE_READY_NAME)
+                .remove(Keys.UPDATE_READY_SHA)
                 .remove(Keys.UPDATE_PULLED_SEEN_AT)
                 .apply();
     }
@@ -928,10 +965,14 @@ public final class UpdateDownloader {
             }
         }
         // Direct downloads' part files, whichever download wrote them (a
-        // cancelled run can still be writing one for a moment).
-        File dir = Preferences.getUpdateApkFile(context).getParentFile();
-        String[] names = dir == null ? null : dir.list();
-        if (names != null) {
+        // cancelled run can still be writing one for a moment), in both dirs
+        // a download can use: the external files dir can come and go.
+        File[] dirs = {context.getExternalFilesDir(null), context.getFilesDir()};
+        for (File dir : dirs) {
+            String[] names = dir == null ? null : dir.list();
+            if (names == null) {
+                continue;
+            }
             for (String n : names) {
                 if (n.startsWith(Preferences.UPDATE_APK + ".dl")) {
                     new File(dir, n).delete();
@@ -959,8 +1000,77 @@ public final class UpdateDownloader {
         } catch (RuntimeException e) {
             // The Download Manager app disabled by the user throws here; one of
             // the callers (the app-replaced receiver) runs on the main thread.
+            // The row stays, and a Download Manager enabled again would resume
+            // it into the update APK's path, under a file another download may
+            // have put there since. It is removed again where the step files
+            // are deleted anyway (a new download, the backoff, clearPending):
+            // removing it deletes its destination, so never while a finished
+            // download waits there to be verified.
             Log.w(TAG, "could not remove download " + id, e);
+            rememberOrphan(context, id);
         }
+    }
+
+    private static final int MAX_ORPHANS = 16;
+
+    private static void rememberOrphan(Context context, long id) {
+        SharedPreferences p = prefs(context);
+        List<String> ids = splitIds(p.getString(Keys.UPDATE_ORPHAN_DM_IDS, ""));
+        String key = Long.toString(id);
+        if (!ids.contains(key)) {
+            ids.add(key);
+        }
+        while (ids.size() > MAX_ORPHANS) {
+            ids.remove(0);
+        }
+        p.edit().putString(Keys.UPDATE_ORPHAN_DM_IDS, String.join(",", ids)).apply();
+    }
+
+    /**
+     * Must be called under LOCK, and only where the step files are deleted
+     * anyway: removing a row deletes its destination, which is the path a
+     * direct download of the same step finishes into. Removes the rows a
+     * disabled Download Manager kept; keeps those it still refuses.
+     */
+    private static void removeOrphansLocked(Context context) {
+        SharedPreferences p = prefs(context);
+        List<String> ids = splitIds(p.getString(Keys.UPDATE_ORPHAN_DM_IDS, ""));
+        if (ids.isEmpty()) {
+            return;
+        }
+        DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (dm == null) {
+            return;
+        }
+        List<String> kept = new ArrayList<>();
+        for (String s : ids) {
+            try {
+                dm.remove(Long.parseLong(s));
+                Log.d(TAG, "removed the orphaned download " + s);
+            } catch (NumberFormatException e) {
+                // Not an id; dropped.
+            } catch (RuntimeException e) {
+                kept.add(s);
+            }
+        }
+        if (kept.isEmpty()) {
+            p.edit().remove(Keys.UPDATE_ORPHAN_DM_IDS).apply();
+        } else {
+            p.edit().putString(Keys.UPDATE_ORPHAN_DM_IDS, String.join(",", kept)).apply();
+        }
+    }
+
+    private static List<String> splitIds(String joined) {
+        List<String> out = new ArrayList<>();
+        if (joined == null || joined.isEmpty()) {
+            return out;
+        }
+        for (String s : joined.split(",")) {
+            if (!s.isEmpty()) {
+                out.add(s);
+            }
+        }
+        return out;
     }
 
     static int queryStatus(DownloadManager dm, long id) {

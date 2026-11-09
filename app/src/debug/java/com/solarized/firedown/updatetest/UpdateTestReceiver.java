@@ -113,6 +113,8 @@ public class UpdateTestReceiver extends BroadcastReceiver {
                 .putBoolean(Keys.UPDATE_READY, true)
                 .putInt(Keys.UPDATE_READY_VERSION_CODE, code)
                 .putString(Keys.UPDATE_READY_NAME, name == null ? "" : name)
+                // No digest: the "not an APK" case must reach Android's refusal.
+                .remove(Keys.UPDATE_READY_SHA)
                 .remove(Keys.UPDATE_PROMPT_SNOOZE_VERSION)
                 .remove(Keys.UPDATE_PROMPT_SNOOZE_UNTIL)
                 .remove(Keys.UPDATE_PROMPT_SNOOZE_COUNT)

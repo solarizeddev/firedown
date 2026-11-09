@@ -57,16 +57,36 @@ public class UpdateDirectDownloadWorker extends Worker {
         return "update_direct_" + downloadId;
     }
 
+    /** Starts the download, or does nothing while its work is queued or running. */
     public static void enqueue(Context context, long downloadId) {
+        WorkManager.getInstance(context).enqueueUniqueWork(workName(downloadId), ExistingWorkPolicy.KEEP,
+                request(downloadId, 0L));
+    }
+
+    /**
+     * From inside a run whose connection ended after some bytes: the next
+     * run, 30 s after this one returns, as a new request (APPEND_OR_REPLACE
+     * chains it behind the running one). A fresh request starts WorkManager's
+     * attempt count over, so the backoff a stall pays never grows from
+     * progress.
+     */
+    static void continueLater(Context context, long downloadId) {
+        WorkManager.getInstance(context).enqueueUniqueWork(workName(downloadId),
+                ExistingWorkPolicy.APPEND_OR_REPLACE, request(downloadId, CONTINUE_DELAY_S));
+    }
+
+    private static final long CONTINUE_DELAY_S = 30L;
+
+    private static OneTimeWorkRequest request(long downloadId, long delaySeconds) {
         Constraints constraints = new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.NOT_ROAMING)
                 .build();
-        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(UpdateDirectDownloadWorker.class)
+        return new OneTimeWorkRequest.Builder(UpdateDirectDownloadWorker.class)
                 .setInputData(new Data.Builder().putLong(KEY_DOWNLOAD_ID, downloadId).build())
                 .setConstraints(constraints)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                .setInitialDelay(delaySeconds, TimeUnit.SECONDS)
                 .build();
-        WorkManager.getInstance(context).enqueueUniqueWork(workName(downloadId), ExistingWorkPolicy.KEEP, request);
     }
 
     public static void cancel(Context context, long downloadId) {
@@ -79,7 +99,16 @@ public class UpdateDirectDownloadWorker extends Worker {
         long downloadId = getInputData().getLong(KEY_DOWNLOAD_ID, -1);
         UpdateDirectDownload.Outcome outcome = UpdateDirectDownload.run(
                 getApplicationContext(), downloadId, this::open, this::isStopped);
-        return outcome == UpdateDirectDownload.Outcome.RETRY ? Result.retry() : Result.success();
+        if (outcome == UpdateDirectDownload.Outcome.RETRY) {
+            return Result.retry();
+        }
+        // CONTINUE only while the record names this download (run() checks
+        // last thing); a record leaving after that costs one run that wakes
+        // to find it stale.
+        if (outcome == UpdateDirectDownload.Outcome.CONTINUE) {
+            continueLater(getApplicationContext(), downloadId);
+        }
+        return Result.success();
     }
 
     private UpdateDirectDownload.Answer open(String url, long from) throws IOException {
@@ -98,7 +127,7 @@ public class UpdateDirectDownloadWorker extends Worker {
         InputStream in = body == null ? null : body.byteStream();
         long rangeStart = -1L;
         long total = -1L;
-        if (response.code() == 206) {
+        if (response.code() == 206 || response.code() == 416) {
             long[] range = UpdateDirectDownload.parseContentRange(response.header("Content-Range"));
             rangeStart = range[0];
             total = range[1];
