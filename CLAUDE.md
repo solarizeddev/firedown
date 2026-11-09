@@ -1402,8 +1402,8 @@ wait, no og:video pairing, DASH captured, no Instagram guard, author as
 title — each fails). The backbone's generic capture is `pageTitled`, so a
 reader finishing after the wait renames it; a URL with no `efg` is cached by
 its file path. A node serialized INTO a JSON string is not seen (the
-backbone covers it). On-device
-unverified at write time; desktop pages and `plugins/video.php` embeds are
+backbone covers it). On a device: `CaptureLiveTest` t6 (live network, a
+pinned public reel), not yet run at write time; desktop pages and `plugins/video.php` embeds are
 read by the same scanner but no HAR of them was checked.
 
 ### Skip the capture probe when the parser already has the metadata
@@ -4671,7 +4671,9 @@ before changing a flow. The rules, each easy to undo:
     t1 pins the webrequests `ensureBuiltIn` version against the bundled
     manifest (the version-cache trap), then Telegram post / Vimeo watch
     page / Apple Podcasts show page / a Wikimedia Commons `<video>` page
-    (the generic catcher's DOM-scrape path). Login-walled and
+    (the generic catcher's DOM-scrape path) / a Facebook reel permalink (t6:
+    captured once, under its `/reel/<id>/` page, titled by its words; skips
+    when Facebook answers with a login wall). Login-walled and
     play-tap-gated sites are deliberately excluded — a red test there would
     measure the wall, not the parser.
 - Re-run your HAR simulation with the **final** code (caps included) and confirm
