@@ -625,6 +625,12 @@ public class GeckoRuntimeHelper {
                 // for callback". Primitives serialize cleanly.
                 return GeckoResult.fromValue(BuildConfig.DEBUG);
             }
+            if ("youtube".equals(nativeApp)
+                    && "warm-potoken".equals(jsonObject.optString("kind", null))) {
+                final String visitorData = jsonObject.optString("visitorData", "");
+                mNetworkExecutor.execute(() -> mPoTokenGenerator.warm(visitorData));
+                return GeckoResult.fromValue(true);
+            }
             Log.d(TAG, "onMessage: " + jsonObject);
             try {
                 switch (nativeApp) {

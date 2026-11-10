@@ -2787,6 +2787,21 @@ browser.webRequest.onHeadersReceived.addListener(
     ], types: ["main_frame", "sub_frame", "xmlhttprequest"] }
 );
 
+// The first YouTube page of this process asks the native side to prepare
+// the PO token page, so its attestation is done well before a download
+// asks for a token.
+let poTokenWarmed = false;
+browser.webRequest.onBeforeRequest.addListener(
+    () => {
+        if (poTokenWarmed) return;
+        poTokenWarmed = true;
+        browser.runtime.sendNativeMessage("youtube",
+            { kind: "warm-potoken", visitorData: cachedVisitorData || "" })
+            .catch(() => { poTokenWarmed = false; });
+    },
+    { urls: ["*://*.youtube.com/*"], types: ["main_frame"] }
+);
+
 function captureBrowserState(details) {
     const headers = details.requestHeaders;
     if (!headers) return;
