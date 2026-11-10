@@ -18,6 +18,7 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
@@ -496,7 +497,8 @@ public class BrowserPipDeviceTest {
     /**
      * The screen switched off while the video floats is not a close: the
      * video goes on, the window is still there when the phone is back, and
-     * the icon then expands it to the fullscreen video. Runs last: see the
+     * the icon then expands it to the fullscreen video. Runs after the others
+     * but the t11 probe: see the
      * class comment about phones that lock at once.
      */
     @Test
@@ -546,46 +548,76 @@ public class BrowserPipDeviceTest {
      * What the page sees inside the PiP window (the follow-up on #311: mobile
      * YouTube in the window pauses itself every two seconds and draws its
      * picture in a corner, while the desktop site plays). The page locks the
-     * screen to landscape on going fullscreen, as mobile YouTube does, and
-     * reports its visibility, viewport and animation frames in its title. A
-     * page that pauses when hidden, and lays out its player from
-     * requestAnimationFrame, breaks in the window if it is hidden there.
-     * Runs last; the numbers are logged ({@code adb logcat -s
-     * BrowserPipDeviceTest}) whether it passes or not.
+     * screen to landscape on going fullscreen, as mobile YouTube does
+     * (the argument {@code nolock=1} as the control), and writes into its title every
+     * 500 ms: visibility now and how often it was hidden, window blurs and
+     * focus, pause events, animation frames, viewport and resizes, screen
+     * size and orientation, fullscreen, and its clock. A page that pauses
+     * when hidden or blurred, or lays out its player from
+     * requestAnimationFrame or the screen, breaks in the window if any of
+     * those turn. Every reading is logged ({@code adb logcat -s
+     * BrowserPipDeviceTest}) whether it passes or not. Run it on its own:
+     * {@code ...BrowserPipDeviceTest#t11_pageInThePipWindowIsVisibleAndAnimating}.
      */
     @Test
     public void t11_pageInThePipWindowIsVisibleAndAnimating() {
-        BrowserMainActivity browser = openPage("/?probe=1");
+        boolean noLock = "1".equals(InstrumentationRegistry.getArguments().getString("nolock"));
+        BrowserMainActivity browser = openPage(noLock ? "/?probe=1&nolock=1" : "/?probe=1");
+        String before = currentTitle();
         GeckoState tab = playFullscreen();
-        String fullscreen = tab.getEntityTitle();
-        int orientation = onMain(browser::getRequestedOrientation);
+        boolean landscape = noLock || waitUntil(() -> isLandscapeRequest(
+                onMain(browser::getRequestedOrientation)), 5_000);
+        SystemClock.sleep(SETTLE_MS);
+        String fullscreen = "[" + tab.getEntityTitle() + "] requested=" + onMain(browser::getRequestedOrientation)
+                + " config=" + mApp.getResources().getConfiguration().orientation;
+        Log.i("BrowserPipDeviceTest", "t11 before: [" + before + "]");
+        Log.i("BrowserPipDeviceTest", "t11 fullscreen: " + fullscreen
+                + (landscape ? "" : " (the landscape lock did not hold)"));
         goHomeIntoPip(browser, tab);
         SystemClock.sleep(3_000);
         String first = tab.getEntityTitle();
+        Log.i("BrowserPipDeviceTest", "t11 pip 3s: [" + first + "]");
         SystemClock.sleep(3_000);
         String second = tab.getEntityTitle();
-        String report = "fullscreen: [" + fullscreen + "] requestedOrientation=" + orientation
-                + " in PiP: [" + first + "] then [" + second + "] requestedOrientation="
+        Log.i("BrowserPipDeviceTest", "t11 pip 6s: [" + second + "] requested="
                 + onMain(browser::getRequestedOrientation)
-                + " playing=" + mMedia.isPlaying(tab.getEntityId());
-        Log.i("BrowserPipDeviceTest", "t11 " + report);
-        assertTrue("the page is hidden in the PiP window. " + report,
-                second != null && second.contains("vis=visible"));
+                + " config=" + mApp.getResources().getConfiguration().orientation
+                + " playing=" + mMedia.isPlaying(tab.getEntityId()));
+        String report = (noLock ? "no lock" : landscape ? "landscape lock held" : "landscape lock did NOT hold")
+                + "; before [" + before + "]; fullscreen " + fullscreen
+                + "; pip [" + first + "] then [" + second + "] playing=" + mMedia.isPlaying(tab.getEntityId());
+        assertTrue("the page's clock did not move in the window (titles not delivered, or timers stopped). "
+                + report, probeValue(second, "t") > probeValue(first, "t"));
+        assertTrue("the page is hidden in the PiP window. " + report, second.contains(" vis=visible"));
+        assertTrue("the page was hidden at some point. " + report, probeValue(second, "hid") == 0);
         assertTrue("the page draws no animation frames in the PiP window. " + report,
                 probeValue(second, "raf") > probeValue(first, "raf"));
+        assertTrue("the page paused its video. " + report, probeValue(second, "pz") == 0);
         assertTrue("the video stopped in the PiP window. " + report, mMedia.isPlaying(tab.getEntityId()));
     }
 
-    /** A number from the probe page's title ("raf=123"), -1 when absent. */
+    private String currentTitle() {
+        GeckoState tab = currentTab();
+        return tab == null ? null : tab.getEntityTitle();
+    }
+
+    private static boolean isLandscapeRequest(int requested) {
+        return requested == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                || requested == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                || requested == ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE;
+    }
+
+    /** A number from the probe page's title (" raf=123"), -1 when absent. */
     private static long probeValue(String title, String key) {
         if (title == null) {
             return -1;
         }
-        int at = title.indexOf(key + "=");
+        String marker = " " + key + "=";
+        int at = title.indexOf(marker);
         if (at < 0) {
             return -1;
         }
-        int start = at + key.length() + 1;
+        int start = at + marker.length();
         int end = start;
         while (end < title.length() && Character.isDigit(title.charAt(end))) {
             end++;
@@ -605,7 +637,8 @@ public class BrowserPipDeviceTest {
                 waitUntil(() -> {
                     GeckoState tab = currentTab();
                     return tab != null && url.equals(tab.getEntityUri()) && !tab.isLoading()
-                            && "ready".equals(tab.getEntityTitle());
+                            && tab.getEntityTitle() != null
+                            && tab.getEntityTitle().startsWith("ready");
                 }, WAIT_MS));
         SystemClock.sleep(SETTLE_MS);
         return browser;
@@ -1087,18 +1120,29 @@ public class BrowserPipDeviceTest {
                     + "    alerted = true; alert('in pip'); document.title = 'after-alert';"
                     + "  }"
                     + "});"
-                    + "let frames = 0;"
+                    + "let frames = 0, hid = 0, blurs = 0, pauses = 0, resizes = 0, probing = false;"
                     + "(function tick() { frames++; requestAnimationFrame(tick); })();"
+                    + "document.addEventListener('visibilitychange', function () { if (document.hidden) hid++; });"
+                    + "addEventListener('blur', function () { blurs++; });"
+                    + "addEventListener('resize', function () { resizes++; });"
+                    + "v.addEventListener('pause', function () { pauses++; });"
+                    + "function lock() {"
+                    + "  if (screen.orientation && screen.orientation.lock) {"
+                    + "    screen.orientation.lock('landscape').catch(function () {}); } }"
                     + "document.addEventListener('fullscreenchange', function () {"
                     + "  if (!q.has('probe') || !document.fullscreenElement) return;"
-                    + "  if (screen.orientation && screen.orientation.lock) {"
-                    + "    screen.orientation.lock('landscape').catch(function () {}); }"
-                    + "  setInterval(function () {"
-                    + "    document.title = 'probe vis=' + document.visibilityState"
-                    + "      + ' vp=' + innerWidth + 'x' + innerHeight + ' raf=' + frames"
-                    + "      + ' paused=' + v.paused + ' t=' + Math.round(performance.now());"
-                    + "  }, 500);"
+                    + "  probing = true;"
+                    + "  if (!q.has('nolock')) { lock(); setTimeout(lock, 800); }"
                     + "});"
+                    + "if (q.has('probe')) setInterval(function () {"
+                    + "  document.title = (probing ? 'probe' : 'ready') + ' vis=' + document.visibilityState"
+                    + "    + ' hid=' + hid + ' blur=' + blurs + ' foc=' + document.hasFocus()"
+                    + "    + ' pz=' + pauses + ' paused=' + v.paused + ' raf=' + frames"
+                    + "    + ' vp=' + innerWidth + 'x' + innerHeight + ' rs=' + resizes"
+                    + "    + ' sc=' + screen.width + 'x' + screen.height + ' dpr=' + devicePixelRatio"
+                    + "    + ' so=' + (screen.orientation ? screen.orientation.type : '?')"
+                    + "    + ' fs=' + !!document.fullscreenElement + ' t=' + Math.round(performance.now());"
+                    + "}, 500);"
                     + "document.title = 'ready';"
                     + "</script></body></html>";
         }
