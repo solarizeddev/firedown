@@ -1836,8 +1836,12 @@ at most 18 s after it, successes at least 24 s), or the streaming URL must
 be captured after that attestation (every failing capture was made before
 it). `settleForStream` tests the first: before a download's first stream
 token it makes sure a second attestation exists and waits until
-`SESSION_SETTLE_MS` (30 s) after the first, then mints. The `mintResult`
-line carries `minterAge=` and `sinceFirstAttest=`. If a first download
+`SESSION_SETTLE_MS` (30 s) after the first, then mints. So that the wait is rarely felt, the first YouTube
+page of a process sends `warm-potoken` (`background.js`, a main_frame
+observer) and `PoTokenGenerator.warm` opens the hidden session and attests
+then: this is the one mint outside a download, and it means opening YouTube
+contacts the attestation endpoints even when nothing is downloaded. The
+`mintResult` line carries `minterAge=` and `sinceFirstAttest=`. If a first download
 still fails with that wait, the capture order is what is left (attest when
 the video is captured, or capture again). A re-mint after status 3 has
 never been accepted in any log.
@@ -1850,8 +1854,8 @@ integrity token is the opposite: the server STATES its TTL in
 `GenerateIT`'s reply, and minting from one it has already retired
 produces a token guaranteed to be refused. Honour `ij[1]`; never invent
 a PO-token expiry. The 10-min `tokenCache` window is scope, not
-prophecy: minting is DOWNLOAD-time only (`SabrStrategy` /
-`TimedTextStrategy` are the sole callers — nothing mints at capture), so
+prophecy: minting is DOWNLOAD-time (`SabrStrategy` /
+`TimedTextStrategy`), plus the one `warm` attestation when YouTube is first opened, so
 it covers a download and its timedtext sibling seconds apart and
 declines to reuse across unrelated later downloads, where a warm re-mint
 is ~100 ms and no network. Four recovery paths were fixed with it, each invisible to the

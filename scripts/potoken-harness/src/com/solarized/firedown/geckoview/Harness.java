@@ -294,6 +294,20 @@ public class Harness {
         gen.shutdown();
         check("15h a closed session forgets its attestations",
                 (Long) f("firstAttestedAt")==0L && (Integer) f("attestations")==0, "");
+        // warmed ahead: the download finds a settled session
+        WebExtension.Port.minterAt = 0; WebExtension.Port.attests = 0;
+        newGen(true);
+        gen.warm("");
+        check("15j warm opens the session and attests once",
+                GeckoSession.created.get()==1 && (Integer) f("attestations")==1, "created="+GeckoSession.created.get());
+        gen.warm("");
+        check("15k a second warm does nothing", GeckoSession.created.get()==1 && livePort.sent.size()==1, "sent="+livePort.sent.size());
+        setF("firstAttestedAt", (Long) f("firstAttestedAt") - 31000L);
+        t0 = System.currentTimeMillis();
+        gen.settleForStream("s6","VD");
+        dt = System.currentTimeMillis()-t0;
+        check("15l a download after a warmed, settled session does not wait", dt<500, dt+"ms");
+
         // a page that reports no age is never waited on
         WebExtension.Port.reportAge = false;
         newGen(true);

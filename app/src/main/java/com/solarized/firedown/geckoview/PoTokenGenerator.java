@@ -402,6 +402,21 @@ public class PoTokenGenerator {
     }
 
     /**
+     * Opens the hidden session and makes its first attestation ahead of any
+     * download (blocking, worker thread), so {@link #settleForStream} finds
+     * the session already settled. Nothing happens when a session exists.
+     */
+    public void warm(@Nullable String visitorData) {
+        synchronized (lock) {
+            if (session != null || firstAttestedAt > 0) return;
+        }
+        generate(Binding.VIDEO, WARM_ID, visitorData, false);
+    }
+
+    /** The identifier {@link #warm} mints over; no video has it. */
+    private static final String WARM_ID = "warm";
+
+    /**
      * Called before a download's first stream token is minted (blocking,
      * worker thread). When the hidden session's first attestation is younger
      * than {@link #SESSION_SETTLE_MS}, it makes sure a second attestation
