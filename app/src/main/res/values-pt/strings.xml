@@ -40,6 +40,10 @@
     <string name="addon_not_an_addon">Este arquivo não é um complemento do Firefox</string>
     <string name="addon_optional_data">Compartilhar %1$s com o desenvolvedor</string>
     <string name="addon_optional_permissions">Permissões opcionais</string>
+    <string name="addon_site_access">Acesso a sites</string>
+    <string name="addon_allow_all_sites">Permitir em todos os sites</string>
+    <string name="addon_allow_all_sites_summary">Poderá ler e alterar qualquer site que você visitar</string>
+    <string name="addon_user_scripts_warning">Scripts não verificados podem representar riscos de segurança e privacidade. Execute apenas scripts de extensões ou fontes em que você confia.</string>
     <string name="addon_page">Página do complemento</string>
     <string name="addon_perm_all_sites">Acessar seus dados em todos os sites</string>
     <string name="addon_perm_bookmarks">Ler e modificar favoritos</string>

@@ -23,11 +23,15 @@ import com.solarized.firedown.addons.AddonIcons;
 import com.solarized.firedown.addons.AddonInfo;
 import com.solarized.firedown.addons.AddonManager;
 import com.solarized.firedown.addons.AddonPermissionText;
+import com.solarized.firedown.addons.AddonPermissions;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -57,6 +61,10 @@ public class AddonDetailFragment extends BasePreferenceFragment {
     private static final String KEY_REMOVE = "com.solarized.firedown.preferences.addon.remove";
     private static final String KEY_OPTIONAL = "com.solarized.firedown.preferences.addon.optional.category";
     private static final String OPTIONAL_PREFIX = "com.solarized.firedown.preferences.addon.optional.";
+    private static final String KEY_SITES = "com.solarized.firedown.preferences.addon.sites.category";
+    private static final String KEY_ALL_SITES = "com.solarized.firedown.preferences.addon.sites.all";
+    private static final String SITE_PREFIX = "com.solarized.firedown.preferences.addon.site.";
+    private static final String USER_SCRIPTS = "userScripts";
 
     @Inject
     AddonManager mAddonManager;
@@ -79,6 +87,9 @@ public class AddonDetailFragment extends BasePreferenceFragment {
     private PreferenceCategory mOptional;
     /** The rows now in {@link #mOptional}, so a repaint only rebuilds when they change. */
     private List<String> mOptionalKeys = new ArrayList<>();
+    private PreferenceCategory mSites;
+    /** Each site switch's patterns, by key, as of the last bind; its listener reads them here. */
+    private final Map<String, List<String>> mSitePatterns = new HashMap<>();
     private boolean mIconLoaded;
     private boolean mBinding;
 
@@ -100,6 +111,10 @@ public class AddonDetailFragment extends BasePreferenceFragment {
         mDataCategory = findPreference(KEY_DATA_CATEGORY);
         mData = findPreference(KEY_DATA);
         mOptional = findPreference(KEY_OPTIONAL);
+        mSites = findPreference(KEY_SITES);
+        if (mSites != null) {
+            mSites.setOrderingAsAdded(false);
+        }
         mIconInk = MaterialColors.getColor(requireContext(), android.R.attr.textColorSecondary, Color.GRAY);
         if (mData != null && mData.getIcon() != null) {
             mData.getIcon().mutate().setTint(mIconInk);
@@ -241,6 +256,7 @@ public class AddonDetailFragment extends BasePreferenceFragment {
             mData.setTitle(data);
         }
         bindOptional(info);
+        bindSites(info);
         mBinding = false;
     }
 
@@ -301,23 +317,22 @@ public class AddonDetailFragment extends BasePreferenceFragment {
         final String title;
         final boolean granted;
         final String permission;
-        final String origin;
         final String data;
 
-        OptionalRow(String key, String title, boolean granted, String permission, String origin, String data) {
+        OptionalRow(String key, String title, boolean granted, String permission, String data) {
             this.key = key;
             this.title = title;
             this.granted = granted;
             this.permission = permission;
-            this.origin = origin;
             this.data = data;
         }
     }
 
     /**
-     * Firefox's permission switches: each optional permission, site or data
+     * Firefox's permission switches: each optional API permission or data
      * kind the add-on declares, on when granted. Turning one off takes it
-     * back; turning one on grants it without the add-on asking.
+     * back; turning one on grants it without the add-on asking. Sites are
+     * their own group ({@link #bindSites}).
      */
     private void bindOptional(@NonNull AddonInfo info) {
         if (mOptional == null) {
@@ -328,21 +343,14 @@ public class AddonDetailFragment extends BasePreferenceFragment {
             String title = AddonPermissionText.permission(requireContext(), permission);
             if (title != null) {
                 rows.add(new OptionalRow(OPTIONAL_PREFIX + "p." + permission, title,
-                        info.grantedOptionalPermissions.contains(permission), permission, null, null));
-            }
-        }
-        for (String origin : info.optionalOrigins) {
-            String title = AddonPermissionText.origin(requireContext(), origin);
-            if (title != null) {
-                rows.add(new OptionalRow(OPTIONAL_PREFIX + "o." + origin, title,
-                        info.grantedOptionalOrigins.contains(origin), null, origin, null));
+                        info.grantedOptionalPermissions.contains(permission), permission, null));
             }
         }
         for (String kind : info.optionalDataCollection) {
             String title = AddonPermissionText.data(requireContext(), kind);
             if (title != null) {
                 rows.add(new OptionalRow(OPTIONAL_PREFIX + "d." + kind, title,
-                        info.grantedOptionalDataCollection.contains(kind), null, null, kind));
+                        info.grantedOptionalDataCollection.contains(kind), null, kind));
             }
         }
         List<String> keys = new ArrayList<>();
@@ -358,9 +366,13 @@ public class AddonDetailFragment extends BasePreferenceFragment {
                 sw.setTitle(row.title);
                 sw.setSingleLineTitle(false);
                 sw.setIconSpaceReserved(false);
+                if (USER_SCRIPTS.equals(row.permission)) {
+                    // Firefox puts the same warning under this switch.
+                    sw.setSummary(R.string.addon_user_scripts_warning);
+                }
                 sw.setOnPreferenceChangeListener((p, value) -> {
                     if (!mBinding && mId != null) {
-                        mAddonManager.setOptionalPermission(mId, row.permission, row.origin, row.data,
+                        mAddonManager.setOptionalPermission(mId, row.permission, row.data,
                                 Boolean.TRUE.equals(value));
                     }
                     return true;
@@ -376,6 +388,79 @@ public class AddonDetailFragment extends BasePreferenceFragment {
             }
         }
         mOptional.setVisible(!rows.isEmpty());
+    }
+
+    /**
+     * Site access, Firefox for Android's shape: one "Allow on all websites"
+     * switch for every all-sites pattern, then a switch per host, declared
+     * or granted while the add-on ran (an add-on declaring all sites asks
+     * for one site at a time, and those grants are in no manifest). The
+     * host alone is the title: hundreds of "Access your data for sites in
+     * the … domain" rows read as a wall. While all sites is allowed the
+     * site switches are disabled and keep their own state: turning one off
+     * would not stop a site the all-sites grant covers. Rows are kept and
+     * updated in place, so a site granted at run time adds one row, not a
+     * rebuild of hundreds.
+     */
+    private void bindSites(@NonNull AddonInfo info) {
+        if (mSites == null) {
+            return;
+        }
+        AddonPermissions.SiteAccess access =
+                AddonPermissions.siteAccess(info.optionalOrigins, info.grantedOptionalOrigins);
+        Map<String, Preference> existing = new HashMap<>();
+        for (int i = 0; i < mSites.getPreferenceCount(); i++) {
+            Preference p = mSites.getPreference(i);
+            existing.put(p.getKey(), p);
+        }
+        mSitePatterns.clear();
+        int order = 0;
+        if (!access.allSitesPatterns.isEmpty()) {
+            SwitchPreferenceCompat all = siteSwitch(existing, KEY_ALL_SITES);
+            all.setTitle(R.string.addon_allow_all_sites);
+            all.setSummary(R.string.addon_allow_all_sites_summary);
+            all.setOrder(order++);
+            all.setChecked(access.allSitesGranted);
+            mSitePatterns.put(KEY_ALL_SITES, access.allSitesPatterns);
+        }
+        for (AddonPermissions.Site site : access.sites) {
+            String key = SITE_PREFIX + site.label.toLowerCase(Locale.ROOT);
+            SwitchPreferenceCompat sw = siteSwitch(existing, key);
+            sw.setTitle(site.label);
+            sw.setOrder(order++);
+            sw.setChecked(site.granted);
+            sw.setEnabled(!access.allSitesGranted);
+            mSitePatterns.put(key, site.patterns);
+        }
+        for (Map.Entry<String, Preference> stale : existing.entrySet()) {
+            if (!mSitePatterns.containsKey(stale.getKey())) {
+                mSites.removePreference(stale.getValue());
+            }
+        }
+        mSites.setVisible(!mSitePatterns.isEmpty());
+    }
+
+    /** The site switch with this key, made and added the first time. */
+    @NonNull
+    private SwitchPreferenceCompat siteSwitch(@NonNull Map<String, Preference> existing, @NonNull String key) {
+        Preference found = existing.get(key);
+        if (found instanceof SwitchPreferenceCompat) {
+            return (SwitchPreferenceCompat) found;
+        }
+        SwitchPreferenceCompat sw = new SwitchPreferenceCompat(requireContext());
+        sw.setKey(key);
+        sw.setPersistent(false);
+        sw.setSingleLineTitle(false);
+        sw.setIconSpaceReserved(false);
+        sw.setOnPreferenceChangeListener((p, value) -> {
+            List<String> patterns = mSitePatterns.get(p.getKey());
+            if (!mBinding && mId != null && patterns != null) {
+                mAddonManager.setOptionalOrigins(mId, patterns, Boolean.TRUE.equals(value));
+            }
+            return true;
+        });
+        mSites.addPreference(sw);
+        return sw;
     }
 
     private static boolean isWebUrl(@Nullable String url) {

@@ -31,6 +31,10 @@
     <string name="addon_not_an_addon">Tệp này không phải là tiện ích Firefox</string>
     <string name="addon_optional_data">Chia sẻ %1$s với nhà phát triển</string>
     <string name="addon_optional_permissions">Quyền tùy chọn</string>
+    <string name="addon_site_access">Quyền truy cập trang web</string>
+    <string name="addon_allow_all_sites">Cho phép trên tất cả các trang web</string>
+    <string name="addon_allow_all_sites_summary">Có thể đọc và thay đổi mọi trang web bạn truy cập</string>
+    <string name="addon_user_scripts_warning">Các tập lệnh chưa được xác minh có thể gây rủi ro về bảo mật và quyền riêng tư. Chỉ chạy tập lệnh từ tiện ích mở rộng hoặc nguồn bạn tin cậy.</string>
     <string name="addon_page">Trang tiện ích</string>
     <string name="addon_perm_all_sites">Truy cập dữ liệu của bạn trên tất cả các trang web</string>
     <string name="addon_perm_bookmarks">Đọc và sửa đổi dấu trang</string>

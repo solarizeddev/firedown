@@ -40,6 +40,10 @@
     <string name="addon_not_an_addon">Tento soubor není doplněk pro Firefox</string>
     <string name="addon_optional_data">Sdílet s vývojářem: %1$s</string>
     <string name="addon_optional_permissions">Volitelná oprávnění</string>
+    <string name="addon_site_access">Přístup k webům</string>
+    <string name="addon_allow_all_sites">Povolit na všech webech</string>
+    <string name="addon_allow_all_sites_summary">Bude moci číst a měnit každý web, který navštívíte</string>
+    <string name="addon_user_scripts_warning">Neověřené skripty mohou ohrozit bezpečnost a soukromí. Spouštějte jen skripty z rozšíření nebo zdrojů, kterým důvěřujete.</string>
     <string name="addon_page">Stránka doplňku</string>
     <string name="addon_perm_all_sites">Přistupovat k vašim datům na všech webech</string>
     <string name="addon_perm_bookmarks">Číst a upravovat záložky</string>

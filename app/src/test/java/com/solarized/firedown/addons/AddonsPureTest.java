@@ -162,6 +162,21 @@ public class AddonsPureTest {
         assertTrue(AddonPermissions.dataCollection(Collections.singletonList("none")).isEmpty());
     }
 
+    @Test
+    public void siteAccessListsGrantedSitesAndOneAllSitesSwitch() {
+        AddonPermissions.SiteAccess access = AddonPermissions.siteAccess(
+                Arrays.asList("*://*/*", "<all_urls>", "https://b.example/*"),
+                Arrays.asList("*://*.a.example/*", "http://b.example/*"));
+        assertEquals(2, access.allSitesPatterns.size());
+        assertFalse(access.allSitesGranted);
+        assertEquals(2, access.sites.size());
+        assertEquals("a.example", access.sites.get(0).label);
+        assertTrue(access.sites.get(0).granted);
+        assertEquals("b.example", access.sites.get(1).label);
+        assertEquals(2, access.sites.get(1).patterns.size());
+        assertTrue(access.sites.get(1).granted);
+    }
+
     private static File zip(String manifest, boolean signed) throws Exception {
         File f = File.createTempFile("addon", ".xpi");
         f.deleteOnExit();

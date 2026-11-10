@@ -42,6 +42,10 @@
     <string name="addon_not_an_addon">此文件不是 Firefox 附加组件</string>
     <string name="addon_optional_data">与开发者共享%1$s</string>
     <string name="addon_optional_permissions">可选权限</string>
+    <string name="addon_site_access">网站访问权限</string>
+    <string name="addon_allow_all_sites">在所有网站上允许</string>
+    <string name="addon_allow_all_sites_summary">它将能读取和更改你访问的每个网站</string>
+    <string name="addon_user_scripts_warning">未经验证的脚本可能带来安全和隐私风险。只运行来自你信任的扩展或来源的脚本。</string>
     <string name="addon_page">附加组件页面</string>
     <string name="addon_perm_all_sites">访问你在所有网站的数据</string>
     <string name="addon_perm_bookmarks">读取和修改书签</string>

@@ -40,6 +40,10 @@
     <string name="addon_not_an_addon">Tämä tiedosto ei ole Firefox-lisäosa</string>
     <string name="addon_optional_data">Jaa kehittäjälle: %1$s</string>
     <string name="addon_optional_permissions">Valinnaiset käyttöoikeudet</string>
+    <string name="addon_site_access">Sivustojen käyttö</string>
+    <string name="addon_allow_all_sites">Salli kaikilla verkkosivustoilla</string>
+    <string name="addon_allow_all_sites_summary">Se voi lukea ja muuttaa jokaista verkkosivustoa, jolla käyt</string>
+    <string name="addon_user_scripts_warning">Vahvistamattomat skriptit voivat aiheuttaa tietoturva- ja yksityisyysriskejä. Suorita vain skriptejä laajennuksista tai lähteistä, joihin luotat.</string>
     <string name="addon_page">Lisäosan sivu</string>
     <string name="addon_perm_all_sites">Käyttää tietojasi kaikilla verkkosivustoilla</string>
     <string name="addon_perm_bookmarks">Lukea ja muokata kirjanmerkkejä</string>

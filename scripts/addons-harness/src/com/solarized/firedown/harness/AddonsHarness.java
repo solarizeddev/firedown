@@ -474,6 +474,44 @@ public final class AddonsHarness {
                         .equals(Arrays.asList("healthInfo", "websiteContent")));
         check("perm: 'none' collects nothing",
                 AddonPermissions.dataCollection(Collections.singletonList("none")).isEmpty());
+        siteAccess();
+    }
+
+    private static String sites(AddonPermissions.SiteAccess a) {
+        List<String> out = new ArrayList<>();
+        for (AddonPermissions.Site s : a.sites) {
+            out.add(s.label + (s.granted ? "+" : "-") + s.patterns.size());
+        }
+        return String.join(" ", out);
+    }
+
+    private static void siteAccess() {
+        // The Bypass Paywalls shape: all sites declared as optional, sites granted one at a time.
+        AddonPermissions.SiteAccess bpc = AddonPermissions.siteAccess(
+                Collections.singletonList("*://*/*"),
+                Arrays.asList("*://*.24heures.ch/*", "*://*.abc.es/*"));
+        check("sites: a site granted at run time but declared nowhere gets a switch",
+                sites(bpc).equals("24heures.ch+1 abc.es+1"));
+        check("sites: all sites is its own switch, off while only sites are granted",
+                bpc.allSitesPatterns.equals(Collections.singletonList("*://*/*")) && !bpc.allSitesGranted);
+
+        AddonPermissions.SiteAccess all = AddonPermissions.siteAccess(
+                Arrays.asList("<all_urls>", "*://*/*", "http://*/*", "https://news.example/*"),
+                Arrays.asList("*://*/*"));
+        check("sites: every all-sites pattern collapses into one switch, on when one is granted",
+                all.allSitesPatterns.size() == 3 && all.allSitesGranted
+                        && sites(all).equals("news.example-1"));
+
+        AddonPermissions.SiteAccess merged = AddonPermissions.siteAccess(
+                Arrays.asList("https://zeit.de/*", "http://zeit.de/*", "*://*.Zeit.de/*",
+                        "https://b.example:8443/path*", "file:///*"),
+                Arrays.asList("http://zeit.de/*"));
+        check("sites: one switch per host (schemes, domain and bare host, case), sorted, granted when any is",
+                sites(merged).equals("b.example-1 file:///*-1 zeit.de+3"));
+
+        AddonPermissions.SiteAccess none = AddonPermissions.siteAccess(null, null);
+        check("sites: nothing declared or granted, no switches",
+                none.sites.isEmpty() && none.allSitesPatterns.isEmpty());
     }
 
     // ---------------------------------------------------------------- update reviews

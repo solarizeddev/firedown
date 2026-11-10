@@ -11,7 +11,6 @@ import com.solarized.firedown.R;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /** The words for {@link AddonPermissions}' lines and data-collection kinds. */
@@ -103,13 +102,6 @@ public final class AddonPermissionText {
     public static String permission(@NonNull Context context, @NonNull String permission) {
         int res = apiString(permission);
         return res == 0 ? null : context.getString(res);
-    }
-
-    /** One optional site pattern: "Access your data for example.com", or all sites. */
-    @Nullable
-    public static String origin(@NonNull Context context, @NonNull String origin) {
-        List<AddonPermissions.Line> lines = AddonPermissions.describe(null, Collections.singletonList(origin));
-        return lines.isEmpty() ? null : text(context, lines.get(0));
     }
 
     /** One optional data-collection kind: "Share bookmarks with the developer". */

@@ -14,7 +14,9 @@
 # newer version not arming the mark again, a declined question still
 # nagging, an old build's mark notified twice or re-armed, a waiting
 # add-on rechecked (downloaded) every day, and Gecko's "no update" trusted
-# offline (a failed check reads the same).
+# offline (a failed check reads the same), and the site switches: only the
+# declared sites listed (a site granted at run time has no switch), the
+# all-sites switch missing, one switch per pattern.
 #
 # usage: sh scripts/addons-harness/run.sh [mozilla-firefox checkout]
 #   With a Firefox source checkout, Firefox's own AMO fixtures are parsed too
@@ -122,4 +124,7 @@ mutant legacyrearm AddonUpdateReviews 's/if (entry.version.isEmpty()) {/if (fals
 mutant dailyrecheck AddonUpdateReviews 's/return now < lastRecheck || now - lastRecheck >= RECHECK_INTERVAL_MS;/return true;/'
 mutant trustnull AddonUpdateReviews 's/        if (validatedNetwork) {/        if (true) {/'
 mutant asksapi AddonPermissions 's/return describe(permissions, origins).isEmpty() \&\& /return /'
+mutant declaredonly AddonPermissions 's/        addTrimmed(patterns, granted);//'
+mutant noallsites AddonPermissions 's/                allSites.add(pattern);/                allSites.isEmpty();/'
+mutant nohostmerge AddonPermissions 's/String key = label.toLowerCase(Locale.ROOT);/String key = pattern;/'
 exit $status

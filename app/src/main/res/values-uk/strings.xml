@@ -40,6 +40,10 @@
     <string name="addon_not_an_addon">Цей файл не є додатком Firefox</string>
     <string name="addon_optional_data">Передавати розробнику: %1$s</string>
     <string name="addon_optional_permissions">Необов’язкові дозволи</string>
+    <string name="addon_site_access">Доступ до сайтів</string>
+    <string name="addon_allow_all_sites">Дозволити на всіх сайтах</string>
+    <string name="addon_allow_all_sites_summary">Зможе читати й змінювати кожен сайт, який ви відвідуєте</string>
+    <string name="addon_user_scripts_warning">Неперевірені скрипти можуть загрожувати безпеці та приватності. Запускайте лише скрипти з розширень або джерел, яким ви довіряєте.</string>
     <string name="addon_page">Сторінка додатка</string>
     <string name="addon_perm_all_sites">Отримувати доступ до ваших даних на всіх сайтах</string>
     <string name="addon_perm_bookmarks">Читати й змінювати закладки</string>
