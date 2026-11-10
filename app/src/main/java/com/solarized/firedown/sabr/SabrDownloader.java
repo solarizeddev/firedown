@@ -114,9 +114,12 @@ public class SabrDownloader {
 
     /**
      * CONSECUTIVE failed re-mints tolerated. One fresh token normally
-     * settles a demand; the second attempt covers a mint that raced a
-     * session rotation. Past this the token is being REJECTED (not missing)
-     * and more minting won't change the answer.
+     * settles a demand. Three is what {@link StreamTokenBinding} needs when
+     * it does not: a fresh token over the same identifier, one over the
+     * other identifier, and one more over the first (a mint that raced a
+     * session rotation, or a binding it could not tell was wrong). Past
+     * this the token is being REJECTED (not missing) and more minting
+     * won't change the answer.
      *
      * <p>Consecutive, not lifetime: {@link #attestationRefreshCount} resets
      * on forward progress, because that proves the recovery worked. Demands
@@ -124,7 +127,7 @@ public class SabrDownloader {
      * legitimately draw several within one short download, and each is a
      * fresh budget rather than a step toward failing it.</p>
      */
-    private static final int MAX_ATTESTATION_REFRESHES = 2;
+    private static final int MAX_ATTESTATION_REFRESHES = 3;
     private int attestationRefreshCount = 0;
 
     /** Re-mints performed by this download, never reset — the backstop that
@@ -169,7 +172,27 @@ public class SabrDownloader {
     public void setPoToken(String base64) {
         // Original base64url string for URL pot= parameter
         this.poToken = base64 != null ? Base64.decode(base64, Base64.URL_SAFE | Base64.NO_WRAP) : null;
+        this.attestationPending = false;
+        this.tokenAccepted = false;
     }
+
+    /** Media arrived on the current token in a response where the server
+     *  reported nothing about it (no status 2 since the token was applied,
+     *  no status 3 in that response). */
+    private volatile boolean tokenAccepted = false;
+
+    public boolean isTokenAccepted() { return tokenAccepted; }
+
+    /** Status 2 ("attestation pending") was seen since the current token
+     *  was applied: the server has not accepted THIS token. A session whose
+     *  token it accepts sends no protection status at all. */
+    private volatile boolean attestationPending = false;
+
+    public boolean isAttestationPending() { return attestationPending; }
+
+    /** How many refreshes in a row the server has demanded with no forward
+     *  progress between them, the one being asked for included. */
+    public int getConsecutiveAttestationRefreshes() { return attestationRefreshCount; }
     public void setVideoFormat(SabrMessages.FormatId fmt) { this.videoFormat = fmt; }
     public void setAudioFormat(SabrMessages.FormatId fmt) { this.audioFormat = fmt; }
     public void setDurationMs(long ms) { this.durationMs = ms; }
@@ -353,6 +376,10 @@ public class SabrDownloader {
             // Position only ever advances toward duration, so a download
             // that keeps recovering keeps finishing; one that stops
             // advancing stops resetting and hits the consecutive cap.
+            if (playerTimeMs > prevPlayerTime && poToken != null
+                    && !attestationPending && !attestationRequired) {
+                tokenAccepted = true;
+            }
             if (playerTimeMs > prevPlayerTime && attestationRefreshCount > 0) {
                 Log.d(TAG, "Progress after re-mint — attestation budget reset");
                 attestationRefreshCount = 0;
@@ -755,6 +782,7 @@ public class SabrDownloader {
                             attestationRequired = true;
                         } else if (sps.status == 2) {
                             Log.w(TAG, "Stream protection: attestation pending");
+                            attestationPending = true;
                         }
                         break;
 

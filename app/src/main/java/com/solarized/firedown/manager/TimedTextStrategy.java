@@ -150,10 +150,9 @@ public class TimedTextStrategy implements DownloadStrategy {
 
     /**
      * Obtain a PoToken via the same {@link PoTokenGenerator} SabrStrategy
-     * uses — but the VIDEO-bound one ({@code generate}, yt-dlp's SUBS
-     * context binds to the video id), not the visitor-bound stream token
-     * the SABR download carries; the two are different tokens the server
-     * checks against different requests. The generator caches it by
+     * uses: always the VIDEO-bound one ({@code generate}, yt-dlp's SUBS
+     * context binds to the video id), whichever binding the SABR stream
+     * of the session takes. The generator caches it by
      * videoId for the life of its BotGuard session, so a second subtitle
      * track of the same video reuses it. videoId + visitorData are plumbed on the
      * request via the existing SABR schema (background.js sets a minimal

@@ -128,9 +128,9 @@ public class SabrHarness {
             };
             String msg = null;
             try { d.download(); } catch (SabrDownloader.SabrException e) { msg = e.getMessage(); }
-            check("3  a token refused twice with no progress fails the download",
+            check("3  a token refused again and again with no progress fails the download",
                     msg != null && msg.contains("rejected"), String.valueOf(msg));
-            check("3b ...after exactly MAX_ATTESTATION_REFRESHES mints", mints.get() == 2, "mints=" + mints.get());
+            check("3b ...after exactly MAX_ATTESTATION_REFRESHES mints", mints.get() == 3, "mints=" + mints.get());
             check("3c ...and reports it as attestation-rejected to the strategy",
                     d.isAttestationRejected(), "");
         });
@@ -248,6 +248,7 @@ public class SabrHarness {
         });
 
         // ── the inline fMP4 muxer: the ONLY copy of a SABR download ──────
+        StreamBindingCases.run();
         Fmp4MuxerCases.run();
 
         System.out.println("\n"+pass+" passed, "+fail+" failed");

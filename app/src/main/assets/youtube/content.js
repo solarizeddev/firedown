@@ -154,20 +154,19 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             if (!BG) throw new Error('BG not loaded');
             // CONTENT BINDING — the identifier the token is minted over,
             // which the server checks against the request it rides on:
-            //   'visitor' → visitorData. The videoplayback / SABR token
-            //               (Google Video Server; yt-dlp's GVS context —
-            //               logged-out WEB client binds to visitor data).
-            //   'video'   → videoId. The player request + timedtext token.
-            // These are NOT interchangeable, and the failure is SILENT: a
-            // video-bound token on videoplayback is accepted unchecked most
-            // of the time and refused only when the server spot-checks the
-            // session — STREAM_PROTECTION_STATUS 2 ("pending") from the
-            // first response, then 3 at ~60 s, and every re-mint refused at
-            // once because it carries the same wrong binding. Shipped as
-            // "the download fails, then works after restarting the app".
-            // Java (PoTokenGenerator.Binding) names the binding per caller;
-            // a message without one is the pre-field Java side, which only
-            // ever minted video-bound tokens.
+            //   'visitor' → visitorData.
+            //   'video'   → videoId.
+            // The player request and timedtext take the video id. The
+            // videoplayback / SABR token takes ONE of the two, depending
+            // on a player experiment of the session that produced the
+            // streaming URL (html5_generate_content_po_token: the video
+            // id with it, the visitor data without). A wrong binding
+            // fails SILENTLY: STREAM_PROTECTION_STATUS 2 ("pending") from
+            // the first response, then 3 around a minute of media, and
+            // every re-mint over the same identifier refused at once.
+            // Java (SabrStrategy) starts from the binding that last
+            // worked and switches on a refusal; a message without a
+            // binding is video-bound.
             const id = (binding === 'visitor') ? (vd || vid) : (vid || vd);
             // forceFresh = the server refused the token this minter produced
             // (SABR STREAM_PROTECTION_STATUS 3). The minter is bound to ONE
