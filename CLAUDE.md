@@ -1744,6 +1744,37 @@ always switch, or switch before any token was tried each fail it). The
 harness's refresher repeats `mintAfterDemand`'s three lines; the
 `SabrStrategy` glue itself and the whole path on a device are unverified.
 
+**The token page attests with the challenge the PAGE carries, not att/get
+(2026-11, an experiment not yet confirmed on a device).** With the binding
+right (`contentPot=true` on the capture's `[Session]` debug line, a 120-char
+video-bound token) the video server still kept every token pending, in the
+same browser session where YouTube's own player was accepted at once. A HAR
+of the tab shows what the player does: no `att/get` at all, the BotGuard
+challenge (`bgChallenge`: interpreter URL, program, global name) is inline in
+the m.youtube.com page's HTML, one `GenerateIT` with the same request key,
+then a token minted over the plain video id (`dv` → `wY(this, a.videoId)`,
+with `html5_bandaid_attach_content_po_token=true`) that is 85 bytes where
+ours was 90; its first media response carries `STREAM_PROTECTION_STATUS 1`.
+The hidden page asked `att/get` as the WEB client with a client version
+hardcoded in April. Now `content.js` fetches `https://m.youtube.com/` from
+the content script (`__fdGetChallenge`, with the browser's cookies) and
+`assets/youtube/challenge.js` (`fdExtractInlineChallenge`, pure; pinned by
+`node scripts/youtube-challenge-smoke.mjs`, and checked against the HAR's
+real page) reads the challenge out of the JS string literal it sits in;
+`att/get` is only the fallback, asked as MWEB with the page's client
+version. A debug line says which was used:
+`[BG-robots] attested: challenge=page|att/get cver=… interpreter=… snapshot=…
+integrity=… ttl=…`. The capture also logs `[Session]` (cookie names, login,
+visitor ids, the two PO-token experiment flags). **If the token is still
+kept pending with `challenge=page`, the challenge was not the cause either:
+what then differs from the real player is where the attestation runs
+(www.youtube.com/robots.txt in a hidden session against the m.youtube.com
+watch page) and the session the streaming URL comes from (the capture's
+OkHttp fetch of the watch page, a different visitor id from the tab's).**
+Ruled out along the way, each by a device log: the binding (both refused),
+being logged in, and uBlock blocking the VM's `generate_204` ping (the tab
+is blocked the same way and plays).
+
 **The re-mint MUST bypass every token cache — a cache-first "refresh" is a
 no-op that only looks like recovery.** The refresher goes through
 `PoTokenGenerator.generateFresh`, NOT `generate`, because the token is cached
