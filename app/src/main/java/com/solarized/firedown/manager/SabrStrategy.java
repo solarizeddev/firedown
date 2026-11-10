@@ -148,6 +148,10 @@ public class SabrStrategy implements DownloadStrategy {
         // (a latent bug in the JS cache).
         streamBinding = new StreamTokenBinding(
                 !TextUtils.isEmpty(request.getSabrVisitorData()));
+        PoTokenGenerator settling = context.getPoTokenGenerator();
+        if (settling != null && !TextUtils.isEmpty(request.getSabrVideoId())) {
+            settling.settleForStream(request.getSabrVideoId(), request.getSabrVisitorData());
+        }
         String poToken = mintPoToken(request);
         if (!TextUtils.isEmpty(poToken)) {
             sabrDownloader.setPoToken(poToken);

@@ -116,6 +116,8 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
         // cml = how long it may be trusted (from the SERVER, see below),
         // cmp = in-flight attestation, so concurrent mints share one run.
         let cm = null, cmt = 0, cml = 0, cmp = null;
+        // How many attestations this page has made.
+        let cmn = 0;
 
         // Fallback only — used when the server doesn't tell us the integrity
         // token's lifetime. Previously this 5h was applied UNCONDITIONALLY.
@@ -206,7 +208,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             const ttl = (typeof ij[1] === 'number' && ij[1] > 0) ? ij[1]*1000 : 0;
             const m = await BG.WebPoMinter.create({integrityToken:ij[0]},wps);
             cml = ttl ? Math.max(60000, ttl - CM_TTL_MARGIN) : CM_TTL_FALLBACK;
-            cm=m; cmt=Date.now();
+            cm=m; cmt=Date.now(); cmn++;
             return 'snapshot='+String(bgr).length+' integrity='+ij[0].length+' ttl='+ij[1]+' '+pageShape();
         }
 
@@ -300,7 +302,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                 // age: how old the attestation behind this token is. The
                 // native side holds a token back until it has settled.
                 const age = cmt ? Date.now()-cmt : -1;
-                window.__fdPoTokenCB(JSON.stringify({requestId:rid,token:t,info:lastAttest,age:age}));
+                window.__fdPoTokenCB(JSON.stringify({requestId:rid,token:t,info:lastAttest,age:age,attests:cmn}));
             } catch(e) {
                 window.__fdPoTokenCB(JSON.stringify({requestId:rid,error:e.message}));
             }
@@ -351,7 +353,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                         if (!data || data.requestId !== requestId) return;
                         cleanup();
                         if (data.error) reject(new Error(data.error));
-                        else resolve({ token: data.token, info: data.info || '', age: data.age });
+                        else resolve({ token: data.token, info: data.info || '', age: data.age, attests: data.attests });
                     };
                     timerId = setTimeout(() => {
                         cleanup();
@@ -365,7 +367,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                             msg.forceFresh === true,
                             msg.binding === 'visitor' ? 'visitor' : 'video');
                 });
-                natPort.postMessage({ type: 'mintResult', requestId, token: minted.token, info: minted.info, age: minted.age });
+                natPort.postMessage({ type: 'mintResult', requestId, token: minted.token, info: minted.info, age: minted.age, attests: minted.attests });
             } catch (e) {
                 natPort.postMessage({ type: 'mintResult', requestId, error: e.message });
             }

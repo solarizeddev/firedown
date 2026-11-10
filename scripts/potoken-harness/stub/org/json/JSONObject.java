@@ -7,5 +7,6 @@ public class JSONObject {
     public String optString(String k, String d){ Object v=m.get(k); return v==null?d:String.valueOf(v); }
     public boolean optBoolean(String k, boolean d){ Object v=m.get(k); return v instanceof Boolean?(Boolean)v:d; }
     public long optLong(String k, long d){ Object v=m.get(k); return v instanceof Number?((Number)v).longValue():d; }
+    public int optInt(String k, int d){ Object v=m.get(k); return v instanceof Number?((Number)v).intValue():d; }
     public String toString(){ return m.toString(); }
 }

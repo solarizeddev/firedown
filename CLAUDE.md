@@ -1825,12 +1825,22 @@ TTL problem, not a token-content problem.** `cml` is now bounded by
 no-value-from-server fallback), the attestation is **single-flight**
 (`cmp`) so a video and its subtitles don't each run their own att/get →
 VM-fetch → GenerateIT, and `tokenCache` entries expire after 10 min.
-**The age of the attestation is not the cause** (ruled out on a device,
-2026-11): a token minted 15 s after its attestation was kept pending like
-one minted at once (`minterAge=` on the `mintResult` line). In the same
-session one video is refused on every token and another downloads with no
-"pending" at all, so the server does not ask every video for a token, and a
-download that works proves nothing about the token.
+**The first download of a hidden session is the one refused** (device
+logs, 2026-11; an experiment, not yet confirmed). In four runs the first
+download was kept pending and refused at a minute of media, and a second
+one in the same process was served with no "pending", whichever video came
+first. A token minted 15 s after its attestation failed the same way, so
+the minter's own age is not it. Two readings fit every log: the stream
+server needs ~20 s after the session's FIRST attestation (failures started
+at most 18 s after it, successes at least 24 s), or the streaming URL must
+be captured after that attestation (every failing capture was made before
+it). `settleForStream` tests the first: before a download's first stream
+token it makes sure a second attestation exists and waits until
+`SESSION_SETTLE_MS` (30 s) after the first, then mints. The `mintResult`
+line carries `minterAge=` and `sinceFirstAttest=`. If a first download
+still fails with that wait, the capture order is what is left (attest when
+the video is captured, or capture again). A re-mint after status 3 has
+never been accepted in any log.
 **Note what is and isn't a prediction here.** A PO token's own lifetime
 is NOT predictable — yt-dlp's guide puts observed validity anywhere from
 ~12 h to several months, and their issue asking for a figure is still
