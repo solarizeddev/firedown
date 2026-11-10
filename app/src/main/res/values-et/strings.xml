@@ -176,7 +176,7 @@
     <string name="browser_tabs_empty_archive">Hiljuti suletud vahelehti pole.</string>
     <string name="cancel">Tühista</string>
     <string name="capture_empty_message">Allalaadimiseks pole meediume saadaval.</string>
-    <string name="capture_empty_subtext">Laadige veebisait uuesti ja Firedown tuvastab saadaoleva meedia.</string>
+    <string name="capture_empty_subtext">Mõni video ilmub alles pärast esitamise alustamist.</string>
     <string name="clipboard">Kopeeriti lõikelauale</string>
     <string name="close_tab">Sulge kaart</string>
 <string name="close_tabs_after_one_day">Ühe päeva pärast</string>
@@ -1006,8 +1006,6 @@
         <item quantity="one">%d ebaõnnestus</item>
         <item quantity="other">%d ebaõnnestus</item>
     </plurals>
-    <string name="capture_help_banner">Mõnda manustatud meediat tuleb enne esitada. Puuduta, et näha, kuidas.</string>
-    <string name="capture_help_banner_title">Videot pole loendis?</string>
     <string name="capture_help_menu">Jäädvustamise abi</string>
     <string name="capture_scanning">Meedia otsimine…</string>
     <string name="cert_connection_exception">Turvaerand</string>

@@ -269,8 +269,6 @@
     <string name="trackers_info_stat_blocked">مسدود شده</string>
     <string name="trackers_info_stat_saved">داده ذخیره‌شده</string>
     <string name="capture_help_menu">راهنما</string>
-    <string name="capture_help_banner_title">ویدیو در فهرست نیست؟</string>
-    <string name="capture_help_banner">برخی رسانه‌های جاسازی‌شده باید ابتدا پخش شوند. برای آموزش ضربه بزنید.</string>
     <string name="bookmark_export">برون‌بری نشانک‌ها</string>
     <string name="bookmark_export_done">%1$d نشانک به Download/Firedown/backup برون‌بری شد</string>
     <string name="bookmark_import">درون‌ریزی نشانک‌ها</string>

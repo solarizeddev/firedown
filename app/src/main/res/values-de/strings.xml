@@ -180,7 +180,7 @@
     <string name="browser_tabs_empty_archive">Keine kürzlich geschlossenen Tabs.</string>
     <string name="cancel">Abbrechen</string>
     <string name="capture_empty_message">Es stehen keine Medien zum Download zur Verfügung.</string>
-    <string name="capture_empty_subtext">Laden Sie die Website neu und Firedown erkennt verfügbare Medien.</string>
+    <string name="capture_empty_subtext">Manche Videos erscheinen erst, nachdem du auf Wiedergabe getippt hast.</string>
     <string name="cert_connection_exception">Sicherheits-Ausnahme</string>
     <string name="cert_connection_insecure">Verbindung ist nicht sicher</string>
     <string name="cert_connection_secure">Verbindung ist sicher</string>
@@ -671,8 +671,6 @@
     <string name="task_frame_failed">Bild konnte nicht gespeichert werden</string>
     <string name="task_frame_cancelled">Speichern abgebrochen</string>
     <string name="capture_help_menu">Hilfe</string>
-    <string name="capture_help_banner_title">Video nicht aufgeführt?</string>
-    <string name="capture_help_banner">Manche eingebetteten Medien müssen erst abgespielt werden. Tippen, um mehr zu erfahren.</string>
     <string name="tabs_more_options">Weitere Optionen</string>
     <string name="trackers_info_summary">%1$s blockiert</string>
     <string name="most_visited">Meistbesucht</string>

@@ -168,7 +168,7 @@
     <string name="browser_tabs_empty_archive">Tidak ada tab yang baru saja ditutup.</string>
     <string name="cancel">Membatalkan</string>
     <string name="capture_empty_message">Tidak ada media yang tersedia untuk diunduh.</string>
-    <string name="capture_empty_subtext">Muat ulang situs web dan Firedown akan mendeteksi media yang tersedia.</string>
+    <string name="capture_empty_subtext">Beberapa video baru muncul setelah Anda menekan putar.</string>
     <string name="clipboard">Disalin ke papan klip</string>
     <string name="clipboard_from">Dari papan klip</string>
     <string name="close_tab">Tutup tab</string>
@@ -423,8 +423,6 @@
     <string name="bookmark_action_open">Buka di browser</string>
     <string name="bookmark_delete_action">Hapus markah</string>
     <string name="capture_help_menu">Bantuan</string>
-    <string name="capture_help_banner_title">Video tidak ada di daftar?</string>
-    <string name="capture_help_banner">Beberapa media tersemat harus diputar dulu. Ketuk untuk mempelajari caranya.</string>
     <string name="bookmark_export">Ekspor markah</string>
     <string name="bookmark_export_done">%1$d markah diekspor ke Download/Firedown/backup</string>
     <string name="bookmark_import">Impor markah</string>

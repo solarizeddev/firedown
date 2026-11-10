@@ -168,7 +168,7 @@
     <string name="browser_tabs_empty_archive">Không có tab nào đã đóng gần đây.</string>
     <string name="cancel">Hủy</string>
     <string name="capture_empty_message">Không có sẵn phương tiện để tải xuống.</string>
-    <string name="capture_empty_subtext">Tải lại trang web và Firedown sẽ phát hiện phương tiện có sẵn.</string>
+    <string name="capture_empty_subtext">Một số video chỉ xuất hiện sau khi bạn nhấn phát.</string>
     <string name="clipboard">Sao chép vào clipboard</string>
     <string name="clipboard_from">Từ bộ nhớ tạm</string>
     <string name="close_tab">Đóng thẻ</string>
@@ -417,8 +417,6 @@
         <item quantity="other">Đã chặn %d yêu cầu trên trang này</item>
     </plurals>
     <string name="capture_help_menu">Trợ giúp</string>
-    <string name="capture_help_banner_title">Không thấy video?</string>
-    <string name="capture_help_banner">Một số nội dung nhúng phải được phát trước. Nhấn để tìm hiểu cách.</string>
     <string name="bookmark_export">Xuất dấu trang</string>
     <string name="bookmark_export_done">Đã xuất %1$d dấu trang vào Download/Firedown/backup</string>
     <string name="bookmark_import">Nhập dấu trang</string>

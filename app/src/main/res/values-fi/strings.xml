@@ -178,7 +178,7 @@
     <string name="browser_tabs_empty_archive">Ei äskettäin suljettuja välilehtiä.</string>
     <string name="cancel">Peruuttaa</string>
     <string name="capture_empty_message">Mediaa ei ole ladattavissa.</string>
-    <string name="capture_empty_subtext">Lataa verkkosivusto uudelleen, niin Firedown havaitsee käytettävissä olevan median.</string>
+    <string name="capture_empty_subtext">Jotkin videot näkyvät vasta, kun olet aloittanut toiston.</string>
     <string name="clipboard">Kopioitu leikepöydälle</string>
     <string name="clipboard_from">Leikepöydältä</string>
     <string name="close_tab">Sulje välilehti</string>
@@ -534,8 +534,6 @@
     <string name="task_frame_failed">Kuvan tallennus epäonnistui</string>
     <string name="task_frame_cancelled">Kuvan tallennus peruutettu</string>
     <string name="capture_help_menu">Ohje</string>
-    <string name="capture_help_banner_title">Eikö videota näy?</string>
-    <string name="capture_help_banner">Jotkin upotetut mediat on toistettava ensin. Napauta nähdäksesi ohjeet.</string>
     <string name="tabs_more_options">Lisää vaihtoehtoja</string>
     <string name="trackers_info_summary">%1$s estetty</string>
     <string name="most_visited">Useimmin vieraillut</string>

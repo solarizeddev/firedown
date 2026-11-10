@@ -188,7 +188,7 @@
     <string name="browser_tabs_empty_archive">Нет недавно закрытых вкладок.</string>
     <string name="cancel">Отмена</string>
     <string name="capture_empty_message">Нет доступных для скачивания медиафайлов.</string>
-    <string name="capture_empty_subtext">Перезагрузите веб-сайт, и Firedown обнаружит доступные медиафайлы.</string>
+    <string name="capture_empty_subtext">Некоторые видео появляются только после нажатия на воспроизведение.</string>
     <string name="clipboard">Скопировано в буфер обмена</string>
     <string name="clipboard_from">Из буфера обмена</string>
     <string name="close_tab">Закрыть вкладку</string>
@@ -586,8 +586,6 @@
     <string name="task_frame_failed">Не удалось сохранить кадр</string>
     <string name="task_frame_cancelled">Сохранение кадра отменено</string>
     <string name="capture_help_menu">Справка</string>
-    <string name="capture_help_banner_title">Видео нет в списке?</string>
-    <string name="capture_help_banner">Некоторые встроенные медиа нужно сначала воспроизвести. Нажмите, чтобы узнать как.</string>
     <string name="tabs_more_options">Ещё параметры</string>
     <string name="trackers_info_summary">%1$s заблокировано</string>
     <string name="most_visited">Часто посещаемые</string>
