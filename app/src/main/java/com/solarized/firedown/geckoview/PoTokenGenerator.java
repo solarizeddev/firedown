@@ -141,13 +141,6 @@ public class PoTokenGenerator {
      *  is the one that gives up first. */
     private static final long MINT_FRESH_TIMEOUT_MS = 30_000;
 
-    /** How long after a hidden session's FIRST attestation a download's
-     *  stream token is minted ({@link #settleForStream}). On a device every
-     *  download started within 18 s of it was kept "pending" by the stream
-     *  server and refused at a minute of media, and every one started 24 s
-     *  or more after it was served, the same video included. */
-    static final long SESSION_SETTLE_MS = 30_000;
-
     /** How long a minted token may be served from {@link #tokenCache}.
      *
      *  <p>This is NOT a prediction of when a token expires — nobody can make
@@ -399,61 +392,6 @@ public class PoTokenGenerator {
     @Nullable
     public String generateFresh(@NonNull String videoId, @Nullable String visitorData) {
         return generate(Binding.VIDEO, videoId, visitorData, true);
-    }
-
-    /**
-     * Opens the hidden session and makes its first attestation ahead of any
-     * download (blocking, worker thread), so {@link #settleForStream} finds
-     * the session already settled. Nothing happens when a session exists.
-     */
-    public void warm(@Nullable String visitorData) {
-        synchronized (lock) {
-            if (session != null || firstAttestedAt > 0) return;
-        }
-        generate(Binding.VIDEO, WARM_ID, visitorData, false);
-    }
-
-    /** The identifier {@link #warm} mints over; no video has it. */
-    private static final String WARM_ID = "warm";
-
-    /**
-     * Called before a download's first stream token is minted (blocking,
-     * worker thread). When the hidden session's first attestation is younger
-     * than {@link #SESSION_SETTLE_MS}, it makes sure a second attestation
-     * exists, waits out the rest, and drops the cached token so the caller's
-     * mint comes from the settled minter. Costs nothing once the session is
-     * older. An interrupt ends the wait.
-     */
-    public void settleForStream(@NonNull String videoId, @Nullable String visitorData) {
-        if (TextUtils.isEmpty(generate(Binding.VIDEO, videoId, visitorData, false))) return;
-        final long first;
-        final int count;
-        synchronized (lock) {
-            first = firstAttestedAt;
-            count = attestations;
-        }
-        if (first <= 0 || System.currentTimeMillis() - first >= SESSION_SETTLE_MS) return;
-        if (count < 2) {
-            generate(Binding.VIDEO, videoId, visitorData, true);
-        }
-        final long wait;
-        synchronized (lock) {
-            wait = firstAttestedAt > 0
-                    ? SESSION_SETTLE_MS - (System.currentTimeMillis() - firstAttestedAt) : 0;
-        }
-        if (wait > 0) {
-            Log.i(TAG, "settleForStream: first attestation is new, waiting " + wait + "ms");
-            try {
-                Thread.sleep(wait);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return;
-            }
-        }
-        synchronized (lock) {
-            tokenCache.remove(cacheKey(Binding.VIDEO, videoId, visitorData));
-            tokenCache.remove(cacheKey(Binding.VISITOR, videoId, visitorData));
-        }
     }
 
     /** {@link #generateFresh} for the visitor-bound stream token — the

@@ -251,6 +251,51 @@ function storeInterceptedResponse(videoId, playerResponse) {
     }
 }
 
+// The tab's own watch request (get_watch / player) while it is in flight,
+// per tab, so processVideo can wait for the response the page's player is
+// about to get instead of fetching a second, separate one. That response
+// is the one the player's own PO token was sent for.
+const watchPending = new Map();   // tabId -> { promise, resolve, at }
+const watchArrival = new Map();   // tabId -> [resolve]
+const WATCH_START_WAIT_MS = 1500;
+const WATCH_RESPONSE_WAIT_MS = 8000;
+
+function watchRequestStarted(tabId) {
+    let resolve;
+    const promise = new Promise(r => { resolve = r; });
+    watchPending.set(tabId, { promise, resolve, at: Date.now() });
+    const waiting = watchArrival.get(tabId);
+    if (waiting) { watchArrival.delete(tabId); for (const r of waiting) r(); }
+}
+
+function watchRequestEnded(tabId) {
+    const p = watchPending.get(tabId);
+    if (p) { watchPending.delete(tabId); p.resolve(); }
+}
+
+function timeoutAfter(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Resolves once the tab's watch request has answered, or at once when the
+// tab makes none within WATCH_START_WAIT_MS.
+async function waitForTabWatchResponse(tabId) {
+    if (!(tabId >= 0)) return;
+    let p = watchPending.get(tabId);
+    if (!p) {
+        await Promise.race([
+            new Promise(r => {
+                const list = watchArrival.get(tabId) || [];
+                list.push(r);
+                watchArrival.set(tabId, list);
+            }),
+            timeoutAfter(WATCH_START_WAIT_MS)
+        ]);
+        watchArrival.delete(tabId);
+        p = watchPending.get(tabId);
+        if (!p) return;
+    }
+    await Promise.race([p.promise, timeoutAfter(WATCH_RESPONSE_WAIT_MS)]);
+}
+
 function takeInterceptedResponse(videoId) {
     const entry = interceptedResponses.get(videoId);
     if (!entry) return null;
@@ -1982,6 +2027,19 @@ async function processVideo(details, videoId) {
             log(`[Process] Using intercepted API response for ${videoId}`);
         }
 
+        // An in-page navigation: the page asks for the watch data itself.
+        // Wait for that answer and use it.
+        if (!playerResponse && details._inPage) {
+            _stage = 'watch-wait';
+            await waitForTabWatchResponse(details._resolvedTabId);
+            const late = takeInterceptedResponse(videoId);
+            if (late) {
+                playerResponse = late;
+                streamSource = "intercepted";
+                log(`[Process] Using the page's own watch response for ${videoId}`);
+            }
+        }
+
         // Intercept-wait removed. In practice, every observed processVideo flow
         // uses streamSource="html" — the player API XHR interceptor never fires
         // for MWEB because YouTube embeds playerResponse in the page HTML, not
@@ -2594,9 +2652,11 @@ browser.webRequest.onBeforeRequest.addListener(
     (details) => {
         if (details.method !== "POST") return;
 
+        const watchTab = details.tabId;
         let filter;
         try { filter = browser.webRequest.filterResponseData(details.requestId); }
         catch (e) { return; }
+        if (watchTab >= 0) watchRequestStarted(watchTab);
         const chunks = [];
         let bytes = 0;
         let overflow = false;
@@ -2616,7 +2676,7 @@ browser.webRequest.onBeforeRequest.addListener(
 
         filter.onstop = () => {
             filter.close();
-            if (overflow) return;
+            if (overflow) { watchRequestEnded(watchTab); return; }
             try {
                 const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
                 const combined = new Uint8Array(totalLength);
@@ -2627,7 +2687,17 @@ browser.webRequest.onBeforeRequest.addListener(
                 }
 
                 const responseText = new TextDecoder().decode(combined);
-                const playerResponse = JSON.parse(responseText);
+                // /player answers the player response itself; get_watch
+                // answers a list whose first part holds it.
+                const parsed = JSON.parse(responseText);
+                const holder = Array.isArray(parsed)
+                    ? (parsed.find(x => x && x.playerResponse) || {})
+                    : (parsed && parsed.playerResponse ? parsed : null);
+                const playerResponse = holder ? holder.playerResponse : parsed;
+                if (holder && playerResponse && !playerResponse.responseContext
+                        && holder.responseContext) {
+                    playerResponse.responseContext = holder.responseContext;
+                }
 
                 if (playerResponse?.playabilityStatus?.status !== "OK") return;
 
@@ -2667,16 +2737,20 @@ browser.webRequest.onBeforeRequest.addListener(
                 }
             } catch (e) {
                 // Not a player response or parse error — ignore
+            } finally {
+                watchRequestEnded(watchTab);
             }
         };
 
         filter.onerror = () => {
             try { filter.close(); } catch (e) {}
+            watchRequestEnded(watchTab);
         };
     },
     {
         urls: [
             "*://*.youtube.com/youtubei/v1/player*",
+            "*://*.youtube.com/youtubei/v1/get_watch*",
             "*://youtubei.googleapis.com/youtubei/v1/player*"
         ],
         types: ["xmlhttprequest"]
@@ -2709,13 +2783,15 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         // matches it, but YouTube always returns ERROR for this ID. No point
         // running the full extraction pipeline just to fail at every stage.
         if (videoId && videoId !== 'yt-dlp-wins' && trackVideo(tabId, videoId)) {
-            processVideo({ url: triggerUrl, tabId, _resolvedTabId: tabId, requestId: `tab-${tabId}-${Date.now()}` }, videoId);
+            processVideo({ url: triggerUrl, tabId, _resolvedTabId: tabId, _inPage: !!changeInfo.url && tab.status === "complete", requestId: `tab-${tabId}-${Date.now()}` }, videoId);
         }
     }
 });
 
 browser.tabs.onRemoved.addListener((tabId) => {
     clearTabFromCache(tabId);
+    watchRequestEnded(tabId);
+    watchArrival.delete(tabId);
     for (const [url, entry] of urlToTabCache) { if (entry.tabId === tabId) urlToTabCache.delete(url); }
 });
 
@@ -2785,21 +2861,6 @@ browser.webRequest.onHeadersReceived.addListener(
         "*://*.youtube-nocookie.com/v/*",
         "*://*.youtube-nocookie.com/e/*"
     ], types: ["main_frame", "sub_frame", "xmlhttprequest"] }
-);
-
-// The first YouTube page of this process asks the native side to prepare
-// the PO token page, so its attestation is done well before a download
-// asks for a token.
-let poTokenWarmed = false;
-browser.webRequest.onBeforeRequest.addListener(
-    () => {
-        if (poTokenWarmed) return;
-        poTokenWarmed = true;
-        browser.runtime.sendNativeMessage("youtube",
-            { kind: "warm-potoken", visitorData: cachedVisitorData || "" })
-            .catch(() => { poTokenWarmed = false; });
-    },
-    { urls: ["*://*.youtube.com/*"], types: ["main_frame"] }
 );
 
 function captureBrowserState(details) {
