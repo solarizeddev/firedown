@@ -18,6 +18,7 @@ import com.solarized.firedown.R;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * The app icon's long-press shortcuts: "New tab" and "New private tab", as
@@ -44,7 +45,11 @@ public final class LauncherShortcuts {
     private LauncherShortcuts() {
     }
 
-    /** Off the main thread: two binder calls. */
+    /**
+     * Off the main thread: two binder calls. Compares labels, action and
+     * component; a changed icon keeps its resource name, which Android
+     * re-resolves on update.
+     */
     public static void publish(@NonNull Context context) {
         ShortcutManager manager = context.getSystemService(ShortcutManager.class);
         if (manager == null) {
@@ -98,10 +103,12 @@ public final class LauncherShortcuts {
                     break;
                 }
             }
-            if (have == null
+            Intent haveIntent = have == null ? null : have.getIntent();
+            Intent wantIntent = want.getIntent();
+            if (haveIntent == null || wantIntent == null
                     || !TextUtils.equals(have.getShortLabel(), want.getShortLabel())
-                    || have.getIntent() == null
-                    || !TextUtils.equals(have.getIntent().getAction(), want.getIntent().getAction())) {
+                    || !TextUtils.equals(haveIntent.getAction(), wantIntent.getAction())
+                    || !Objects.equals(haveIntent.getComponent(), wantIntent.getComponent())) {
                 return false;
             }
         }

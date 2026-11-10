@@ -18,6 +18,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.solarized.firedown.BaseActivity;
+import com.solarized.firedown.IntentActions;
+import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.Utils;
@@ -153,16 +155,17 @@ public class HtmlViewerActivity extends BaseActivity {
     }
 
     /**
-     * A link tapped inside an archive opens in Firedown's browser — the
-     * app's own VIEW filter, pinned to this package so the chooser never
-     * appears. Only reached for a user gesture on an http(s) link: a
-     * meta-refresh is stripped by the serializer before it gets here, and a
-     * script can't run in this viewer.
+     * A link tapped inside an archive opens in Firedown's browser, as
+     * OPEN_URI (never a VIEW, which the "links from other apps open
+     * privately" setting would take for another app's). Only reached for a
+     * user gesture on an http(s) link: a meta-refresh is stripped by the
+     * serializer before it gets here, and a script can't run in this viewer.
      */
     private void openInBrowser(Uri target) {
         try {
-            Intent intent = new Intent(Intent.ACTION_VIEW, target);
-            intent.setPackage(getPackageName());
+            Intent intent = new Intent(this, BrowserMainActivity.class);
+            intent.setAction(IntentActions.OPEN_URI);
+            intent.putExtra(Keys.ITEM_URL, target.toString());
             startActivity(intent);
         } catch (ActivityNotFoundException e) {
             Log.w(TAG, "openInBrowser: no handler for " + target.getScheme());

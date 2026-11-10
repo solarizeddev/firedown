@@ -1,6 +1,7 @@
 package com.solarized.firedown;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -36,6 +37,12 @@ public class SearchIntentActivity extends AppCompatActivity {
             resultIntent.putExtra(Intent.EXTRA_TEXT, url);
 
             resultIntent.setAction(Intent.ACTION_SEND);
+
+            // Text selected in Firedown's own page is not another app's link.
+            Uri referrer = getReferrer();
+            if (referrer != null && getPackageName().equals(referrer.getHost())) {
+                resultIntent.putExtra(Keys.FROM_FIREDOWN, true);
+            }
 
             resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 

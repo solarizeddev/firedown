@@ -16,6 +16,13 @@ public class Keys {
 
     public static final String IS_INCOGNITO = "com.solarized.firedown.IS_INCOGNTO";
     public static final String OPEN_INCOGNITO = "com.solarized.firedown.OPEN_INCOGNTO";
+
+    /**
+     * On a SEND that SearchIntentActivity forwards for text selected inside
+     * Firedown itself: not a link from another app, so the "open links from
+     * other apps in a private tab" setting leaves it alone.
+     */
+    public static final String FROM_FIREDOWN = "com.solarized.firedown.FROM_FIREDOWN";
     public static final String ITEM_BOOKMARK = "com.solarized.firedown.ITEM_BOOKMARK";
     public static final String ITEM_URL = "com.solarized.firedown.ITEM_URL";
     public static final String ITEM_ID = "com.solarized.firedown.ITEM_ID";

@@ -89,6 +89,12 @@ public class IntentHandler {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
+    /** A launcher shortcut's action: act on it once, never on a restore. */
+    public static boolean isOneShotAction(String action) {
+        return IntentActions.NEW_TAB.equals(action)
+                || IntentActions.NEW_PRIVATE_TAB.equals(action);
+    }
+
     private static boolean isExternalViewAction(String action) {
         return Intent.ACTION_SEND.equals(action)
                 || Intent.ACTION_VIEW.equals(action)
@@ -181,7 +187,8 @@ public class IntentHandler {
     private void handleExternalUri(Intent intent, NavController navController) {
         String url = AppLinkUseCases.getIntentUrl(intent);
         GeckoStateEntity geckoStateEntity = new GeckoStateEntity(false, url);
-        geckoStateEntity.setIncognito(callback.opensExternalLinksPrivately());
+        geckoStateEntity.setIncognito(callback.opensExternalLinksPrivately()
+                && !intent.getBooleanExtra(Keys.FROM_FIREDOWN, false));
         geckoStateEntity.setExternal(true);
         // A private link (Settings: links from other apps open privately)
         // gets the private home under it, so Back lands there. A regular

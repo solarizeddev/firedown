@@ -117,7 +117,7 @@ public class BrowserMainActivity extends BaseActivity {
 
         // The icon's long-press "New tab" / "New private tab".
         Context appContext = getApplicationContext();
-        mDiskExecutor.execute(() -> LauncherShortcuts.publish(appContext));
+        mHeavyExecutor.execute(() -> LauncherShortcuts.publish(appContext));
 
         GeckoRuntime sGeckoRuntime = mGeckoRuntimeHelper.getGeckoRuntime();
         sGeckoRuntime.setDelegate(() -> mKillProcessOnDestroy = true);
