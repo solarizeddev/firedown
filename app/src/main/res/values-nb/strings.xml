@@ -310,8 +310,6 @@
     <string name="task_frame_failed">Kunne ikke lagre bilde</string>
     <string name="task_frame_cancelled">Lagring av bilde avbrutt</string>
     <string name="capture_help_menu">Hjelp</string>
-    <string name="capture_help_banner_title">Mangler videoen?</string>
-    <string name="capture_help_banner">Noen innebygde medier må spilles av først. Trykk for å lære mer.</string>
     <string name="bookmark_export">Eksporter bokmerker</string>
     <string name="bookmark_export_done">Eksporterte %1$d bokmerker til Download/Firedown/backup</string>
     <string name="bookmark_import">Importer bokmerker</string>

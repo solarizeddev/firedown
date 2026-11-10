@@ -73,7 +73,6 @@ public class Preferences {
     // One-shot "you may need to play the embedded media first" banner on the
     // Capture sheet. Set once the user taps or dismisses it, so it never returns
     // (the toolbar Help item remains the permanent affordance).
-    public static final String CAPTURE_HELP_BANNER_DISMISSED = "com.solarized.firedown.preferences.capture.help.banner.dismissed";
 
     public static final String SORT_LOCAL = "com.solarized.firedown.preferences.sort.local";
 

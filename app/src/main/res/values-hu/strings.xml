@@ -282,8 +282,6 @@
         <item quantity="other">%d kérés letiltva ezen az oldalon</item>
     </plurals>
     <string name="capture_help_menu">Súgó</string>
-    <string name="capture_help_banner_title">Nincs a listában a videó?</string>
-    <string name="capture_help_banner">Egyes beágyazott médiákat előbb le kell játszani. Koppints a részletekért.</string>
     <string name="bookmark_export">Könyvjelzők exportálása</string>
     <string name="bookmark_export_done">%1$d könyvjelző exportálva ide: Download/Firedown/backup</string>
     <string name="bookmark_import">Könyvjelzők importálása</string>

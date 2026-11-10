@@ -273,8 +273,6 @@
     <string name="trackers_info_stat_blocked">ถูกบล็อก</string>
     <string name="trackers_info_stat_saved">ข้อมูลที่ประหยัด</string>
     <string name="capture_help_menu">ความช่วยเหลือ</string>
-    <string name="capture_help_banner_title">ไม่พบวิดีโอใช่ไหม</string>
-    <string name="capture_help_banner">สื่อที่ฝังไว้บางรายการต้องเล่นก่อน แตะเพื่อดูวิธี</string>
     <string name="bookmark_export">ส่งออกบุ๊กมาร์ก</string>
     <string name="bookmark_export_done">ส่งออกบุ๊กมาร์ก %1$d รายการไปยัง Download/Firedown/backup แล้ว</string>
     <string name="bookmark_import">นำเข้าบุ๊กมาร์ก</string>

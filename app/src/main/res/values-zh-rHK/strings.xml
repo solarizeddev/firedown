@@ -206,8 +206,6 @@
     <string name="trackers_info_title">已封鎖追蹤器與廣告</string>
     <string name="trackers_info_idle">防護已啟用</string>
     <string name="capture_help_menu">說明</string>
-    <string name="capture_help_banner_title">找不到影片？</string>
-    <string name="capture_help_banner">部分嵌入的媒體需先播放才能偵測。輕觸瞭解詳情。</string>
     <string name="bookmark_export">匯出書籤</string>
     <string name="bookmark_export_done">已將 %1$d 個書籤匯出至 Download/Firedown/backup</string>
     <string name="bookmark_import">匯入書籤</string>

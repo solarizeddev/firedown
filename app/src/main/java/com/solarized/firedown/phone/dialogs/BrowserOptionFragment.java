@@ -66,7 +66,6 @@ import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.adapters.BrowserOptionAdapter;
 import com.solarized.firedown.utils.CaptureUrlActions;
 import com.solarized.firedown.utils.NavigationUtils;
-import com.solarized.firedown.utils.SelectionStyling;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,11 +84,9 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
     private FragmentsOptionsViewModel mFragmentsViewModel;
     private GridLayoutManager mLayoutManager;
     private Toolbar mToolbar;
-    private View mHelpBanner;
     private MaterialCardView mBatchCard;
     private TextView mBatchText;
     private LinearProgressIndicator mBatchProgress;
-    private boolean mHelpBannerDismissed;
     private boolean mIsIncognito;
     private int mScrollLimit;
     // Set by a tap that OPENS the fold, cleared by the first list that comes
@@ -112,7 +109,6 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         super.onCreate(savedInstanceState);
         mScrollLimit = Preferences.LIST_LIMIT;
         mIsIncognito = getArguments() != null && getArguments().getBoolean(Keys.IS_INCOGNITO, false);
-        mHelpBannerDismissed = mSharedPreferences.getBoolean(Preferences.CAPTURE_HELP_BANNER_DISMISSED, false);
         mBrowserDownloadViewModel = new ViewModelProvider(this).get(BrowserDownloadViewModel.class);
         mFragmentsViewModel = new ViewModelProvider(mActivity).get(FragmentsOptionsViewModel.class);
     }
@@ -134,37 +130,6 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         mLCEERecyclerView.setEmptyText(R.string.capture_empty_message);
         mLCEERecyclerView.setEmptySubText(R.string.capture_empty_subtext);
         mLCEERecyclerView.setEmptyImageView(R.drawable.ill_baloons);
-
-        // One-shot help banner (non-empty list only). Tapping the body opens the
-        // same help screen as the toolbar Help item; the X just dismisses. Either
-        // gesture persists the dismissal so it never returns.
-        mHelpBanner = view.findViewById(R.id.capture_help_banner);
-        // Brand wash (primaryContainer @ 20% over surface) — composed in code, so
-        // set here rather than XML — matching the archive / incognito-in-progress
-        // banners so the three list-banners read as siblings.
-        //
-        // Resolve the wash off the BANNER's own context, NOT requireContext():
-        // this sheet inflates against the incognito-themed dialog context
-        // (Theme_FireDown_BottomSheetVaultDialogTheme — see
-        // BaseBottomSheetDialogFragment.getTheme), so the banner's XML
-        // ?attr/colorOnSurface text is the incognito (light) onSurface. The
-        // fragment's requireContext() is the regular (light) activity theme, so
-        // washing over its colorSurface produced a LIGHT pink card — light text
-        // on a light card, illegible (the incognito Captured sheet bug). Using
-        // the themed view context makes the wash track whatever palette the
-        // text does, exactly as the sibling adapters do with parent.getContext().
-        if (mHelpBanner instanceof MaterialCardView) {
-            ((MaterialCardView) mHelpBanner).setCardBackgroundColor(
-                    SelectionStyling.selectedCardWashOver(
-                            mHelpBanner.getContext(),
-                            com.google.android.material.R.attr.colorSurface));
-        }
-        mHelpBanner.setOnClickListener(v -> {
-            openCaptureHelp();
-            dismissHelpBanner();
-        });
-        view.findViewById(R.id.capture_help_banner_dismiss)
-                .setOnClickListener(v -> dismissHelpBanner());
 
         mBatchCard = view.findViewById(R.id.capture_batch_card);
         mBatchText = view.findViewById(R.id.capture_batch_text);
@@ -415,29 +380,9 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
             }
         }
         updateProgressIndicator();
-        updateHelpBanner();
     }
 
-    /**
-     * The one-shot help banner shows only on a NON-empty list (the empty state
-     * already carries the same guidance via its button), while not in action mode,
-     * and only until the user taps or dismisses it once (persisted). The toolbar
-     * Help item remains the permanent way back to the same screen.
-     */
-    private void updateHelpBanner() {
-        if (mHelpBanner == null) return;
-        boolean show = !mActionModeEnabled && !mListEmpty && !mHelpBannerDismissed;
-        mHelpBanner.setVisibility(show ? View.VISIBLE : View.GONE);
-    }
-
-    /** Persist the dismissal and hide the banner — both the tap and the X land here. */
-    private void dismissHelpBanner() {
-        mHelpBannerDismissed = true;
-        mSharedPreferences.edit().putBoolean(Preferences.CAPTURE_HELP_BANNER_DISMISSED, true).apply();
-        updateHelpBanner();
-    }
-
-    /** Open the "play the media before downloading" help screen (toolbar item + banner). */
+    /** Open the "play the media before downloading" help screen (the toolbar's Help item). */
     private void openCaptureHelp() {
         OptionEntity option = new OptionEntity();
         option.setId(R.id.action_help);
@@ -739,8 +684,7 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
             mAdapter.toggleSelected(position);
             updateActionModeTitle();
             mToolbar.invalidateMenu();
-            updateHelpBanner();
-        }
+            }
     }
 
     public boolean isActionMode() {
@@ -778,7 +722,6 @@ public class BrowserOptionFragment extends BaseFocusFragment implements OnItemCl
         super.onDestroyView();
         mSpinnerHandler.removeCallbacks(mHideSpinner);
         mToolbar = null;
-        mHelpBanner = null;
         mBatchCard = null;
         mBatchText = null;
         mBatchProgress = null;

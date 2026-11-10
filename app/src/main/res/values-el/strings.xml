@@ -282,8 +282,6 @@
         <item quantity="other">%d αιτήματα αποκλείστηκαν σε αυτή τη σελίδα</item>
     </plurals>
     <string name="capture_help_menu">Βοήθεια</string>
-    <string name="capture_help_banner_title">Δεν εμφανίζεται το βίντεο;</string>
-    <string name="capture_help_banner">Ορισμένα ενσωματωμένα μέσα πρέπει να αναπαραχθούν πρώτα. Πατήστε για να μάθετε πώς.</string>
     <string name="bookmark_export">Εξαγωγή σελιδοδεικτών</string>
     <string name="bookmark_export_done">Έγινε εξαγωγή %1$d σελιδοδεικτών στο Download/Firedown/backup</string>
     <string name="bookmark_import">Εισαγωγή σελιδοδεικτών</string>

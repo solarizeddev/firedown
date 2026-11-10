@@ -313,8 +313,6 @@
     <string name="task_frame_failed">Kunne ikke gemme billede</string>
     <string name="task_frame_cancelled">Lagring af billede annulleret</string>
     <string name="capture_help_menu">Hjælp</string>
-    <string name="capture_help_banner_title">Mangler videoen?</string>
-    <string name="capture_help_banner">Nogle indlejrede medier skal afspilles først. Tryk for at læse mere.</string>
     <string name="bookmark_export">Eksportér bogmærker</string>
     <string name="bookmark_export_done">Eksporterede %1$d bogmærker til Download/Firedown/backup</string>
     <string name="bookmark_import">Importér bogmærker</string>

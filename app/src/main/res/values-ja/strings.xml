@@ -176,7 +176,7 @@
     <string name="browser_tabs_empty_archive">最近閉じたタブはありません。</string>
     <string name="cancel">キャンセル</string>
     <string name="capture_empty_message">ダウンロードできるメディアがありません。</string>
-    <string name="capture_empty_subtext">Web サイトをリロードすると、Firedown が利用可能なメディアを検出します。</string>
+    <string name="capture_empty_subtext">一部の動画は、再生を押した後にのみ表示されます。</string>
     <string name="cert_connection_exception">セキュリティ例外</string>
     <string name="cert_connection_insecure">接続は安全ではありません</string>
     <string name="cert_connection_secure">接続は安全です</string>
@@ -666,8 +666,6 @@
     <string name="task_frame_failed">フレームを保存できませんでした</string>
     <string name="task_frame_cancelled">フレームの保存をキャンセルしました</string>
     <string name="capture_help_menu">ヘルプ</string>
-    <string name="capture_help_banner_title">動画が見つかりませんか？</string>
-    <string name="capture_help_banner">一部の埋め込みメディアは先に再生する必要があります。タップして詳細をご覧ください。</string>
     <string name="tabs_more_options">その他のオプション</string>
     <string name="trackers_info_summary">%1$s ブロック</string>
     <string name="most_visited">よく見るサイト</string>
