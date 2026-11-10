@@ -1225,4 +1225,6 @@
     <string name="bottom_bar_downloading">%1$s, đang tải xuống</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Mở liên kết từ ứng dụng khác trong thẻ riêng tư</string>
+    <string name="settings_external_links_private_summary">Chúng không lưu vào lịch sử, và tệp tải xuống từ chúng vào Thư mục an toàn.</string>
 </resources>

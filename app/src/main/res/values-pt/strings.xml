@@ -1265,4 +1265,6 @@
     <string name="bottom_bar_downloading">%1$s, baixando</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Abrir links de outros apps em uma aba privativa</string>
+    <string name="settings_external_links_private_summary">Eles não ficam no seu histórico, e os downloads vão para a Pasta segura.</string>
 </resources>

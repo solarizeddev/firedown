@@ -1258,4 +1258,6 @@
     <string name="bottom_bar_downloading">%1$s, indiriliyor</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %%%3$d</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Diğer uygulamalardan gelen bağlantıları gizli sekmede aç</string>
+    <string name="settings_external_links_private_summary">Geçmişinizde kalmazlar ve indirmeleri Güvenli klasöre gider.</string>
 </resources>

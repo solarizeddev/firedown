@@ -746,6 +746,13 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
         finish();
     }
 
+    @Override
+    public boolean opensExternalLinksPrivately() {
+        return PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+                Preferences.SETTINGS_EXTERNAL_LINKS_PRIVATE,
+                Preferences.DEFAULT_EXTERNAL_LINKS_PRIVATE);
+    }
+
     // ── Downloads ────────────────────────────────────────────────────────────
 
     public void startDownload(BrowserDownloadEntity browserDownloadEntity, View anchorView, int anchorId){

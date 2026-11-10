@@ -40,6 +40,8 @@ public class IntentHandler {
         NavController getNavController();
         void startEncryptionService(Intent intent);
         void finishActivity();
+        /** Settings: a link from another app opens in a private tab. */
+        boolean opensExternalLinksPrivately();
     }
 
     private final BrowserURIViewModel browserURIViewModel;
@@ -71,6 +73,10 @@ public class IntentHandler {
             handleOpenSession(intent, navController);
         } else if (IntentActions.OPEN_INCOGNITO.equals(intentAction)) {
             handleOpenIncognito(intent, navController);
+        } else if (IntentActions.NEW_TAB.equals(intentAction)) {
+            handleNewTab(intent, navController, false);
+        } else if (IntentActions.NEW_PRIVATE_TAB.equals(intentAction)) {
+            handleNewTab(intent, navController, true);
         } else if (IntentActions.START_ENCRYPTION.equals(intentAction)) {
             callback.startEncryptionService(intent);
             intent.setAction("");
@@ -89,6 +95,24 @@ public class IntentHandler {
                 || Intent.ACTION_WEB_SEARCH.equals(action);
     }
 
+
+    /**
+     * NEW_TAB / NEW_PRIVATE_TAB — the launcher's long-press shortcuts
+     * (LauncherShortcuts). Always a NEW home tab in that mode, as the menus'
+     * "New tab" rows make one; never the current tab, which may hold a page.
+     */
+    private void handleNewTab(Intent intent, NavController navController, boolean incognito) {
+        GeckoStateEntity entity = new GeckoStateEntity(true);
+        entity.setIncognito(incognito);
+        GeckoState geckoState = new GeckoState(entity);
+        if (incognito) {
+            incognitoStateViewModel.setGeckoState(geckoState, true);
+        } else {
+            geckoStateViewModel.setGeckoState(geckoState, true);
+        }
+        navigateToHomeIfNeeded(navController, incognito);
+        intent.setAction("");
+    }
 
     private void handleOpenIncognito(Intent intent, NavController navController) {
         GeckoState incognitoState = incognitoStateViewModel.peekCurrentGeckoState();
@@ -157,7 +181,14 @@ public class IntentHandler {
     private void handleExternalUri(Intent intent, NavController navController) {
         String url = AppLinkUseCases.getIntentUrl(intent);
         GeckoStateEntity geckoStateEntity = new GeckoStateEntity(false, url);
+        geckoStateEntity.setIncognito(callback.opensExternalLinksPrivately());
         geckoStateEntity.setExternal(true);
+        // A private link (Settings: links from other apps open privately)
+        // gets the private home under it, so Back lands there. A regular
+        // link keeps the old path untouched.
+        if (geckoStateEntity.isIncognito()) {
+            NavigationUtils.ensureHomeOfMode(navController, true);
+        }
         browserURIViewModel.onEventSelected(geckoStateEntity, IntentActions.OPEN_EXTERNAL_URI);
         navigateToBrowserIfNeeded(navController, geckoStateEntity.isIncognito());
         intent.setAction("");

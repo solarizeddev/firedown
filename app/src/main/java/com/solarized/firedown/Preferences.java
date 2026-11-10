@@ -244,6 +244,18 @@ public class Preferences {
 
     public static final boolean DEFAULT_ADDRESS_BAR_HOST_ONLY = false;
 
+    /**
+     * A link another app hands to Firedown (VIEW, SEND, a web search) opens
+     * in a PRIVATE tab: out of history, its downloads in the Safe Folder.
+     * Firefox for Android's "Open links in a private tab". OFF by default;
+     * read by IntentHandler when the link arrives. The launcher's "New
+     * private tab" shortcut (LauncherShortcuts) is the other way in.
+     */
+    public static final String SETTINGS_EXTERNAL_LINKS_PRIVATE =
+            "com.solarized.firedown.preferences.browser.external.private";
+
+    public static final boolean DEFAULT_EXTERNAL_LINKS_PRIVATE = false;
+
     public static final String SETTINGS_THEME = "com.solarized.firedown.preferences.theme";
 
     public static final String SETTINGS_THEME_DEFAULT = "com.solarized.firedown.preferences.theme.default";

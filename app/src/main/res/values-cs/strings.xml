@@ -1291,4 +1291,6 @@
     <string name="bottom_bar_downloading">%1$s, stahování</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d %%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Otevírat odkazy z jiných aplikací v anonymním panelu</string>
+    <string name="settings_external_links_private_summary">Nezůstanou v historii a jejich stažené soubory půjdou do Bezpečné složky.</string>
 </resources>

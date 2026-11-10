@@ -1490,4 +1490,6 @@
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <!-- Spoken by a screen reader for the Downloads button: "Downloads, 3 downloading", "Downloads, Download finished". -->
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Open links from other apps in a private tab</string>
+    <string name="settings_external_links_private_summary">They stay out of your history, and their downloads go to the Safe Folder.</string>
 </resources>

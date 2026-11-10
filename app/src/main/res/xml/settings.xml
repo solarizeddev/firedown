@@ -225,6 +225,18 @@
             android:title="@string/settings_block_app_redirects_title"
             app:icon="@drawable/ic_shop_24" />
 
+        <!-- Links from other apps open in a private tab (Preferences
+             .SETTINGS_EXTERNAL_LINKS_PRIVATE). OFF by default; defaultValue
+             must match DEFAULT_EXTERNAL_LINKS_PRIVATE. IntentHandler reads it
+             when a link arrives, so nothing applies it here. -->
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            app:singleLineTitle="false"
+            android:key="com.solarized.firedown.preferences.browser.external.private"
+            android:summary="@string/settings_external_links_private_summary"
+            android:title="@string/settings_external_links_private_title"
+            app:icon="@drawable/ic_incognito_24" />
+
 
         <SwitchPreferenceCompat
             android:defaultValue="true"

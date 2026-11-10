@@ -1292,4 +1292,6 @@
     <string name="bottom_bar_downloading">%1$s, загрузка</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d %%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Открывать ссылки из других приложений в приватной вкладке</string>
+    <string name="settings_external_links_private_summary">Они не попадают в историю, а их загрузки сохраняются в Безопасную папку.</string>
 </resources>

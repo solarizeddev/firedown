@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launcher shortcut "New private tab": ic_incognito_24's glyph
+     centred in an adaptive icon's 108dp foreground, a fixed colour. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="15.875"
+    android:viewportHeight="15.875">
+  <group android:translateX="4.7625" android:translateY="4.7625">
+    <path
+        android:fillColor="@color/shortcut_icon_glyph"
+        android:pathData="M2.3813,1.0583 L0.2646,2.9104v0.2646,0.2646h0.2646v0.5292c0,0.4397 0.354,0.7937 0.7937,0.7937h0.7937c0.4397,0 0.7937,-0.354 0.7937,-0.7937v-0.5292h0.5292v0.5292c0,0.4397 0.354,0.7937 0.7937,0.7937h0.7937c0.4397,0 0.7937,-0.354 0.7937,-0.7937v-0.5292h0.2646v-0.2646,-0.2646l-2.1167,-1.8521v0.5292l1.0552,1.3229h-3.698l1.0552,-1.3229z"/>
+  </group>
+</vector>

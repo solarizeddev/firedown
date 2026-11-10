@@ -1293,4 +1293,6 @@
     <string name="bottom_bar_downloading">%1$s, завантаження</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Відкривати посилання з інших застосунків у приватній вкладці</string>
+    <string name="settings_external_links_private_summary">Вони не потрапляють до історії, а їхні завантаження йдуть до Захищеної папки.</string>
 </resources>

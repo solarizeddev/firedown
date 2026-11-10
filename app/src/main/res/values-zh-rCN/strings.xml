@@ -1244,4 +1244,6 @@
     <string name="bottom_bar_downloading">%1$s，正在下载</string>
     <string name="bottom_bar_downloading_count_percent">%1$s，%2$s，%3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s，%2$s</string>
+    <string name="settings_external_links_private_title">在隐私标签页中打开其他应用的链接</string>
+    <string name="settings_external_links_private_summary">不会留在历史记录中，下载的文件保存到安全文件夹。</string>
 </resources>

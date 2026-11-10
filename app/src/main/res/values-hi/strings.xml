@@ -1259,4 +1259,6 @@
     <string name="bottom_bar_downloading">%1$s, डाउनलोड हो रहा है</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">अन्य ऐप्स के लिंक निजी टैब में खोलें</string>
+    <string name="settings_external_links_private_summary">ये आपके इतिहास में नहीं रहते, और इनके डाउनलोड सुरक्षित फ़ोल्डर में जाते हैं।</string>
 </resources>

@@ -1259,4 +1259,6 @@
     <string name="bottom_bar_downloading">%1$s, изтегляне</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Отваряй връзки от други приложения в поверителен раздел</string>
+    <string name="settings_external_links_private_summary">Те не остават в историята, а изтеглянията от тях отиват в Защитена папка.</string>
 </resources>
