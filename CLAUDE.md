@@ -4563,7 +4563,14 @@ before changing a flow. The rules, each easy to undo:
   switch at the top (Gecko widens an all-sites change to all of them
   itself); while it is on, the site switches are disabled and keep their
   own state, since turning one off would not stop a site the all-sites
-  grant covers. A site switch is titled by its host alone, sorted (Fenix
+  grant covers. "All sites" is Gecko's own rule
+  (`Extension.isAllSitesPermission`: `<all_urls>`, or host `*` under `*`,
+  http, https, ws or wss; a lone `https://*/*` counts, `ftp://*/*` is a
+  site row), not a narrower one of ours. A grouped change Gecko refuses
+  (`normalizeOptional` throws on the first pattern the manifest does not
+  cover) is retried one pattern at a time, so one stale pattern cannot
+  block a host's others or leave the all-sites switch stuck. A site switch
+  is titled by its host alone (an IPv6 literal kept whole), sorted (Fenix
   shows the raw `*://*.example.com/*`; a full sentence per row is a wall
   at hundreds of rows), and the patterns naming one host (http and https,
   a domain and its bare host) share it (`setOptionalOrigins` sends them
@@ -4718,7 +4725,7 @@ before changing a flow. The rules, each easy to undo:
   them.
 - **Verify** with `sh scripts/addons-harness/run.sh /path/to/firefox-src`
   (the real pure classes against Firefox's own test fixtures and AMO
-  shapes; 131 checks without the Firefox fixtures, 26 mutants must
+  shapes; 136 checks without the Firefox fixtures, 28 mutants must
   fail), the JUnit
   `AddonsPureTest`, and on a device `addons/AddonsDeviceTest`
   (`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.addons.AddonsDeviceTest`;

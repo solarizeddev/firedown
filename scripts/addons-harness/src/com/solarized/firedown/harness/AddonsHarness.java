@@ -509,6 +509,27 @@ public final class AddonsHarness {
         check("sites: one switch per host (schemes, domain and bare host, case), sorted, granted when any is",
                 sites(merged).equals("b.example-1 file:///*-1 zeit.de+3"));
 
+        check("sites: a host's switch sends exactly its own patterns",
+                merged.sites.get(2).patterns.equals(Arrays.asList("https://zeit.de/*", "http://zeit.de/*",
+                        "*://*.Zeit.de/*")));
+        check("sites: the all-sites switch sends every all-sites pattern, declared or granted",
+                all.allSitesPatterns.equals(Arrays.asList("<all_urls>", "*://*/*", "http://*/*")));
+
+        AddonPermissions.SiteAccess twice = AddonPermissions.siteAccess(
+                Arrays.asList("https://a.example/*", "wss://*/*"), Arrays.asList("https://a.example/*"));
+        check("sites: a pattern both declared and granted is listed once; wss with host * is all sites (Gecko's rule)",
+                sites(twice).equals("a.example+1") && twice.allSitesPatterns.equals(Arrays.asList("wss://*/*")));
+
+        AddonPermissions.SiteAccess ftp = AddonPermissions.siteAccess(
+                Arrays.asList("ftp://*/*"), null);
+        check("sites: host * under a non-web scheme is not all sites, it is its own switch",
+                ftp.allSitesPatterns.isEmpty() && sites(ftp).equals("ftp://*/*-1"));
+
+        AddonPermissions.SiteAccess v6 = AddonPermissions.siteAccess(
+                Arrays.asList("http://[::1]/*", "http://[2001:db8::1]:8080/*", "http://[2001:db8::2]/*"), null);
+        check("sites: IPv6 hosts keep their colons, one switch each",
+                sites(v6).equals("[2001:db8::1]-1 [2001:db8::2]-1 [::1]-1"));
+
         AddonPermissions.SiteAccess none = AddonPermissions.siteAccess(null, null);
         check("sites: nothing declared or granted, no switches",
                 none.sites.isEmpty() && none.allSitesPatterns.isEmpty());

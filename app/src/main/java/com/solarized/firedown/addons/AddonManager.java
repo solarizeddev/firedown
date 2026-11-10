@@ -1309,6 +1309,19 @@ public class AddonManager {
             if (BuildConfig.DEBUG) {
                 Log.w(TAG, "optional permission change failed", e);
             }
+            if (origins.length > 1) {
+                // Gecko refuses the whole call over one pattern the manifest
+                // does not cover (ExtensionPermissions.normalizeOptional):
+                // change each alone, so the others still do.
+                for (String origin : origins) {
+                    String[] one = new String[]{origin};
+                    GeckoResult<WebExtension> single = granted
+                            ? controller.addOptionalPermissions(id, permissions, one, dataKinds)
+                            : controller.removeOptionalPermissions(id, permissions, one, dataKinds);
+                    single.accept(this::onChanged, e2 -> publish());
+                }
+                return;
+            }
             publish();
         });
     }
