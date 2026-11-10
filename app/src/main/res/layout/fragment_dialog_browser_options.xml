@@ -26,13 +26,14 @@
          edge. Tap opens Downloads (the Safe Folder in a private tab). Visibility
          and text come from BrowserOptionFragment.renderBatch; it lives as long
          as the sheet does. Margins and corner match the help banner, its
-         sibling. -->
+         sibling: both sit on the sheet's 16dp gutter, where the tiles and
+         squares below start (CaptureSpacingDecoration). -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/capture_batch_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/list_spacing"
-        android:layout_marginEnd="@dimen/list_spacing"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
         android:layout_marginBottom="@dimen/list_spacing"
         android:clickable="true"
         android:focusable="true"
@@ -103,8 +104,8 @@
         android:id="@+id/capture_help_banner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/list_spacing"
-        android:layout_marginEnd="@dimen/list_spacing"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
         android:layout_marginTop="@dimen/list_spacing"
         android:layout_marginBottom="@dimen/list_spacing"
         android:clickable="true"
