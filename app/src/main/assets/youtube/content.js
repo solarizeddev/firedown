@@ -297,7 +297,10 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
         window.__fdGenPoToken = async function(vid,vd,rid,forceFresh,binding) {
             try {
                 const t = await gen(vid,vd,forceFresh,binding);
-                window.__fdPoTokenCB(JSON.stringify({requestId:rid,token:t,info:lastAttest}));
+                // age: how old the attestation behind this token is. The
+                // native side holds a token back until it has settled.
+                const age = cmt ? Date.now()-cmt : -1;
+                window.__fdPoTokenCB(JSON.stringify({requestId:rid,token:t,info:lastAttest,age:age}));
             } catch(e) {
                 window.__fdPoTokenCB(JSON.stringify({requestId:rid,error:e.message}));
             }
@@ -348,7 +351,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                         if (!data || data.requestId !== requestId) return;
                         cleanup();
                         if (data.error) reject(new Error(data.error));
-                        else resolve({ token: data.token, info: data.info || '' });
+                        else resolve({ token: data.token, info: data.info || '', age: data.age });
                     };
                     timerId = setTimeout(() => {
                         cleanup();
@@ -362,7 +365,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                             msg.forceFresh === true,
                             msg.binding === 'visitor' ? 'visitor' : 'video');
                 });
-                natPort.postMessage({ type: 'mintResult', requestId, token: minted.token, info: minted.info });
+                natPort.postMessage({ type: 'mintResult', requestId, token: minted.token, info: minted.info, age: minted.age });
             } catch (e) {
                 natPort.postMessage({ type: 'mintResult', requestId, error: e.message });
             }

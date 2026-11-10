@@ -1825,6 +1825,23 @@ TTL problem, not a token-content problem.** `cml` is now bounded by
 no-value-from-server fallback), the attestation is **single-flight**
 (`cmp`) so a video and its subtitles don't each run their own att/get →
 VM-fetch → GenerateIT, and `tokenCache` entries expire after 10 min.
+**A token is handed out only from an attestation at least 15 s old
+(`PoTokenGenerator.MINTER_SETTLE_MS`, 2026-11, an experiment not yet
+confirmed on a device).** Six device downloads were kept "pending" from the
+first response; each used a token minted within seconds of a new
+attestation. The one download that was accepted at once used a token minted
+12 s after the attestation, from the same minter, in the same session. The
+browser's own player attests at page load, long before its first stream
+request. So the page reports the minter's age with every `mintResult`
+(`age`, logged as `minterAge=`), and `remintWhenSettled` waits out the rest
+and mints AGAIN from the same minter (no re-attestation); a stop during the
+wait keeps the first token. A cold first download therefore starts up to
+15 s later, and each re-attestation after a status-3 demand waits the same.
+Not built: attesting when a video is captured, which would hide the wait.
+The other reading of the same logs is that the failing video itself differs
+(all six failures were one video, the success another); a log where a
+settled token is still kept pending on that video settles it. Pinned by the
+harness's 15b-15d.
 **Note what is and isn't a prediction here.** A PO token's own lifetime
 is NOT predictable — yt-dlp's guide puts observed validity anywhere from
 ~12 h to several months, and their issue asking for a figure is still
