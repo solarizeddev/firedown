@@ -249,6 +249,33 @@ public class Harness {
         dt = System.currentTimeMillis()-t0;
         check("15 a forceFresh mint waits MINT_FRESH_TIMEOUT_MS, not 15s", dt>=30000 && dt<35000, dt+"ms");
 
+        // ── 15p. tokens the page's own player sent ───────────────────────
+        newGen(true);
+        check("15p no player token for an unknown video", gen.playerToken("pv1")==null, "");
+        gen.adoptPlayerToken("pv1","tokA");
+        check("15q an adopted token is returned", "tokA".equals(gen.playerToken("pv1")), "");
+        gen.adoptPlayerToken("pv1","tokB");
+        check("15r the newest one replaces it", "tokB".equals(gen.playerToken("pv1")), "");
+        gen.adoptPlayerToken("pv1",""); gen.adoptPlayerToken("","tokC");
+        check("15s an empty token or video id changes nothing", "tokB".equals(gen.playerToken("pv1")) && gen.playerToken("")==null, "");
+        check("15t another video has its own", gen.playerToken("pv2")==null, "");
+        for (int i=0;i<40;i++) gen.adoptPlayerToken("many"+i,"t"+i);
+        @SuppressWarnings("unchecked") Map<String,Object> pt = (Map<String,Object>) f("playerTokens");
+        check("15u the store is bounded and drops the oldest", pt.size()==32 && gen.playerToken("pv1")==null
+                && "t39".equals(gen.playerToken("many39")) && gen.playerToken("many0")==null, "size="+pt.size());
+        gen.adoptPlayerToken("many10","t10b");
+        gen.adoptPlayerToken("fresh","tf");
+        check("15v a re-adopted video counts as the newest", "t10b".equals(gen.playerToken("many10")), "");
+        Object kept = pt.get("many39");
+        Field at = kept.getClass().getDeclaredField("mintedAt"); at.setAccessible(true);
+        at.setLong(kept, at.getLong(kept) - (6L*60*60*1000 + 1000));
+        check("15w a token older than its lifetime is not offered and is dropped",
+                gen.playerToken("many39")==null && !pt.containsKey("many39"), "");
+        at.setLong(pt.get("fresh"), System.currentTimeMillis() - (6L*60*60*1000 - 60000));
+        check("15x one just inside its lifetime still is", "tf".equals(gen.playerToken("fresh")), "");
+        gen.generate("pv9","VD");
+        check("15y minting does not touch the player's tokens", "tf".equals(gen.playerToken("fresh")), "");
+
         // ── 16. init timeout: young session is LEFT LOADING ──────────────
         newGen(false);                                    // port never connects
         t0 = System.currentTimeMillis();

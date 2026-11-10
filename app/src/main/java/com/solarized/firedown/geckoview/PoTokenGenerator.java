@@ -267,8 +267,12 @@ public class PoTokenGenerator {
     @GuardedBy("lock") private final Set<String> forceFreshNext = new HashSet<>();
 
     /** Tokens the page's own player sent for a video, newest last. */
-    @GuardedBy("lock") private final LinkedHashMap<String, String> playerTokens = new LinkedHashMap<>();
+    @GuardedBy("lock") private final LinkedHashMap<String, CachedToken> playerTokens = new LinkedHashMap<>();
     private static final int MAX_PLAYER_TOKENS = 32;
+    /** How long a token the page's player sent is offered to a download.
+     *  Half the lifetime the server states for the attestation behind a
+     *  token (12 h): how old the player's attestation was is not known. */
+    private static final long PLAYER_TOKEN_TTL_MS = 6L * 60 * 60 * 1000;
 
     /** When this hidden session's first attestation was made (0 = none
      *  yet) and how many it has made, as the page reports them. */
@@ -405,7 +409,7 @@ public class PoTokenGenerator {
         if (TextUtils.isEmpty(videoId) || TextUtils.isEmpty(token)) return;
         synchronized (lock) {
             playerTokens.remove(videoId);
-            playerTokens.put(videoId, token);
+            playerTokens.put(videoId, new CachedToken(token, System.currentTimeMillis()));
             Iterator<String> it = playerTokens.keySet().iterator();
             while (playerTokens.size() > MAX_PLAYER_TOKENS && it.hasNext()) {
                 it.next();
@@ -419,7 +423,13 @@ public class PoTokenGenerator {
     @Nullable
     public String playerToken(@NonNull String videoId) {
         synchronized (lock) {
-            return playerTokens.get(videoId);
+            CachedToken kept = playerTokens.get(videoId);
+            if (kept == null) return null;
+            if (System.currentTimeMillis() - kept.mintedAt > PLAYER_TOKEN_TTL_MS) {
+                playerTokens.remove(videoId);
+                return null;
+            }
+            return kept.token;
         }
     }
 
