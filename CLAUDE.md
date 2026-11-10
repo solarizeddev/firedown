@@ -1854,8 +1854,26 @@ video and `SabrStrategy.mintPoToken` uses it before minting. It exists only
 once the page's player has asked for media; otherwise the minted token is
 used as before. Across every log the first download of a process was
 refused and a later one usually served, with our own token both times;
-why is not known. Not built: sending our token in a player request of our
-own.
+why is not known. Which player token a download may still use is
+`sabr/PlayerTokenSource` (pure: the newest one, once; a token the server
+answered with a demand is not offered again, a newer one is taken at the
+next demand, so a token that arrives after a download began with a minted
+one rescues it). The native store keeps the newest per video for 6 h, 32
+videos. **A player token that stops being accepted with nothing newer
+from the page ends in an error**: minting is all that is left. Verify with
+`node scripts/youtube-token-smoke.mjs` (the real background.js in a vm: the
+protobuf reader, the stream-request listener, the watch-answer interceptor,
+the wait; 50 checks, six mutants fail it), the `P` cases of
+`sh scripts/sabr-harness/run.sh` (whole downloads against a server that
+serves player tokens and holds minted ones pending: start, late arrival,
+expiry with and without a newer token, a refused one; a source that
+repeats a token or never offers one fails) and `15p`-`15y` of
+`sh scripts/potoken-harness/run.sh` (the store: newest wins, the cap, the
+lifetime). Not covered by any test: `processVideo`'s use of the wait, the
+native hand-over, and a real download on a device. Not built: a video
+opened by a full page load (its stream is not tied to a video, so its
+download still starts with a minted token), and sending our token in a
+player request of our own.
 **Note what is and isn't a prediction here.** A PO token's own lifetime
 is NOT predictable — yt-dlp's guide puts observed validity anywhere from
 ~12 h to several months, and their issue asking for a figure is still
