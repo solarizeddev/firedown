@@ -24,6 +24,7 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.service.notification.StatusBarNotification;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
@@ -115,8 +116,8 @@ import dagger.hilt.android.EntryPointAccessors;
  *
  * <p>What a case needs, else it is skipped: the lock cases a screen lock on
  * the phone, the notification case Firedown's notifications allowed. The
- * screen-off case runs LAST: on a phone with a screen lock that locks at
- * once, unlock it when it asks (the case waits a minute), or pass the PIN as
+ * screen-off case runs after the others (only the t11 probe follows it): on
+ * a phone with a screen lock that locks at once, unlock it when it asks (the case waits a minute), or pass the PIN as
  * {@code -Pandroid.testInstrumentationRunnerArguments.pin=<PIN>}.
  *
  * <pre>
@@ -126,7 +127,8 @@ import dagger.hilt.android.EntryPointAccessors;
  * Written for issue #311. On SM-A426B (Android 12): t01–t07 green. The
  * first run of t08 found Downloads opened INSIDE the PiP window (fixed in
  * BaseActivity), t09 a dark-mode recreate read as a close (fixed in
- * PipSession); t10 waited too briefly for the person to unlock.
+ * PipSession); t10 waited too briefly for the person to unlock. t11 is a
+ * probe for the follow-up (mobile YouTube pausing in the window).
  */
 @RunWith(AndroidJUnit4.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -538,6 +540,57 @@ public class BrowserPipDeviceTest {
             }
             shell("input keyevent KEYCODE_WAKEUP");
         }
+    }
+
+    /**
+     * What the page sees inside the PiP window (the follow-up on #311: mobile
+     * YouTube in the window pauses itself every two seconds and draws its
+     * picture in a corner, while the desktop site plays). The page locks the
+     * screen to landscape on going fullscreen, as mobile YouTube does, and
+     * reports its visibility, viewport and animation frames in its title. A
+     * page that pauses when hidden, and lays out its player from
+     * requestAnimationFrame, breaks in the window if it is hidden there.
+     * Runs last; the numbers are logged ({@code adb logcat -s
+     * BrowserPipDeviceTest}) whether it passes or not.
+     */
+    @Test
+    public void t11_pageInThePipWindowIsVisibleAndAnimating() {
+        BrowserMainActivity browser = openPage("/?probe=1");
+        GeckoState tab = playFullscreen();
+        String fullscreen = tab.getEntityTitle();
+        int orientation = onMain(browser::getRequestedOrientation);
+        goHomeIntoPip(browser, tab);
+        SystemClock.sleep(3_000);
+        String first = tab.getEntityTitle();
+        SystemClock.sleep(3_000);
+        String second = tab.getEntityTitle();
+        String report = "fullscreen: [" + fullscreen + "] requestedOrientation=" + orientation
+                + " in PiP: [" + first + "] then [" + second + "] requestedOrientation="
+                + onMain(browser::getRequestedOrientation)
+                + " playing=" + mMedia.isPlaying(tab.getEntityId());
+        Log.i("BrowserPipDeviceTest", "t11 " + report);
+        assertTrue("the page is hidden in the PiP window. " + report,
+                second != null && second.contains("vis=visible"));
+        assertTrue("the page draws no animation frames in the PiP window. " + report,
+                probeValue(second, "raf") > probeValue(first, "raf"));
+        assertTrue("the video stopped in the PiP window. " + report, mMedia.isPlaying(tab.getEntityId()));
+    }
+
+    /** A number from the probe page's title ("raf=123"), -1 when absent. */
+    private static long probeValue(String title, String key) {
+        if (title == null) {
+            return -1;
+        }
+        int at = title.indexOf(key + "=");
+        if (at < 0) {
+            return -1;
+        }
+        int start = at + key.length() + 1;
+        int end = start;
+        while (end < title.length() && Character.isDigit(title.charAt(end))) {
+            end++;
+        }
+        return end > start ? Long.parseLong(title.substring(start, end)) : -1;
     }
 
     // ── Driving the app ─────────────────────────────────────────────────────
@@ -1033,6 +1086,18 @@ public class BrowserPipDeviceTest {
                     + "  if (innerWidth * innerHeight * 4 < fullArea) {"
                     + "    alerted = true; alert('in pip'); document.title = 'after-alert';"
                     + "  }"
+                    + "});"
+                    + "let frames = 0;"
+                    + "(function tick() { frames++; requestAnimationFrame(tick); })();"
+                    + "document.addEventListener('fullscreenchange', function () {"
+                    + "  if (!q.has('probe') || !document.fullscreenElement) return;"
+                    + "  if (screen.orientation && screen.orientation.lock) {"
+                    + "    screen.orientation.lock('landscape').catch(function () {}); }"
+                    + "  setInterval(function () {"
+                    + "    document.title = 'probe vis=' + document.visibilityState"
+                    + "      + ' vp=' + innerWidth + 'x' + innerHeight + ' raf=' + frames"
+                    + "      + ' paused=' + v.paused + ' t=' + Math.round(performance.now());"
+                    + "  }, 500);"
                     + "});"
                     + "document.title = 'ready';"
                     + "</script></body></html>";
