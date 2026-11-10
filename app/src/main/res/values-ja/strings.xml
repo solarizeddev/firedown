@@ -42,6 +42,10 @@
     <string name="addon_not_an_addon">このファイルは Firefox アドオンではありません</string>
     <string name="addon_optional_data">%1$s を開発者と共有</string>
     <string name="addon_optional_permissions">任意の権限</string>
+    <string name="addon_site_access">サイトへのアクセス</string>
+    <string name="addon_allow_all_sites">すべての Web サイトで許可</string>
+    <string name="addon_allow_all_sites_summary">アクセスするすべての Web サイトを読み取り、変更できるようになります</string>
+    <string name="addon_user_scripts_warning">未検証のスクリプトはセキュリティとプライバシーのリスクになる可能性があります。信頼できる拡張機能やソースのスクリプトのみを実行してください。</string>
     <string name="addon_page">アドオンのページ</string>
     <string name="addon_perm_all_sites">すべての Web サイトのデータへのアクセス</string>
     <string name="addon_perm_bookmarks">ブックマークの読み取りと変更</string>

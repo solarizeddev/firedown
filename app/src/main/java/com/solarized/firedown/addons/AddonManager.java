@@ -48,6 +48,7 @@ import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1267,20 +1268,39 @@ public class AddonManager {
     }
 
     /**
-     * Grants or takes back one optional permission, site or data kind (the
+     * Grants or takes back one optional permission or data kind (the
      * add-on's page in Settings; Firefox's permission switches). Exactly
-     * one of the three is set.
+     * one of the two is set. Sites go through {@link #setOptionalOrigins}.
      */
     @UiThread
     public void setOptionalPermission(@NonNull String id, @Nullable String permission,
-                                      @Nullable String origin, @Nullable String data, boolean granted) {
+                                      @Nullable String data, boolean granted) {
+        String[] permissions = permission == null ? new String[0] : new String[]{permission};
+        String[] dataKinds = data == null ? new String[0] : new String[]{data};
+        changeOptional(id, permissions, new String[0], dataKinds, granted);
+    }
+
+    /**
+     * Grants or takes back site access: every pattern of one host (its
+     * page switch), or every all-sites pattern ("Allow on all websites").
+     * Gecko refuses a pattern the manifest's optional sites don't cover,
+     * and widens an all-sites change to all of them itself.
+     */
+    @UiThread
+    public void setOptionalOrigins(@NonNull String id, @NonNull Collection<String> origins, boolean granted) {
+        if (origins.isEmpty()) {
+            return;
+        }
+        changeOptional(id, new String[0], origins.toArray(new String[0]), new String[0], granted);
+    }
+
+    @UiThread
+    private void changeOptional(@NonNull String id, @NonNull String[] permissions,
+                                @NonNull String[] origins, @NonNull String[] dataKinds, boolean granted) {
         GeckoRuntime runtime = mRuntime;
         if (runtime == null || !mInstalled.containsKey(id)) {
             return;
         }
-        String[] permissions = permission == null ? new String[0] : new String[]{permission};
-        String[] origins = origin == null ? new String[0] : new String[]{origin};
-        String[] dataKinds = data == null ? new String[0] : new String[]{data};
         WebExtensionController controller = runtime.getWebExtensionController();
         GeckoResult<WebExtension> result = granted
                 ? controller.addOptionalPermissions(id, permissions, origins, dataKinds)

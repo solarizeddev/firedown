@@ -31,6 +31,10 @@
     <string name="addon_not_an_addon">Berkas ini bukan pengaya Firefox</string>
     <string name="addon_optional_data">Bagikan %1$s dengan pengembang</string>
     <string name="addon_optional_permissions">Izin opsional</string>
+    <string name="addon_site_access">Akses situs</string>
+    <string name="addon_allow_all_sites">Izinkan di semua situs web</string>
+    <string name="addon_allow_all_sites_summary">Ini dapat membaca dan mengubah setiap situs web yang Anda kunjungi</string>
+    <string name="addon_user_scripts_warning">Skrip yang belum diverifikasi dapat menimbulkan risiko keamanan dan privasi. Jalankan hanya skrip dari ekstensi atau sumber yang Anda percayai.</string>
     <string name="addon_page">Halaman pengaya</string>
     <string name="addon_perm_all_sites">Mengakses data Anda untuk semua situs web</string>
     <string name="addon_perm_bookmarks">Membaca dan mengubah markah</string>

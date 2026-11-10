@@ -43,6 +43,10 @@
     <string name="addon_not_an_addon">Bu dosya bir Firefox eklentisi değil</string>
     <string name="addon_optional_data">Geliştiriciyle paylaş: %1$s</string>
     <string name="addon_optional_permissions">İsteğe bağlı izinler</string>
+    <string name="addon_site_access">Site erişimi</string>
+    <string name="addon_allow_all_sites">Tüm web sitelerinde izin ver</string>
+    <string name="addon_allow_all_sites_summary">Ziyaret ettiğiniz her web sitesini okuyup değiştirebilir</string>
+    <string name="addon_user_scripts_warning">Doğrulanmamış betikler güvenlik ve gizlilik riskleri oluşturabilir. Yalnızca güvendiğiniz uzantılardan veya kaynaklardan gelen betikleri çalıştırın.</string>
     <string name="addon_page">Eklenti sayfası</string>
     <string name="addon_perm_all_sites">Tüm web sitelerine ait verilerinize erişme</string>
     <string name="addon_perm_bookmarks">Yer imlerini okuma ve değiştirme</string>

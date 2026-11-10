@@ -43,6 +43,10 @@
     <string name="addon_not_an_addon">Ten plik nie jest dodatkiem do Firefoksa</string>
     <string name="addon_optional_data">Udostępniaj twórcy: %1$s</string>
     <string name="addon_optional_permissions">Uprawnienia opcjonalne</string>
+    <string name="addon_site_access">Dostęp do stron</string>
+    <string name="addon_allow_all_sites">Zezwalaj na wszystkich stronach</string>
+    <string name="addon_allow_all_sites_summary">Będzie mógł odczytywać i zmieniać każdą odwiedzaną stronę</string>
+    <string name="addon_user_scripts_warning">Niezweryfikowane skrypty mogą zagrażać bezpieczeństwu i prywatności. Uruchamiaj tylko skrypty z rozszerzeń lub źródeł, którym ufasz.</string>
     <string name="addon_page">Strona dodatku</string>
     <string name="addon_perm_all_sites">Dostęp do danych na wszystkich stronach</string>
     <string name="addon_perm_bookmarks">Odczyt i modyfikacja zakładek</string>

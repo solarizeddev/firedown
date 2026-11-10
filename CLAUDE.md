@@ -4548,10 +4548,29 @@ before changing a flow. The rules, each easy to undo:
     next check without asking again.
   Gecko itself is never booted for any of this.
 - **Optional permissions are the user's to take back**, as in Firefox:
-  the add-on's page lists each optional permission, site and data kind it
+  the add-on's page lists each optional permission and data kind it
   declares as a switch, on when granted (`setOptionalPermission` →
   `add/removeOptionalPermissions`). A permission it asks for at run time
   is the OPTIONAL prompt.
+- **Site access lists what the add-on HOLDS, not only what it declares**
+  (`AddonPermissions.siteAccess`, the "Site access" group, last before
+  Remove). An add-on that declares all sites as optional asks for one site
+  at a time (Bypass Paywalls Clean), and those grants are in no manifest:
+  the page listed `optionalOrigins` alone, so they had no switch and only
+  removing the add-on took them back. IronFox (stock Fenix) lists the union
+  of `optionalOrigins` and `grantedOptionalOrigins`, and so do we. Every
+  all-sites pattern (`<all_urls>`, host `*`) is ONE "Allow on all websites"
+  switch at the top (Gecko widens an all-sites change to all of them
+  itself); while it is on, the site switches are disabled and keep their
+  own state, since turning one off would not stop a site the all-sites
+  grant covers. A site switch is titled by its host alone, sorted (Fenix
+  shows the raw `*://*.example.com/*`; a full sentence per row is a wall
+  at hundreds of rows), and the patterns naming one host (http and https,
+  a domain and its bare host) share it (`setOptionalOrigins` sends them
+  together). Rows are kept and updated in place, never rebuilt, so a site
+  granted while the page is open adds one row. Not built yet: a separate
+  screen once the list is long (the Remove row sits below it). An
+  optional `userScripts` switch carries Firefox's warning as its summary.
 - **Private tabs are opt-in per add-on**, at install and in its page; an
   add-on not allowed there gets no button, no popup and no `tabs.create`
   in a private tab.
@@ -4699,7 +4718,7 @@ before changing a flow. The rules, each easy to undo:
   them.
 - **Verify** with `sh scripts/addons-harness/run.sh /path/to/firefox-src`
   (the real pure classes against Firefox's own test fixtures and AMO
-  shapes; 126 checks without the Firefox fixtures, 23 mutants must
+  shapes; 131 checks without the Firefox fixtures, 26 mutants must
   fail), the JUnit
   `AddonsPureTest`, and on a device `addons/AddonsDeviceTest`
   (`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.addons.AddonsDeviceTest`;

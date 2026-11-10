@@ -7,10 +7,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -155,6 +157,136 @@ public final class AddonPermissions {
         return describe(permissions, origins).isEmpty() && dataCollection(dataCollection).isEmpty();
     }
 
+    /** One switch of an add-on's site access: a host and the patterns behind it. */
+    public static final class Site {
+        /** The host the switch shows ("example.com"), or the pattern when it names none. */
+        @NonNull public final String label;
+        /** Every pattern with this label; the switch grants or takes back all of them. */
+        @NonNull public final List<String> patterns;
+        /** True when any of them is granted: the add-on can reach the site. */
+        public final boolean granted;
+
+        Site(@NonNull String label, @NonNull List<String> patterns, boolean granted) {
+            this.label = label;
+            this.patterns = Collections.unmodifiableList(patterns);
+            this.granted = granted;
+        }
+    }
+
+    /** The site switches of an add-on's page. */
+    public static final class SiteAccess {
+        /** The all-sites patterns ({@code <all_urls>}, host "*"), declared or granted. */
+        @NonNull public final List<String> allSitesPatterns;
+        /** True when any of them is granted. */
+        public final boolean allSitesGranted;
+        /** Every other site, one per host, sorted by host. */
+        @NonNull public final List<Site> sites;
+
+        SiteAccess(@NonNull List<String> allSitesPatterns, boolean allSitesGranted,
+                   @NonNull List<Site> sites) {
+            this.allSitesPatterns = Collections.unmodifiableList(allSitesPatterns);
+            this.allSitesGranted = allSitesGranted;
+            this.sites = Collections.unmodifiableList(sites);
+        }
+    }
+
+    /**
+     * An add-on's optional site access: the patterns its manifest declares
+     * PLUS the ones it was granted while running. An add-on that declares
+     * all sites as optional asks for one site at a time, and those grants
+     * are in no manifest: listing the declared patterns alone left them
+     * with no switch to take them back. Firefox for Android lists the same
+     * union. Patterns that name one host (http and https, a domain and its
+     * bare host) share one switch.
+     */
+    @NonNull
+    public static SiteAccess siteAccess(@Nullable Collection<String> declared,
+                                        @Nullable Collection<String> granted) {
+        Set<String> grantedSet = new HashSet<>();
+        Set<String> patterns = new LinkedHashSet<>();
+        addTrimmed(patterns, declared);
+        addTrimmed(patterns, granted);
+        addTrimmed(grantedSet, granted);
+        List<String> allSites = new ArrayList<>();
+        boolean allGranted = false;
+        Map<String, String> labels = new HashMap<>();
+        Map<String, List<String>> byHost = new HashMap<>();
+        Map<String, Boolean> grantedByHost = new HashMap<>();
+        for (String pattern : patterns) {
+            String host = hostOf(pattern);
+            boolean isGranted = grantedSet.contains(pattern);
+            if ("*".equals(host)) {
+                allSites.add(pattern);
+                allGranted |= isGranted;
+                continue;
+            }
+            String label = host == null ? pattern : stripWildcard(host);
+            String key = label.toLowerCase(Locale.ROOT);
+            if (!byHost.containsKey(key)) {
+                labels.put(key, label);
+                byHost.put(key, new ArrayList<>());
+                grantedByHost.put(key, false);
+            }
+            byHost.get(key).add(pattern);
+            if (isGranted) {
+                grantedByHost.put(key, true);
+            }
+        }
+        List<String> keys = new ArrayList<>(byHost.keySet());
+        Collections.sort(keys);
+        List<Site> sites = new ArrayList<>();
+        for (String key : keys) {
+            sites.add(new Site(labels.get(key), byHost.get(key), Boolean.TRUE.equals(grantedByHost.get(key))));
+        }
+        return new SiteAccess(allSites, allGranted, sites);
+    }
+
+    private static void addTrimmed(@NonNull Set<String> into, @Nullable Collection<String> values) {
+        if (values == null) {
+            return;
+        }
+        for (String v : values) {
+            if (v != null && !v.trim().isEmpty()) {
+                into.add(v.trim());
+            }
+        }
+    }
+
+    @NonNull
+    private static String stripWildcard(@NonNull String host) {
+        return host.startsWith("*.") ? host.substring(2) : host;
+    }
+
+    /**
+     * "*" for all sites, the host of one site or domain ("*.example.com"
+     * keeps its wildcard, a port is dropped), null when the pattern names
+     * no web host (a file: pattern, a malformed one).
+     */
+    @Nullable
+    static String hostOf(@NonNull String pattern) {
+        String p = pattern.trim();
+        if ("<all_urls>".equals(p)) {
+            return "*";
+        }
+        Matcher m = ORIGIN.matcher(p);
+        if (!m.matches()) {
+            return null;
+        }
+        String host = m.group(2) == null ? "" : m.group(2).toLowerCase(Locale.ROOT);
+        String path = m.group(3);
+        if ("*".equals(host)) {
+            return "*";
+        }
+        if (host.isEmpty() || path == null || path.isEmpty()) {
+            return null;
+        }
+        int colon = host.indexOf(':');
+        if (colon >= 0) {
+            host = host.substring(0, colon);
+        }
+        return host.isEmpty() ? null : host;
+    }
+
     static boolean isOriginPattern(@NonNull String value) {
         return "<all_urls>".equals(value) || value.contains("://");
     }
@@ -165,26 +297,13 @@ public final class AddonPermissions {
         Set<String> domains = new LinkedHashSet<>();
         boolean all = false;
         for (String pattern : hosts) {
-            if ("<all_urls>".equals(pattern)) {
-                all = true;
+            String host = hostOf(pattern);
+            if (host == null) {
                 continue;
             }
-            Matcher m = ORIGIN.matcher(pattern.trim());
-            if (!m.matches()) {
-                continue;
-            }
-            String host = m.group(2) == null ? "" : m.group(2).toLowerCase(Locale.ROOT);
-            String path = m.group(3);
             if ("*".equals(host)) {
                 all = true;
                 continue;
-            }
-            if (host.isEmpty() || path == null || path.isEmpty()) {
-                continue;
-            }
-            int colon = host.indexOf(':');
-            if (colon >= 0) {
-                host = host.substring(0, colon);
             }
             if (host.startsWith("*.")) {
                 domains.add(host.substring(2));

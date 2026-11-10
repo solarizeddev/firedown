@@ -1388,6 +1388,10 @@
     <string name="addon_data_collection">Data collection</string>
     <string name="addon_permissions_none">No special permissions</string>
     <string name="addon_optional_permissions">Optional permissions</string>
+    <string name="addon_site_access">Site access</string>
+    <string name="addon_allow_all_sites">Allow on all websites</string>
+    <string name="addon_allow_all_sites_summary">Lets it read and change every website you visit</string>
+    <string name="addon_user_scripts_warning">Unverified scripts can pose security and privacy risks. Only run scripts from extensions or sources you trust.</string>
     <string name="addon_optional_data">Share %1$s with the developer</string>
     <string name="addon_version">Version %1$s</string>
     <string name="addon_by">By %1$s</string>

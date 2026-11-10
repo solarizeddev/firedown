@@ -40,6 +40,10 @@
     <string name="addon_not_an_addon">Този файл не е добавка за Firefox</string>
     <string name="addon_optional_data">Споделяне на %1$s с разработчика</string>
     <string name="addon_optional_permissions">Права по избор</string>
+    <string name="addon_site_access">Достъп до сайтове</string>
+    <string name="addon_allow_all_sites">Разрешаване на всички сайтове</string>
+    <string name="addon_allow_all_sites_summary">Ще може да чете и променя всеки сайт, който посещавате</string>
+    <string name="addon_user_scripts_warning">Непроверените скриптове може да носят рискове за сигурността и поверителността. Изпълнявайте само скриптове от разширения или източници, на които имате доверие.</string>
     <string name="addon_page">Страница на добавката</string>
     <string name="addon_perm_all_sites">Достъп до вашите данни от всички страници</string>
     <string name="addon_perm_bookmarks">Четене и промяна на отметки</string>

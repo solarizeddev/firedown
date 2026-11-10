@@ -88,11 +88,19 @@
 
     </PreferenceCategory>
 
-    <!-- One switch per optional permission, site or data kind the add-on
+    <!-- One switch per optional API permission or data kind the add-on
          declares, filled by the fragment; hidden when it declares none. -->
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.addon.optional.category"
         android:title="@string/addon_optional_permissions"
+        app:iconSpaceReserved="false" />
+
+    <!-- Its optional sites, declared or granted while it ran: "Allow on all
+         websites", then a switch per host. Last before Remove because it
+         can run to hundreds of rows. Filled by the fragment. -->
+    <PreferenceCategory
+        android:key="com.solarized.firedown.preferences.addon.sites.category"
+        android:title="@string/addon_site_access"
         app:iconSpaceReserved="false" />
 
     <PreferenceCategory

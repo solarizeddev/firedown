@@ -40,6 +40,10 @@
     <string name="addon_not_an_addon">See fail pole Firefoxi lisa</string>
     <string name="addon_optional_data">Jaga arendajaga: %1$s</string>
     <string name="addon_optional_permissions">Valikulised õigused</string>
+    <string name="addon_site_access">Juurdepääs saitidele</string>
+    <string name="addon_allow_all_sites">Luba kõigil veebisaitidel</string>
+    <string name="addon_allow_all_sites_summary">See saab lugeda ja muuta kõiki veebisaite, mida külastad</string>
+    <string name="addon_user_scripts_warning">Kontrollimata skriptid võivad ohustada turvalisust ja privaatsust. Käivita ainult skripte laiendustest või allikatest, mida usaldad.</string>
     <string name="addon_page">Selle lisa leht</string>
     <string name="addon_perm_all_sites">Ligipääs sinu andmetele kõigil veebisaitidel</string>
     <string name="addon_perm_bookmarks">Järjehoidjate lugemine ja muutmine</string>

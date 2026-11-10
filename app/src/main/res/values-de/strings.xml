@@ -42,6 +42,10 @@
     <string name="addon_not_an_addon">Diese Datei ist kein Firefox-Add-on</string>
     <string name="addon_optional_data">Mit dem Entwickler teilen: %1$s</string>
     <string name="addon_optional_permissions">Optionale Berechtigungen</string>
+    <string name="addon_site_access">Zugriff auf Websites</string>
+    <string name="addon_allow_all_sites">Auf allen Websites erlauben</string>
+    <string name="addon_allow_all_sites_summary">Damit kann es jede Website lesen und ändern, die du besuchst</string>
+    <string name="addon_user_scripts_warning">Nicht überprüfte Skripte können Sicherheits- und Datenschutzrisiken bergen. Führe nur Skripte aus Erweiterungen oder Quellen aus, denen du vertraust.</string>
     <string name="addon_page">Add-on-Seite</string>
     <string name="addon_perm_all_sites">Auf deine Daten für alle Websites zugreifen</string>
     <string name="addon_perm_bookmarks">Lesezeichen lesen und ändern</string>

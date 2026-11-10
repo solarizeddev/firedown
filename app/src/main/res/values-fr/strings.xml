@@ -42,6 +42,10 @@
     <string name="addon_not_an_addon">Ce fichier n\'est pas un module complémentaire Firefox</string>
     <string name="addon_optional_data">Partager avec le développeur : %1$s</string>
     <string name="addon_optional_permissions">Autorisations facultatives</string>
+    <string name="addon_site_access">Accès aux sites</string>
+    <string name="addon_allow_all_sites">Autoriser sur tous les sites web</string>
+    <string name="addon_allow_all_sites_summary">Il pourra lire et modifier tous les sites web que vous visitez</string>
+    <string name="addon_user_scripts_warning">Les scripts non vérifiés peuvent présenter des risques pour la sécurité et la vie privée. N\'exécutez que des scripts provenant d\'extensions ou de sources de confiance.</string>
     <string name="addon_page">Page du module</string>
     <string name="addon_perm_all_sites">Accéder à vos données pour tous les sites web</string>
     <string name="addon_perm_bookmarks">Lire et modifier les marque-pages</string>

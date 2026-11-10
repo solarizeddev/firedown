@@ -43,6 +43,10 @@
     <string name="addon_not_an_addon">Dit bestand is geen Firefox-add-on</string>
     <string name="addon_optional_data">%1$s delen met de ontwikkelaar</string>
     <string name="addon_optional_permissions">Optionele toestemmingen</string>
+    <string name="addon_site_access">Toegang tot websites</string>
+    <string name="addon_allow_all_sites">Toestaan op alle websites</string>
+    <string name="addon_allow_all_sites_summary">Het kan dan elke website die je bezoekt lezen en wijzigen</string>
+    <string name="addon_user_scripts_warning">Niet-geverifieerde scripts kunnen beveiligings- en privacyrisico\'s vormen. Voer alleen scripts uit van extensies of bronnen die je vertrouwt.</string>
     <string name="addon_page">Add-on-pagina</string>
     <string name="addon_perm_all_sites">Je gegevens voor alle websites benaderen</string>
     <string name="addon_perm_bookmarks">Bladwijzers lezen en wijzigen</string>
