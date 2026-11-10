@@ -162,6 +162,9 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
         mTabsCountButton = findViewById(R.id.tab_button);
         mDownloadsButton = (ImageView) downloadButton;
         mDownloadsRing = findViewById(R.id.downloads_progress);
+        if (mDownloadsRing != null) {
+            pinRingToIcon(mDownloadsButton, mDownloadsRing);
+        }
         refreshDownloadsIcon();
         refreshDownloadsDescription();
 
@@ -439,6 +442,31 @@ public class BottomNavigationBar extends FrameLayout implements View.OnClickList
                         badge.getIntrinsicHeight()));
             }
         });
+    }
+
+    /**
+     * Keeps the ring's centre on the centre of the icon the button draws.
+     * Both are centred in the same cell, but by different rounding: the
+     * button rounds its icon's offset, the cell floors the ring's. At a
+     * fractional density (1.875: a 45px icon, a 41px ring) that leaves the
+     * ring a pixel towards the start, the arrow visibly off-centre in it.
+     */
+    private void pinRingToIcon(ImageView button, View ring) {
+        OnLayoutChangeListener listener = (v, left, top, right, bottom,
+                                           oldLeft, oldTop, oldRight, oldBottom) -> {
+            Drawable icon = button.getDrawable();
+            if (icon == null || ring.getWidth() == 0 || ring.getHeight() == 0) {
+                return;
+            }
+            RectF bounds = new RectF(icon.getBounds());
+            button.getImageMatrix().mapRect(bounds);
+            bounds.offset(button.getLeft() + button.getPaddingLeft(),
+                    button.getTop() + button.getPaddingTop());
+            ring.setTranslationX(bounds.centerX() - (ring.getLeft() + ring.getWidth() / 2f));
+            ring.setTranslationY(bounds.centerY() - (ring.getTop() + ring.getHeight() / 2f));
+        };
+        button.addOnLayoutChangeListener(listener);
+        ring.addOnLayoutChangeListener(listener);
     }
 
     private void refreshMenuBadge() {

@@ -6949,6 +6949,12 @@ script that left it there), and the first check is
     shown by the notification and Downloads.
   - **22dp / 2dp, not 24dp / 2.5dp.** At 24dp the ring was the heaviest
     icon on the bar; 22dp with a 2dp line is the tab counter's square.
+- **The ring is pinned to the icon's drawn centre**
+  (`BottomNavigationBar.pinRingToIcon`, a translation recomputed on every
+  layout of the button or the ring): both are centred in the cell, but the
+  button ROUNDS its icon's offset and the cell FLOORS the ring's, so at a
+  fractional density (1.875: a 45px icon, a 41px ring) the ring sat a pixel
+  towards the start and the arrow read off-centre in it (on-device).
 - **The arrow** (`download_arrow_24`): `download_24`'s arrow path at full
   size, moved 2dp down to the box's centre. Same 2dp shaft as the glyph, so
   ring and arrow read as one weight. (The board drew a smaller arrow; Chrome
@@ -12691,6 +12697,11 @@ here:
   player background, no grid to multiply it) to match `PlayerView`'s
   `resize_mode="fit"` — don't make the fill unconditional, it would paint
   the player background edge-to-edge.
+- **An ERROR or QUEUED grid tile shows no mime row**
+  (`DownloadItemAdapter.hideGridMimeRow`): title + type + status is three
+  lines, which pushed the title over the centred glyph (on-device), and the
+  glyph already says the type. The full bind re-shows the row for a recycled
+  holder.
 - **List-row meta line is `MIME · domain` — plain text, no domain icon.** The
   Downloads list row (`fragment_download_item.xml`, `row_meta` → `mime_text` +
   `file_url`) reads `VÍDEO · youtube.com` (the Captured sheet had a twin row
