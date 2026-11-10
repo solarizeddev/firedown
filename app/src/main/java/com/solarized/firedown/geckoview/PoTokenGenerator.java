@@ -932,7 +932,8 @@ public class PoTokenGenerator {
                 String requestId = json.optString("requestId", "");
                 Log.i(TAG, "port: mintResult id=" + requestId
                         + " token=" + json.optString("token", "").length() + " chars"
-                        + " error=" + json.optString("error", ""));
+                        + " error=" + json.optString("error", "")
+                        + " attest=" + json.optString("info", ""));
                 if (requestId.isEmpty()) {
                     Log.w(TAG, "mintResult missing requestId");
                     return;
