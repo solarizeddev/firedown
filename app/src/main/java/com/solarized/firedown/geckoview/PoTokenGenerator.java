@@ -141,6 +141,13 @@ public class PoTokenGenerator {
      *  is the one that gives up first. */
     private static final long MINT_FRESH_TIMEOUT_MS = 30_000;
 
+    /** How long after a hidden session's FIRST attestation a download's
+     *  stream token is minted ({@link #settleForStream}). On a device every
+     *  download started within 18 s of it was kept "pending" by the stream
+     *  server and refused at a minute of media, and every one started 24 s
+     *  or more after it was served, the same video included. */
+    static final long SESSION_SETTLE_MS = 30_000;
+
     /** How long a minted token may be served from {@link #tokenCache}.
      *
      *  <p>This is NOT a prediction of when a token expires — nobody can make
@@ -265,6 +272,11 @@ public class PoTokenGenerator {
      *  one real attestation. Consumed on the first mint of that key. */
     @GuardedBy("lock") private final Set<String> forceFreshNext = new HashSet<>();
 
+    /** When this hidden session's first attestation was made (0 = none
+     *  yet) and how many it has made, as the page reports them. */
+    @GuardedBy("lock") private long firstAttestedAt;
+    @GuardedBy("lock") private int attestations;
+
     /** A minted token plus when we minted it, so {@link #TOKEN_CACHE_TTL_MS}
      *  can be enforced on read. */
     private static final class CachedToken {
@@ -387,6 +399,46 @@ public class PoTokenGenerator {
     @Nullable
     public String generateFresh(@NonNull String videoId, @Nullable String visitorData) {
         return generate(Binding.VIDEO, videoId, visitorData, true);
+    }
+
+    /**
+     * Called before a download's first stream token is minted (blocking,
+     * worker thread). When the hidden session's first attestation is younger
+     * than {@link #SESSION_SETTLE_MS}, it makes sure a second attestation
+     * exists, waits out the rest, and drops the cached token so the caller's
+     * mint comes from the settled minter. Costs nothing once the session is
+     * older. An interrupt ends the wait.
+     */
+    public void settleForStream(@NonNull String videoId, @Nullable String visitorData) {
+        if (TextUtils.isEmpty(generate(Binding.VIDEO, videoId, visitorData, false))) return;
+        final long first;
+        final int count;
+        synchronized (lock) {
+            first = firstAttestedAt;
+            count = attestations;
+        }
+        if (first <= 0 || System.currentTimeMillis() - first >= SESSION_SETTLE_MS) return;
+        if (count < 2) {
+            generate(Binding.VIDEO, videoId, visitorData, true);
+        }
+        final long wait;
+        synchronized (lock) {
+            wait = firstAttestedAt > 0
+                    ? SESSION_SETTLE_MS - (System.currentTimeMillis() - firstAttestedAt) : 0;
+        }
+        if (wait > 0) {
+            Log.i(TAG, "settleForStream: first attestation is new, waiting " + wait + "ms");
+            try {
+                Thread.sleep(wait);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+        synchronized (lock) {
+            tokenCache.remove(cacheKey(Binding.VIDEO, videoId, visitorData));
+            tokenCache.remove(cacheKey(Binding.VISITOR, videoId, visitorData));
+        }
     }
 
     /** {@link #generateFresh} for the visitor-bound stream token — the
@@ -939,6 +991,7 @@ public class PoTokenGenerator {
                         + " token=" + json.optString("token", "").length() + " chars"
                         + " error=" + json.optString("error", "")
                         + " minterAge=" + json.optLong("age", -1) + "ms"
+                        + " sinceFirstAttest=" + noteAttestation(json.optLong("age", -1), json.optInt("attests", 0)) + "ms"
                         + " attest=" + json.optString("info", ""));
                 if (requestId.isEmpty()) {
                     Log.w(TAG, "mintResult missing requestId");
@@ -969,6 +1022,21 @@ public class PoTokenGenerator {
     }
 
     /** Caller MUST hold {@link #lock}. */
+    /** Records the attestations the page reports with a mint reply (its
+     *  minter's age and how many attestations it has made), and returns how
+     *  long ago this session's first one was (-1 = not reported). */
+    private long noteAttestation(long minterAge, int count) {
+        if (minterAge < 0 || count <= 0) return -1;
+        final long now = System.currentTimeMillis();
+        synchronized (lock) {
+            if (count > attestations) {
+                attestations = count;
+                if (firstAttestedAt == 0) firstAttestedAt = now - minterAge;
+            }
+            return firstAttestedAt > 0 ? now - firstAttestedAt : -1;
+        }
+    }
+
     private void closeSessionLocked() {
         if (session != null) {
             final GeckoSession s = session;
@@ -991,6 +1059,8 @@ public class PoTokenGenerator {
         // A rebuilt session attests from scratch anyway, so a pending
         // force-fresh mark has nothing left to force.
         forceFreshNext.clear();
+        firstAttestedAt = 0;
+        attestations = 0;
         if (readyFuture != null && !readyFuture.isDone()) {
             readyFuture.completeExceptionally(new IllegalStateException("session closing"));
         }

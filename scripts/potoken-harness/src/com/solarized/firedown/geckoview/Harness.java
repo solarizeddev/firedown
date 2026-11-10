@@ -249,6 +249,59 @@ public class Harness {
         dt = System.currentTimeMillis()-t0;
         check("15 a forceFresh mint waits MINT_FRESH_TIMEOUT_MS, not 15s", dt>=30000 && dt<35000, dt+"ms");
 
+        // ── 15b. the first stream token waits for the session to settle ──
+        WebExtension.Port.reportAge = true; WebExtension.Port.minterAt = 0; WebExtension.Port.attests = 0;
+        newGen(true);
+        gen.generate("s0","VD");                          // attestation 1
+        setF("firstAttestedAt", (Long) f("firstAttestedAt") - 28500L);
+        int sentBefore = livePort.sent.size();
+        t0 = System.currentTimeMillis();
+        gen.settleForStream("s1","VD");
+        dt = System.currentTimeMillis()-t0;
+        int forcedN = 0;
+        for (int i=sentBefore;i<livePort.sent.size();i++) if (livePort.sent.get(i).optBoolean("forceFresh",false)) forcedN++;
+        check("15b a new session waits out the rest of SESSION_SETTLE_MS", dt>=1000 && dt<4000, dt+"ms");
+        check("15c ...after making one second attestation", forcedN==1 && (Integer) f("attestations")==2, forcedN+" forced");
+        check("15d ...and leaves no cached token behind", !cache().containsKey("s1"), cache().keySet().toString());
+        // settled session: nothing more is asked of the page than the mint
+        sentBefore = livePort.sent.size();
+        t0 = System.currentTimeMillis();
+        gen.settleForStream("s2","VD");
+        dt = System.currentTimeMillis()-t0;
+        forcedN = 0;
+        for (int i=sentBefore;i<livePort.sent.size();i++) if (livePort.sent.get(i).optBoolean("forceFresh",false)) forcedN++;
+        check("15e a settled session does not wait or attest again", dt<500 && forcedN==0, dt+"ms "+forcedN);
+        // two attestations already made: wait only
+        WebExtension.Port.minterAt = 0; WebExtension.Port.attests = 0;
+        newGen(true);
+        gen.generate("s3","VD"); gen.generateFresh("s3","VD");
+        setF("firstAttestedAt", (Long) f("firstAttestedAt") - 29000L);
+        sentBefore = livePort.sent.size();
+        gen.settleForStream("s3","VD");
+        forcedN = 0;
+        for (int i=sentBefore;i<livePort.sent.size();i++) if (livePort.sent.get(i).optBoolean("forceFresh",false)) forcedN++;
+        check("15f a session with two attestations is not attested a third time", forcedN==0, forcedN+" forced");
+        // an interrupt ends the wait
+        WebExtension.Port.minterAt = 0; WebExtension.Port.attests = 0;
+        newGen(true);
+        final Thread me = Thread.currentThread();
+        new Thread(() -> { try { Thread.sleep(1500); } catch (InterruptedException e) {} me.interrupt(); }).start();
+        t0 = System.currentTimeMillis();
+        gen.settleForStream("s4","VD");
+        dt = System.currentTimeMillis()-t0;
+        check("15g an interrupt ends the wait and stays set", dt<5000 && Thread.interrupted(), dt+"ms");
+        // a closed session forgets its attestations
+        gen.shutdown();
+        check("15h a closed session forgets its attestations",
+                (Long) f("firstAttestedAt")==0L && (Integer) f("attestations")==0, "");
+        // a page that reports no age is never waited on
+        WebExtension.Port.reportAge = false;
+        newGen(true);
+        t0 = System.currentTimeMillis();
+        gen.settleForStream("s5","VD");
+        dt = System.currentTimeMillis()-t0;
+        check("15i no minter age from the page -> no wait", dt<500, dt+"ms");
+
         // ── 16. init timeout: young session is LEFT LOADING ──────────────
         newGen(false);                                    // port never connects
         t0 = System.currentTimeMillis();
