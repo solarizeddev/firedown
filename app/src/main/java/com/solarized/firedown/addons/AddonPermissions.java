@@ -55,6 +55,8 @@ public final class AddonPermissions {
             "technicalAndInteraction", "websiteActivity", "websiteContent"));
 
     private static final Pattern ORIGIN = Pattern.compile("^([a-z*]+)://([^/]*)(/.*)?$");
+    private static final Set<String> WEB_SCHEMES =
+            new HashSet<>(Arrays.asList("*", "http", "https", "ws", "wss"));
 
     private AddonPermissions() {}
 
@@ -213,14 +215,14 @@ public final class AddonPermissions {
         Map<String, List<String>> byHost = new HashMap<>();
         Map<String, Boolean> grantedByHost = new HashMap<>();
         for (String pattern : patterns) {
-            String host = hostOf(pattern);
             boolean isGranted = grantedSet.contains(pattern);
-            if ("*".equals(host)) {
+            if (isAllSitesPattern(pattern)) {
                 allSites.add(pattern);
                 allGranted |= isGranted;
                 continue;
             }
-            String label = host == null ? pattern : stripWildcard(host);
+            String host = hostOf(pattern);
+            String label = host == null || "*".equals(host) ? pattern : stripWildcard(host);
             String key = label.toLowerCase(Locale.ROOT);
             if (!byHost.containsKey(key)) {
                 labels.put(key, label);
@@ -252,15 +254,31 @@ public final class AddonPermissions {
         }
     }
 
+    /**
+     * Gecko's all-sites rule (Extension.isAllSitesPermission): {@code
+     * <all_urls>}, or host "*" under a web scheme. Gecko widens a grant or
+     * revoke of one of these to every one the manifest declares, so they
+     * are one switch. An ftp: pattern with host "*" is not all sites.
+     */
+    static boolean isAllSitesPattern(@NonNull String pattern) {
+        String p = pattern.trim();
+        if ("<all_urls>".equals(p)) {
+            return true;
+        }
+        Matcher m = ORIGIN.matcher(p);
+        return m.matches() && "*".equals(m.group(2)) && WEB_SCHEMES.contains(m.group(1));
+    }
+
     @NonNull
     private static String stripWildcard(@NonNull String host) {
         return host.startsWith("*.") ? host.substring(2) : host;
     }
 
     /**
-     * "*" for all sites, the host of one site or domain ("*.example.com"
-     * keeps its wildcard, a port is dropped), null when the pattern names
-     * no web host (a file: pattern, a malformed one).
+     * "*" for host "*" (the prompt lines read it as all sites, whatever the
+     * scheme), the host of one site or domain ("*.example.com" keeps its
+     * wildcard, a port is dropped, an IPv6 literal kept whole), null when
+     * the pattern names no host (a file: pattern, a malformed one).
      */
     @Nullable
     static String hostOf(@NonNull String pattern) {
@@ -280,9 +298,15 @@ public final class AddonPermissions {
         if (host.isEmpty() || path == null || path.isEmpty()) {
             return null;
         }
-        int colon = host.indexOf(':');
-        if (colon >= 0) {
-            host = host.substring(0, colon);
+        if (host.startsWith("[")) {
+            // An IPv6 literal: its colons are not a port.
+            int close = host.indexOf(']');
+            host = close > 0 ? host.substring(0, close + 1) : host;
+        } else {
+            int colon = host.indexOf(':');
+            if (colon >= 0) {
+                host = host.substring(0, colon);
+            }
         }
         return host.isEmpty() ? null : host;
     }

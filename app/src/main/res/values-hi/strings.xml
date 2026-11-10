@@ -42,7 +42,7 @@
     <string name="addon_optional_permissions">वैकल्पिक अनुमतियाँ</string>
     <string name="addon_site_access">साइट एक्सेस</string>
     <string name="addon_allow_all_sites">सभी वेबसाइटों पर अनुमति दें</string>
-    <string name="addon_allow_all_sites_summary">यह आपकी देखी जाने वाली हर वेबसाइट को पढ़ और बदल सकेगा</string>
+    <string name="addon_allow_all_sites_summary">आप जो भी वेबसाइट देखते हैं, उसे यह पढ़ और बदल सकेगा</string>
     <string name="addon_user_scripts_warning">असत्यापित स्क्रिप्ट सुरक्षा और निजता के लिए जोखिम पैदा कर सकती हैं। केवल उन एक्सटेंशन या स्रोतों की स्क्रिप्ट चलाएँ जिन पर आप भरोसा करते हैं।</string>
     <string name="addon_page">ऐड-ऑन पेज</string>
     <string name="addon_perm_all_sites">सभी वेबसाइटों के लिए आपके डेटा तक पहुँचना</string>
