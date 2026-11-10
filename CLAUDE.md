@@ -1841,9 +1841,18 @@ navigation `processVideo` waits for the page's own watch answer
 (`waitForTabWatchResponse`: 1.5 s for the request to start, 8 s for its
 answer) and uses its player response; the interceptor reads `get_watch`
 beside `/player`. A full page load has no such request and still takes the
-HTML path. Not built: taking the token the page's player puts in its own
-stream requests (field 19.2), and sending our token in a player request of
-our own.
+HTML path. That alone changed nothing on a device (the page's own URL
+with our token was kept pending). **So a download now starts with the token
+the page's own player sends**: `background.js` reads each stream request a
+tab makes (`googlevideo.com/videoplayback`, request body field 19.2), ties
+it to its video by the streaming URL's `id`, and hands it over as
+`player-potoken`; `PoTokenGenerator.adoptPlayerToken` keeps the newest per
+video and `SabrStrategy.mintPoToken` uses it before minting. It exists only
+once the page's player has asked for media; otherwise the minted token is
+used as before. Across every log the first download of a process was
+refused and a later one usually served, with our own token both times;
+why is not known. Not built: sending our token in a player request of our
+own.
 **Note what is and isn't a prediction here.** A PO token's own lifetime
 is NOT predictable — yt-dlp's guide puts observed validity anywhere from
 ~12 h to several months, and their issue asking for a figure is still

@@ -438,6 +438,9 @@ public class SabrStrategy implements DownloadStrategy {
      *  switch (worker thread). Built in {@link #executeInternal}. */
     private StreamTokenBinding streamBinding;
 
+    /** The page player's token this download last used (worker thread). */
+    private String lastPlayerToken;
+
     /** Drop the cached tokens of BOTH bindings (this download may have
      *  carried either) so the next mint re-attests in the page. */
     private void invalidatePoToken(@NonNull DownloadRequest request) {
@@ -496,6 +499,15 @@ public class SabrStrategy implements DownloadStrategy {
         if (TextUtils.isEmpty(videoId)) {
             Log.w(TAG, "mintPoToken: missing videoId on request");
             return null;
+        }
+
+        // The token the page's own player sent for this video, when there
+        // is one this download has not been refused with.
+        String fromPlayer = gen.playerToken(videoId);
+        if (!TextUtils.isEmpty(fromPlayer) && !fromPlayer.equals(lastPlayerToken)) {
+            lastPlayerToken = fromPlayer;
+            Log.d(TAG, "PO token from the page's player: " + fromPlayer.length() + " chars");
+            return fromPlayer;
         }
 
         StreamTokenBinding.Kind binding = streamBinding.current();
