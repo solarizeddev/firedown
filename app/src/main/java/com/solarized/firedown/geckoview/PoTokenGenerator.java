@@ -141,13 +141,6 @@ public class PoTokenGenerator {
      *  is the one that gives up first. */
     private static final long MINT_FRESH_TIMEOUT_MS = 30_000;
 
-    /** How old an attestation must be before a token minted from it is
-     *  handed out. The stream server kept every token "pending" when it was
-     *  minted within seconds of the attestation (six downloads on a device),
-     *  and accepted one minted 12 s after it from the same minter. A token
-     *  from a younger attestation is minted again once this has passed. */
-    static final long MINTER_SETTLE_MS = 15_000;
-
     /** How long a minted token may be served from {@link #tokenCache}.
      *
      *  <p>This is NOT a prediction of when a token expires — nobody can make
@@ -271,9 +264,6 @@ public class PoTokenGenerator {
      *  (see {@link #generateFresh}). A retry after a refusal therefore pays
      *  one real attestation. Consumed on the first mint of that key. */
     @GuardedBy("lock") private final Set<String> forceFreshNext = new HashSet<>();
-
-    /** When the page's current minter was attested, 0 = not known. */
-    @GuardedBy("lock") private long minterAttestedAt;
 
     /** A minted token plus when we minted it, so {@link #TOKEN_CACHE_TTL_MS}
      *  can be enforced on read. */
@@ -494,7 +484,6 @@ public class PoTokenGenerator {
         // concurrently across callers because the port can multiplex via
         // per-request ids.
         MintResult result = mint(binding, videoId, visitorData, forceFresh);
-        result = remintWhenSettled(result, binding, videoId, visitorData);
         if (!TextUtils.isEmpty(result.token) && !TextUtils.isEmpty(key)) {
             synchronized (lock) {
                 pruneTokenCacheLocked();
@@ -526,33 +515,6 @@ public class PoTokenGenerator {
         Log.i(TAG, "generate: result="
                 + (result.token != null ? result.token.length() + " chars" : "null"));
         return result.token;
-    }
-
-    /**
-     * A token minted from an attestation younger than
-     * {@link #MINTER_SETTLE_MS}: wait out the rest, then mint again from the
-     * same minter and return that token. A stop during the wait, or a failed
-     * second mint, keeps the first token.
-     */
-    @NonNull
-    private MintResult remintWhenSettled(@NonNull MintResult first, @NonNull Binding binding,
-                                         @NonNull String videoId, @Nullable String visitorData) {
-        if (TextUtils.isEmpty(first.token)) return first;
-        final long wait;
-        synchronized (lock) {
-            wait = minterAttestedAt > 0
-                    ? MINTER_SETTLE_MS - (System.currentTimeMillis() - minterAttestedAt) : 0;
-        }
-        if (wait <= 0) return first;
-        Log.i(TAG, "generate: attestation is new, minting again in " + wait + "ms");
-        try {
-            Thread.sleep(wait);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return first;
-        }
-        MintResult second = mint(binding, videoId, visitorData, false);
-        return TextUtils.isEmpty(second.token) ? first : second;
     }
 
     /**
@@ -992,12 +954,6 @@ public class PoTokenGenerator {
                     Log.d(TAG, "mintResult late or unknown id=" + requestId);
                     return;
                 }
-                long minterAge = json.optLong("age", -1);
-                if (minterAge >= 0) {
-                    synchronized (lock) {
-                        minterAttestedAt = System.currentTimeMillis() - minterAge;
-                    }
-                }
                 String error = json.optString("error", "");
                 if (!error.isEmpty()) {
                     f.completeExceptionally(new RuntimeException(error));
@@ -1014,7 +970,6 @@ public class PoTokenGenerator {
 
     /** Caller MUST hold {@link #lock}. */
     private void closeSessionLocked() {
-        minterAttestedAt = 0;
         if (session != null) {
             final GeckoSession s = session;
             session = null;

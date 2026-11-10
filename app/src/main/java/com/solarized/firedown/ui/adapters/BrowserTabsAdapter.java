@@ -238,6 +238,7 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
 
         if (viewHolder instanceof BannerViewHolder bannerHolder) {
             bannerHolder.bind(mBannerCount, mBannerTitleResId, mBannerListener);
+            bannerHolder.alignWithCards(mList);
             return;
         }
 
@@ -288,6 +289,7 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
 
         if (viewHolder instanceof BannerViewHolder bannerHolder) {
             bannerHolder.bind(mBannerCount, mBannerTitleResId, mBannerListener);
+            bannerHolder.alignWithCards(mList);
             return;
         }
 
@@ -511,6 +513,23 @@ public class BrowserTabsAdapter extends GridListBaseAdapter<GeckoStateEntity, Re
             mTitle = itemView.findViewById(R.id.archive_banner_title);
             mSubtitle = itemView.findViewById(R.id.archive_banner_subtitle);
             mDismiss = itemView.findViewById(R.id.archive_banner_dismiss);
+        }
+
+        /**
+         * The banner's edges on the tab cards' edges: a grid card is 4dp
+         * inside its cell, a list row 6dp, and the banner's cell is as wide
+         * as theirs.
+         */
+        void alignWithCards(boolean list) {
+            if (!(itemView.getLayoutParams() instanceof ViewGroup.MarginLayoutParams params)) {
+                return;
+            }
+            int side = Math.round((list ? 6 : 4) * itemView.getResources().getDisplayMetrics().density);
+            if (params.getMarginStart() != side || params.getMarginEnd() != side) {
+                params.setMarginStart(side);
+                params.setMarginEnd(side);
+                itemView.setLayoutParams(params);
+            }
         }
 
         void bind(int count, @PluralsRes int titleResId,
