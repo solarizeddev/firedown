@@ -124,39 +124,33 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
         // can't land just after it lapses.
         const CM_TTL_MARGIN = 300000;
 
-        async function attest(vd) {
+        // What the last attestation did, for the native log: which
+        // challenge made the minter, and why an earlier one did not.
+        let lastAttest = '';
+
+        async function pageChallenge() {
+            const found = await window.__fdGetChallenge();
+            if (!found) throw new Error('no challenge in page');
+            const o = JSON.parse(found);
+            if (!o.bgChallenge || !o.bgChallenge.program) throw new Error('no program');
+            return { ch: o.bgChallenge, cv: o.clientVersion || '' };
+        }
+
+        async function attGetChallenge(vd, name, num, cv) {
+            const ctx = {client:{clientName:name,clientVersion:cv,hl:'en',gl:'US',visitorData:vd||''}};
+            const cr = await fetch('https://www.youtube.com/youtubei/v1/att/get?prettyPrint=false&alt=json',{
+                method:'POST',headers:{'Accept':'*/*','Content-Type':'application/json','X-Goog-Visitor-Id':vd||'','X-Youtube-Client-Version':cv,'X-Youtube-Client-Name':num},
+                body:JSON.stringify({engagementType:'ENGAGEMENT_TYPE_UNBOUND',context:ctx})
+            });
+            if (!cr.ok) throw new Error('att/get '+cr.status);
+            const cd = await cr.json();
+            if (!cd.bgChallenge) throw new Error('no bgChallenge');
+            return { ch: cd.bgChallenge, cv: cv };
+        }
+
+        // One challenge → interpreter VM → snapshot → GenerateIT → minter.
+        async function attestWith(ch) {
             const BG = window.BG;
-            // The challenge YouTube's own player uses: the one its page
-            // carries. A token made from an att/get challenge asked as
-            // another client and an old client version was kept "pending"
-            // by the video server (STREAM_PROTECTION_STATUS 2, then 3 at a
-            // minute of media) while the page's own player, in the same
-            // browser session, was accepted at once. att/get stays as the
-            // fallback, asked as the client the streams belong to (MWEB).
-            let cv = '2.20261106.00.00';
-            let ch = null;
-            let src = 'att/get';
-            try {
-                const found = await window.__fdGetChallenge();
-                if (found) {
-                    const o = JSON.parse(found);
-                    if (o.clientVersion) cv = o.clientVersion;
-                    if (o.bgChallenge && o.bgChallenge.program) { ch = o.bgChallenge; src = 'page'; }
-                }
-            } catch (e) {}
-
-            if (!ch) {
-                const ctx = {client:{clientName:'MWEB',clientVersion:cv,hl:'en',gl:'US',visitorData:vd||''}};
-                const cr = await fetch('https://www.youtube.com/youtubei/v1/att/get?prettyPrint=false&alt=json',{
-                    method:'POST',headers:{'Accept':'*/*','Content-Type':'application/json','X-Goog-Visitor-Id':vd||'','X-Youtube-Client-Version':cv,'X-Youtube-Client-Name':'2'},
-                    body:JSON.stringify({engagementType:'ENGAGEMENT_TYPE_UNBOUND',context:ctx})
-                });
-                if (!cr.ok) throw new Error('att/get '+cr.status);
-                const cd = await cr.json();
-                if (!cd.bgChallenge) throw new Error('no bgChallenge');
-                ch = cd.bgChallenge;
-            }
-
             const wrapped = ch.interpreterUrl || ch.interpreterSafeUrl || {};
             let iu = wrapped.privateDoNotAccessOrElseTrustedResourceUrlWrappedValue;
             if (!iu) throw new Error('no interpreter url');
@@ -176,8 +170,16 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                 method:'POST',headers:{'Content-Type':'application/json+protobuf','x-goog-api-key':AK,'x-user-agent':'grpc-web-javascript/0.1'},
                 body:JSON.stringify([RK,bgr])
             });
-            const ij = await ir.json();
-            if (typeof ij[0]!=='string') throw new Error('no IT');
+            const it = await ir.text();
+            let ij = null;
+            try { ij = JSON.parse(it); } catch (e) {}
+            if (!Array.isArray(ij) || typeof ij[0]!=='string') {
+                // The server's answer in shape only: types and lengths.
+                const shape = Array.isArray(ij)
+                    ? '['+ij.map(v => v===null ? 'null' : (typeof v==='string' ? 'str'+v.length : typeof v)).join(',')+']'
+                    : 'len'+it.length;
+                throw new Error('no IT (http '+ir.status+' program='+String(ch.program).length+' snapshot='+String(bgr).length+' answer='+shape+')');
+            }
 
             // ij = [integrityToken, estimatedTtlSecs, mintRefreshThreshold, ...].
             // HONOUR ij[1]. Every token this minter produces is bound to THIS
@@ -188,12 +190,41 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             // regardless of what the server said is what made that
             // intermittent rather than never.
             const ttl = (typeof ij[1] === 'number' && ij[1] > 0) ? ij[1]*1000 : 0;
-            cml = ttl ? Math.max(60000, ttl - CM_TTL_MARGIN) : CM_TTL_FALLBACK;
-
             const m = await BG.WebPoMinter.create({integrityToken:ij[0]},wps);
+            cml = ttl ? Math.max(60000, ttl - CM_TTL_MARGIN) : CM_TTL_FALLBACK;
             cm=m; cmt=Date.now();
-            if (window.__fdDebug) console.log('[BG-robots] attested: challenge='+src+' cver='+cv+' interpreter='+(ch.interpreterHash||'?')+' snapshot='+String(bgr).length+' integrity='+ij[0].length+' ttl='+ij[1]+'s, minter valid for '+Math.round(cml/1000)+'s');
-            return m;
+            return 'snapshot='+String(bgr).length+' integrity='+ij[0].length+' ttl='+ij[1];
+        }
+
+        // Tries each source of a challenge until one yields a minter:
+        // the challenge the m.youtube.com page carries (what YouTube's own
+        // player attests with), then att/get as the client the streams
+        // belong to (MWEB), then att/get as WEB. A source that fails at
+        // any step (no challenge, the VM, a GenerateIT answer with no
+        // integrity token) is recorded and the next one tried, so a mint
+        // fails only when none works.
+        async function attest(vd) {
+            const MWEB_CV = '2.20261106.00.00';
+            const sources = [
+                ['page', () => pageChallenge()],
+                ['att/get-mweb', () => attGetChallenge(vd, 'MWEB', '2', MWEB_CV)],
+                ['att/get-web', () => attGetChallenge(vd, 'WEB', '1', '2.20260401.01.00')]
+            ];
+            const failed = [];
+            for (const [name, get] of sources) {
+                try {
+                    const c = await get();
+                    const done = await attestWith(c.ch);
+                    lastAttest = 'challenge='+name+' cver='+(c.cv||'?')+' '+done
+                        + (failed.length ? ' after '+failed.join('; ') : '');
+                    if (window.__fdDebug) console.log('[BG-robots] attested: '+lastAttest);
+                    return cm;
+                } catch (e) {
+                    failed.push(name+': '+(e && e.message ? e.message : e));
+                }
+            }
+            lastAttest = '';
+            throw new Error(failed.join('; '));
         }
 
         async function gen(vid, vd, forceFresh, binding) {
@@ -252,7 +283,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
         window.__fdGenPoToken = async function(vid,vd,rid,forceFresh,binding) {
             try {
                 const t = await gen(vid,vd,forceFresh,binding);
-                window.__fdPoTokenCB(JSON.stringify({requestId:rid,token:t}));
+                window.__fdPoTokenCB(JSON.stringify({requestId:rid,token:t,info:lastAttest}));
             } catch(e) {
                 window.__fdPoTokenCB(JSON.stringify({requestId:rid,error:e.message}));
             }
@@ -291,7 +322,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                 // (page crash, runtime fault), which matters because
                 // listeners would otherwise accumulate on a long-lived
                 // robots.txt session.
-                const token = await new Promise((resolve, reject) => {
+                const minted = await new Promise((resolve, reject) => {
                     let timerId;
                     const cleanup = () => {
                         window.removeEventListener('fdPoTokenResult', handler);
@@ -303,7 +334,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                         if (!data || data.requestId !== requestId) return;
                         cleanup();
                         if (data.error) reject(new Error(data.error));
-                        else resolve(data.token);
+                        else resolve({ token: data.token, info: data.info || '' });
                     };
                     timerId = setTimeout(() => {
                         cleanup();
@@ -317,7 +348,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                             msg.forceFresh === true,
                             msg.binding === 'visitor' ? 'visitor' : 'video');
                 });
-                natPort.postMessage({ type: 'mintResult', requestId, token });
+                natPort.postMessage({ type: 'mintResult', requestId, token: minted.token, info: minted.info });
             } catch (e) {
                 natPort.postMessage({ type: 'mintResult', requestId, error: e.message });
             }
