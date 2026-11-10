@@ -451,9 +451,9 @@ public class SabrStrategy implements DownloadStrategy {
 
     /**
      * The server demanded attestation (status 3): mint a fresh token over
-     * the identifier {@link StreamTokenBinding#onDemand} names. A binding
-     * left behind has its cached token dropped, so a later download can
-     * never start from a token the server did not accept.
+     * the identifier {@link StreamTokenBinding#onDemand} names. A visitor
+     * binding left behind has its cached token dropped, so a later download
+     * never starts from a token the server did not accept.
      */
     @Nullable
     private String mintAfterDemand(@NonNull DownloadRequest request,
@@ -466,27 +466,17 @@ public class SabrStrategy implements DownloadStrategy {
         if (now != before) {
             Log.d(TAG, "PO token bound to " + before + " not accepted, minting one bound to "
                     + now);
-            invalidatePoToken(request, before);
+            // The visitor key only: a video-bound token the stream did not
+            // take is still the right one for this video's subtitles.
+            if (before == StreamTokenBinding.Kind.VISITOR) {
+                String visitorData = request.getSabrVisitorData();
+                PoTokenGenerator gen = context.getPoTokenGenerator();
+                if (gen != null && !TextUtils.isEmpty(visitorData)) {
+                    gen.invalidateStream(visitorData);
+                }
+            }
         }
         return mintPoToken(request, true);
-    }
-
-    /** Drop the cached token of one binding. */
-    private void invalidatePoToken(@NonNull DownloadRequest request,
-                                   @NonNull StreamTokenBinding.Kind kind) {
-        PoTokenGenerator gen = context.getPoTokenGenerator();
-        if (gen == null) return;
-        if (kind == StreamTokenBinding.Kind.VISITOR) {
-            String visitorData = request.getSabrVisitorData();
-            if (!TextUtils.isEmpty(visitorData)) {
-                gen.invalidateStream(visitorData);
-            }
-        } else {
-            String videoId = request.getSabrVideoId();
-            if (!TextUtils.isEmpty(videoId)) {
-                gen.invalidate(videoId);
-            }
-        }
     }
 
     @Nullable

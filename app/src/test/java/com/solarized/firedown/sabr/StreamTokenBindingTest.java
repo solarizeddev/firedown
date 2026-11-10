@@ -19,7 +19,7 @@ import java.util.List;
  * whose token is over the wrong identifier is served its first responses
  * "pending", then every such token is refused at once; a token over the
  * right identifier draws no status) with the downloader's own bookkeeping:
- * a consecutive count reset by progress and capped at two.
+ * a consecutive count reset by progress and capped at three.
  */
 public class StreamTokenBindingTest {
 
@@ -95,6 +95,32 @@ public class StreamTokenBindingTest {
     }
 
     @Test
+    public void threeRefusalsInARowAreThisTheOtherAndThisAgain() {
+        StreamTokenBinding b = new StreamTokenBinding(true);
+        b.onMinted();
+        assertEquals(Kind.VIDEO, b.onDemand(true, false, 1));
+        b.onMinted();
+        assertEquals(Kind.VISITOR, b.onDemand(false, false, 2));
+        b.onMinted();
+        assertEquals(Kind.VIDEO, b.onDemand(false, false, 3));
+    }
+
+    @Test
+    public void mediaOnABindingAlreadyGivenUpProvesNothing() {
+        StreamTokenBinding b = new StreamTokenBinding(true);
+        b.onMinted();
+        b.onDemand(false, false, 1);                            // VIDEO again
+        b.onMinted();
+        assertEquals(Kind.VISITOR, b.onDemand(false, false, 2)); // VIDEO given up
+        b.onMinted();
+        assertEquals(Kind.VIDEO, b.onDemand(false, true, 1));    // VISITOR pending
+        b.onMinted();
+        // VIDEO moved media without a status, as it did before it was
+        // refused: not proof, so a pending token still switches.
+        assertEquals(Kind.VISITOR, b.onDemand(true, true, 1));
+    }
+
+    @Test
     public void aFailedFirstMintTriesTheSameBindingFirst() {
         StreamTokenBinding b = new StreamTokenBinding(true);
         // No onMinted: the download started with no token at all.
@@ -151,7 +177,7 @@ public class StreamTokenBindingTest {
 
     private static final int RESPONSES = 40;        // media, in responses
     private static final int GRACE = 3;             // responses served before the first refusal
-    private static final int MAX_CONSECUTIVE = 2;   // SabrDownloader.MAX_ATTESTATION_REFRESHES
+    private static final int MAX_CONSECUTIVE = 3;   // SabrDownloader.MAX_ATTESTATION_REFRESHES
 
     /**
      * @param wanted       the identifier the server checks; null = none is accepted

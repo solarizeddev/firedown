@@ -36,6 +36,9 @@ public final class StreamTokenBinding {
     private boolean minted;
     /** The binding the server accepted earlier in THIS download. */
     private Kind proven;
+    /** A binding whose fresh token was refused with no progress in THIS
+     *  download: media on it proves nothing any more. */
+    private Kind givenUp;
 
     /**
      * @param hasVisitorData false when the capture carried no visitor data:
@@ -73,14 +76,17 @@ public final class StreamTokenBinding {
             // mint failed): the demand says nothing about the binding.
             return current;
         }
-        if (accepted) {
-            proven = current;
-        }
         boolean refusedTwice = consecutive >= 2;
-        if (refusedTwice && proven == current) {
-            // A fresh token over the proven binding was refused with no
-            // progress: the proof was wrong, or the session changed.
-            proven = null;
+        if (refusedTwice) {
+            // A fresh token over this binding was refused with no progress.
+            // Whatever media it moved before (a server that serves a wrong
+            // token for a while without saying "pending") proved nothing.
+            givenUp = current;
+            if (proven == current) {
+                proven = null;
+            }
+        } else if (accepted && current != givenUp) {
+            proven = current;
         }
         if (!hasVisitorData) {
             return current;
@@ -93,6 +99,8 @@ public final class StreamTokenBinding {
             return current;
         }
         if (pending || refusedTwice) {
+            // Each further refusal in a row goes back to the other one, so
+            // three attempts are: this binding fresh, the other, this again.
             current = current.other();
             minted = false;
         }

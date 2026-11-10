@@ -114,9 +114,12 @@ public class SabrDownloader {
 
     /**
      * CONSECUTIVE failed re-mints tolerated. One fresh token normally
-     * settles a demand; the second attempt covers a mint that raced a
-     * session rotation. Past this the token is being REJECTED (not missing)
-     * and more minting won't change the answer.
+     * settles a demand. Three is what {@link StreamTokenBinding} needs when
+     * it does not: a fresh token over the same identifier, one over the
+     * other identifier, and one more over the first (a mint that raced a
+     * session rotation, or a binding it could not tell was wrong). Past
+     * this the token is being REJECTED (not missing) and more minting
+     * won't change the answer.
      *
      * <p>Consecutive, not lifetime: {@link #attestationRefreshCount} resets
      * on forward progress, because that proves the recovery worked. Demands
@@ -124,7 +127,7 @@ public class SabrDownloader {
      * legitimately draw several within one short download, and each is a
      * fresh budget rather than a step toward failing it.</p>
      */
-    private static final int MAX_ATTESTATION_REFRESHES = 2;
+    private static final int MAX_ATTESTATION_REFRESHES = 3;
     private int attestationRefreshCount = 0;
 
     /** Re-mints performed by this download, never reset — the backstop that

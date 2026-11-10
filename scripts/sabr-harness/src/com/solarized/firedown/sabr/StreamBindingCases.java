@@ -173,7 +173,7 @@ final class StreamBindingCases {
             check("B6  a session that accepts neither fails, having tried both",
                     !r.finished && r.error != null && r.error.contains("rejected")
                             && r.mints.contains(Kind.VIDEO) && r.mints.contains(Kind.VISITOR)
-                            && r.mints.size() == 3,
+                            && r.mints.equals(Arrays.asList(Kind.VISITOR, Kind.VIDEO, Kind.VISITOR, Kind.VIDEO)),
                     "mints=" + r.mints + " err=" + r.error);
             check("B6b ...and teaches the next download nothing",
                     StreamTokenBinding.lastAccepted() == Kind.VISITOR, "");
@@ -219,6 +219,58 @@ final class StreamBindingCases {
             check("B10 a binding accepted before a later failure is still remembered",
                     !r.finished && StreamTokenBinding.lastAccepted() == Kind.VIDEO,
                     "mints=" + r.mints + " err=" + r.error);
+        });
+
+        SabrHarness.sec("B12", () -> {
+            // The accepted binding's fresh token is refused once with no
+            // progress (a mint that raced a session rotation), the other
+            // identifier is wrong, and the third attempt is back on it.
+            StreamTokenBinding.resetForTest(Kind.VIDEO);
+            Run run = new Run();
+            run.binding = new StreamTokenBinding(true);
+            run.binding.onMinted();
+            run.mints.add(Kind.VIDEO);
+            run.carried = Kind.VIDEO;
+            final int[] remints = {0};
+            run.d = SabrHarness.newDownloader(SabrHarness.tok("T0"), () -> {
+                Kind kind = run.binding.onDemand(run.d.isTokenAccepted(),
+                        run.d.isAttestationPending(),
+                        run.d.getConsecutiveAttestationRefreshes());
+                remints[0]++;
+                run.binding.onMinted();
+                run.carried = kind;
+                run.mints.add(kind);
+                return SabrHarness.tok("T" + remints[0]);
+            });
+            final int[] seq = {0};
+            OkHttpClient.responder = (req, call) -> {
+                List<byte[]> parts = new ArrayList<>();
+                if (call == 0) parts.add(SabrHarness.inits());
+                // Calls 0-1 media; then refused until the THIRD re-mint.
+                boolean ok = call < 2 || (remints[0] >= 3 && run.carried == Kind.VIDEO);
+                if (ok) {
+                    if (seq[0] * SabrHarness.SEG < SabrHarness.DUR) parts.add(SabrHarness.segsAt(seq[0]++));
+                } else {
+                    parts.add(SabrTestServer.streamProtection(3));
+                }
+                return Response.ok(SabrTestServer.concat(parts.toArray(new byte[0][])));
+            };
+            boolean finished = false; String err = null;
+            try { finished = run.d.download() != null; } catch (Exception e) { err = e.getMessage(); }
+            check("B12 an accepted binding refused once comes back on the third attempt",
+                    finished && run.mints.equals(Arrays.asList(Kind.VIDEO, Kind.VIDEO, Kind.VISITOR, Kind.VIDEO)),
+                    "mints=" + run.mints + " err=" + err);
+        });
+
+        SabrHarness.sec("B13", () -> {
+            // Media and a demand in the SAME response: that token is not
+            // an accepted one.
+            SabrDownloader d = SabrHarness.newDownloader(SabrHarness.tok("A"), () -> null);
+            OkHttpClient.responder = (req, call) -> Response.ok(SabrTestServer.concat(
+                    SabrHarness.inits(), SabrHarness.segsAt(0), SabrTestServer.streamProtection(3)));
+            try { d.download(); } catch (Exception expected) { }
+            check("B13 media that arrives with a demand does not make the token accepted",
+                    !d.isTokenAccepted(), "");
         });
 
         SabrHarness.sec("B11", () -> {
