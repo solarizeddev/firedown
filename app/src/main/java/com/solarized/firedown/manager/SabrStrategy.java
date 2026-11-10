@@ -159,12 +159,11 @@ public class SabrStrategy implements DownloadStrategy {
         // failed (branch above) gets its second chance here too. Runs on
         // this same worker thread, the thread the initial mint used.
         //
-        // Goes through mintFreshPoToken, NOT mintPoToken: the plain mint is
-        // cache-first and on this path the cache holds exactly the token the
-        // server just refused, so the recovery re-applied the rejected token
-        // twice in ~4s ("cache hit ... 0ms") and failed the download having
-        // never asked the page to mint anything.
-        sabrDownloader.setPoTokenRefresher(() -> mintFreshPoToken(request));
+        // Every recovery mint is FRESH (the plain mint is cache-first, and
+        // the cache holds the token the server just refused) and over the
+        // OTHER identifier when the current one is the problem: see
+        // mintAfterRefusal.
+        sabrDownloader.setPoTokenRefresher(() -> mintAfterRefusal(request, sabrDownloader));
 
         // Dynamic MWEB client version from HTML — CDN validates cver= matches
         String clientVersion = request.getSabrClientVersion();
@@ -233,6 +232,11 @@ public class SabrStrategy implements DownloadStrategy {
         SabrDownloader.Result result;
         try {
             result = sabrDownloader.download();
+            // A binding the server accepted is where the next download
+            // starts; one it kept pending to the end proved nothing.
+            if (tokenMinted && !sabrDownloader.isAttestationPending()) {
+                sStreamBinding = streamBinding;
+            }
         } catch (SabrDownloader.SabrException e) {
             Log.e(TAG, "SABR download failed: " + e.getMessage(), e);
 
@@ -425,25 +429,71 @@ public class SabrStrategy implements DownloadStrategy {
     }
 
     /**
-     * Mint a PO token the server has not already refused — used only by the
-     * mid-stream attestation recovery. Bypasses every cache layer; see
-     * {@link PoTokenGenerator#generateFresh}.
+     * Which identifier the STREAM token is minted over, for the next
+     * download of this process: the last binding a download finished with.
+     *
+     * The server checks the videoplayback / SABR token against ONE
+     * identifier and which one depends on a player experiment of the
+     * session that produced the streaming URL
+     * (html5_generate_content_po_token, the switch yt-dlp calls
+     * gvs_bind_to_video_id): the video id with it, the visitor data
+     * without. Nothing on the request says which, and a wrong binding is
+     * refused the same way a missing token is: status 2 from the first
+     * response, status 3 around a minute of media. So the binding is tried,
+     * not assumed: start from the last one that worked, switch on a
+     * refusal (see {@link #mintAfterRefusal}).
      */
-    @Nullable
-    private String mintFreshPoToken(@NonNull DownloadRequest request) {
-        return mintPoToken(request, true);
-    }
+    private static volatile PoTokenGenerator.Binding sStreamBinding =
+            PoTokenGenerator.Binding.VIDEO;
 
-    /** Drop the cached STREAM token (the visitor-bound one this download
-     *  carried on videoplayback) so the next mint re-attests in the page.
-     *  The video-bound token is a different token for a different request
-     *  (timedtext) and is left alone. */
+    /** The binding of the token this download carries (worker thread). */
+    private PoTokenGenerator.Binding streamBinding = sStreamBinding;
+
+    /** A token was minted and applied for {@link #streamBinding}. */
+    private boolean tokenMinted;
+
+    /** Drop the cached tokens of BOTH bindings (this download may have
+     *  carried either) so the next mint re-attests in the page. */
     private void invalidatePoToken(@NonNull DownloadRequest request) {
         PoTokenGenerator gen = context.getPoTokenGenerator();
+        if (gen == null) return;
+        String videoId = request.getSabrVideoId();
         String visitorData = request.getSabrVisitorData();
-        if (gen != null && !TextUtils.isEmpty(visitorData)) {
+        if (!TextUtils.isEmpty(videoId)) {
+            gen.invalidate(videoId);
+        }
+        if (!TextUtils.isEmpty(visitorData)) {
             gen.invalidateStream(visitorData);
         }
+    }
+
+    /**
+     * The server demanded attestation (status 3): mint a fresh token, over
+     * the OTHER identifier when the current one is the problem.
+     *
+     * The current binding is wrong when the server kept this token pending
+     * (status 2 since it was applied), or refused a fresh one of the same
+     * binding with no progress in between. A demand on a token it had
+     * accepted (no status 2, progress before it) is the ordinary mid-stream
+     * one and keeps the binding: switching there would put a long download
+     * on the wrong identifier for a minute of media at every demand. A
+     * download whose first mint failed has tried no binding yet.
+     */
+    @Nullable
+    private String mintAfterRefusal(@NonNull DownloadRequest request,
+                                    @NonNull SabrDownloader downloader) {
+        boolean wrongBinding = tokenMinted
+                && (downloader.isAttestationPending()
+                        || downloader.getConsecutiveAttestationRefreshes() >= 2);
+        if (wrongBinding && !TextUtils.isEmpty(request.getSabrVisitorData())) {
+            PoTokenGenerator.Binding refused = streamBinding;
+            streamBinding = refused == PoTokenGenerator.Binding.VIDEO
+                    ? PoTokenGenerator.Binding.VISITOR
+                    : PoTokenGenerator.Binding.VIDEO;
+            Log.d(TAG, "PO token bound to " + refused + " not accepted, minting one bound to "
+                    + streamBinding);
+        }
+        return mintPoToken(request, true);
     }
 
     @Nullable
@@ -456,24 +506,33 @@ public class SabrStrategy implements DownloadStrategy {
             Log.w(TAG, "mintPoToken: PoTokenGenerator unavailable");
             return null;
         }
-        if (TextUtils.isEmpty(videoId) || TextUtils.isEmpty(visitorData)) {
-            Log.w(TAG, "mintPoToken: missing videoId/visitorData on request");
+        if (TextUtils.isEmpty(videoId)) {
+            Log.w(TAG, "mintPoToken: missing videoId on request");
             return null;
         }
 
+        // No visitor data: the video id is the only identifier there is.
+        PoTokenGenerator.Binding binding = TextUtils.isEmpty(visitorData)
+                ? PoTokenGenerator.Binding.VIDEO
+                : streamBinding;
+        streamBinding = binding;
         long t0 = System.currentTimeMillis();
         try {
-            // The STREAM token: bound to visitorData, which is what the
-            // Google Video Server checks on videoplayback. generate() (the
-            // video-bound one) is the timedtext token — sending that here
-            // shipped as the intermittent status-3 death at ~60 s.
-            String token = forceFresh
-                    ? gen.generateFreshForStream(videoId, visitorData)
-                    : gen.generateForStream(videoId, visitorData);
+            String token;
+            if (binding == PoTokenGenerator.Binding.VISITOR) {
+                token = forceFresh
+                        ? gen.generateFreshForStream(videoId, visitorData)
+                        : gen.generateForStream(videoId, visitorData);
+            } else {
+                token = forceFresh
+                        ? gen.generateFresh(videoId, visitorData)
+                        : gen.generate(videoId, visitorData);
+            }
             long dt = System.currentTimeMillis() - t0;
             if (!TextUtils.isEmpty(token)) {
-                Log.d(TAG, "Native PO token: " + token.length() + " chars (" + dt + "ms"
-                        + (forceFresh ? ", fresh" : "") + ")");
+                tokenMinted = true;
+                Log.d(TAG, "Native PO token: " + token.length() + " chars, bound to "
+                        + binding + " (" + dt + "ms" + (forceFresh ? ", fresh" : "") + ")");
                 return token;
             }
             Log.w(TAG, "Native mint returned empty after " + dt + "ms");

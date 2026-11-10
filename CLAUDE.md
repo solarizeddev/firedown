@@ -1542,7 +1542,7 @@ server-refused download ERRORS — it never finalizes.** The server can demand
 attestation MID-STREAM (seen in the wild ~60 s into a download whose
 start-time token it had accepted). `SabrDownloader` reacts by minting a fresh
 per-video PO token through `PoTokenRefresher` (wired by `SabrStrategy` to
-`mintFreshPoToken`, set unconditionally so a download whose initial mint
+`mintAfterRefusal`, set unconditionally so a download whose initial mint
 failed gets its chance here too) and resuming from position; after
 `MAX_ATTESTATION_REFRESHES` (2) failed re-mints the token is being REJECTED,
 not missing, and it throws `SabrException`. **That budget is CONSECUTIVE —
@@ -1676,40 +1676,48 @@ the 16-bit `reference_count` unchecked):
   the partial-write case passed. With both fixes all three cases pass on
   that device, the remux fallback's first green anywhere.
 
-**The SABR / `videoplayback` token is bound to the VISITOR DATA; the
-subtitles token to the VIDEO ID — two different tokens, never one shared
-cache entry.** A PO token is minted over one identifier (BotGuard's content
-binding) and the server checks it against the request it rides on: the
-Google Video Server checks the `videoplayback` / SABR `poToken` against the
-session's visitor (yt-dlp's GVS context — the logged-out WEB client, which
-`SabrDownloader` forces, binds to `visitorData`), while the player request
-and the `timedtext` `pot=` param check the VIDEO id (yt-dlp's PLAYER/SUBS
-contexts; `get_webpo_content_binding` in `youtube/pot/utils.py` is the
-reference). `content.js` used to mint EVERY token over `vid || vd`, so the
-stream token was video-bound — and the failure of a wrong binding is
-SILENT: the server accepts it unchecked most of the time and refuses it
-only when it spot-checks the session. On-device that was
-`STREAM_PROTECTION_STATUS 2` ("pending" — never validated) from the first
-data response, status 3 at ~60 s, two genuinely fresh re-mints (~600 ms
-each, full attestation) refused at once because they carried the same
-wrong binding, then a restart of the app that worked with no protection
-status at all. Recognise the shape: **an intermittent status-3 death where
-FRESH re-mints are refused immediately is a BINDING problem, not a
-token-TTL or network one** (a TTL problem tracks session age; a network
-problem mints nothing). Now `PoTokenGenerator.Binding` names the binding
-per caller — `generateForStream`/`generateFreshForStream`/`invalidateStream`
-(`SabrStrategy`, `binding:"visitor"` on the mint message, cache key
-`visitor:<visitorData>`, shared across every video of the session because
-the server binds it to the visitor) versus `generate`/`generateFresh`/
-`invalidate` (`TimedTextStrategy`, `binding:"video"`, cache key = videoId)
-— and `content.js` picks the identifier from it (a message with no binding
-is treated as video-bound, so the pre-field pairing still agrees on the
-subtitles token). Don't collapse the two back into one videoId-keyed cache
-"so subtitles reuse the stream token" — they were never the same token.
-`invalidate*` now also marks the key so the NEXT mint runs `forceFresh`
-(the page re-attests instead of re-minting through the minter whose output
-was just refused), so a user's retry of an ERROR row never starts from the
-refused token. Pinned by cases 8b–8n of `sh scripts/potoken-harness/run.sh`.
+**The SABR / `videoplayback` token is bound to the video id OR the visitor
+data, depending on the session, and `SabrStrategy` TRIES the binding instead
+of assuming it.** A PO token is minted over one identifier (BotGuard's
+content binding) and the server checks it against the request it rides on.
+The player request and `timedtext` take the VIDEO id. The Google Video
+Server takes one of two for a logged-out web client: the video id when the
+session that produced the streaming URL runs the player experiment
+`html5_generate_content_po_token` (yt-dlp's `_gvs_bind_to_video_id`), the
+visitor data without it. Nothing on the capture says which, and a wrong
+binding fails SILENTLY: `STREAM_PROTECTION_STATUS 2` ("pending") from the
+first data response, status 3 around a minute of media, and every re-mint
+over the same identifier refused at once however fresh. Recognise the
+shape: **a status-3 death where FRESH re-mints are refused immediately is a
+BINDING problem, not a token-TTL or network one.** It shipped twice, once
+per fixed choice: every token video-bound ("fails, then works after a
+restart", the session's experiment having changed), then the stream token
+always visitor-bound (2026-11 log: an 836-char token over a 548-char
+visitor data, pending from the first response, both fresh re-mints
+refused). Now: a download starts with the binding the server last
+ACCEPTED in this process (`sStreamBinding`, VIDEO at start; recorded when a
+download finishes with no status 2 on its current token), and the status-3
+refresher (`mintAfterRefusal`) always mints FRESH, over the OTHER identifier
+only when the current one is the problem: the server kept this token pending
+(`SabrDownloader.isAttestationPending`, status 2 since `setPoToken`; an
+accepted token draws no protection status at all), or it refused a fresh
+token of the same binding with no progress between
+(`getConsecutiveAttestationRefreshes() >= 2`). An ordinary mid-stream demand
+on an accepted token keeps its binding: switching on every status 3 (the
+first cut, caught by the Opus review) would put a long download on the wrong
+identifier for a minute of media at each demand and spend two units of the
+total budget per demand. A download whose first mint failed has tried no
+binding and does not switch on its first demand; with no visitor data the
+binding stays VIDEO. The two bindings stay two cache entries
+(`PoTokenGenerator.Binding`: `generate` / `generateFresh` / `invalidate`
+keyed by videoId, the `…ForStream` twins keyed `visitor:<visitorData>`);
+a video-bound stream token and the subtitles token are the same token, and
+a failed download invalidates both keys. `invalidate*` also marks the key
+so the NEXT mint runs `forceFresh`. Not built: reading the experiment flag
+from the watch page at capture to pick the first binding (it would save
+the one refused request and its 2 s backoff). `PoTokenGenerator` is pinned
+by `sh scripts/potoken-harness/run.sh` (cases 8b–8n cover the two keys);
+the switch in `SabrStrategy` has no harness and is on-device unverified.
 
 **The re-mint MUST bypass every token cache — a cache-first "refresh" is a
 no-op that only looks like recovery.** The refresher goes through

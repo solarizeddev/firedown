@@ -169,7 +169,19 @@ public class SabrDownloader {
     public void setPoToken(String base64) {
         // Original base64url string for URL pot= parameter
         this.poToken = base64 != null ? Base64.decode(base64, Base64.URL_SAFE | Base64.NO_WRAP) : null;
+        this.attestationPending = false;
     }
+
+    /** Status 2 ("attestation pending") was seen since the current token
+     *  was applied: the server has not accepted THIS token. A session whose
+     *  token it accepts sends no protection status at all. */
+    private volatile boolean attestationPending = false;
+
+    public boolean isAttestationPending() { return attestationPending; }
+
+    /** How many refreshes in a row the server has demanded with no forward
+     *  progress between them, the one being asked for included. */
+    public int getConsecutiveAttestationRefreshes() { return attestationRefreshCount; }
     public void setVideoFormat(SabrMessages.FormatId fmt) { this.videoFormat = fmt; }
     public void setAudioFormat(SabrMessages.FormatId fmt) { this.audioFormat = fmt; }
     public void setDurationMs(long ms) { this.durationMs = ms; }
@@ -755,6 +767,7 @@ public class SabrDownloader {
                             attestationRequired = true;
                         } else if (sps.status == 2) {
                             Log.w(TAG, "Stream protection: attestation pending");
+                            attestationPending = true;
                         }
                         break;
 

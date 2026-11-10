@@ -226,11 +226,12 @@ public class PoTokenGenerator {
      *  <ul>
      *    <li>{@link #VIDEO}: bound to the video ID. What the player request
      *        and the timedtext (subtitles) request check.</li>
-     *    <li>{@link #VISITOR}: bound to the visitor data. What the
-     *        Google Video Server checks on {@code videoplayback} — the SABR
-     *        stream's {@code poToken} (yt-dlp's GVS context; on the WEB
-     *        client a logged-out session binds to visitor data).</li>
-     *  </ul> */
+     *    <li>{@link #VISITOR}: bound to the visitor data.</li>
+     *  </ul>
+     *  The Google Video Server ({@code videoplayback}, the SABR stream's
+     *  {@code poToken}) checks ONE of the two, depending on a player
+     *  experiment of the session; {@code SabrStrategy} tries one and
+     *  switches when the server does not accept it. */
     public enum Binding {
         VIDEO("video"),
         VISITOR("visitor");
@@ -339,16 +340,11 @@ public class PoTokenGenerator {
     }
 
     /**
-     * Mint the PO token a SABR / {@code videoplayback} request carries: bound
-     * to the VISITOR DATA, not the video ({@link Binding#VISITOR}). This is
-     * the token the Google Video Server validates, and it checks the binding
-     * against the session's visitor — a video-bound token there is accepted
-     * unchecked most of the time and refused the moment the server
-     * spot-checks, which is how a download used to die at ~60 s with
-     * {@code STREAM_PROTECTION_STATUS 3} after two immediate re-mint
-     * refusals, then work fine on the next launch. Same blocking contract as
-     * {@link #generate}. {@code videoId} is only carried for logging and
-     * for the page to fall back on when visitorData is empty.
+     * Mint a PO token bound to the VISITOR DATA ({@link Binding#VISITOR}):
+     * the stream token of a session whose Google Video Server checks the
+     * visitor and not the video (see {@link Binding}). Same blocking
+     * contract as {@link #generate}. {@code videoId} is only carried for
+     * logging and for the page to fall back on when visitorData is empty.
      */
     @Nullable
     public String generateForStream(@NonNull String videoId, @NonNull String visitorData) {
