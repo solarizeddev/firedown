@@ -562,7 +562,8 @@ public class SabrMessages {
             SabrContextUpdate[] sabrContexts,
             int[] unsentContextTypes,
             int clientName,
-            String clientVersion
+            String clientVersion,
+            String osVersion
     ) {
         // =================================================================
         // ClientAbrState (request field 1)
@@ -677,9 +678,8 @@ public class SabrMessages {
             }
         }
 
-        // f19: StreamerContext — only for subsequent requests (playbackCookie, sabrContexts)
-        // The browser's INITIAL request does NOT include f19 at all.
-        // It gets added on subsequent requests when we have playbackCookie from NextRequestPolicy.
+        // f19: StreamerContext, whenever there is a token, a playback
+        // cookie or a context to send.
         boolean hasStreamerCtxData = (playbackCookie != null && playbackCookie.length > 0)
                 || (sabrContexts != null && sabrContexts.length > 0)
                 || (unsentContextTypes != null && unsentContextTypes.length > 0)
@@ -693,8 +693,12 @@ public class SabrMessages {
             if (isMweb) {
                 clientInfo.writeInt32(16, CLIENT_MWEB);
                 clientInfo.writeString(17, clientVersion);
+                // As the browser's own player sends them: the make and
+                // model of Firefox for Android, and this phone's Android.
+                clientInfo.writeString(12, "mozilla");
+                clientInfo.writeString(13, "firefox for android");
                 clientInfo.writeString(18, "Android");
-                clientInfo.writeString(19, "16");
+                clientInfo.writeString(19, osVersion != null ? osVersion : "12");
             } else {
                 clientInfo.writeInt32(16, CLIENT_WEB);
                 clientInfo.writeString(17, clientVersion);

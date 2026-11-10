@@ -58,6 +58,10 @@ public class SabrDownloader {
     private int targetResolution = 1080;
     private int clientName = SabrMessages.CLIENT_WEB;
     private String clientVersion = null;
+    // The phone as the attesting page reports it: the stream requests
+    // must come from the same browser the PO token was attested in.
+    private String osVersion = null;
+    private String mobileUserAgent = "Mozilla/5.0 (Android 12; Mobile; rv:151.0) Gecko/151.0 Firefox/151.0";
 
     // Session state (managed internally)
     private int requestNumber = 0;
@@ -201,6 +205,12 @@ public class SabrDownloader {
     public void setClientInfo(int clientName, String clientVersion) {
         this.clientName = clientName;
         this.clientVersion = clientVersion;
+    }
+    public void setDevice(String osVersion, String mobileUserAgent) {
+        this.osVersion = osVersion;
+        if (mobileUserAgent != null && !mobileUserAgent.isEmpty()) {
+            this.mobileUserAgent = mobileUserAgent;
+        }
     }
     public void setProgressListener(ProgressListener l) { this.progressListener = l; }
     public void setMuxSink(SegmentSink sink) { this.muxSink = sink; }
@@ -530,7 +540,8 @@ public class SabrDownloader {
                 activeContexts.toArray(new SabrMessages.SabrContextUpdate[0]),
                 unsentTypes.stream().mapToInt(i -> i).toArray(),
                 clientName,
-                clientVersion
+                clientVersion,
+                osVersion
         );
     }
 
@@ -657,8 +668,8 @@ public class SabrDownloader {
         if (clientName == SabrMessages.CLIENT_MWEB) {
             origin = "https://m.youtube.com";
             referer = "https://m.youtube.com/";
-            // Must match the UA the browser uses on m.youtube.com
-            userAgent = "Mozilla/5.0 (Android 16; Mobile; rv:149.0) Gecko/149.0 Firefox/149.0";
+            // The UA the browser uses on m.youtube.com
+            userAgent = mobileUserAgent;
         } else {
             origin = "https://www.youtube.com";
             referer = "https://www.youtube.com/";

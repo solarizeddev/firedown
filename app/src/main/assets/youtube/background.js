@@ -1,3 +1,10 @@
+// The browser's own User-Agent: the watch page and the streams are asked
+// for as the same browser that attests the PO token, not as a fixed
+// Android and Firefox version that drifts from it.
+const MOBILE_UA = (typeof navigator !== "undefined" && /Mobile/.test(navigator.userAgent || ""))
+    ? navigator.userAgent
+    : "Mozilla/5.0 (Android 12; Mobile; rv:151.0) Gecko/151.0 Firefox/151.0";
+
 // =============================================================================
 // YouTube Solver Extension — Background Shell
 // Bundled in APK via ensureBuiltIn. Rarely needs updating.
@@ -1816,7 +1823,7 @@ async function emitYouTubeCaptions(details, playerResponse, videoTitle, videoUrl
         // pulled out of playerResponse.responseContext below. Accept-
         // Encoding stays identity because okhttp can't decode brotli.
         const headers = [
-            { name: "User-Agent", value: "Mozilla/5.0 (Android 12; Mobile; rv:151.0) Gecko/151.0 Firefox/151.0" },
+            { name: "User-Agent", value: MOBILE_UA },
             { name: "Accept", value: "*/*" },
             { name: "Accept-Language", value: "en-US,en;q=0.5" },
             { name: "Accept-Encoding", value: "identity" },
@@ -2002,7 +2009,7 @@ async function processVideo(details, videoId) {
                 const cookieStr = youtubeCookie || "PREF=hl=en&tz=UTC; SOCS=CAI";
                 _stage = 'html-for-nsolve';
                 const nativeResp = await nativeFetch(mwebUrl, [
-                    { name: "User-Agent", value: "Mozilla/5.0 (Android 16; Mobile; rv:149.0) Gecko/149.0 Firefox/149.0" },
+                    { name: "User-Agent", value: MOBILE_UA },
                     { name: "Accept-Language", value: "en-US,en;q=0.5" },
                     { name: "Cookie", value: cookieStr }
                 ]);
@@ -2042,7 +2049,7 @@ async function processVideo(details, videoId) {
             function buildHeaders(cookieString) {
                 return [
                     // Use mobile Firefox UA to get MWEB response with c=MWEB streaming URL
-                    { name: "User-Agent", value: "Mozilla/5.0 (Android 16; Mobile; rv:149.0) Gecko/149.0 Firefox/149.0" },
+                    { name: "User-Agent", value: MOBILE_UA },
                     { name: "Accept", value: PAGE_FETCH_HEADERS["Accept"] },
                     { name: "Accept-Language", value: PAGE_FETCH_HEADERS["Accept-Language"] },
                     { name: "Sec-Fetch-Mode", value: PAGE_FETCH_HEADERS["Sec-Fetch-Mode"] },
@@ -2092,7 +2099,7 @@ async function processVideo(details, videoId) {
                 try {
                     const response = await fetch(mwebVideoUrl, { headers: {
                         ...PAGE_FETCH_HEADERS,
-                        "User-Agent": "Mozilla/5.0 (Android 16; Mobile; rv:149.0) Gecko/149.0 Firefox/149.0",
+                        "User-Agent": MOBILE_UA,
                         "Cookie": browserCookies || minimalCookies
                     } });
                     if (response.ok) {

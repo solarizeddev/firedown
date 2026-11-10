@@ -1,5 +1,7 @@
 package com.solarized.firedown.manager;
 
+import com.solarized.firedown.utils.BrowserHeaders;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -166,6 +168,8 @@ public class SabrStrategy implements DownloadStrategy {
         // the cache holds the token the server just refused) and over the
         // identifier StreamTokenBinding names: see mintAfterDemand.
         sabrDownloader.setPoTokenRefresher(() -> mintAfterDemand(request, sabrDownloader));
+
+        sabrDownloader.setDevice(Build.VERSION.RELEASE, BrowserHeaders.getMobileUserAgentString());
 
         // Dynamic MWEB client version from HTML — CDN validates cver= matches
         String clientVersion = request.getSabrClientVersion();
