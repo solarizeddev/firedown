@@ -84,6 +84,31 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
         );
     }, window.wrappedJSObject, { defineAs: '__fdFetchText' });
 
+    // The page's own challenge: the m.youtube.com page carries the BotGuard
+    // challenge YouTube's player attests with (challenge.js reads it). The
+    // fetch runs here, in the content script: m.youtube.com is another
+    // origin for the www.youtube.com token page, and the request carries
+    // the browser's cookies as a real page load does. Resolves to a JSON
+    // string, or to an empty string when the page has none (a consent
+    // redirect, a network error): the runner then asks att/get instead.
+    exportFunction(function() {
+        return new window.wrappedJSObject.Promise(
+            exportFunction(function(resolve) {
+                fetch('https://m.youtube.com/', { credentials: 'include' })
+                    .then(r => r.ok ? r.text() : '')
+                    .then(html => {
+                        let out = '';
+                        try {
+                            const found = fdExtractInlineChallenge(html);
+                            if (found) out = JSON.stringify(found);
+                        } catch (e) {}
+                        resolve(cloneInto(out, window.wrappedJSObject));
+                    })
+                    .catch(() => resolve(cloneInto('', window.wrappedJSObject)));
+            }, window.wrappedJSObject)
+        );
+    }, window.wrappedJSObject, { defineAs: '__fdGetChallenge' });
+
     const RUNNER = `(function() {
         const RK = 'O43z0dpjhgX20SCx4KAo';
         const AK = 'AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw';
@@ -101,18 +126,40 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
 
         async function attest(vd) {
             const BG = window.BG;
-            const cv = '2.20260401.01.00';
-            const ctx = {client:{clientName:'WEB',clientVersion:cv,hl:'en',gl:'US',visitorData:vd||''}};
+            // The challenge YouTube's own player uses: the one its page
+            // carries. A token made from an att/get challenge asked as
+            // another client and an old client version was kept "pending"
+            // by the video server (STREAM_PROTECTION_STATUS 2, then 3 at a
+            // minute of media) while the page's own player, in the same
+            // browser session, was accepted at once. att/get stays as the
+            // fallback, asked as the client the streams belong to (MWEB).
+            let cv = '2.20261106.00.00';
+            let ch = null;
+            let src = 'att/get';
+            try {
+                const found = await window.__fdGetChallenge();
+                if (found) {
+                    const o = JSON.parse(found);
+                    if (o.clientVersion) cv = o.clientVersion;
+                    if (o.bgChallenge && o.bgChallenge.program) { ch = o.bgChallenge; src = 'page'; }
+                }
+            } catch (e) {}
 
-            const cr = await fetch('https://www.youtube.com/youtubei/v1/att/get?prettyPrint=false&alt=json',{
-                method:'POST',headers:{'Accept':'*/*','Content-Type':'application/json','X-Goog-Visitor-Id':vd||'','X-Youtube-Client-Version':cv,'X-Youtube-Client-Name':'1'},
-                body:JSON.stringify({engagementType:'ENGAGEMENT_TYPE_UNBOUND',context:ctx})
-            });
-            if (!cr.ok) throw new Error('att/get '+cr.status);
-            const cd = await cr.json();
-            if (!cd.bgChallenge) throw new Error('no bgChallenge');
+            if (!ch) {
+                const ctx = {client:{clientName:'MWEB',clientVersion:cv,hl:'en',gl:'US',visitorData:vd||''}};
+                const cr = await fetch('https://www.youtube.com/youtubei/v1/att/get?prettyPrint=false&alt=json',{
+                    method:'POST',headers:{'Accept':'*/*','Content-Type':'application/json','X-Goog-Visitor-Id':vd||'','X-Youtube-Client-Version':cv,'X-Youtube-Client-Name':'2'},
+                    body:JSON.stringify({engagementType:'ENGAGEMENT_TYPE_UNBOUND',context:ctx})
+                });
+                if (!cr.ok) throw new Error('att/get '+cr.status);
+                const cd = await cr.json();
+                if (!cd.bgChallenge) throw new Error('no bgChallenge');
+                ch = cd.bgChallenge;
+            }
 
-            let iu = cd.bgChallenge.interpreterUrl.privateDoNotAccessOrElseTrustedResourceUrlWrappedValue;
+            const wrapped = ch.interpreterUrl || ch.interpreterSafeUrl || {};
+            let iu = wrapped.privateDoNotAccessOrElseTrustedResourceUrlWrappedValue;
+            if (!iu) throw new Error('no interpreter url');
             if (iu.startsWith('//')) iu='https:'+iu;
 
             // Use content script's fetch to bypass CORS (page fetch blocked by google.com CORS)
@@ -120,7 +167,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             if (!js) throw new Error('empty VM');
             new Function(js)();
 
-            const bg = await BG.BotGuardClient.create({program:cd.bgChallenge.program,globalName:cd.bgChallenge.globalName,globalObj:window});
+            const bg = await BG.BotGuardClient.create({program:ch.program,globalName:ch.globalName,globalObj:window});
             const wps = [];
             const bgr = await bg.snapshot({webPoSignalOutput:wps},10000);
             if (!bgr) throw new Error('empty snapshot');
@@ -145,7 +192,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
 
             const m = await BG.WebPoMinter.create({integrityToken:ij[0]},wps);
             cm=m; cmt=Date.now();
-            if (window.__fdDebug) console.log('[BG-robots] attested, minter valid for '+Math.round(cml/1000)+'s');
+            if (window.__fdDebug) console.log('[BG-robots] attested: challenge='+src+' cver='+cv+' interpreter='+(ch.interpreterHash||'?')+' snapshot='+String(bgr).length+' integrity='+ij[0].length+' ttl='+ij[1]+'s, minter valid for '+Math.round(cml/1000)+'s');
             return m;
         }
 
