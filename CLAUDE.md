@@ -1842,8 +1842,11 @@ navigation `processVideo` waits for the page's own watch answer
 answer) and uses its player response; the interceptor reads `get_watch`
 beside `/player`. A full page load has no such request and still takes the
 HTML path. That alone changed nothing on a device (the page's own URL
-with our token was kept pending). **So a download now starts with the token
-the page's own player sends**: `background.js` reads each stream request a
+with our token was kept pending). **So a download starts with the token
+the page's own player sends** (confirmed on a device, 2026-11: the first
+download of a fresh install ran with no "pending" and past the minute where
+every minted token was refused; tokens minted in the hidden page from the
+`att/get` attestation are the ones the server holds pending): `background.js` reads each stream request a
 tab makes (`googlevideo.com/videoplayback`, request body field 19.2), ties
 it to its video by the streaming URL's `id`, and hands it over as
 `player-potoken`; `PoTokenGenerator.adoptPlayerToken` keeps the newest per
