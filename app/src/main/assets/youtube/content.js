@@ -128,6 +128,20 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
         // challenge made the minter, and why an earlier one did not.
         let lastAttest = '';
 
+        // What the attestation VM can see of this page: a hidden session
+        // has no view, and the VM reports the page it runs in.
+        function pageShape() {
+            try {
+                return 'page=' + document.visibilityState
+                    + ' focus=' + document.hasFocus()
+                    + ' inner=' + window.innerWidth + 'x' + window.innerHeight
+                    + ' outer=' + window.outerWidth + 'x' + window.outerHeight
+                    + ' screen=' + screen.width + 'x' + screen.height
+                    + ' dpr=' + window.devicePixelRatio
+                    + ' type=' + document.contentType;
+            } catch (e) { return 'page=?'; }
+        }
+
         async function pageChallenge() {
             const found = await window.__fdGetChallenge();
             if (!found) throw new Error('no challenge in page');
@@ -193,7 +207,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             const m = await BG.WebPoMinter.create({integrityToken:ij[0]},wps);
             cml = ttl ? Math.max(60000, ttl - CM_TTL_MARGIN) : CM_TTL_FALLBACK;
             cm=m; cmt=Date.now();
-            return 'snapshot='+String(bgr).length+' integrity='+ij[0].length+' ttl='+ij[1];
+            return 'snapshot='+String(bgr).length+' integrity='+ij[0].length+' ttl='+ij[1]+' '+pageShape();
         }
 
         // Tries each source of a challenge until one yields a minter:
