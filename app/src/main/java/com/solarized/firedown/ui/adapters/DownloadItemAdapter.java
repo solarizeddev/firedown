@@ -888,6 +888,9 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         // already states the type) — null-guarded. The normal tiles hide
         // it while a single-type filter is active (mSuppressMime), same
         // redundancy rule.
+        // An ERROR / QUEUED grid tile hides the row (hideGridMimeRow); a
+        // recycled holder gets it back here.
+        setVisible(holder.rowMime, true);
         if (holder.mimeText != null) {
             String mimeLabel = mSuppressMime ? null : mimeLabelFor(mimeType, isGrid);
             if (TextUtils.isEmpty(mimeLabel)) {
@@ -1438,9 +1441,23 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             holder.statusText.setText(errorId);
             holder.statusText.setVisibility(View.VISIBLE);
         }
+        hideGridMimeRow(holder, isGrid);
         Tracing.begin("Glide.loadFallback");
         try { GlideHelper.loadFallback(entity, holder.image); }
         finally { Tracing.end(); }
+    }
+
+    /**
+     * A grid tile that states an error or "Queued" drops its mime row: with
+     * title, type and status the caption is three lines tall and the title
+     * runs over the centred glyph, which already says the type.
+     */
+    private void hideGridMimeRow(DownloadViewHolder holder, boolean isGrid) {
+        if (!isGrid) {
+            return;
+        }
+        setVisible(holder.mimeText, false);
+        setVisible(holder.rowMime, false);
     }
 
     private void bindQueued(DownloadViewHolder holder, DownloadEntity entity, boolean isGrid) {
@@ -1472,6 +1489,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             holder.statusText.setText(R.string.download_queued);
             holder.statusText.setVisibility(View.VISIBLE);
         }
+        hideGridMimeRow(holder, isGrid);
         Tracing.begin("Glide.loadFallback");
         try { GlideHelper.loadFallback(entity, holder.image); }
         finally { Tracing.end(); }
@@ -1569,6 +1587,8 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
         final AppCompatImageView image;
         /** Absent (null) in the dense tile, which renders no text/chrome. */
         final @Nullable TextView mimeText;
+        /** The grid tile's mime + facts row; null in the list and dense layouts. */
+        final @Nullable View rowMime;
         final @Nullable TextView fileName;
         final @Nullable TextView fileUrl;
         final @Nullable View actionButton;
@@ -1642,6 +1662,7 @@ public class DownloadItemAdapter extends PagingDataAdapter<Object, RecyclerView.
             selected = view.findViewById(R.id.item_download_selected);
             image = view.findViewById(R.id.image);
             mimeText = view.findViewById(R.id.mime_text);
+            rowMime = view.findViewById(R.id.row_mime);
             fileName = view.findViewById(R.id.file_name);
             fileUrl = view.findViewById(R.id.file_url);
 
