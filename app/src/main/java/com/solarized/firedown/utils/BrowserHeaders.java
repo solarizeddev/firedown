@@ -1,6 +1,7 @@
 package com.solarized.firedown.utils;
 
 
+import android.os.Build;
 import androidx.annotation.Nullable;
 
 import org.mozilla.geckoview.BuildConfig;
@@ -137,6 +138,18 @@ public class BrowserHeaders {
 
     public static boolean hasHeader(Request request, String value){
         return request.header(value) != null;
+    }
+
+    /**
+     * The User-Agent GeckoView sends from this phone, e.g.
+     * "Mozilla/5.0 (Android 12; Mobile; rv:159.0) Gecko/159.0 Firefox/159.0".
+     */
+    public static String getMobileUserAgentString() {
+        String version = BuildConfig.MOZ_APP_VERSION;
+        int dot = version.indexOf('.');
+        String major = (dot > 0) ? version.substring(0, dot) : version;
+        return "Mozilla/5.0 (Android " + Build.VERSION.RELEASE + "; Mobile; rv:" + major + ".0)"
+                + " Gecko/" + major + ".0 Firefox/" + major + ".0";
     }
 
     public static String getDefaultUserAgentString() {
