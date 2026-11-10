@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -265,6 +266,10 @@ public class PoTokenGenerator {
      *  one real attestation. Consumed on the first mint of that key. */
     @GuardedBy("lock") private final Set<String> forceFreshNext = new HashSet<>();
 
+    /** Tokens the page's own player sent for a video, newest last. */
+    @GuardedBy("lock") private final LinkedHashMap<String, String> playerTokens = new LinkedHashMap<>();
+    private static final int MAX_PLAYER_TOKENS = 32;
+
     /** When this hidden session's first attestation was made (0 = none
      *  yet) and how many it has made, as the page reports them. */
     @GuardedBy("lock") private long firstAttestedAt;
@@ -392,6 +397,30 @@ public class PoTokenGenerator {
     @Nullable
     public String generateFresh(@NonNull String videoId, @Nullable String visitorData) {
         return generate(Binding.VIDEO, videoId, visitorData, true);
+    }
+
+    /** Keeps the PO token the page's own player sent in a stream request
+     *  for {@code videoId}; the newest one replaces an earlier one. */
+    public void adoptPlayerToken(@NonNull String videoId, @NonNull String token) {
+        if (TextUtils.isEmpty(videoId) || TextUtils.isEmpty(token)) return;
+        synchronized (lock) {
+            playerTokens.remove(videoId);
+            playerTokens.put(videoId, token);
+            Iterator<String> it = playerTokens.keySet().iterator();
+            while (playerTokens.size() > MAX_PLAYER_TOKENS && it.hasNext()) {
+                it.next();
+                it.remove();
+            }
+        }
+        Log.i(TAG, "adoptPlayerToken: " + videoId + " " + token.length() + " chars");
+    }
+
+    /** The page player's own token for {@code videoId}, or null. */
+    @Nullable
+    public String playerToken(@NonNull String videoId) {
+        synchronized (lock) {
+            return playerTokens.get(videoId);
+        }
     }
 
     /** {@link #generateFresh} for the visitor-bound stream token — the

@@ -2717,6 +2717,7 @@ browser.webRequest.onBeforeRequest.addListener(
 
                 // Store for processVideo to pick up (self-expiring, capped)
                 storeInterceptedResponse(videoId, playerResponse);
+                rememberStreamId(streamingData.serverAbrStreamingUrl, videoId);
 
                 // Trigger processing if tabs.onUpdated already fired for this video
                 // (SPA navigations: tab URL changes → processVideo starts → waits for intercept)
@@ -2756,6 +2757,96 @@ browser.webRequest.onBeforeRequest.addListener(
         types: ["xmlhttprequest"]
     },
     ["blocking", "requestBody"]
+);
+
+// The PO token the page's own player sends in its stream requests, handed
+// to the native side for a download of that video. A stream request is
+// tied to its video by the `id` of the streaming URL the page was given.
+const streamIdToVideo = new Map();
+const STREAM_ID_MAX = 32;
+const lastPlayerToken = new Map();
+
+function streamIdOf(url) {
+    try { return new URL(url).searchParams.get("id") || ""; } catch (e) { return ""; }
+}
+
+function rememberStreamId(url, videoId) {
+    const id = url ? streamIdOf(url) : "";
+    if (!id) return;
+    streamIdToVideo.delete(id);
+    streamIdToVideo.set(id, videoId);
+    while (streamIdToVideo.size > STREAM_ID_MAX) {
+        const oldest = streamIdToVideo.keys().next().value;
+        lastPlayerToken.delete(streamIdToVideo.get(oldest));
+        streamIdToVideo.delete(oldest);
+    }
+}
+
+// First length-delimited field `want` of a protobuf message, or null.
+function protoBytesField(bytes, want) {
+    let o = 0;
+    const varint = () => {
+        let v = 0, shift = 0;
+        while (o < bytes.length) {
+            const b = bytes[o++];
+            if (shift < 28) v |= (b & 0x7f) << shift;
+            shift += 7;
+            if (!(b & 0x80)) return v >>> 0;
+        }
+        return -1;
+    };
+    while (o < bytes.length) {
+        const key = varint();
+        if (key < 0) return null;
+        const field = key >>> 3, wire = key & 7;
+        if (wire === 0) { if (varint() < 0) return null; }
+        else if (wire === 1) o += 8;
+        else if (wire === 5) o += 4;
+        else if (wire === 2) {
+            const len = varint();
+            if (len < 0 || o + len > bytes.length) return null;
+            if (field === want) return bytes.subarray(o, o + len);
+            o += len;
+        } else return null;
+    }
+    return null;
+}
+
+function base64Url(bytes) {
+    let bin = "";
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+browser.webRequest.onBeforeRequest.addListener(
+    (details) => {
+        if (details.method !== "POST" || !(details.tabId >= 0)) return;
+        const videoId = streamIdToVideo.get(streamIdOf(details.url));
+        if (!videoId) return;
+        const raw = details.requestBody && details.requestBody.raw;
+        if (!raw || !raw.length) return;
+        let total = 0;
+        for (const part of raw) { if (part.bytes) total += part.bytes.byteLength; }
+        if (!total || total > 65536) return;
+        const body = new Uint8Array(total);
+        let at = 0;
+        for (const part of raw) {
+            if (!part.bytes) continue;
+            body.set(new Uint8Array(part.bytes), at);
+            at += part.bytes.byteLength;
+        }
+        const streamer = protoBytesField(body, 19);
+        const token = streamer ? protoBytesField(streamer, 2) : null;
+        if (!token || token.length < 16 || token.length > 4096) return;
+        const encoded = base64Url(token);
+        if (lastPlayerToken.get(videoId) === encoded) return;
+        lastPlayerToken.set(videoId, encoded);
+        log(`[PlayerToken] ${videoId}: ${token.length} bytes from the page's player`);
+        browser.runtime.sendNativeMessage("youtube",
+            { kind: "player-potoken", videoId, token: encoded }).catch(() => {});
+    },
+    { urls: ["*://*.googlevideo.com/videoplayback*"], types: ["xmlhttprequest"] },
+    ["requestBody"]
 );
 
 // =============================================================================
