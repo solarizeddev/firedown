@@ -249,6 +249,38 @@ public class Harness {
         dt = System.currentTimeMillis()-t0;
         check("15 a forceFresh mint waits MINT_FRESH_TIMEOUT_MS, not 15s", dt>=30000 && dt<35000, dt+"ms");
 
+        // ── 15b. a token from a NEW attestation is minted again once it settled ─
+        newGen(true);
+        gen.generate("s0","VD");                          // no age reported: no wait
+        livePort.autoReply = false;
+        Future<String> fS = ex.submit(() -> gen.generate("s1","VD"));
+        Thread.sleep(300);
+        int nS = livePort.sent.size();
+        JSONObject rS = new JSONObject();
+        rS.put("type","mintResult"); rS.put("requestId", livePort.sent.get(nS-1).optString("requestId",""));
+        rS.put("token","YOUNG"); rS.put("age", PoTokenGenerator.MINTER_SETTLE_MS - 2000);
+        t0 = System.currentTimeMillis();
+        livePort.deliver(rS);
+        Thread.sleep(1000);
+        check("15b a young attestation's token is held back", !fS.isDone() && livePort.sent.size()==nS, "");
+        Thread.sleep(1500);
+        JSONObject rS2 = new JSONObject();
+        rS2.put("type","mintResult"); rS2.put("requestId", livePort.sent.get(livePort.sent.size()-1).optString("requestId",""));
+        rS2.put("token","SETTLED"); rS2.put("age", PoTokenGenerator.MINTER_SETTLE_MS + 500);
+        livePort.deliver(rS2);
+        String tS = fS.get();
+        dt = System.currentTimeMillis()-t0;
+        JSONObject lastS = livePort.sent.get(livePort.sent.size()-1);
+        check("15c ...then minted again from the same minter, not re-attested",
+                "SETTLED".equals(tS) && livePort.sent.size()==nS+1 && !lastS.optBoolean("forceFresh",false)
+                && dt>=2000 && dt<6000, tS+" "+dt+"ms");
+        livePort.autoReply = true;
+        int nS3 = livePort.sent.size();
+        t0 = System.currentTimeMillis();
+        String tS3 = gen.generate("s2","VD");
+        check("15d a settled attestation mints once, no wait",
+                tS3!=null && livePort.sent.size()==nS3+1 && System.currentTimeMillis()-t0<1500, String.valueOf(tS3));
+
         // ── 16. init timeout: young session is LEFT LOADING ──────────────
         newGen(false);                                    // port never connects
         t0 = System.currentTimeMillis();

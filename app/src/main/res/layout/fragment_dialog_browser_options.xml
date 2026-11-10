@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="@dimen/list_spacing"
+        android:layout_marginBottom="16dp"
         android:clickable="true"
         android:focusable="true"
         android:visibility="gone"
@@ -106,8 +106,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginTop="@dimen/list_spacing"
-        android:layout_marginBottom="@dimen/list_spacing"
+        android:layout_marginBottom="16dp"
         android:clickable="true"
         android:focusable="true"
         android:visibility="gone"
@@ -119,11 +118,15 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingStart="16dp"
-            android:paddingEnd="8dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="0dp"
             android:paddingTop="12dp"
             android:paddingBottom="12dp">
 
+            <!-- 12dp all round the icon and text. No end padding: the 36dp
+                 dismiss button then has its X 18dp from the card's edge, in
+                 line with the ⋮ of the tile under it. No top margin: the
+                 card starts where the list's first tile would. -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/capture_help_banner_icon"
                 android:layout_width="24dp"
