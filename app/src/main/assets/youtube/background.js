@@ -2121,6 +2121,45 @@ async function processVideo(details, videoId) {
             cachedVisitorData = playerResponse.responseContext.visitorData;
         }
 
+        // What kind of session produced this streaming URL: the facts a
+        // refused PO token is diagnosed from. Names and flags only, never a
+        // cookie's value.
+        if (DEBUG) {
+            try {
+                const visitorIdOf = (vd) => {
+                    try {
+                        const b = atob(decodeURIComponent(vd).replace(/-/g, "+").replace(/_/g, "/"));
+                        return b.substring(2, 13);
+                    } catch (e) { return "?"; }
+                };
+                const cookieNames = (youtubeCookie || "").split(";")
+                    .map(c => c.trim().split("=")[0]).filter(Boolean);
+                const has = (n) => cookieNames.includes(n);
+                const cfgVd = html ? (html.match(/["']VISITOR_DATA["']\s*:\s*["']([^"']+)["']/) || [])[1] : null;
+                const prVd = playerResponse?.responseContext?.visitorData || null;
+                const flag = (name) => {
+                    if (!html) return "no-html";
+                    const m = html.match(new RegExp(name + "(?:=|%3D|\\\\u003d)(\\w+)"));
+                    return m ? m[1] : "absent";
+                };
+                log(`[Session] ${videoId} source=${streamSource}`
+                    + ` cookies=${cookieNames.length}`
+                    + ` visitorCookie=${has("VISITOR_INFO1_LIVE")} yec=${has("__Secure-YEC")}`
+                    + ` login=${has("SAPISID") || has("__Secure-3PAPISID")} loginInfo=${has("LOGIN_INFO")}`
+                    + ` socs=${has("SOCS")} consent=${has("CONSENT")}`
+                    + ` loggedIn=${html ? /"LOGGED_IN"\s*:\s*true/.test(html) : "no-html"}`
+                    + ` datasync=${html ? /"DATASYNC_ID"\s*:\s*"[^"]+"/.test(html) : "no-html"}`
+                    + ` cfgVisitor=${cfgVd ? visitorIdOf(cfgVd) + "/" + cfgVd.length : "none"}`
+                    + ` prVisitor=${prVd ? visitorIdOf(prVd) + "/" + prVd.length : "none"}`
+                    + ` contentPot=${flag("html5_generate_content_po_token")}`
+                    + ` sessionPot=${flag("html5_generate_session_po_token")}`
+                    + ` playability=${playerResponse?.playabilityStatus?.status}`
+                    + ` potInPr=${!!playerResponse?.streamingData?.serviceIntegrityDimensions}`);
+            } catch (e) {
+                log(`[Session] diagnostics failed: ${e?.message || e}`);
+            }
+        }
+
         let videoTitle = playerResponse?.videoDetails?.title || "Unknown";
         let videoDescription = playerResponse?.videoDetails?.shortDescription || "";
         const thumbnails = playerResponse?.videoDetails?.thumbnail?.thumbnails;
