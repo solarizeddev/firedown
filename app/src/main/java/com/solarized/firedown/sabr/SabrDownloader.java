@@ -170,7 +170,15 @@ public class SabrDownloader {
         // Original base64url string for URL pot= parameter
         this.poToken = base64 != null ? Base64.decode(base64, Base64.URL_SAFE | Base64.NO_WRAP) : null;
         this.attestationPending = false;
+        this.tokenAccepted = false;
     }
+
+    /** Media arrived on the current token in a response where the server
+     *  reported nothing about it (no status 2 since the token was applied,
+     *  no status 3 in that response). */
+    private volatile boolean tokenAccepted = false;
+
+    public boolean isTokenAccepted() { return tokenAccepted; }
 
     /** Status 2 ("attestation pending") was seen since the current token
      *  was applied: the server has not accepted THIS token. A session whose
@@ -365,6 +373,10 @@ public class SabrDownloader {
             // Position only ever advances toward duration, so a download
             // that keeps recovering keeps finishing; one that stops
             // advancing stops resetting and hits the consecutive cap.
+            if (playerTimeMs > prevPlayerTime && poToken != null
+                    && !attestationPending && !attestationRequired) {
+                tokenAccepted = true;
+            }
             if (playerTimeMs > prevPlayerTime && attestationRefreshCount > 0) {
                 Log.d(TAG, "Progress after re-mint — attestation budget reset");
                 attestationRefreshCount = 0;

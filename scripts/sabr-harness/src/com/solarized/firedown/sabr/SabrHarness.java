@@ -248,6 +248,7 @@ public class SabrHarness {
         });
 
         // ── the inline fMP4 muxer: the ONLY copy of a SABR download ──────
+        StreamBindingCases.run();
         Fmp4MuxerCases.run();
 
         System.out.println("\n"+pass+" passed, "+fail+" failed");

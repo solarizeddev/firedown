@@ -19,6 +19,7 @@ import com.solarized.firedown.ffmpegutils.FFmpegStreamInfo;
 import com.solarized.firedown.sabr.Fmp4Muxer;
 import com.solarized.firedown.sabr.SabrDownloader;
 import com.solarized.firedown.sabr.SabrMessages;
+import com.solarized.firedown.sabr.StreamTokenBinding;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.MessageHelper;
 import com.solarized.firedown.utils.WebUtils;
@@ -143,6 +144,8 @@ public class SabrStrategy implements DownloadStrategy {
         // mint for the video being downloaded. The native path mints fresh;
         // the JS path may return a cached token bound to a different video
         // (a latent bug in the JS cache).
+        streamBinding = new StreamTokenBinding(
+                !TextUtils.isEmpty(request.getSabrVisitorData()));
         String poToken = mintPoToken(request);
         if (!TextUtils.isEmpty(poToken)) {
             sabrDownloader.setPoToken(poToken);
@@ -161,9 +164,8 @@ public class SabrStrategy implements DownloadStrategy {
         //
         // Every recovery mint is FRESH (the plain mint is cache-first, and
         // the cache holds the token the server just refused) and over the
-        // OTHER identifier when the current one is the problem: see
-        // mintAfterRefusal.
-        sabrDownloader.setPoTokenRefresher(() -> mintAfterRefusal(request, sabrDownloader));
+        // identifier StreamTokenBinding names: see mintAfterDemand.
+        sabrDownloader.setPoTokenRefresher(() -> mintAfterDemand(request, sabrDownloader));
 
         // Dynamic MWEB client version from HTML — CDN validates cver= matches
         String clientVersion = request.getSabrClientVersion();
@@ -232,11 +234,6 @@ public class SabrStrategy implements DownloadStrategy {
         SabrDownloader.Result result;
         try {
             result = sabrDownloader.download();
-            // A binding the server accepted is where the next download
-            // starts; one it kept pending to the end proved nothing.
-            if (tokenMinted && !sabrDownloader.isAttestationPending()) {
-                sStreamBinding = streamBinding;
-            }
         } catch (SabrDownloader.SabrException e) {
             Log.e(TAG, "SABR download failed: " + e.getMessage(), e);
 
@@ -270,6 +267,11 @@ public class SabrStrategy implements DownloadStrategy {
             // ERROR row the user can retry.
             callback.onError(MessageHelper.IOEXCEPTION);
             return;
+        } finally {
+            // However it ended (finished, refused, a dropped connection),
+            // a binding the server accepted is where the next download
+            // starts.
+            streamBinding.onEnded(sabrDownloader.isTokenAccepted());
         }
 
         // ====================================================================
@@ -428,29 +430,9 @@ public class SabrStrategy implements DownloadStrategy {
         return mintPoToken(request, false);
     }
 
-    /**
-     * Which identifier the STREAM token is minted over, for the next
-     * download of this process: the last binding a download finished with.
-     *
-     * The server checks the videoplayback / SABR token against ONE
-     * identifier and which one depends on a player experiment of the
-     * session that produced the streaming URL
-     * (html5_generate_content_po_token, the switch yt-dlp calls
-     * gvs_bind_to_video_id): the video id with it, the visitor data
-     * without. Nothing on the request says which, and a wrong binding is
-     * refused the same way a missing token is: status 2 from the first
-     * response, status 3 around a minute of media. So the binding is tried,
-     * not assumed: start from the last one that worked, switch on a
-     * refusal (see {@link #mintAfterRefusal}).
-     */
-    private static volatile PoTokenGenerator.Binding sStreamBinding =
-            PoTokenGenerator.Binding.VIDEO;
-
-    /** The binding of the token this download carries (worker thread). */
-    private PoTokenGenerator.Binding streamBinding = sStreamBinding;
-
-    /** A token was minted and applied for {@link #streamBinding}. */
-    private boolean tokenMinted;
+    /** Which identifier this download's token is minted over, and when to
+     *  switch (worker thread). Built in {@link #executeInternal}. */
+    private StreamTokenBinding streamBinding;
 
     /** Drop the cached tokens of BOTH bindings (this download may have
      *  carried either) so the next mint re-attests in the page. */
@@ -468,32 +450,43 @@ public class SabrStrategy implements DownloadStrategy {
     }
 
     /**
-     * The server demanded attestation (status 3): mint a fresh token, over
-     * the OTHER identifier when the current one is the problem.
-     *
-     * The current binding is wrong when the server kept this token pending
-     * (status 2 since it was applied), or refused a fresh one of the same
-     * binding with no progress in between. A demand on a token it had
-     * accepted (no status 2, progress before it) is the ordinary mid-stream
-     * one and keeps the binding: switching there would put a long download
-     * on the wrong identifier for a minute of media at every demand. A
-     * download whose first mint failed has tried no binding yet.
+     * The server demanded attestation (status 3): mint a fresh token over
+     * the identifier {@link StreamTokenBinding#onDemand} names. A binding
+     * left behind has its cached token dropped, so a later download can
+     * never start from a token the server did not accept.
      */
     @Nullable
-    private String mintAfterRefusal(@NonNull DownloadRequest request,
-                                    @NonNull SabrDownloader downloader) {
-        boolean wrongBinding = tokenMinted
-                && (downloader.isAttestationPending()
-                        || downloader.getConsecutiveAttestationRefreshes() >= 2);
-        if (wrongBinding && !TextUtils.isEmpty(request.getSabrVisitorData())) {
-            PoTokenGenerator.Binding refused = streamBinding;
-            streamBinding = refused == PoTokenGenerator.Binding.VIDEO
-                    ? PoTokenGenerator.Binding.VISITOR
-                    : PoTokenGenerator.Binding.VIDEO;
-            Log.d(TAG, "PO token bound to " + refused + " not accepted, minting one bound to "
-                    + streamBinding);
+    private String mintAfterDemand(@NonNull DownloadRequest request,
+                                   @NonNull SabrDownloader downloader) {
+        StreamTokenBinding.Kind before = streamBinding.current();
+        StreamTokenBinding.Kind now = streamBinding.onDemand(
+                downloader.isTokenAccepted(),
+                downloader.isAttestationPending(),
+                downloader.getConsecutiveAttestationRefreshes());
+        if (now != before) {
+            Log.d(TAG, "PO token bound to " + before + " not accepted, minting one bound to "
+                    + now);
+            invalidatePoToken(request, before);
         }
         return mintPoToken(request, true);
+    }
+
+    /** Drop the cached token of one binding. */
+    private void invalidatePoToken(@NonNull DownloadRequest request,
+                                   @NonNull StreamTokenBinding.Kind kind) {
+        PoTokenGenerator gen = context.getPoTokenGenerator();
+        if (gen == null) return;
+        if (kind == StreamTokenBinding.Kind.VISITOR) {
+            String visitorData = request.getSabrVisitorData();
+            if (!TextUtils.isEmpty(visitorData)) {
+                gen.invalidateStream(visitorData);
+            }
+        } else {
+            String videoId = request.getSabrVideoId();
+            if (!TextUtils.isEmpty(videoId)) {
+                gen.invalidate(videoId);
+            }
+        }
     }
 
     @Nullable
@@ -511,15 +504,11 @@ public class SabrStrategy implements DownloadStrategy {
             return null;
         }
 
-        // No visitor data: the video id is the only identifier there is.
-        PoTokenGenerator.Binding binding = TextUtils.isEmpty(visitorData)
-                ? PoTokenGenerator.Binding.VIDEO
-                : streamBinding;
-        streamBinding = binding;
+        StreamTokenBinding.Kind binding = streamBinding.current();
         long t0 = System.currentTimeMillis();
         try {
             String token;
-            if (binding == PoTokenGenerator.Binding.VISITOR) {
+            if (binding == StreamTokenBinding.Kind.VISITOR) {
                 token = forceFresh
                         ? gen.generateFreshForStream(videoId, visitorData)
                         : gen.generateForStream(videoId, visitorData);
@@ -530,7 +519,7 @@ public class SabrStrategy implements DownloadStrategy {
             }
             long dt = System.currentTimeMillis() - t0;
             if (!TextUtils.isEmpty(token)) {
-                tokenMinted = true;
+                streamBinding.onMinted();
                 Log.d(TAG, "Native PO token: " + token.length() + " chars, bound to "
                         + binding + " (" + dt + "ms" + (forceFresh ? ", fresh" : "") + ")");
                 return token;
