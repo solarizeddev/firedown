@@ -5336,9 +5336,18 @@ is **~75 MB**, the APK 205 MB.
   over the test's file. The app's update
   preferences and any update APK are set aside and put back. Compiled
   against android-all in the harness's section 0. Green on SM-A426B
-  (Android 12), 39 s. Not covered by it: a Download Manager actually
-  disabled by the user (`pm disable-user com.android.providers.downloads`)
-  rather than hidden from the test's context.
+  (Android 12), 39 s. **The real case was run by hand on the same phone**
+  (2026-11-10): `pm disable-user com.android.providers.downloads`, a debug
+  build marked 1206, Settings → About → Check for updates. `enqueue` threw
+  `IllegalArgumentException: Unknown URL content://downloads/my_downloads`
+  and the whole ladder ran directly: the `.xz` (rebuilt, checksum passed),
+  the APK from GitHub, the APK from the F-Droid mirror, then the backoff;
+  each was refused by the signature check, as it must be for a
+  release-signed APK over a debug install, and every refused file was
+  deleted. So no prompt or notification on a debug build: both appear only
+  for an APK that passes every check. A network drop mid-download was not
+  caught on that run (the files arrived in seconds); the device test covers
+  the resume.
 
 ## Releasing — `bumpVersion` and `releaseStatus` (app/release.gradle)
 
