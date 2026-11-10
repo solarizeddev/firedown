@@ -1765,7 +1765,16 @@ real page) reads the challenge out of the JS string literal it sits in;
 version. A debug line says which was used:
 `[BG-robots] attested: challenge=page|att/get cver=… interpreter=… snapshot=…
 integrity=… ttl=…`. The capture also logs `[Session]` (cookie names, login,
-visitor ids, the two PO-token experiment flags). **If the token is still
+visitor ids, the two PO-token experiment flags). **The hidden token page has a window of the screen's size**
+(`HiddenSessionDisplay`: a `GeckoDisplay` over an off-screen
+`SurfaceTexture`, attached after `open()`, released before every
+`close()`). A session with no display reads `innerWidth`/`outerWidth` as
+0x0, which a device log showed on the page the VM attests from
+(`page=visible focus=true inner=0x0 outer=0x0 … type=text/plain` on the
+`mintResult` line) while every token was kept pending; not yet confirmed
+on a device as the cause. The same log: the page's inline challenge is
+answered by `GenerateIT` with no integrity token from this page, and
+`attest()` falls back to `att/get` as MWEB, then WEB. **If the token is still
 kept pending with `challenge=page`, the challenge was not the cause either:
 what then differs from the real player is where the attestation runs
 (www.youtube.com/robots.txt in a hidden session against the m.youtube.com

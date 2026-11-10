@@ -769,6 +769,9 @@ public class PoTokenGenerator {
                 // 2) Open the session — content scripts attach here.
                 s.open(runtime);
                 opened = true;
+                // A window of the screen's size: with no display the page
+                // reads 0x0, which the attestation VM reports.
+                HiddenSessionDisplay.attach(s);
                 // 3) Mark active so the WebExtension API treats this as a
                 //    live tab for content-script injection purposes.
                 s.setActive(true);
@@ -795,6 +798,7 @@ public class PoTokenGenerator {
                 }
                 if (abandoned) {
                     Log.w(TAG, "createSession: abandoned while queued — closing the orphan");
+                    HiddenSessionDisplay.release(s);
                     s.close();
                     return;
                 }
@@ -809,6 +813,7 @@ public class PoTokenGenerator {
                 // it holds a content process for the life of the app.
                 if (s != null && opened) {
                     try {
+                        HiddenSessionDisplay.release(s);
                         s.close();
                     } catch (Exception ignored) {
                         // Already dying; nothing useful left to do.
@@ -969,6 +974,7 @@ public class PoTokenGenerator {
             session = null;
             mainHandler.post(() -> {
                 try {
+                    HiddenSessionDisplay.release(s);
                     s.close();
                 } catch (Exception e) {
                     Log.w(TAG, "session.close failed", e);
