@@ -1842,8 +1842,11 @@ navigation `processVideo` waits for the page's own watch answer
 answer) and uses its player response; the interceptor reads `get_watch`
 beside `/player`. A full page load has no such request and still takes the
 HTML path. That alone changed nothing on a device (the page's own URL
-with our token was kept pending). **So a download now starts with the token
-the page's own player sends**: `background.js` reads each stream request a
+with our token was kept pending). **So a download starts with the token
+the page's own player sends** (confirmed on a device, 2026-11: the first
+download of a fresh install ran with no "pending" and past the minute where
+every minted token was refused; tokens minted in the hidden page from the
+`att/get` attestation are the ones the server holds pending): `background.js` reads each stream request a
 tab makes (`googlevideo.com/videoplayback`, request body field 19.2), ties
 it to its video by the streaming URL's `id`, and hands it over as
 `player-potoken`; `PoTokenGenerator.adoptPlayerToken` keeps the newest per
@@ -1851,8 +1854,26 @@ video and `SabrStrategy.mintPoToken` uses it before minting. It exists only
 once the page's player has asked for media; otherwise the minted token is
 used as before. Across every log the first download of a process was
 refused and a later one usually served, with our own token both times;
-why is not known. Not built: sending our token in a player request of our
-own.
+why is not known. Which player token a download may still use is
+`sabr/PlayerTokenSource` (pure: the newest one, once; a token the server
+answered with a demand is not offered again, a newer one is taken at the
+next demand, so a token that arrives after a download began with a minted
+one rescues it). The native store keeps the newest per video for 6 h, 32
+videos. **A player token that stops being accepted with nothing newer
+from the page ends in an error**: minting is all that is left. Verify with
+`node scripts/youtube-token-smoke.mjs` (the real background.js in a vm: the
+protobuf reader, the stream-request listener, the watch-answer interceptor,
+the wait; 50 checks, six mutants fail it), the `P` cases of
+`sh scripts/sabr-harness/run.sh` (whole downloads against a server that
+serves player tokens and holds minted ones pending: start, late arrival,
+expiry with and without a newer token, a refused one; a source that
+repeats a token or never offers one fails) and `15p`-`15y` of
+`sh scripts/potoken-harness/run.sh` (the store: newest wins, the cap, the
+lifetime). Not covered by any test: `processVideo`'s use of the wait, the
+native hand-over, and a real download on a device. Not built: a video
+opened by a full page load (its stream is not tied to a video, so its
+download still starts with a minted token), and sending our token in a
+player request of our own.
 **Note what is and isn't a prediction here.** A PO token's own lifetime
 is NOT predictable — yt-dlp's guide puts observed validity anywhere from
 ~12 h to several months, and their issue asking for a figure is still

@@ -19,6 +19,7 @@ import com.solarized.firedown.ffmpegutils.FFmpegMetaData;
 import com.solarized.firedown.ffmpegutils.FFmpegMetaDataReader;
 import com.solarized.firedown.ffmpegutils.FFmpegStreamInfo;
 import com.solarized.firedown.sabr.Fmp4Muxer;
+import com.solarized.firedown.sabr.PlayerTokenSource;
 import com.solarized.firedown.sabr.SabrDownloader;
 import com.solarized.firedown.sabr.SabrMessages;
 import com.solarized.firedown.sabr.StreamTokenBinding;
@@ -148,6 +149,7 @@ public class SabrStrategy implements DownloadStrategy {
         // (a latent bug in the JS cache).
         streamBinding = new StreamTokenBinding(
                 !TextUtils.isEmpty(request.getSabrVisitorData()));
+        playerTokens = new PlayerTokenSource();
         String poToken = mintPoToken(request);
         if (!TextUtils.isEmpty(poToken)) {
             sabrDownloader.setPoToken(poToken);
@@ -438,8 +440,9 @@ public class SabrStrategy implements DownloadStrategy {
      *  switch (worker thread). Built in {@link #executeInternal}. */
     private StreamTokenBinding streamBinding;
 
-    /** The page player's token this download last used (worker thread). */
-    private String lastPlayerToken;
+    /** The page player's tokens this download may still use (worker
+     *  thread). */
+    private PlayerTokenSource playerTokens;
 
     /** Drop the cached tokens of BOTH bindings (this download may have
      *  carried either) so the next mint re-attests in the page. */
@@ -503,9 +506,8 @@ public class SabrStrategy implements DownloadStrategy {
 
         // The token the page's own player sent for this video, when there
         // is one this download has not been refused with.
-        String fromPlayer = gen.playerToken(videoId);
-        if (!TextUtils.isEmpty(fromPlayer) && !fromPlayer.equals(lastPlayerToken)) {
-            lastPlayerToken = fromPlayer;
+        String fromPlayer = playerTokens.next(gen.playerToken(videoId));
+        if (fromPlayer != null) {
             Log.d(TAG, "PO token from the page's player: " + fromPlayer.length() + " chars");
             return fromPlayer;
         }
