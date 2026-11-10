@@ -180,7 +180,7 @@
     <string name="browser_tabs_empty_archive">Hiljuti suletud vahelehti pole.</string>
     <string name="cancel">Tühista</string>
     <string name="capture_empty_message">Allalaadimiseks pole meediume saadaval.</string>
-    <string name="capture_empty_subtext">Laadige veebisait uuesti ja Firedown tuvastab saadaoleva meedia.</string>
+    <string name="capture_empty_subtext">Mõni video ilmub alles pärast esitamise alustamist.</string>
     <string name="clipboard">Kopeeriti lõikelauale</string>
     <string name="close_tab">Sulge kaart</string>
 <string name="close_tabs_after_one_day">Ühe päeva pärast</string>
@@ -1010,8 +1010,6 @@
         <item quantity="one">%d ebaõnnestus</item>
         <item quantity="other">%d ebaõnnestus</item>
     </plurals>
-    <string name="capture_help_banner">Mõnda manustatud meediat tuleb enne esitada. Puuduta, et näha, kuidas.</string>
-    <string name="capture_help_banner_title">Videot pole loendis?</string>
     <string name="capture_help_menu">Jäädvustamise abi</string>
     <string name="capture_scanning">Meedia otsimine…</string>
     <string name="cert_connection_exception">Turvaerand</string>
@@ -1265,4 +1263,6 @@
     <string name="bottom_bar_downloading">%1$s, allalaadimine</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Ava teiste rakenduste lingid privaatsel kaardil</string>
+    <string name="settings_external_links_private_summary">Need ei jää ajalukku ja nende allalaadimised lähevad turvalisse kausta.</string>
 </resources>

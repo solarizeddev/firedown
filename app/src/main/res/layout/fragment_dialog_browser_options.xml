@@ -25,15 +25,15 @@
          · 13 pending") with the batch's overall progress along its bottom
          edge. Tap opens Downloads (the Safe Folder in a private tab). Visibility
          and text come from BrowserOptionFragment.renderBatch; it lives as long
-         as the sheet does. Margins and corner match the help banner, its
-         sibling. -->
+         as the sheet does. It sits on the sheet's 16dp gutter, where the
+         tiles and squares below start (CaptureSpacingDecoration). -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/capture_batch_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/list_spacing"
-        android:layout_marginEnd="@dimen/list_spacing"
-        android:layout_marginBottom="@dimen/list_spacing"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
         android:clickable="true"
         android:focusable="true"
         android:visibility="gone"
@@ -88,92 +88,6 @@
             app:trackCornerRadius="0dp"
             app:trackStopIndicatorSize="0dp"
             app:trackThickness="3dp" />
-
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- One-shot help banner: shown only when the list is NON-empty (the empty
-         state already explains this) until the user taps or dismisses it. Tapping
-         the body opens the same help as the toolbar Help item; the X dismisses.
-         Gone by default; visibility is driven from BrowserOptionFragment.
-         Styled as a sibling of the archive / incognito-in-progress banners — the
-         cardBackgroundColor here is a fallback; BrowserOptionFragment overrides it
-         with the SelectionStyling brand wash (primaryContainer @ 20% over surface)
-         so the three list-banners read alike. -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/capture_help_banner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/list_spacing"
-        android:layout_marginEnd="@dimen/list_spacing"
-        android:layout_marginTop="@dimen/list_spacing"
-        android:layout_marginBottom="@dimen/list_spacing"
-        android:clickable="true"
-        android:focusable="true"
-        android:visibility="gone"
-        app:cardBackgroundColor="?attr/colorSurfaceContainerHighest"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="0dp"
-        app:strokeWidth="0dp">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="16dp"
-            android:paddingEnd="8dp"
-            android:paddingTop="12dp"
-            android:paddingBottom="12dp">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/capture_help_banner_icon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:contentDescription="@null"
-                android:src="@drawable/ic_help_24"
-                app:tint="?attr/colorOnSurface"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-
-            <TextView
-                android:id="@+id/capture_help_banner_title"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="@string/capture_help_banner_title"
-                android:textAppearance="?attr/textAppearanceTitleSmall"
-                android:textColor="?attr/colorOnSurface"
-                app:layout_constraintStart_toEndOf="@id/capture_help_banner_icon"
-                app:layout_constraintEnd_toStartOf="@id/capture_help_banner_dismiss"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/capture_help_banner_subtitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="2dp"
-                android:alpha="0.8"
-                android:text="@string/capture_help_banner"
-                android:textAppearance="?attr/textAppearanceBodySmall"
-                android:textColor="?attr/colorOnSurface"
-                app:layout_constraintStart_toEndOf="@id/capture_help_banner_icon"
-                app:layout_constraintEnd_toStartOf="@id/capture_help_banner_dismiss"
-                app:layout_constraintTop_toBottomOf="@id/capture_help_banner_title" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/capture_help_banner_dismiss"
-                style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:contentDescription="@string/task_dismiss"
-                app:icon="@drawable/ic_baseline_close_24"
-                app:iconSize="18dp"
-                app:iconTint="?attr/colorOnSurface"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </com.google.android.material.card.MaterialCardView>
 

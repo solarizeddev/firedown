@@ -182,7 +182,7 @@
     <string name="browser_tabs_empty_archive">Няма наскоро затворени раздели.</string>
     <string name="cancel">Отказ</string>
     <string name="capture_empty_message">Няма налични медии за изтегляне.</string>
-    <string name="capture_empty_subtext">Презаредете уебсайта и Firedown ще открие наличните медии.</string>
+    <string name="capture_empty_subtext">Някои видеа се появяват едва след като натиснете възпроизвеждане.</string>
     <string name="clipboard">Копирано в клипборда</string>
     <string name="close_tab">Затваряне на раздел</string>
 <string name="close_tabs_after_one_day">След един ден</string>
@@ -1032,8 +1032,6 @@
         <item quantity="one">%d неуспешно</item>
         <item quantity="other">%d неуспешни</item>
     </plurals>
-    <string name="capture_help_banner">Някои вградени медии трябва първо да се пуснат. Докоснете, за да научите как.</string>
-    <string name="capture_help_banner_title">Видеото не е в списъка?</string>
     <string name="capture_help_menu">Помощ за заснемането</string>
     <string name="capture_scanning">Търсене на медии…</string>
     <string name="cert_connection_exception">Изключение за сигурност</string>
@@ -1265,4 +1263,6 @@
     <string name="bottom_bar_downloading">%1$s, изтегляне</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Отваряй връзки от други приложения в поверителен раздел</string>
+    <string name="settings_external_links_private_summary">Те не остават в историята, а изтеглянията от тях отиват в Защитена папка.</string>
 </resources>

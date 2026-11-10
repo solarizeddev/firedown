@@ -334,6 +334,23 @@ public abstract class NavigationUtils {
         navController.navigate(R.id.browser, null, opts.build());
     }
 
+    /**
+     * Makes the home of {@code incognito}'s mode the root when it is not on
+     * the back stack, so a browser opened next sits over its own mode's home
+     * (Back from a private link lands on the private home). A no-op in the
+     * same mode, and while a browser is on the stack: re-rooting commits
+     * later, so the live browser would take the event the caller fires next
+     * and its replacement would open the regular tab. The live browser
+     * switches mode itself (openSession), and its Back re-roots the home.
+     */
+    public static void ensureHomeOfMode(NavController navController, boolean incognito) {
+        if (navController == null) return;
+        int target = incognito ? R.id.home_incognito : R.id.home;
+        if (!onBackStack(navController, target) && !onBackStack(navController, R.id.browser)) {
+            navigateToHome(navController, incognito);
+        }
+    }
+
     /** True if {@code destId} is currently on the back stack. */
     private static boolean onBackStack(NavController navController, int destId) {
         try {

@@ -332,8 +332,6 @@
     <string name="task_frame_failed">프레임을 저장할 수 없습니다</string>
     <string name="task_frame_cancelled">프레임 저장이 취소됨</string>
     <string name="capture_help_menu">도움말</string>
-    <string name="capture_help_banner_title">동영상이 목록에 없나요?</string>
-    <string name="capture_help_banner">일부 삽입된 미디어는 먼저 재생해야 합니다. 방법을 보려면 탭하세요.</string>
     <string name="bookmark_export">북마크 내보내기</string>
     <string name="bookmark_export_done">북마크 %1$d개를 Download/Firedown/backup에 내보냈습니다</string>
     <string name="bookmark_import">북마크 가져오기</string>

@@ -1,5 +1,7 @@
 package com.solarized.firedown.manager;
 
+import com.solarized.firedown.utils.BrowserHeaders;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -17,8 +19,10 @@ import com.solarized.firedown.ffmpegutils.FFmpegMetaData;
 import com.solarized.firedown.ffmpegutils.FFmpegMetaDataReader;
 import com.solarized.firedown.ffmpegutils.FFmpegStreamInfo;
 import com.solarized.firedown.sabr.Fmp4Muxer;
+import com.solarized.firedown.sabr.PlayerTokenSource;
 import com.solarized.firedown.sabr.SabrDownloader;
 import com.solarized.firedown.sabr.SabrMessages;
+import com.solarized.firedown.sabr.StreamTokenBinding;
 import com.solarized.firedown.utils.FileUriHelper;
 import com.solarized.firedown.utils.MessageHelper;
 import com.solarized.firedown.utils.WebUtils;
@@ -143,6 +147,9 @@ public class SabrStrategy implements DownloadStrategy {
         // mint for the video being downloaded. The native path mints fresh;
         // the JS path may return a cached token bound to a different video
         // (a latent bug in the JS cache).
+        streamBinding = new StreamTokenBinding(
+                !TextUtils.isEmpty(request.getSabrVisitorData()));
+        playerTokens = new PlayerTokenSource();
         String poToken = mintPoToken(request);
         if (!TextUtils.isEmpty(poToken)) {
             sabrDownloader.setPoToken(poToken);
@@ -159,12 +166,12 @@ public class SabrStrategy implements DownloadStrategy {
         // failed (branch above) gets its second chance here too. Runs on
         // this same worker thread, the thread the initial mint used.
         //
-        // Goes through mintFreshPoToken, NOT mintPoToken: the plain mint is
-        // cache-first and on this path the cache holds exactly the token the
-        // server just refused, so the recovery re-applied the rejected token
-        // twice in ~4s ("cache hit ... 0ms") and failed the download having
-        // never asked the page to mint anything.
-        sabrDownloader.setPoTokenRefresher(() -> mintFreshPoToken(request));
+        // Every recovery mint is FRESH (the plain mint is cache-first, and
+        // the cache holds the token the server just refused) and over the
+        // identifier StreamTokenBinding names: see mintAfterDemand.
+        sabrDownloader.setPoTokenRefresher(() -> mintAfterDemand(request, sabrDownloader));
+
+        sabrDownloader.setDevice(Build.VERSION.RELEASE, BrowserHeaders.getMobileUserAgentString());
 
         // Dynamic MWEB client version from HTML — CDN validates cver= matches
         String clientVersion = request.getSabrClientVersion();
@@ -266,6 +273,11 @@ public class SabrStrategy implements DownloadStrategy {
             // ERROR row the user can retry.
             callback.onError(MessageHelper.IOEXCEPTION);
             return;
+        } finally {
+            // However it ended (finished, refused, a dropped connection),
+            // a binding the server accepted is where the next download
+            // starts.
+            streamBinding.onEnded(sabrDownloader.isTokenAccepted());
         }
 
         // ====================================================================
@@ -424,26 +436,57 @@ public class SabrStrategy implements DownloadStrategy {
         return mintPoToken(request, false);
     }
 
-    /**
-     * Mint a PO token the server has not already refused — used only by the
-     * mid-stream attestation recovery. Bypasses every cache layer; see
-     * {@link PoTokenGenerator#generateFresh}.
-     */
-    @Nullable
-    private String mintFreshPoToken(@NonNull DownloadRequest request) {
-        return mintPoToken(request, true);
-    }
+    /** Which identifier this download's token is minted over, and when to
+     *  switch (worker thread). Built in {@link #executeInternal}. */
+    private StreamTokenBinding streamBinding;
 
-    /** Drop the cached STREAM token (the visitor-bound one this download
-     *  carried on videoplayback) so the next mint re-attests in the page.
-     *  The video-bound token is a different token for a different request
-     *  (timedtext) and is left alone. */
+    /** The page player's tokens this download may still use (worker
+     *  thread). */
+    private PlayerTokenSource playerTokens;
+
+    /** Drop the cached tokens of BOTH bindings (this download may have
+     *  carried either) so the next mint re-attests in the page. */
     private void invalidatePoToken(@NonNull DownloadRequest request) {
         PoTokenGenerator gen = context.getPoTokenGenerator();
+        if (gen == null) return;
+        String videoId = request.getSabrVideoId();
         String visitorData = request.getSabrVisitorData();
-        if (gen != null && !TextUtils.isEmpty(visitorData)) {
+        if (!TextUtils.isEmpty(videoId)) {
+            gen.invalidate(videoId);
+        }
+        if (!TextUtils.isEmpty(visitorData)) {
             gen.invalidateStream(visitorData);
         }
+    }
+
+    /**
+     * The server demanded attestation (status 3): mint a fresh token over
+     * the identifier {@link StreamTokenBinding#onDemand} names. A visitor
+     * binding left behind has its cached token dropped, so a later download
+     * never starts from a token the server did not accept.
+     */
+    @Nullable
+    private String mintAfterDemand(@NonNull DownloadRequest request,
+                                   @NonNull SabrDownloader downloader) {
+        StreamTokenBinding.Kind before = streamBinding.current();
+        StreamTokenBinding.Kind now = streamBinding.onDemand(
+                downloader.isTokenAccepted(),
+                downloader.isAttestationPending(),
+                downloader.getConsecutiveAttestationRefreshes());
+        if (now != before) {
+            Log.d(TAG, "PO token bound to " + before + " not accepted, minting one bound to "
+                    + now);
+            // The visitor key only: a video-bound token the stream did not
+            // take is still the right one for this video's subtitles.
+            if (before == StreamTokenBinding.Kind.VISITOR) {
+                String visitorData = request.getSabrVisitorData();
+                PoTokenGenerator gen = context.getPoTokenGenerator();
+                if (gen != null && !TextUtils.isEmpty(visitorData)) {
+                    gen.invalidateStream(visitorData);
+                }
+            }
+        }
+        return mintPoToken(request, true);
     }
 
     @Nullable
@@ -456,24 +499,37 @@ public class SabrStrategy implements DownloadStrategy {
             Log.w(TAG, "mintPoToken: PoTokenGenerator unavailable");
             return null;
         }
-        if (TextUtils.isEmpty(videoId) || TextUtils.isEmpty(visitorData)) {
-            Log.w(TAG, "mintPoToken: missing videoId/visitorData on request");
+        if (TextUtils.isEmpty(videoId)) {
+            Log.w(TAG, "mintPoToken: missing videoId on request");
             return null;
         }
 
+        // The token the page's own player sent for this video, when there
+        // is one this download has not been refused with.
+        String fromPlayer = playerTokens.next(gen.playerToken(videoId));
+        if (fromPlayer != null) {
+            Log.d(TAG, "PO token from the page's player: " + fromPlayer.length() + " chars");
+            return fromPlayer;
+        }
+
+        StreamTokenBinding.Kind binding = streamBinding.current();
         long t0 = System.currentTimeMillis();
         try {
-            // The STREAM token: bound to visitorData, which is what the
-            // Google Video Server checks on videoplayback. generate() (the
-            // video-bound one) is the timedtext token — sending that here
-            // shipped as the intermittent status-3 death at ~60 s.
-            String token = forceFresh
-                    ? gen.generateFreshForStream(videoId, visitorData)
-                    : gen.generateForStream(videoId, visitorData);
+            String token;
+            if (binding == StreamTokenBinding.Kind.VISITOR) {
+                token = forceFresh
+                        ? gen.generateFreshForStream(videoId, visitorData)
+                        : gen.generateForStream(videoId, visitorData);
+            } else {
+                token = forceFresh
+                        ? gen.generateFresh(videoId, visitorData)
+                        : gen.generate(videoId, visitorData);
+            }
             long dt = System.currentTimeMillis() - t0;
             if (!TextUtils.isEmpty(token)) {
-                Log.d(TAG, "Native PO token: " + token.length() + " chars (" + dt + "ms"
-                        + (forceFresh ? ", fresh" : "") + ")");
+                streamBinding.onMinted();
+                Log.d(TAG, "Native PO token: " + token.length() + " chars, bound to "
+                        + binding + " (" + dt + "ms" + (forceFresh ? ", fresh" : "") + ")");
                 return token;
             }
             Log.w(TAG, "Native mint returned empty after " + dt + "ms");

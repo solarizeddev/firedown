@@ -1,7 +1,11 @@
-## [1.2.8] - 2026-11-08
+## [1.2.8] - 2026-11-10
 
+- Updated the GeckoView browser engine to 160.0.20261104181552
+- Fixed video downloads that stopped with an error after the first minute
 - Fullscreen videos keep playing in a picture-in-picture window when you leave the app
 - The update prompt opens only when it interrupts nothing, and waits in the ⋮ menu
+- App updates: fixed failed installs when a newer version arrives first, and updates that waited for a dialog that never opened
+- App updates: updates download even when the system Download Manager is turned off
 - The Downloads button shows progress in a ring, and lights up when downloads finish
 - Add-ons: the list shows each add-on's rating and users, and its page lists permissions one by one
 - Add-ons: an update asking for new permissions shows a dot on the ⋮ menu and a Review button until you review it

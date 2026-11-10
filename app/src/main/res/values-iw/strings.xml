@@ -313,8 +313,6 @@
     <string name="task_frame_failed">לא ניתן לשמור את הפריים</string>
     <string name="task_frame_cancelled">שמירת הפריים בוטלה</string>
     <string name="capture_help_menu">עזרה</string>
-    <string name="capture_help_banner_title">הסרטון לא מופיע?</string>
-    <string name="capture_help_banner">יש להפעיל קודם חלק מהמדיה המוטמעת. הקש כדי ללמוד איך.</string>
     <string name="bookmark_export">ייצוא סימניות</string>
     <string name="bookmark_export_done">%1$d סימניות יוצאו אל Download/Firedown/backup</string>
     <string name="bookmark_import">ייבוא סימניות</string>

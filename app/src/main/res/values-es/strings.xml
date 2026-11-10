@@ -188,7 +188,7 @@
     <string name="browser_tabs_empty_archive">No hay pestañas cerradas recientemente.</string>
     <string name="cancel">Cancelar</string>
     <string name="capture_empty_message">No hay medios disponibles para descargar.</string>
-    <string name="capture_empty_subtext">Vuelve a cargar el sitio web y Firedown detectará los medios disponibles.</string>
+    <string name="capture_empty_subtext">Algunos vídeos solo aparecen después de pulsar reproducir.</string>
     <string name="cert_connection_exception">Excepción de seguridad</string>
     <string name="cert_connection_insecure">La conexión no es segura</string>
     <string name="cert_connection_secure">La conexión es segura</string>
@@ -679,8 +679,6 @@
     <string name="task_frame_failed">No se pudo guardar el fotograma</string>
     <string name="task_frame_cancelled">Guardado de fotograma cancelado</string>
     <string name="capture_help_menu">Ayuda</string>
-    <string name="capture_help_banner_title">¿No aparece el vídeo?</string>
-    <string name="capture_help_banner">Algunos medios incrustados deben reproducirse primero. Toca para saber cómo.</string>
     <string name="tabs_more_options">Más opciones</string>
     <string name="trackers_info_summary">%1$s bloqueados</string>
     <string name="most_visited">Más visitados</string>
@@ -1269,4 +1267,6 @@
     <string name="bottom_bar_downloading">%1$s, descargando</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d %%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Abrir enlaces de otras apps en una pestaña privada</string>
+    <string name="settings_external_links_private_summary">No quedan en tu historial y sus descargas van a la Carpeta segura.</string>
 </resources>

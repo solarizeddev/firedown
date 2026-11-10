@@ -360,4 +360,8 @@
     <color name="mime_fallback_status">#A63D37</color>
     <color name="mime_fallback_action">@color/md_theme_onSurfaceVariant</color>
 
+    <!-- Launcher shortcut icons (LauncherShortcuts): drawn by the launcher,
+         so fixed colours, the brand coral on white like other browsers'. -->
+    <color name="shortcut_icon_background">#FFFFFF</color>
+    <color name="shortcut_icon_glyph">#FF716C</color>
 </resources>

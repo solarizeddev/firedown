@@ -1402,8 +1402,8 @@ wait, no og:video pairing, DASH captured, no Instagram guard, author as
 title — each fails). The backbone's generic capture is `pageTitled`, so a
 reader finishing after the wait renames it; a URL with no `efg` is cached by
 its file path. A node serialized INTO a JSON string is not seen (the
-backbone covers it). On-device
-unverified at write time; desktop pages and `plugins/video.php` embeds are
+backbone covers it). On a device: `CaptureLiveTest` t6 (live network, a
+pinned public reel; it counts the reel's video and audio captures, not the page's pictures), green on SM-A426B (Android 12); desktop pages and `plugins/video.php` embeds are
 read by the same scanner but no HAR of them was checked.
 
 ### Skip the capture probe when the parser already has the metadata
@@ -1542,9 +1542,9 @@ server-refused download ERRORS — it never finalizes.** The server can demand
 attestation MID-STREAM (seen in the wild ~60 s into a download whose
 start-time token it had accepted). `SabrDownloader` reacts by minting a fresh
 per-video PO token through `PoTokenRefresher` (wired by `SabrStrategy` to
-`mintFreshPoToken`, set unconditionally so a download whose initial mint
+`mintAfterDemand`, set unconditionally so a download whose initial mint
 failed gets its chance here too) and resuming from position; after
-`MAX_ATTESTATION_REFRESHES` (2) failed re-mints the token is being REJECTED,
+`MAX_ATTESTATION_REFRESHES` (3) failed re-mints the token is being REJECTED,
 not missing, and it throws `SabrException`. **That budget is CONSECUTIVE —
 it resets on forward progress (`playerTimeMs > prevPlayerTime`).** It was a
 lifetime cap, so a download challenged a third time was failed even though
@@ -1556,8 +1556,8 @@ in minutes; do not reason about this in wall-clock). The reset must use the
 SAME progress test the stall detector uses, not merely "segments arrived".
 
 **Three separate bounds stop a status-3 → re-mint → status-3 loop, and all
-three are load-bearing.** (1) The consecutive cap (2): the same token being
-refused twice in a row with no progress between ends the download — more
+three are load-bearing.** (1) The consecutive cap (3): tokens
+refused three times in a row with no progress between ends the download — more
 minting cannot change that answer. (2) `attestationBudgetTotal()`, a
 never-reset ceiling, because the consecutive cap resets on progress and a
 server answering with segments AND status=3 together would otherwise
@@ -1573,7 +1573,7 @@ network. Re-minting seconds later over the same broken network only repeats
 it; the honest end state is an ERROR row the user retries with signal,
 which restarts cleanly. **All of it is covered by
 `sh scripts/sabr-harness/run.sh`**, which drives the REAL `SabrDownloader`
-against a scripted SABR server (18 assertions, seconds, JDK only — the
+against a scripted SABR server (seconds, JDK only — the
 `sabr` package touches just five external types, so `okhttp3.*` +
 `android.util.Log`/`Base64` + `BuildConfig` are stubbed and OkHttp answers
 from a queue the test writes). `SabrTestServer` builds genuine UMP frames:
@@ -1676,40 +1676,113 @@ the 16-bit `reference_count` unchecked):
   the partial-write case passed. With both fixes all three cases pass on
   that device, the remux fallback's first green anywhere.
 
-**The SABR / `videoplayback` token is bound to the VISITOR DATA; the
-subtitles token to the VIDEO ID — two different tokens, never one shared
-cache entry.** A PO token is minted over one identifier (BotGuard's content
-binding) and the server checks it against the request it rides on: the
-Google Video Server checks the `videoplayback` / SABR `poToken` against the
-session's visitor (yt-dlp's GVS context — the logged-out WEB client, which
-`SabrDownloader` forces, binds to `visitorData`), while the player request
-and the `timedtext` `pot=` param check the VIDEO id (yt-dlp's PLAYER/SUBS
-contexts; `get_webpo_content_binding` in `youtube/pot/utils.py` is the
-reference). `content.js` used to mint EVERY token over `vid || vd`, so the
-stream token was video-bound — and the failure of a wrong binding is
-SILENT: the server accepts it unchecked most of the time and refuses it
-only when it spot-checks the session. On-device that was
-`STREAM_PROTECTION_STATUS 2` ("pending" — never validated) from the first
-data response, status 3 at ~60 s, two genuinely fresh re-mints (~600 ms
-each, full attestation) refused at once because they carried the same
-wrong binding, then a restart of the app that worked with no protection
-status at all. Recognise the shape: **an intermittent status-3 death where
-FRESH re-mints are refused immediately is a BINDING problem, not a
-token-TTL or network one** (a TTL problem tracks session age; a network
-problem mints nothing). Now `PoTokenGenerator.Binding` names the binding
-per caller — `generateForStream`/`generateFreshForStream`/`invalidateStream`
-(`SabrStrategy`, `binding:"visitor"` on the mint message, cache key
-`visitor:<visitorData>`, shared across every video of the session because
-the server binds it to the visitor) versus `generate`/`generateFresh`/
-`invalidate` (`TimedTextStrategy`, `binding:"video"`, cache key = videoId)
-— and `content.js` picks the identifier from it (a message with no binding
-is treated as video-bound, so the pre-field pairing still agrees on the
-subtitles token). Don't collapse the two back into one videoId-keyed cache
-"so subtitles reuse the stream token" — they were never the same token.
-`invalidate*` now also marks the key so the NEXT mint runs `forceFresh`
-(the page re-attests instead of re-minting through the minter whose output
-was just refused), so a user's retry of an ERROR row never starts from the
-refused token. Pinned by cases 8b–8n of `sh scripts/potoken-harness/run.sh`.
+**The SABR / `videoplayback` token is bound to the video id OR the visitor
+data, depending on the session, and `SabrStrategy` TRIES the binding instead
+of assuming it.** A PO token is minted over one identifier (BotGuard's
+content binding) and the server checks it against the request it rides on.
+The player request and `timedtext` take the VIDEO id. The Google Video
+Server takes one of two for a logged-out web client: the video id when the
+session that produced the streaming URL runs the player experiment
+`html5_generate_content_po_token` (yt-dlp's `_gvs_bind_to_video_id`), the
+visitor data without it. Nothing on the capture says which, and a wrong
+binding fails SILENTLY: `STREAM_PROTECTION_STATUS 2` ("pending") from the
+first data response, status 3 around a minute of media, and every re-mint
+over the same identifier refused at once however fresh. Recognise the
+shape: **a status-3 death where FRESH re-mints are refused immediately is a
+BINDING problem, not a token-TTL or network one.** It shipped twice, once
+per fixed choice: every token video-bound ("fails, then works after a
+restart", the session's experiment having changed), then the stream token
+always visitor-bound (2026-11 log: an 836-char token over a 548-char
+visitor data, pending from the first response, both fresh re-mints
+refused). Now the choice is `sabr/StreamTokenBinding` (pure Java, one per
+download): it starts from the binding the server last ACCEPTED in this
+process (VIDEO at start; always VIDEO with no visitor data), and at each
+status-3 demand `SabrStrategy.mintAfterDemand` mints FRESH over the
+identifier `onDemand(accepted, pending, consecutive)` names, from three
+facts the downloader reports about the current token:
+`isTokenAccepted()` (media arrived while the server reported nothing: no
+status 2 since `setPoToken`, no status 3 in that response),
+`isAttestationPending()` (status 2 since `setPoToken`) and
+`getConsecutiveAttestationRefreshes()`. The rules:
+- a token never accepted and kept pending switches at the first demand;
+- with no "pending" from the server, the same binding is tried fresh once
+  and the other one on the second refusal in a row;
+- a binding accepted earlier in the download is PROVEN: an ordinary
+  mid-stream demand, even one that comes with a status 2, is answered over
+  it (switching on every status 3, the first cut, put a long download on
+  the wrong identifier for a minute of media at each demand);
+- a proven binding refused fresh with no progress is given up, and media on
+  a given-up binding proves nothing again (a server that serves a wrong
+  token for a while without saying "pending" would otherwise swing forever);
+- three refusals in a row are: this binding fresh, the other, this again,
+  which is why `MAX_ATTESTATION_REFRESHES` is 3 (a mint that raced a
+  session rotation gets its retry on the right identifier);
+- a download whose first mint failed has tried nothing and does not switch
+  on its first demand;
+- however the download ends (finished, refused, a dropped connection: a
+  `finally`), an accepted or proven binding is where the next one starts.
+A visitor binding left behind has its cache key invalidated; the video key
+is left alone on a switch, since that token is still right for the video's
+subtitles. The two bindings stay two cache entries
+(`PoTokenGenerator.Binding`: `generate` / `generateFresh` / `invalidate`
+keyed by videoId, the `…ForStream` twins keyed `visitor:<visitorData>`);
+a video-bound stream token and the subtitles token are the same token, and
+a failed download invalidates both keys. `invalidate*` also marks the key
+so the NEXT mint runs `forceFresh`. Not built: reading the experiment flag
+from the watch page at capture to pick the first binding (it would save
+the one refused request and its backoff). Pinned by
+`StreamTokenBindingTest` (JUnit: the decision table and whole downloads
+against a model of the server;
+`./gradlew testDebugUnitTest --tests 'com.solarized.firedown.sabr.StreamTokenBindingTest'`)
+and the `B` cases of `sh scripts/sabr-harness/run.sh` (the REAL
+`SabrDownloader` with the real class against a server that checks the
+binding: the device log's case, both directions, ordinary demands, a server
+that never says pending, a session that accepts neither, no visitor data, a
+failed first mint, a failed re-mint, a failure after a correction, a
+rotation retry, media arriving with a demand; mutants that never switch,
+always switch, or switch before any token was tried each fail it). The
+harness's refresher repeats `mintAfterDemand`'s three lines; the
+`SabrStrategy` glue itself and the whole path on a device are unverified.
+
+**The token page attests with the challenge the PAGE carries, not att/get
+(2026-11, an experiment not yet confirmed on a device).** With the binding
+right (`contentPot=true` on the capture's `[Session]` debug line, a 120-char
+video-bound token) the video server still kept every token pending, in the
+same browser session where YouTube's own player was accepted at once. A HAR
+of the tab shows what the player does: no `att/get` at all, the BotGuard
+challenge (`bgChallenge`: interpreter URL, program, global name) is inline in
+the m.youtube.com page's HTML, one `GenerateIT` with the same request key,
+then a token minted over the plain video id (`dv` → `wY(this, a.videoId)`,
+with `html5_bandaid_attach_content_po_token=true`) that is 85 bytes where
+ours was 90; its first media response carries `STREAM_PROTECTION_STATUS 1`.
+The hidden page asked `att/get` as the WEB client with a client version
+hardcoded in April. Now `content.js` fetches `https://m.youtube.com/` from
+the content script (`__fdGetChallenge`, with the browser's cookies) and
+`assets/youtube/challenge.js` (`fdExtractInlineChallenge`, pure; pinned by
+`node scripts/youtube-challenge-smoke.mjs`, and checked against the HAR's
+real page) reads the challenge out of the JS string literal it sits in;
+`att/get` is only the fallback, asked as MWEB with the page's client
+version. A debug line says which was used:
+`[BG-robots] attested: challenge=page|att/get cver=… interpreter=… snapshot=…
+integrity=… ttl=…`. The capture also logs `[Session]` (cookie names, login,
+visitor ids, the two PO-token experiment flags). **The hidden token page has a window of the screen's size**
+(`HiddenSessionDisplay`: a `GeckoDisplay` over an off-screen
+`SurfaceTexture`, attached after `open()`, released before every
+`close()`). A session with no display reads `innerWidth`/`outerWidth` as
+0x0, which a device log showed on the page the VM attests from
+(`page=visible focus=true inner=0x0 outer=0x0 … type=text/plain` on the
+`mintResult` line) while every token was kept pending; not yet confirmed
+on a device as the cause. The same log: the page's inline challenge is
+answered by `GenerateIT` with no integrity token from this page, and
+`attest()` falls back to `att/get` as MWEB, then WEB. **If the token is still
+kept pending with `challenge=page`, the challenge was not the cause either:
+what then differs from the real player is where the attestation runs
+(www.youtube.com/robots.txt in a hidden session against the m.youtube.com
+watch page) and the session the streaming URL comes from (the capture's
+OkHttp fetch of the watch page, a different visitor id from the tab's).**
+Ruled out along the way, each by a device log: the binding (both refused),
+being logged in, and uBlock blocking the VM's `generate_204` ping (the tab
+is blocked the same way and plays).
 
 **The re-mint MUST bypass every token cache — a cache-first "refresh" is a
 no-op that only looks like recovery.** The refresher goes through
@@ -1752,6 +1825,55 @@ TTL problem, not a token-content problem.** `cml` is now bounded by
 no-value-from-server fallback), the attestation is **single-flight**
 (`cmp`) so a video and its subtitles don't each run their own att/get →
 VM-fetch → GenerateIT, and `tokenCache` entries expire after 10 min.
+**Timing is not the cause** (ruled out on a device, 2026-11): tokens
+minted 15 s after their attestation, and 30 s after the session's first
+one with the attestation made when YouTube opened, were kept pending like
+one minted at once. The `mintResult` line carries `minterAge=` and
+`sinceFirstAttest=`. A re-mint after status 3 has never been accepted in
+any log, and the SABR request bytes are the same in runs that were served
+and runs that were refused. **The working reading (an experiment, not
+confirmed): the server judges the session that issued the streaming URL.**
+The page's player sends its own PO token in the watch request
+(`youtubei/v1/get_watch` on m.youtube.com, `serviceIntegrityDimensions`),
+and the URL in that answer belongs to an attested request; ours came from
+a separate watch-page GET that carries no token. So on an in-page
+navigation `processVideo` waits for the page's own watch answer
+(`waitForTabWatchResponse`: 1.5 s for the request to start, 8 s for its
+answer) and uses its player response; the interceptor reads `get_watch`
+beside `/player`. A full page load has no such request and still takes the
+HTML path. That alone changed nothing on a device (the page's own URL
+with our token was kept pending). **So a download starts with the token
+the page's own player sends** (confirmed on a device, 2026-11: the first
+download of a fresh install ran with no "pending" and past the minute where
+every minted token was refused; tokens minted in the hidden page from the
+`att/get` attestation are the ones the server holds pending): `background.js` reads each stream request a
+tab makes (`googlevideo.com/videoplayback`, request body field 19.2), ties
+it to its video by the streaming URL's `id`, and hands it over as
+`player-potoken`; `PoTokenGenerator.adoptPlayerToken` keeps the newest per
+video and `SabrStrategy.mintPoToken` uses it before minting. It exists only
+once the page's player has asked for media; otherwise the minted token is
+used as before. Across every log the first download of a process was
+refused and a later one usually served, with our own token both times;
+why is not known. Which player token a download may still use is
+`sabr/PlayerTokenSource` (pure: the newest one, once; a token the server
+answered with a demand is not offered again, a newer one is taken at the
+next demand, so a token that arrives after a download began with a minted
+one rescues it). The native store keeps the newest per video for 6 h, 32
+videos. **A player token that stops being accepted with nothing newer
+from the page ends in an error**: minting is all that is left. Verify with
+`node scripts/youtube-token-smoke.mjs` (the real background.js in a vm: the
+protobuf reader, the stream-request listener, the watch-answer interceptor,
+the wait; 50 checks, six mutants fail it), the `P` cases of
+`sh scripts/sabr-harness/run.sh` (whole downloads against a server that
+serves player tokens and holds minted ones pending: start, late arrival,
+expiry with and without a newer token, a refused one; a source that
+repeats a token or never offers one fails) and `15p`-`15y` of
+`sh scripts/potoken-harness/run.sh` (the store: newest wins, the cap, the
+lifetime). Not covered by any test: `processVideo`'s use of the wait, the
+native hand-over, and a real download on a device. Not built: a video
+opened by a full page load (its stream is not tied to a video, so its
+download still starts with a minted token), and sending our token in a
+player request of our own.
 **Note what is and isn't a prediction here.** A PO token's own lifetime
 is NOT predictable — yt-dlp's guide puts observed validity anywhere from
 ~12 h to several months, and their issue asking for a figure is still
@@ -4690,7 +4812,9 @@ before changing a flow. The rules, each easy to undo:
     t1 pins the webrequests `ensureBuiltIn` version against the bundled
     manifest (the version-cache trap), then Telegram post / Vimeo watch
     page / Apple Podcasts show page / a Wikimedia Commons `<video>` page
-    (the generic catcher's DOM-scrape path). Login-walled and
+    (the generic catcher's DOM-scrape path) / a Facebook reel permalink (t6:
+    captured once, under its `/reel/<id>/` page, titled by its words; skips
+    when Facebook answers with a login wall). Login-walled and
     play-tap-gated sites are deliberately excluded — a red test there would
     measure the wall, not the parser.
 - Re-run your HAR simulation with the **final** code (caps included) and confirm
@@ -5172,6 +5296,104 @@ is **~75 MB**, the APK 205 MB.
   checks the fallback tap. The results file opens with the
   phone's model and Android version. Cancelling Android's dialog posts the "update failed" notification
   (the session reports ABORTED); the script flags it as a WARN.
+- **Invariants from the 2026-11 review** (why 1.1.88 installs stopped
+  updating, and what the current client still got wrong), each pinned by
+  the flow harness with a mutant:
+  - **A download that starts clears the ready record**
+    (`enqueueLocked` → `clearReadyRecordLocked`). The APK step downloads to
+    the ready APK's own path, so a verified 1.2.7 left uninstalled when 1.2.8
+    came out was offered over 1.2.8's PARTIAL file ("Update to 1.2.7", then
+    "Update failed"). `isVerifiedReady` is also false while a download is
+    recorded (the belt), and `UpdateReadyLiveData` listens to the download id.
+    Clearing the record takes down the "Tap to update" notification that
+    offered it (not while an install runs: the same id is then its
+    progress), and `UpdateInstaller.install` itself refuses anything but a
+    verified ready APK, so a sheet opened before the download began can't
+    copy the partial file either. A check starts no download while an
+    install copies (the download would begin by deleting that file).
+  - **A wrong clock never holds a version**: a retry time more than one
+    backoff (6 h + 20%) away and a finalize claim more than 6 h in the
+    future count as expired (`backoffActive`, `claimLive`). A phone that
+    booted in the future used to wait until the clock caught up. A claim a
+    few hours ahead still holds: a clock set back while a rebuild runs must
+    not have `start` take the download from under the worker.
+  - **A pulled release stops being offered** (`onManifestSeen`): when
+    status.json names a version OLDER than the ready APK on two checks a
+    day apart, the APK and its record are dropped. Not sooner:
+    publish-release.sh updates the GitHub copy before the website's deploy,
+    a phone that can't reach firedown.app reads the GitHub copy, and a
+    deploy can lag or fail, so a phone can verify a release the primary
+    endpoint doesn't list yet; dropping a good update costs a full download.
+  - **The notification's Install runs in `UpdateInstallWorker`** (expedited,
+    unique, KEEP), not the receiver's `goAsync`: a broadcast is killed after
+    60 s, mid-copy on a slow phone, leaving the installer session open. On
+    Android 11 and older the worker is a foreground service whose notice is
+    the install's own progress notification (same id).
+  - **Android's confirmation dialog has a notification fallback**
+    (`STATUS_PENDING_USER_ACTION` → `showConfirmInstall`, id
+    `APK_UPDATE_CONFIRM_INSTALL`): Android drops an activity start from the
+    background without a word, so with no activity of the app on screen the
+    dialog is also offered as a notification, removed by any outcome. This
+    is not only Android 10–11: `USER_ACTION_NOT_REQUIRED` holds only when
+    Firedown is the installer of record, so the FIRST self-update of an
+    install a browser or file manager put on the phone asks, on every
+    Android version. The periodic check doesn't re-post "Tap to update"
+    beside it (a tap would start a second session), and the prompt is named
+    after the APK on disk, not status.json's version.
+  - **No update check is expedited** (`UpdateScheduler`): on Android 11 and
+    older WorkManager runs expedited work as a foreground service and calls
+    `getForegroundInfo()`, which `UpdateWorker` doesn't implement (the
+    default throws): 1.2.7's startup and "Check for updates" runs failed on
+    Android 8–11, leaving the 6-hour periodic check. An expedited worker
+    must implement it (`UpdateInstallWorker` does).
+  - Smaller: `UPDATE_META` is removed when a commit never happened (a later
+    unrelated update announced the old name); the periodic check doesn't
+    re-post the prompt over a running install's progress (same id);
+    `removeDownload` catches the disabled-DownloadManager throw (it runs on
+    the main thread from the app-replaced receiver).
+- **When the Download Manager can't take a download, it is DIRECT**
+  (`UpdateDirectDownload`, run by `UpdateDirectDownloadWorker` over the
+  app's OkHttp client). The user disabling the Download Manager app makes
+  `enqueue` throw on every check, and until 1.2.8 no update ever downloaded,
+  silently; no external files dir (where the Download Manager writes) was
+  the same dead end. Now `enqueueLocked` falls back to a direct download of
+  the same step, recorded under a NEGATIVE id (`isDirect`: below -1; the
+  Download Manager's ids are positive), and everything after the transport
+  is unchanged: the plan, the files, the claim, the finalize worker, the
+  backoff. Rules:
+  - **Bytes go to a part file per download** (`firedown.apk.dl<id>`) and
+    are moved to the step's file only by `completeDirect`, under the lock,
+    while the record still names that id — a stale run (its record moved
+    on: a check, its own failed attempt, `clearPending`) deletes its part
+    and writes nothing where a newer download is going. `deleteArtifacts`
+    deletes every part file; `removeDownload` of a direct id cancels its
+    work and deletes its part.
+  - **Resumable across runs**: WorkManager stops a run after ten minutes or
+    when the network goes, so a 205 MB APK on a slow link is several runs.
+    A run keeps what it wrote; the next asks `Range: bytes=<have>-` and
+    appends only to a 206 whose Content-Range starts there. A 200 starts the
+    file over; a 206 for another range drops the part. `Accept-Encoding:
+    identity` always (a gzipped answer has no length and counts other
+    bytes). The SHA-256 check in the finalize worker still decides.
+  - **Failures map to the Download Manager's**: a refusal (4xx), a
+    Content-Length or body longer than status.json's size → the next
+    mirror; a run that downloads nothing (no connection, a 5xx, 408, 429,
+    416, a wrong range) is a stall, and `MAX_STALLS` (6) in a row, with
+    WorkManager's 30 s doubling backoff, ends the attempt — any progress
+    resets the count, a run the system stopped is not one; no room → a
+    device failure.
+  - **A check never starts it twice**: `inFlightLocked` re-enqueues the
+    recorded direct download's work with KEEP (a no-op while it is queued,
+    running or waiting out a retry; it resumes the part if the work was
+    lost) and, once `UPDATE_DIRECT_DONE` names it, hands an unclaimed one to
+    the finalize worker like a finished Download Manager download.
+  - Not roaming (the Download Manager request's rule), no notification (the
+    Download Manager download is hidden too). A Download Manager disabled
+    after its download was recorded: `queryStatus` answers unknown instead
+    of throwing, and the next check downloads directly.
+- **Known, not fixed**: on Android 8–11 the install worker's foreground notice shares the
+  progress notification's id, so "Installing…" can vanish when the worker
+  returns, before Android answers.
 - **Verify** with `sh scripts/update-harness/run.sh` (JDK only, ~6 min): the
   JUnit tests on a plain JVM (UpdatePatchTest, UpdatePlanTest,
   UpdateManifestTest — the same ones `testDebugUnitTest` runs); **the state
@@ -5180,10 +5402,18 @@ is **~75 MB**, the APK 205 MB.
   SharedPreferences — the ladder, mirrors, a patch for another base, device
   failures, no room, the claim live / stale / unclaimed, a stopped worker,
   stale broadcasts, a record from before plans, an unreadable record,
-  clearPending; 51 checks, written after review found the device-failure
-  loop the other tests all passed on); a fuzz of the real generator and
+  clearPending, a newer release over a ready one, a wrong clock, a pulled
+  release, a disabled DownloadManager, and the direct download — disabled,
+  absent, no external dir, disabled mid-download, resume, a stopped run,
+  Range ignored, a wrong range, refused, never connecting, a 5xx, too long,
+  stale runs, in flight, all failing; 134 checks, written after review found
+  the device-failure loop the other tests all passed on); **the Android
+  compile check** (section 0: the installer, receiver, workers,
+  notifications and scheduler compiled against Robolectric's android-all,
+  API 35, with signature stubs of the androidx and app classes in
+  `android-stub/`; `ANDROID_COMPILE=0` skips the ~190 MB jar); a fuzz of the real generator and
   applier (300 random edits, 3000 random corruptions, 500 random headers, an
-  APK-shaped file, the CLI); 30 planted bugs that must each fail
+  APK-shaped file, the CLI); 51 planted bugs that must each fail
   (`MUTANTS=0` skips); the REAL `releaseStatus` in a scratch Gradle
   project (offline, file:// history URLs: status.json blocks, history,
   SHA256SUMS, each patch re-applied, a mismatched history entry skipped, the
@@ -5253,7 +5483,11 @@ tasks, not hand edits:
   `app/build/outputs/update/v<name>/`. **`./gradlew uploadUpdateRelease`**
   uploads that folder to the GitHub release with `gh` (creating it as a DRAFT
   with the changelog as notes when missing; publishing stays a click on
-  GitHub).
+  GitHub). **Patches come only from releases whose app can apply one**
+  (`defaultPatchMinFrom`, 1206 = 1.2.6, the first app that reads `patches`;
+  `-Pfiredown.patchMinFrom` overrides; the build names the releases left
+  out): 1.2.7 shipped patches from 1.2.4 and
+  1.2.5, ~110 MB and ~12 minutes of build for apps that ignore the block.
 - **`scripts/publish-release.sh` publishes a built release, in the order
   phones need it** (it replaced a list of manual steps): `uploadUpdateRelease`
   and the draft published after asking (a draft's files answer 404 to
@@ -5264,7 +5498,10 @@ tasks, not hand edits:
   names (older releases' files removed, each file's SHA-256 checked on the
   server; no login there or in the environment stops it, by design: the
   server's address and user live only in that uncommitted file, never in
-  this public repo); then, once every URL in status.json answers 200 with its size and
+  this public repo); then, once every URL in status.json answers 200 with its size (and
+  every GitHub asset has the SHA-256 status.json names — `github_digests`,
+  from the release API's `digest`; a size alone can't tell a stale asset of
+  the same length, and two builds of one version differed by 4 bytes) and
   after one last question, status.json and release-history.json committed and
   pushed to firedown's main and status.json to the website's main
   (`WEBSITE_DIR`, default `../firedown-website`), whose push deploys; last it
@@ -5283,8 +5520,8 @@ tasks, not hand edits:
   Never BatchMode for the login check: it cannot prompt, and a passphrase
   key read as "cannot log in". Verify with
   `bash scripts/publish-release/selftest.sh` (a simulated GitHub, server,
-  `publish.sh`, ssh, ssh-agent and rsync, real git remotes; 75 checks, and
-  six planted faults that must each be caught).
+  `publish.sh`, ssh, ssh-agent and rsync, real git remotes; 83 checks, and
+  seven planted faults that must each be caught).
 
 ### CHANGELOG entries — short, important changes only (HARD RULE)
 
@@ -6780,6 +7017,12 @@ script that left it there), and the first check is
     shown by the notification and Downloads.
   - **22dp / 2dp, not 24dp / 2.5dp.** At 24dp the ring was the heaviest
     icon on the bar; 22dp with a 2dp line is the tab counter's square.
+- **The ring is pinned to the icon's drawn centre**
+  (`BottomNavigationBar.pinRingToIcon`, a translation recomputed on every
+  layout of the button or the ring): both are centred in the cell, but the
+  button ROUNDS its icon's offset and the cell FLOORS the ring's, so at a
+  fractional density (1.875: a 45px icon, a 41px ring) the ring sat a pixel
+  towards the start and the arrow read off-centre in it (on-device).
 - **The arrow** (`download_arrow_24`): `download_24`'s arrow path at full
   size, moved 2dp down to the box's centre. Same 2dp shaft as the glyph, so
   ring and arrow read as one weight. (The board drew a smaller arrow; Chrome
@@ -12534,6 +12777,11 @@ here:
   player background, no grid to multiply it) to match `PlayerView`'s
   `resize_mode="fit"` — don't make the fill unconditional, it would paint
   the player background edge-to-edge.
+- **An ERROR or QUEUED grid tile shows no mime row**
+  (`DownloadItemAdapter.hideGridMimeRow`): title + type + status is three
+  lines, which pushed the title over the centred glyph (on-device), and the
+  glyph already says the type. The full bind re-shows the row for a recycled
+  holder.
 - **List-row meta line is `MIME · domain` — plain text, no domain icon.** The
   Downloads list row (`fragment_download_item.xml`, `row_meta` → `mime_text` +
   `file_url`) reads `VÍDEO · youtube.com` (the Captured sheet had a twin row

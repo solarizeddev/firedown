@@ -172,7 +172,7 @@
     <string name="browser_tabs_empty_archive">हाल ही में बंद किए गए कोई टैब नहीं.</string>
     <string name="cancel">रद्द करें</string>
     <string name="capture_empty_message">डाउनलोड करने के लिए कोई मीडिया उपलब्ध नहीं है.</string>
-    <string name="capture_empty_subtext">वेबसाइट को पुनः लोड करें और Firedown उपलब्ध मीडिया का पता लगाएगा.</string>
+    <string name="capture_empty_subtext">कुछ वीडियो चलाने के बाद ही दिखाई देते हैं.</string>
     <string name="clipboard">क्लिपबोर्ड पर कॉपी किया गया</string>
 <string name="connection_secure">कनेक्शन सुरक्षित है</string>
     <string name="delete">मिटाएं</string>
@@ -504,8 +504,6 @@
     <string name="task_frame_failed">फ़्रेम सहेज नहीं सके</string>
     <string name="task_frame_cancelled">फ़्रेम सहेजना रद्द किया गया</string>
     <string name="capture_help_menu">मदद</string>
-    <string name="capture_help_banner_title">वीडियो सूची में नहीं है?</string>
-    <string name="capture_help_banner">कुछ एम्बेड किए गए मीडिया को पहले चलाना ज़रूरी है. जानने के लिए टैप करें.</string>
     <string name="tabs_more_options">अधिक विकल्प</string>
     <string name="trackers_info_summary">%1$s ब्लॉक किए गए</string>
     <string name="most_visited">सबसे ज़्यादा देखे गए</string>
@@ -1265,4 +1263,6 @@
     <string name="bottom_bar_downloading">%1$s, डाउनलोड हो रहा है</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">अन्य ऐप्स के लिंक निजी टैब में खोलें</string>
+    <string name="settings_external_links_private_summary">ये आपके इतिहास में नहीं रहते, और इनके डाउनलोड सुरक्षित फ़ोल्डर में जाते हैं।</string>
 </resources>

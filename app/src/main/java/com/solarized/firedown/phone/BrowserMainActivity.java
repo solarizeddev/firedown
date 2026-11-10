@@ -115,6 +115,10 @@ public class BrowserMainActivity extends BaseActivity {
         // splash covers both the repo init wait AND the navigation transition.
         splashScreen.setKeepOnScreenCondition(() -> !mColdStartNavigated);
 
+        // The icon's long-press "New tab" / "New private tab".
+        Context appContext = getApplicationContext();
+        mHeavyExecutor.execute(() -> LauncherShortcuts.publish(appContext));
+
         GeckoRuntime sGeckoRuntime = mGeckoRuntimeHelper.getGeckoRuntime();
         sGeckoRuntime.setDelegate(() -> mKillProcessOnDestroy = true);
 

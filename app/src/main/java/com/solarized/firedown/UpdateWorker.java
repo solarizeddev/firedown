@@ -80,6 +80,10 @@ public class UpdateWorker extends Worker {
                 manifest.versionName, manifest.changelog);
 
         try {
+            // A verified APK newer than what status.json now names belongs to
+            // a pulled release: stop offering it (after a second sighting).
+            UpdateDownloader.onManifestSeen(mContext, manifest.versionCode);
+
             boolean newer = manifest.isNewerThan(mCurrentVersion);
 
             if (newer) {
@@ -87,9 +91,24 @@ public class UpdateWorker extends Worker {
                     // Already downloaded AND verified on a previous cycle —
                     // re-surface the (silent) install prompt. The in-app sheet
                     // additionally shows on resume while the app is in use.
-                    UpdateNotification.showInstallPrompt(mContext, manifest.versionName);
+                    // Not while an install runs: the prompt's id is the one
+                    // its progress is shown on.
+                    // Nor beside Android's confirmation (its tap would start a
+                    // second session). Named after the APK on disk, which can
+                    // be newer than status.json for a day (a pulled release).
+                    if (!UpdateInstaller.isInstalling()
+                            && !UpdateNotification.isConfirmInstallShowing(mContext)) {
+                        String ready = UpdateDownloader.readyVersionName(mContext);
+                        UpdateNotification.showInstallPrompt(mContext,
+                                ready.isEmpty() ? manifest.versionName : ready);
+                    }
+                } else if (UpdateInstaller.isInstalling()) {
+                    // A download would start by deleting the file the install
+                    // is copying; the next check starts it.
+                    Log.d("UpdateWorker", "an install is running; not downloading now");
                 } else {
-                    // Hand the download to the system DownloadManager and
+                    // Hand the download to the system DownloadManager (or,
+                    // when it refuses, to UpdateDirectDownloadWorker) and
                     // return — when the broadcast arrives (which can cold-start
                     // the app, so a download surviving a process eviction still
                     // ends in a notification) UpdateDownloadReceiver hands it to

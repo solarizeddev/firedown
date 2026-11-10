@@ -1,0 +1,148 @@
+<title>Capture help banner rework</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto:wght@400;500;700&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: three phone frames of the Captured sheet side by side (now / after / after, empty), notes under each. */
+:root {
+  --bg: #f6f3f3; --fg: #1d1b1c; --muted: #655d5e; --rule: #ddd6d6;
+  --sheet: #ece6e9; --tile: #f7f2f4; --ink: #1c1b1f; --ink2: #5a5458;
+  --coral: #db4444; --wash: #fce2e2; --banner: #e4dde1; --thumb: #c9c1c5;
+  --removed: #b3261e; --added: #1f6f43;
+  --page-font: "Inter", system-ui, sans-serif;
+  --head-font: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --ui-font: "Roboto", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121113; --fg: #ece6e8; --muted: #a39a9d; --rule: #322e30;
+  --sheet: #29272a; --tile: #1d1b1e; --ink: #ece6e8; --ink2: #b5acb0;
+  --coral: #ff716c; --wash: #402425; --banner: #37343a; --thumb: #46424a;
+  --removed: #f2b8b5; --added: #8fd6ab; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121113; --fg: #ece6e8; --muted: #a39a9d; --rule: #322e30;
+  --sheet: #29272a; --tile: #1d1b1e; --ink: #ece6e8; --ink2: #b5acb0;
+  --coral: #ff716c; --wash: #402425; --banner: #37343a; --thumb: #46424a;
+  --removed: #f2b8b5; --added: #8fd6ab; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--page-font); line-height: 1.5;
+  padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+h1 { font-family: var(--head-font); font-size: 26px; font-weight: 600; margin: 0; text-wrap: balance; }
+.lede { margin: 6px 0 0; color: var(--muted); max-width: 65ch; }
+.frames { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 28px 24px; }
+.col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.tag { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.col h2 { font-family: var(--head-font); font-size: 17px; font-weight: 600; margin: 0; }
+.col p { margin: 0; font-size: 13px; color: var(--muted); }
+.col p b { color: var(--fg); font-weight: 600; }
+
+/* The sheet */
+.sheet { background: var(--sheet); border-radius: 28px 28px 12px 12px; padding: 10px 16px 16px;
+  font-family: var(--ui-font); color: var(--ink); display: flex; flex-direction: column; gap: 12px; min-height: 430px; }
+.pill { width: 32px; height: 4px; border-radius: 2px; background: var(--ink2); opacity: .4; align-self: center; }
+.bar { display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 500; }
+.bar span:last-child { letter-spacing: 2px; color: var(--ink2); }
+.banner { background: var(--banner); border-radius: 16px; padding: 12px 0 12px 12px; display: flex; gap: 12px; align-items: center;
+  outline: 2px dashed var(--removed); outline-offset: 3px; }
+.banner .i { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--coral); flex: none;
+  display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--coral); }
+.banner .t { flex: 1; min-width: 0; font-size: 12px; color: var(--ink2); }
+.banner .t b { display: block; font-size: 14px; font-weight: 500; color: var(--ink); }
+.banner .x { width: 36px; text-align: center; color: var(--ink2); font-size: 16px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tile { background: var(--thumb); border-radius: 12px; aspect-ratio: 16/10; position: relative; overflow: hidden; }
+.tile.wide { grid-column: 1 / -1; }
+.tile .cap { position: absolute; inset: auto 0 0 0; padding: 14px 8px 7px; font-size: 11px; color: #fff;
+  background: linear-gradient(transparent, rgba(0,0,0,.72)); }
+.tile .cap b { display: block; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .cap i { font-style: normal; color: #ff8a85; font-weight: 500; }
+.hdr { font-size: 14px; font-weight: 500; margin-top: 4px; }
+.hdr small { display: block; font-size: 12px; font-weight: 400; color: var(--ink2); }
+.sq { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.sq div { background: var(--thumb); border-radius: 12px; aspect-ratio: 1; }
+
+/* Empty state */
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 0 12px; }
+.ill { width: 120px; height: 84px; border-radius: 18px; background: var(--wash); display: grid; place-items: center; color: var(--coral); font-size: 30px; }
+.empty .m { font-size: 14px; font-weight: 500; }
+.empty .s { font-size: 13px; font-weight: 500; color: var(--ink2); }
+.empty .btn { margin-top: 4px; border: 1px solid var(--ink2); border-radius: 20px; padding: 6px 16px; font-size: 14px; font-weight: 500; color: var(--coral); }
+.del { color: var(--removed); text-decoration: line-through; }
+.ins { color: var(--added); }
+.changes { border-top: 1px solid var(--rule); padding-top: 20px; }
+.changes h2 { font-family: var(--head-font); font-size: 17px; margin: 0 0 8px; }
+.changes ul { margin: 0; padding-left: 20px; max-width: 70ch; }
+.changes li { margin: 4px 0; }
+code { font-size: .92em; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Captured sheet: drop the "Video not listed?" banner</h1>
+    <p class="lede">The hint moves to the empty state, where a missing video is the actual problem. The list starts at the first capture.</p>
+  </header>
+
+  <div class="frames">
+    <section class="col">
+      <span class="tag">Now</span>
+      <div class="sheet">
+        <div class="pill"></div>
+        <div class="bar"><span>Captured content</span><span>⋮</span></div>
+        <div class="banner">
+          <div class="i">?</div>
+          <div class="t"><b>Video not listed?</b>Some embedded media must be played first. Tap to learn how.</div>
+          <div class="x">✕</div>
+        </div>
+        <div class="grid">
+          <div class="tile wide"><div class="cap"><b>Harbour at dawn, full film</b><i>▶ VIDEO</i> · 1080p · 12:40</div></div>
+        </div>
+        <div class="hdr">Images<small>6 files</small></div>
+        <div class="sq"><div></div><div></div><div></div></div>
+      </div>
+      <h2>Banner above a list that has the video</h2>
+      <p>Shown on every page with captures until dismissed. Hidden when the list is empty, the one time it applies.</p>
+    </section>
+
+    <section class="col">
+      <span class="tag">After · list</span>
+      <div class="sheet">
+        <div class="pill"></div>
+        <div class="bar"><span>Captured content</span><span>⋮</span></div>
+        <div class="grid">
+          <div class="tile wide"><div class="cap"><b>Harbour at dawn, full film</b><i>▶ VIDEO</i> · 1080p · 12:40</div></div>
+        </div>
+        <div class="hdr">Images<small>6 files</small></div>
+        <div class="sq"><div></div><div></div><div></div><div></div><div></div><div></div></div>
+      </div>
+      <h2>The first capture leads</h2>
+      <p>About 70dp back. Help stays one tap away in <b>⋮ → Capture help</b>, unchanged.</p>
+    </section>
+
+    <section class="col">
+      <span class="tag">After · nothing captured</span>
+      <div class="sheet">
+        <div class="pill"></div>
+        <div class="bar"><span>Captured content</span><span>⋮</span></div>
+        <div class="empty">
+          <div class="ill">▶</div>
+          <div class="m">No media available for downloading.</div>
+          <div class="s"><span class="del">Reload the page to detect media.</span></div>
+          <div class="s"><span class="ins">Some videos appear only after you press play.</span></div>
+          <div class="btn">Learn more</div>
+        </div>
+      </div>
+      <h2>The hint, where the video is missing</h2>
+      <p>Same illustration, same <b>Learn more</b> button (it already opens the help page). Only the second line changes.</p>
+    </section>
+  </div>
+
+  <section class="changes">
+    <h2>What changes in code</h2>
+    <ul>
+      <li>Remove <code>capture_help_banner</code> from the sheet layout, its two strings, the fragment's banner code and the "dismissed" preference.</li>
+      <li>Reword <code>capture_empty_subtext</code> in all 18 locales.</li>
+      <li>Not covered any more: a page whose list holds only images. That user has the ⋮ row and no visible hint.</li>
+    </ul>
+  </section>
+</div>

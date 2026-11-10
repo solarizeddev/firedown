@@ -107,6 +107,11 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
     @Qualifiers.DiskIO
     protected Executor mDiskExecutor;
 
+    /** Off-main work that must not queue behind Room writes (the launcher shortcuts). */
+    @Inject
+    @Qualifiers.HeavyIO
+    protected Executor mHeavyExecutor;
+
     /** Intent waiting to be processed until the repository finishes loading. */
     private Intent mPendingIntent;
 
@@ -195,6 +200,17 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
         // those extras from any app opening a link, and the throw landed in
         // onSaveInstanceState: follow a link, press home, crash.
         IntentSanitizer.stripUnsavableExtras(getIntent());
+
+        // A launcher shortcut's "new tab" is done once. Consuming it only
+        // changes this object, so a restore after process death (or Recents
+        // relaunching an activity a shortcut started) would hand it back and
+        // open another tab: there it means "the app as it was".
+        Intent start = getIntent();
+        if (start != null && IntentHandler.isOneShotAction(start.getAction())
+                && (savedInstanceState != null
+                || (start.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0)) {
+            start.setAction(Intent.ACTION_MAIN);
+        }
 
         // Apply the AMOLED true-black overlay BEFORE super.onCreate so the
         // window background, status bar, and view inflation in super pick
@@ -690,6 +706,10 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
                 return;
             }
             mColdStartHandled = true;
+        } else if (IntentHandler.isOneShotAction(intent.getAction())) {
+            // A shortcut was this activity's start: a later ACTION_MAIN (the
+            // browser started again from a root screen) is not a cold start.
+            mColdStartHandled = true;
         }
 
         if (mRepoInitialized) {
@@ -744,6 +764,13 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
     @Override
     public void finishActivity() {
         finish();
+    }
+
+    @Override
+    public boolean opensExternalLinksPrivately() {
+        return PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+                Preferences.SETTINGS_EXTERNAL_LINKS_PRIVATE,
+                Preferences.DEFAULT_EXTERNAL_LINKS_PRIVATE);
     }
 
     // ── Downloads ────────────────────────────────────────────────────────────

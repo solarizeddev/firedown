@@ -178,7 +178,8 @@ tasks.register('bumpVersion') {
 //   firedown-<code>.apk.xz     the same APK compressed; the tool unpacks it
 //                              again and compares before keeping it
 //   patch-<from>-<code>.fdpatch  one per release in release-history.json
-//                              below this one, at most 3, newest first; each
+//                              below this one whose app can apply patches
+//                              (1.2.6 on), at most 3, newest first; each
 //                              is applied to its old APK with the app's own
 //                              code (UpdatePatch) and must rebuild the new APK
 //                              byte for byte, or the build fails
@@ -215,6 +216,11 @@ tasks.register('bumpVersion') {
 
 def releaseHistoryFile = rootProject.file('release-history.json')
 def maxPatches = 3
+// The first versionCode whose app reads status.json's `patches` (1.2.6). A
+// patch from an older release is uploaded and listed for nobody: those apps
+// ignore the block and download the APK. -Pfiredown.patchMinFrom overrides it
+// (the update harness builds patches between test APKs numbered lower).
+def defaultPatchMinFrom = 1206
 def maxHistory = 10
 def githubReleaseBase = 'https://github.com/solarizeddev/firedown/releases/download'
 
@@ -347,6 +353,7 @@ tasks.register('releaseStatus') {
     def deltas = (project.findProperty('firedown.updateDeltas') ?: 'true').toString() != 'false'
     def mirror = (project.findProperty('firedown.updateMirror') ?: 'https://www.firedown.app/updates').toString().replaceAll('/+$', '')
     def patchJobsProp = project.findProperty('firedown.patchJobs')?.toString()
+    def patchMinFrom = (project.findProperty('firedown.patchMinFrom') ?: defaultPatchMinFrom).toString() as int
     def xzTool = project.configurations.detachedConfiguration(
             project.dependencies.create("org.tukaani:xz:${project.property('firedown.xzVersion')}"))
     def updateDir = layout.buildDirectory.dir("outputs/update/v${versionName}").get().asFile
@@ -443,9 +450,19 @@ tasks.register('releaseStatus') {
 
             // Patches from the newest older releases, each from an APK that
             // hashes to what release-history.json says was published.
-            List sources = history.findAll { (it.versionCode as int) < (versionCode as int) }
+            // Only from releases whose app can apply one (patchMinFrom).
+            List sources = history.findAll { (it.versionCode as int) < (versionCode as int)
+                                             && (it.versionCode as int) >= patchMinFrom }
                     .sort { -(it.versionCode as int) }
                     .take(maxPatches)
+            List skipped = history.findAll { (it.versionCode as int) < (versionCode as int) }
+                    .sort { -(it.versionCode as int) }
+                    .take(maxPatches)
+                    .findAll { (it.versionCode as int) < patchMinFrom }
+            if (!skipped.isEmpty()) {
+                logger.lifecycle("No patch from ${skipped.collect { it.versionCode }.join(', ')}: " +
+                        "apps before ${patchMinFrom} read no patches")
+            }
             List jobs = []
             for (Map entry : sources) {
                 File old = fetchReleaseApk(entry, apkCache)

@@ -1,3 +1,10 @@
+// The browser's own User-Agent: the watch page and the streams are asked
+// for as the same browser that attests the PO token, not as a fixed
+// Android and Firefox version that drifts from it.
+const MOBILE_UA = (typeof navigator !== "undefined" && /Mobile/.test(navigator.userAgent || ""))
+    ? navigator.userAgent
+    : "Mozilla/5.0 (Android 12; Mobile; rv:151.0) Gecko/151.0 Firefox/151.0";
+
 // =============================================================================
 // YouTube Solver Extension — Background Shell
 // Bundled in APK via ensureBuiltIn. Rarely needs updating.
@@ -242,6 +249,51 @@ function storeInterceptedResponse(videoId, playerResponse) {
         clearTimeout(interceptedResponses.get(oldestId).timer);
         interceptedResponses.delete(oldestId);
     }
+}
+
+// The tab's own watch request (get_watch / player) while it is in flight,
+// per tab, so processVideo can wait for the response the page's player is
+// about to get instead of fetching a second, separate one. That response
+// is the one the player's own PO token was sent for.
+const watchPending = new Map();   // tabId -> { promise, resolve, at }
+const watchArrival = new Map();   // tabId -> [resolve]
+const WATCH_START_WAIT_MS = 1500;
+const WATCH_RESPONSE_WAIT_MS = 8000;
+
+function watchRequestStarted(tabId) {
+    let resolve;
+    const promise = new Promise(r => { resolve = r; });
+    watchPending.set(tabId, { promise, resolve, at: Date.now() });
+    const waiting = watchArrival.get(tabId);
+    if (waiting) { watchArrival.delete(tabId); for (const r of waiting) r(); }
+}
+
+function watchRequestEnded(tabId) {
+    const p = watchPending.get(tabId);
+    if (p) { watchPending.delete(tabId); p.resolve(); }
+}
+
+function timeoutAfter(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Resolves once the tab's watch request has answered, or at once when the
+// tab makes none within WATCH_START_WAIT_MS.
+async function waitForTabWatchResponse(tabId) {
+    if (!(tabId >= 0)) return;
+    let p = watchPending.get(tabId);
+    if (!p) {
+        await Promise.race([
+            new Promise(r => {
+                const list = watchArrival.get(tabId) || [];
+                list.push(r);
+                watchArrival.set(tabId, list);
+            }),
+            timeoutAfter(WATCH_START_WAIT_MS)
+        ]);
+        watchArrival.delete(tabId);
+        p = watchPending.get(tabId);
+        if (!p) return;
+    }
+    await Promise.race([p.promise, timeoutAfter(WATCH_RESPONSE_WAIT_MS)]);
 }
 
 function takeInterceptedResponse(videoId) {
@@ -1816,7 +1868,7 @@ async function emitYouTubeCaptions(details, playerResponse, videoTitle, videoUrl
         // pulled out of playerResponse.responseContext below. Accept-
         // Encoding stays identity because okhttp can't decode brotli.
         const headers = [
-            { name: "User-Agent", value: "Mozilla/5.0 (Android 12; Mobile; rv:151.0) Gecko/151.0 Firefox/151.0" },
+            { name: "User-Agent", value: MOBILE_UA },
             { name: "Accept", value: "*/*" },
             { name: "Accept-Language", value: "en-US,en;q=0.5" },
             { name: "Accept-Encoding", value: "identity" },
@@ -1975,6 +2027,19 @@ async function processVideo(details, videoId) {
             log(`[Process] Using intercepted API response for ${videoId}`);
         }
 
+        // An in-page navigation: the page asks for the watch data itself.
+        // Wait for that answer and use it.
+        if (!playerResponse && details._inPage) {
+            _stage = 'watch-wait';
+            await waitForTabWatchResponse(details._resolvedTabId);
+            const late = takeInterceptedResponse(videoId);
+            if (late) {
+                playerResponse = late;
+                streamSource = "intercepted";
+                log(`[Process] Using the page's own watch response for ${videoId}`);
+            }
+        }
+
         // Intercept-wait removed. In practice, every observed processVideo flow
         // uses streamSource="html" — the player API XHR interceptor never fires
         // for MWEB because YouTube embeds playerResponse in the page HTML, not
@@ -2002,7 +2067,7 @@ async function processVideo(details, videoId) {
                 const cookieStr = youtubeCookie || "PREF=hl=en&tz=UTC; SOCS=CAI";
                 _stage = 'html-for-nsolve';
                 const nativeResp = await nativeFetch(mwebUrl, [
-                    { name: "User-Agent", value: "Mozilla/5.0 (Android 16; Mobile; rv:149.0) Gecko/149.0 Firefox/149.0" },
+                    { name: "User-Agent", value: MOBILE_UA },
                     { name: "Accept-Language", value: "en-US,en;q=0.5" },
                     { name: "Cookie", value: cookieStr }
                 ]);
@@ -2042,7 +2107,7 @@ async function processVideo(details, videoId) {
             function buildHeaders(cookieString) {
                 return [
                     // Use mobile Firefox UA to get MWEB response with c=MWEB streaming URL
-                    { name: "User-Agent", value: "Mozilla/5.0 (Android 16; Mobile; rv:149.0) Gecko/149.0 Firefox/149.0" },
+                    { name: "User-Agent", value: MOBILE_UA },
                     { name: "Accept", value: PAGE_FETCH_HEADERS["Accept"] },
                     { name: "Accept-Language", value: PAGE_FETCH_HEADERS["Accept-Language"] },
                     { name: "Sec-Fetch-Mode", value: PAGE_FETCH_HEADERS["Sec-Fetch-Mode"] },
@@ -2092,7 +2157,7 @@ async function processVideo(details, videoId) {
                 try {
                     const response = await fetch(mwebVideoUrl, { headers: {
                         ...PAGE_FETCH_HEADERS,
-                        "User-Agent": "Mozilla/5.0 (Android 16; Mobile; rv:149.0) Gecko/149.0 Firefox/149.0",
+                        "User-Agent": MOBILE_UA,
                         "Cookie": browserCookies || minimalCookies
                     } });
                     if (response.ok) {
@@ -2119,6 +2184,45 @@ async function processVideo(details, videoId) {
         // Also from playerResponse
         if (playerResponse?.responseContext?.visitorData) {
             cachedVisitorData = playerResponse.responseContext.visitorData;
+        }
+
+        // What kind of session produced this streaming URL: the facts a
+        // refused PO token is diagnosed from. Names and flags only, never a
+        // cookie's value.
+        if (DEBUG) {
+            try {
+                const visitorIdOf = (vd) => {
+                    try {
+                        const b = atob(decodeURIComponent(vd).replace(/-/g, "+").replace(/_/g, "/"));
+                        return b.substring(2, 13);
+                    } catch (e) { return "?"; }
+                };
+                const cookieNames = (youtubeCookie || "").split(";")
+                    .map(c => c.trim().split("=")[0]).filter(Boolean);
+                const has = (n) => cookieNames.includes(n);
+                const cfgVd = html ? (html.match(/["']VISITOR_DATA["']\s*:\s*["']([^"']+)["']/) || [])[1] : null;
+                const prVd = playerResponse?.responseContext?.visitorData || null;
+                const flag = (name) => {
+                    if (!html) return "no-html";
+                    const m = html.match(new RegExp(name + "(?:=|%3D|\\\\u003d)(\\w+)"));
+                    return m ? m[1] : "absent";
+                };
+                log(`[Session] ${videoId} source=${streamSource}`
+                    + ` cookies=${cookieNames.length}`
+                    + ` visitorCookie=${has("VISITOR_INFO1_LIVE")} yec=${has("__Secure-YEC")}`
+                    + ` login=${has("SAPISID") || has("__Secure-3PAPISID")} loginInfo=${has("LOGIN_INFO")}`
+                    + ` socs=${has("SOCS")} consent=${has("CONSENT")}`
+                    + ` loggedIn=${html ? /"LOGGED_IN"\s*:\s*true/.test(html) : "no-html"}`
+                    + ` datasync=${html ? /"DATASYNC_ID"\s*:\s*"[^"]+"/.test(html) : "no-html"}`
+                    + ` cfgVisitor=${cfgVd ? visitorIdOf(cfgVd) + "/" + cfgVd.length : "none"}`
+                    + ` prVisitor=${prVd ? visitorIdOf(prVd) + "/" + prVd.length : "none"}`
+                    + ` contentPot=${flag("html5_generate_content_po_token")}`
+                    + ` sessionPot=${flag("html5_generate_session_po_token")}`
+                    + ` playability=${playerResponse?.playabilityStatus?.status}`
+                    + ` potInPr=${!!playerResponse?.streamingData?.serviceIntegrityDimensions}`);
+            } catch (e) {
+                log(`[Session] diagnostics failed: ${e?.message || e}`);
+            }
         }
 
         let videoTitle = playerResponse?.videoDetails?.title || "Unknown";
@@ -2548,9 +2652,11 @@ browser.webRequest.onBeforeRequest.addListener(
     (details) => {
         if (details.method !== "POST") return;
 
+        const watchTab = details.tabId;
         let filter;
         try { filter = browser.webRequest.filterResponseData(details.requestId); }
         catch (e) { return; }
+        if (watchTab >= 0) watchRequestStarted(watchTab);
         const chunks = [];
         let bytes = 0;
         let overflow = false;
@@ -2570,7 +2676,7 @@ browser.webRequest.onBeforeRequest.addListener(
 
         filter.onstop = () => {
             filter.close();
-            if (overflow) return;
+            if (overflow) { watchRequestEnded(watchTab); return; }
             try {
                 const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
                 const combined = new Uint8Array(totalLength);
@@ -2581,7 +2687,17 @@ browser.webRequest.onBeforeRequest.addListener(
                 }
 
                 const responseText = new TextDecoder().decode(combined);
-                const playerResponse = JSON.parse(responseText);
+                // /player answers the player response itself; get_watch
+                // answers a list whose first part holds it.
+                const parsed = JSON.parse(responseText);
+                const holder = Array.isArray(parsed)
+                    ? (parsed.find(x => x && x.playerResponse) || {})
+                    : (parsed && parsed.playerResponse ? parsed : null);
+                const playerResponse = holder ? holder.playerResponse : parsed;
+                if (holder && playerResponse && !playerResponse.responseContext
+                        && holder.responseContext) {
+                    playerResponse.responseContext = holder.responseContext;
+                }
 
                 if (playerResponse?.playabilityStatus?.status !== "OK") return;
 
@@ -2601,6 +2717,7 @@ browser.webRequest.onBeforeRequest.addListener(
 
                 // Store for processVideo to pick up (self-expiring, capped)
                 storeInterceptedResponse(videoId, playerResponse);
+                rememberStreamId(streamingData.serverAbrStreamingUrl, videoId);
 
                 // Trigger processing if tabs.onUpdated already fired for this video
                 // (SPA navigations: tab URL changes → processVideo starts → waits for intercept)
@@ -2621,21 +2738,115 @@ browser.webRequest.onBeforeRequest.addListener(
                 }
             } catch (e) {
                 // Not a player response or parse error — ignore
+            } finally {
+                watchRequestEnded(watchTab);
             }
         };
 
         filter.onerror = () => {
             try { filter.close(); } catch (e) {}
+            watchRequestEnded(watchTab);
         };
     },
     {
         urls: [
             "*://*.youtube.com/youtubei/v1/player*",
+            "*://*.youtube.com/youtubei/v1/get_watch*",
             "*://youtubei.googleapis.com/youtubei/v1/player*"
         ],
         types: ["xmlhttprequest"]
     },
     ["blocking", "requestBody"]
+);
+
+// The PO token the page's own player sends in its stream requests, handed
+// to the native side for a download of that video. A stream request is
+// tied to its video by the `id` of the streaming URL the page was given.
+const streamIdToVideo = new Map();
+const STREAM_ID_MAX = 32;
+const lastPlayerToken = new Map();
+
+function streamIdOf(url) {
+    try { return new URL(url).searchParams.get("id") || ""; } catch (e) { return ""; }
+}
+
+function rememberStreamId(url, videoId) {
+    const id = url ? streamIdOf(url) : "";
+    if (!id) return;
+    streamIdToVideo.delete(id);
+    streamIdToVideo.set(id, videoId);
+    while (streamIdToVideo.size > STREAM_ID_MAX) {
+        const oldest = streamIdToVideo.keys().next().value;
+        lastPlayerToken.delete(streamIdToVideo.get(oldest));
+        streamIdToVideo.delete(oldest);
+    }
+}
+
+// First length-delimited field `want` of a protobuf message, or null.
+function protoBytesField(bytes, want) {
+    let o = 0;
+    const varint = () => {
+        let v = 0, shift = 0;
+        while (o < bytes.length) {
+            const b = bytes[o++];
+            if (shift < 28) v |= (b & 0x7f) << shift;
+            shift += 7;
+            if (!(b & 0x80)) return v >>> 0;
+        }
+        return -1;
+    };
+    while (o < bytes.length) {
+        const key = varint();
+        if (key < 0) return null;
+        const field = key >>> 3, wire = key & 7;
+        if (wire === 0) { if (varint() < 0) return null; }
+        else if (wire === 1) o += 8;
+        else if (wire === 5) o += 4;
+        else if (wire === 2) {
+            const len = varint();
+            if (len < 0 || o + len > bytes.length) return null;
+            if (field === want) return bytes.subarray(o, o + len);
+            o += len;
+        } else return null;
+    }
+    return null;
+}
+
+function base64Url(bytes) {
+    let bin = "";
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+browser.webRequest.onBeforeRequest.addListener(
+    (details) => {
+        if (details.method !== "POST" || !(details.tabId >= 0)) return;
+        const videoId = streamIdToVideo.get(streamIdOf(details.url));
+        if (!videoId) return;
+        const raw = details.requestBody && details.requestBody.raw;
+        if (!raw || !raw.length) return;
+        let total = 0;
+        for (const part of raw) { if (part.bytes) total += part.bytes.byteLength; }
+        if (!total || total > 65536) return;
+        const body = new Uint8Array(total);
+        let at = 0;
+        for (const part of raw) {
+            if (!part.bytes) continue;
+            body.set(new Uint8Array(part.bytes), at);
+            at += part.bytes.byteLength;
+        }
+        const streamer = protoBytesField(body, 19);
+        const token = streamer ? protoBytesField(streamer, 2) : null;
+        if (!token || token.length < 16 || token.length > 4096) return;
+        const encoded = base64Url(token);
+        if (lastPlayerToken.get(videoId) === encoded) return;
+        lastPlayerToken.set(videoId, encoded);
+        log(`[PlayerToken] ${videoId}: ${token.length} bytes from the page's player`);
+        browser.runtime.sendNativeMessage("youtube",
+            { kind: "player-potoken", videoId, token: encoded }).catch(() => {});
+    },
+    { urls: ["*://*.googlevideo.com/videoplayback*"], types: ["xmlhttprequest"] },
+    ["requestBody"]
 );
 
 // =============================================================================
@@ -2663,13 +2874,15 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         // matches it, but YouTube always returns ERROR for this ID. No point
         // running the full extraction pipeline just to fail at every stage.
         if (videoId && videoId !== 'yt-dlp-wins' && trackVideo(tabId, videoId)) {
-            processVideo({ url: triggerUrl, tabId, _resolvedTabId: tabId, requestId: `tab-${tabId}-${Date.now()}` }, videoId);
+            processVideo({ url: triggerUrl, tabId, _resolvedTabId: tabId, _inPage: !!changeInfo.url && tab.status === "complete", requestId: `tab-${tabId}-${Date.now()}` }, videoId);
         }
     }
 });
 
 browser.tabs.onRemoved.addListener((tabId) => {
     clearTabFromCache(tabId);
+    watchRequestEnded(tabId);
+    watchArrival.delete(tabId);
     for (const [url, entry] of urlToTabCache) { if (entry.tabId === tabId) urlToTabCache.delete(url); }
 });
 

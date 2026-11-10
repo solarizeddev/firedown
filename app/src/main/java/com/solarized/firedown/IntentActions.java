@@ -88,5 +88,11 @@ public class IntentActions {
 
     public static final String OPEN_INCOGNITO = "com.solarized.firedown.OPEN_INCOGNITO";
 
+    /** The launcher shortcut "New tab" (LauncherShortcuts): a new regular tab. */
+    public static final String NEW_TAB = "com.solarized.firedown.NEW_TAB";
+
+    /** The launcher shortcut "New private tab" (LauncherShortcuts): a new private tab. */
+    public static final String NEW_PRIVATE_TAB = "com.solarized.firedown.NEW_PRIVATE_TAB";
+
 
 }

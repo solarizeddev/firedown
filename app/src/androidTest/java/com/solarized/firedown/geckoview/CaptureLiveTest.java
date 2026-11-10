@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.content.Context;
 import android.util.Log;
@@ -16,6 +17,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.solarized.firedown.data.di.RepositoryEntryPoint;
 import com.solarized.firedown.data.entity.BrowserDownloadEntity;
 import com.solarized.firedown.data.repository.BrowserDownloadRepository;
+import com.solarized.firedown.utils.FileUriHelper;
 
 import org.json.JSONObject;
 import org.junit.AfterClass;
@@ -32,6 +34,7 @@ import org.mozilla.geckoview.WebExtension;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -49,14 +52,17 @@ import dagger.hilt.android.EntryPointAccessors;
  *
  * <p>This answers "does capture still work against TODAY'S site" for the
  * sites reachable logged-out with no play tap:
- * Telegram (t.me post), Vimeo (watch page), Apple Podcasts (show page), and
- * the generic catcher's DOM scrape (a Wikimedia Commons video page). A
+ * Telegram (t.me post), Vimeo (watch page), Apple Podcasts (show page), the
+ * generic catcher's DOM scrape (a Wikimedia Commons video page), and a
+ * Facebook reel permalink (served logged out, the reel rendered into the
+ * document). A
  * FAILURE here with working network usually means the SITE changed — start
  * CLAUDE.md's "video not captured" debugging order (fresh HAR first).
  *
- * <p>Deliberately NOT here: Instagram/Facebook/Twitter/TikTok/Niconico
- * (login-walled or feed-nondeterministic on a fresh profile — a red test
- * would measure the wall, not the parser) and Dailymotion/Twitch/Kick
+ * <p>Deliberately NOT here: Instagram/Twitter/TikTok/Niconico and Facebook's
+ * feeds (login-walled or feed-nondeterministic on a fresh profile — a red
+ * test would measure the wall, not the parser; the Facebook reel test SKIPS
+ * when the page is sent to a login wall) and Dailymotion/Twitch/Kick
  * (capture keys on the player's own fetches, which need a play tap or a live
  * channel — nondeterministic in CI terms). Those stay covered by the offline
  * replays plus manual on-device use.
@@ -67,7 +73,7 @@ import dagger.hilt.android.EntryPointAccessors;
  *     -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.geckoview.CaptureLiveTest
  * </pre>
  *
- * <p>Tests share one booted runtime and run in name order (t1…t5); the
+ * <p>Tests share one booted runtime and run in name order (t1…t6); the
  * runtime is a process singleton so per-test isolation is impossible by
  * construction (the AddonsDeviceTest model). Pinned URLs are long-lived
  * public content; if one dies, replace it — a 404'd pin fails with the
@@ -88,6 +94,9 @@ public class CaptureLiveTest {
     private static final String APPLE_SHOW = "https://podcasts.apple.com/us/podcast/the-daily/id1200361736";
     private static final String COMMONS_VIDEO_PAGE =
             "https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_4K.webm";
+    private static final String FACEBOOK_REEL_ID = "1648221806821449";
+    private static final String FACEBOOK_REEL =
+            "https://www.facebook.com/reel/" + FACEBOOK_REEL_ID + "/";
 
     private static final long BOOT_TIMEOUT_MS = 120_000;
     // Page load + extension parse + (for probed captures) a network probe.
@@ -96,6 +105,8 @@ public class CaptureLiveTest {
     private static GeckoRuntimeHelper sHelper;
     private static BrowserDownloadRepository sCaptures;
     private static GeckoSession sSession;
+    /** The session's current location (a login redirect is a skip, not a failure). */
+    private static final AtomicReference<String> sLocation = new AtomicReference<>("");
 
     @Before
     public void boot() {
@@ -248,6 +259,54 @@ public class CaptureLiveTest {
     }
 
     /* ---------------------------------------------------------------------- */
+    /* t6 — Facebook reel permalink (parser, document literal, one capture)    */
+    /* ---------------------------------------------------------------------- */
+
+    /**
+     * The mobile reel page renders its reel into an inline script as a JS
+     * object literal and fires no API call for it; before the parser read the
+     * document, the page landed as several bare, page-titled tiles (each
+     * rendition, twice). Asserts the reel is captured under its own
+     * /reel/&lt;id&gt;/ page, titled by its words, and exactly ONCE (no
+     * generic-catcher copy of the og:video or the played file beside it).
+     */
+    @Test
+    public void t6_facebookReelCapture() throws Exception {
+        loadPage(FACEBOOK_REEL);
+        String reelPage = "/reel/" + FACEBOOK_REEL_ID;
+        // The page's pictures (avatars, the cookie banner, sprites) are
+        // captured under the same page; only the media counts here.
+        Check reelMedia = e -> originContains(e, reelPage) && isMedia(e);
+        BrowserDownloadEntity hit = awaitCapture(reelMedia, CAPTURE_TIMEOUT_MS);
+        if (hit == null) {
+            String at = sLocation.get();
+            assumeFalse("Facebook sent the page to a login wall (" + at + "); nothing to measure",
+                    at.contains("/login") || at.contains("/checkpoint"));
+        }
+        assertNotNull("no capture of " + FACEBOOK_REEL + " (page at " + sLocation.get()
+                + ") — the reel document's player config (playable_url / video_versions) "
+                + "moved, or the reel was deleted (pin any public reel)", hit);
+
+        // Let the player fetch the file and every other path have its say;
+        // none of them may add a second capture of this reel.
+        Thread.sleep(10_000);
+        List<BrowserDownloadEntity> reel = capturesWhere(reelMedia);
+        assertEquals("the reel was captured more than once: " + describe(reel), 1, reel.size());
+        BrowserDownloadEntity only = reel.get(0);
+        assertTrue("the capture is not on Facebook's video CDN: " + only.getFileUrl(),
+                urlContains(only, ".fbcdn.net/"));
+        String name = only.getFileName();
+        assertNotNull(name);
+        assertTrue("the reel is not titled by its own words: " + name,
+                !name.trim().isEmpty() && !name.startsWith("Facebook video")
+                        && !name.equalsIgnoreCase("Loading") && !name.contains("fbcdn"));
+        assertTrue("the reel carries no duration: " + only.getDurationTime(),
+                only.getDurationTime() > 0);
+        Log.i(TAG, "t6: facebook reel captured " + only.getFileUrl()
+                + " name=" + name + " variants=" + only.getHasVariants());
+    }
+
+    /* ---------------------------------------------------------------------- */
     /* plumbing                                                                */
     /* ---------------------------------------------------------------------- */
 
@@ -261,7 +320,36 @@ public class CaptureLiveTest {
         return origin != null && origin.contains(needle);
     }
 
+    private static boolean isMedia(BrowserDownloadEntity e) {
+        String mime = e.getMimeType();
+        return FileUriHelper.isVideo(mime) || FileUriHelper.isAudio(mime);
+    }
+
     private interface Check { boolean ok(BrowserDownloadEntity entity); }
+
+    /** Every entity the Captured repository holds now that passes {@code check}. */
+    private static List<BrowserDownloadEntity> capturesWhere(Check check) {
+        AtomicReference<List<BrowserDownloadEntity>> out = new AtomicReference<>(new ArrayList<>());
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            List<BrowserDownloadEntity> list = sCaptures.getData().getValue();
+            List<BrowserDownloadEntity> matched = new ArrayList<>();
+            if (list != null) {
+                for (BrowserDownloadEntity entity : list) {
+                    if (check.ok(entity)) { matched.add(entity); }
+                }
+            }
+            out.set(matched);
+        });
+        return out.get();
+    }
+
+    private static String describe(List<BrowserDownloadEntity> list) {
+        StringBuilder sb = new StringBuilder();
+        for (BrowserDownloadEntity e : list) {
+            sb.append("\n  ").append(e.getFileName()).append(" | ").append(e.getMimeType()).append(" | ").append(e.getFileUrl());
+        }
+        return sb.toString();
+    }
 
     /** Waits until the Captured repository holds an entity passing {@code check}. */
     private static BrowserDownloadEntity awaitCapture(Check check, long timeoutMs)
@@ -305,6 +393,14 @@ public class CaptureLiveTest {
                         .allowJavascript(true)
                         .build();
                 GeckoSession s = new GeckoSession(settings);
+                s.setNavigationDelegate(new GeckoSession.NavigationDelegate() {
+                    @Override
+                    public void onLocationChange(GeckoSession session, String location,
+                            List<GeckoSession.PermissionDelegate.ContentPermission> perms,
+                            Boolean hasUserGesture) {
+                        sLocation.set(location != null ? location : "");
+                    }
+                });
                 sHelper.registerSession(s);
                 s.open(runtime);
                 s.setActive(true);

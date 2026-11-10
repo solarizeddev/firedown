@@ -305,8 +305,6 @@
     <string name="task_frame_failed">تعذّر حفظ الإطار</string>
     <string name="task_frame_cancelled">تم إلغاء حفظ الإطار</string>
     <string name="capture_help_menu">مساعدة</string>
-    <string name="capture_help_banner_title">الفيديو غير مدرج؟</string>
-    <string name="capture_help_banner">بعض الوسائط المضمّنة يجب تشغيلها أولاً. انقر لمعرفة الطريقة.</string>
     <string name="bookmark_export">تصدير الإشارات المرجعية</string>
     <string name="bookmark_export_done">تم تصدير %1$d إشارة مرجعية إلى Download/Firedown/backup</string>
     <string name="bookmark_import">استيراد الإشارات المرجعية</string>

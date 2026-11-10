@@ -21,7 +21,8 @@ public final class UpdateReadyLiveData extends LiveData<Boolean> {
 
     private final SharedPreferences.OnSharedPreferenceChangeListener mListener = (prefs, key) -> {
         if (key == null || Keys.UPDATE_READY.equals(key)
-                || Keys.UPDATE_READY_VERSION_CODE.equals(key)) {
+                || Keys.UPDATE_READY_VERSION_CODE.equals(key)
+                || Keys.UPDATE_DOWNLOAD_ID.equals(key)) {
             refresh();
         }
     };

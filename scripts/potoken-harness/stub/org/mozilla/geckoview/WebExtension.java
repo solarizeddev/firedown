@@ -19,6 +19,11 @@ public class WebExtension {
         public volatile String tokenPrefix = "TOK";
         /** Simulate Gecko rejecting a post on a dead port. */
         public volatile boolean throwOnPost = false;
+        /** Reply with the minter's age, as the page does. Static: the
+         *  minter belongs to the page, not to one port object. */
+        public static volatile boolean reportAge = false;
+        public static volatile long minterAt = 0;
+        public static volatile int attests = 0;
         public Port(String sender){ this.sender = sender; }
         public void setDelegate(PortDelegate d){ this.delegate = d; }
         public void postMessage(JSONObject msg){
@@ -31,6 +36,12 @@ public class WebExtension {
             try {
                 reply.put("type","mintResult");
                 reply.put("requestId", rid);
+                if (reportAge) {
+                    long now = System.currentTimeMillis();
+                    if (fresh || minterAt == 0) { minterAt = now; attests++; }
+                    reply.put("age", now - minterAt);
+                    reply.put("attests", attests);
+                }
                 if (replyError != null) reply.put("error", replyError);
                 else reply.put("token", tokenPrefix + (fresh ? "-fresh-" : "-") + msg.optString("videoId","") + "-" + sent.size());
             } catch (Exception e) { throw new RuntimeException(e); }

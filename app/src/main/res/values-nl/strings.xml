@@ -184,7 +184,7 @@
     <string name="browser_tabs_empty_archive">Geen recent gesloten tabbladen.</string>
     <string name="cancel">Annuleren</string>
     <string name="capture_empty_message">Er zijn geen media beschikbaar om te downloaden.</string>
-    <string name="capture_empty_subtext">Laad de website opnieuw en Firedown zal de beschikbare media detecteren.</string>
+    <string name="capture_empty_subtext">Sommige video\'s verschijnen pas nadat je op afspelen hebt getikt.</string>
     <string name="clipboard">Gekopieerd naar het klembord</string>
     <string name="clipboard_from">Van klembord</string>
     <string name="close_tab">Tabblad sluiten</string>
@@ -580,8 +580,6 @@
     <string name="task_frame_failed">Kan frame niet opslaan</string>
     <string name="task_frame_cancelled">Opslaan van frame geannuleerd</string>
     <string name="capture_help_menu">Help</string>
-    <string name="capture_help_banner_title">Video niet in de lijst?</string>
-    <string name="capture_help_banner">Sommige ingesloten media moeten eerst worden afgespeeld. Tik voor meer info.</string>
     <string name="tabs_more_options">Meer opties</string>
     <string name="trackers_info_summary">%1$s geblokkeerd</string>
     <string name="most_visited">Meest bezocht</string>
@@ -1264,4 +1262,6 @@
     <string name="bottom_bar_downloading">%1$s, bezig met downloaden</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Links uit andere apps openen in een privétabblad</string>
+    <string name="settings_external_links_private_summary">Ze komen niet in je geschiedenis en hun downloads gaan naar de Beveiligde map.</string>
 </resources>

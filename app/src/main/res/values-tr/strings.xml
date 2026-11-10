@@ -184,7 +184,7 @@
     <string name="browser_tabs_empty_archive">Yakın zamanda kapatılmış sekme yok.</string>
     <string name="cancel">İptal etmek</string>
     <string name="capture_empty_message">İndirilebilecek medya yok.</string>
-    <string name="capture_empty_subtext">Web sitesini yeniden yüklediğinizde Firedown mevcut medyayı algılayacaktır.</string>
+    <string name="capture_empty_subtext">Bazı videolar yalnızca oynat\'a bastıktan sonra görünür.</string>
     <string name="clipboard">Panoya kopyalandı</string>
     <string name="clipboard_from">Panodan</string>
     <string name="close_tab">Sekmeyi kapat</string>
@@ -580,8 +580,6 @@
     <string name="task_frame_failed">Kare kaydedilemedi</string>
     <string name="task_frame_cancelled">Kare kaydetme iptal edildi</string>
     <string name="capture_help_menu">Yardım</string>
-    <string name="capture_help_banner_title">Video listede yok mu?</string>
-    <string name="capture_help_banner">Bazı gömülü medyaların önce oynatılması gerekir. Nasıl olduğunu öğrenmek için dokunun.</string>
     <string name="tabs_more_options">Diğer seçenekler</string>
     <string name="trackers_info_summary">%1$s engellendi</string>
     <string name="most_visited">En çok ziyaret edilenler</string>
@@ -1264,4 +1262,6 @@
     <string name="bottom_bar_downloading">%1$s, indiriliyor</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %%%3$d</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Diğer uygulamalardan gelen bağlantıları gizli sekmede aç</string>
+    <string name="settings_external_links_private_summary">Geçmişinizde kalmazlar ve indirmeleri Güvenli klasöre gider.</string>
 </resources>

@@ -180,7 +180,7 @@
     <string name="browser_tabs_empty_archive">没有最近关闭的标签。</string>
     <string name="cancel">取消</string>
     <string name="capture_empty_message">没有可供下载的媒体。</string>
-    <string name="capture_empty_subtext">重新加载网站，Firedown 将检测可用媒体。</string>
+    <string name="capture_empty_subtext">部分视频只有在点击播放后才会出现。</string>
     <string name="cert_connection_exception">安全例外</string>
     <string name="cert_connection_insecure">连接不安全</string>
     <string name="cert_connection_secure">连接安全</string>
@@ -670,8 +670,6 @@
     <string name="task_frame_failed">无法保存帧</string>
     <string name="task_frame_cancelled">已取消保存帧</string>
     <string name="capture_help_menu">帮助</string>
-    <string name="capture_help_banner_title">找不到视频？</string>
-    <string name="capture_help_banner">部分嵌入的媒体需先播放才能识别。点按了解详情。</string>
     <string name="tabs_more_options">更多选项</string>
     <string name="trackers_info_summary">已拦截 %1$s</string>
     <string name="most_visited">常访问</string>
@@ -1250,4 +1248,6 @@
     <string name="bottom_bar_downloading">%1$s，正在下载</string>
     <string name="bottom_bar_downloading_count_percent">%1$s，%2$s，%3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s，%2$s</string>
+    <string name="settings_external_links_private_title">在隐私标签页中打开其他应用的链接</string>
+    <string name="settings_external_links_private_summary">不会留在历史记录中，下载的文件保存到安全文件夹。</string>
 </resources>

@@ -1,6 +1,5 @@
 package com.solarized.firedown;
 
-import android.app.DownloadManager;
 import android.content.Context;
 import android.util.Log;
 
@@ -33,6 +32,7 @@ import java.nio.file.StandardCopyOption;
  * A worker, not the broadcast receiver: rebuilding and hashing 200 MB takes
  * seconds to tens of seconds on a phone, past what a receiver may hold.
  * Unique work per download id, so a duplicate broadcast runs nothing twice.
+ * A direct download (UpdateDirectDownload) is handed over the same way.
  *
  * Outcomes go back to UpdateDownloader, each naming the download it is about
  * (a stale run can't move a newer record): a wrong or failed download tries
@@ -205,10 +205,6 @@ public class UpdateFinalizeWorker extends Worker {
     }
 
     private static boolean isDownloadSuccessful(Context context, long downloadId) {
-        DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-        if (dm == null) {
-            return false;
-        }
-        return UpdateDownloader.queryStatus(dm, downloadId) == DownloadManager.STATUS_SUCCESSFUL;
+        return UpdateDownloader.isDownloadComplete(context, downloadId);
     }
 }

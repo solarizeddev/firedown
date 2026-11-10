@@ -47,11 +47,9 @@
     <string name="browser_tabs_empty_archive">No recently closed tabs.</string>
     <string name="cancel">Cancel</string>
     <string name="capture_empty_message">No media available for downloading.</string>
-    <string name="capture_empty_subtext">Reload the page to detect media.</string>
+    <string name="capture_empty_subtext">Some videos appear only after you press play.</string>
     <string name="capture_scanning">Checking for media…</string>
     <string name="capture_help_menu">Capture help</string>
-    <string name="capture_help_banner_title">Video not listed?</string>
-    <string name="capture_help_banner">Some embedded media must be played first. Tap to learn how.</string>
     <!-- Copy/Share the captured resource's URL (issue #302) — the variant
          sheet's overflow. Only for captures whose URL is self-contained (see
          findCopyableUrl); the copy toast shows below Android 13 only (13+
@@ -1496,4 +1494,6 @@
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <!-- Spoken by a screen reader for the Downloads button: "Downloads, 3 downloading", "Downloads, Download finished". -->
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Open links from other apps in a private tab</string>
+    <string name="settings_external_links_private_summary">They stay out of your history, and their downloads go to the Safe Folder.</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.solarized.firedown;
 
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -48,6 +49,7 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
         // the app goes either way (the success notification below cancels it
         // too, but only when it posts).
         UpdateNotification.cancelInstallProgress(context);
+        UpdateNotification.cancelConfirmInstall(context);
         if (updateName != null) {
             prefs.edit().remove(Keys.UPDATE_META).apply();
             UpdateNotification.showNotificationSuccess(context, updateName);
@@ -64,18 +66,10 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
 
     private void handleUserTapInstall(Context context, Intent intent) {
         Log.d(TAG, "User requested install from notification");
-        String updateName = intent.getStringExtra(Keys.UPDATE_NAME);
-
-        // Use goAsync to keep the receiver alive while the install thread runs.
-        // Without this, the system may kill the process after onReceive returns.
-        PendingResult pendingResult = goAsync();
-        new Thread(() -> {
-            try {
-                UpdateInstaller.install(context, updateName, true);
-            } finally {
-                pendingResult.finish();
-            }
-        }).start();
+        // The copy runs in a worker: a receiver may hold its broadcast for 60 s
+        // at most, and a slow phone copying the APK past that was killed
+        // mid-copy, leaving its installer session open.
+        UpdateInstallWorker.enqueue(context, intent.getStringExtra(Keys.UPDATE_NAME));
     }
 
     // ── PackageInstaller session callback ────────────────────────────────────
@@ -96,12 +90,19 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
                         ? intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class)
                         : intent.getParcelableExtra(Intent.EXTRA_INTENT);
                 if (confirmationIntent != null) {
+                    // In the background Android drops this start without a
+                    // word (Android 10 and later block activity starts from the
+                    // background), so the dialog is also offered as a
+                    // notification; the install's outcome removes it.
+                    if (!appInForeground()) {
+                        UpdateNotification.showConfirmInstall(context, confirmationIntent);
+                    }
                     confirmationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     try {
                         context.startActivity(confirmationIntent);
                     } catch (Exception e) {
                         Log.e(TAG, "Failed to launch installer", e);
-                        UpdateNotification.showNotificationFailed(context);
+                        UpdateNotification.showConfirmInstall(context, confirmationIntent);
                     }
                 }
                 break;
@@ -112,6 +113,7 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
                 // consumed by handlePackageReplaced).
                 Log.d(TAG, "Session callback: success (redundant path)");
                 UpdateInstaller.onAndroidAnswered(context);
+                UpdateNotification.cancelConfirmInstall(context);
                 String updateName = prefs.getString(Keys.UPDATE_META, null);
                 if (updateName != null) {
                     prefs.edit().remove(Keys.UPDATE_META).apply();
@@ -128,6 +130,7 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
             case PackageInstaller.STATUS_FAILURE_STORAGE:
                 Log.e(TAG, "Installation failed: " + message);
                 UpdateInstaller.onAndroidRefused(context);
+                UpdateNotification.cancelConfirmInstall(context);
                 prefs.edit().remove(Keys.UPDATE_META).apply();
                 UpdateNotification.showNotificationFailed(context);
                 break;
@@ -136,6 +139,17 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
                 Log.e(TAG, "Unknown status: " + status);
                 break;
         }
+    }
+
+    /** An activity of this app is on screen, so the dialog's start is allowed. */
+    private static boolean appInForeground() {
+        ActivityManager.RunningAppProcessInfo info = new ActivityManager.RunningAppProcessInfo();
+        try {
+            ActivityManager.getMyMemoryState(info);
+        } catch (RuntimeException e) {
+            return false;
+        }
+        return info.importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
     }
 
     private static IntentSanitizer.Builder getBuilder() {

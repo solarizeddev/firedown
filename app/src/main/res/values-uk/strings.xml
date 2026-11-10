@@ -190,7 +190,7 @@
     <string name="browser_tabs_empty_archive">Немає нещодавно закритих вкладок.</string>
     <string name="cancel">Скасувати</string>
     <string name="capture_empty_message">Немає медіафайлів, доступних для завантаження.</string>
-    <string name="capture_empty_subtext">Перезавантажте веб-сайт, і Firedown виявить доступні носії.</string>
+    <string name="capture_empty_subtext">Деякі відео з\'являються лише після натискання відтворення.</string>
     <string name="clipboard">Скопійовано в буфер обміну</string>
     <string name="clipboard_from">З буфера обміну</string>
     <string name="close_tab">Закрити вкладку</string>
@@ -516,8 +516,6 @@
         <item quantity="other">%d запиту заблоковано на цій сторінці</item>
     </plurals>
     <string name="capture_help_menu">Довідка</string>
-    <string name="capture_help_banner_title">Відео немає у списку?</string>
-    <string name="capture_help_banner">Деякі вбудовані медіа потрібно спочатку відтворити. Торкніться, щоб дізнатися як.</string>
     <string name="media_tools">Медіаінструменти</string>
     <string name="tabs_more_options">Більше параметрів</string>
     <string name="trackers_info_summary">%1$s заблоковано</string>
@@ -1299,4 +1297,6 @@
     <string name="bottom_bar_downloading">%1$s, завантаження</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Відкривати посилання з інших застосунків у приватній вкладці</string>
+    <string name="settings_external_links_private_summary">Вони не потрапляють до історії, а їхні завантаження йдуть до Захищеної папки.</string>
 </resources>

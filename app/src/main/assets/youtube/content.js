@@ -84,6 +84,31 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
         );
     }, window.wrappedJSObject, { defineAs: '__fdFetchText' });
 
+    // The page's own challenge: the m.youtube.com page carries the BotGuard
+    // challenge YouTube's player attests with (challenge.js reads it). The
+    // fetch runs here, in the content script: m.youtube.com is another
+    // origin for the www.youtube.com token page, and the request carries
+    // the browser's cookies as a real page load does. Resolves to a JSON
+    // string, or to an empty string when the page has none (a consent
+    // redirect, a network error): the runner then asks att/get instead.
+    exportFunction(function() {
+        return new window.wrappedJSObject.Promise(
+            exportFunction(function(resolve) {
+                fetch('https://m.youtube.com/', { credentials: 'include' })
+                    .then(r => r.ok ? r.text() : '')
+                    .then(html => {
+                        let out = '';
+                        try {
+                            const found = fdExtractInlineChallenge(html);
+                            if (found) out = JSON.stringify(found);
+                        } catch (e) {}
+                        resolve(cloneInto(out, window.wrappedJSObject));
+                    })
+                    .catch(() => resolve(cloneInto('', window.wrappedJSObject)));
+            }, window.wrappedJSObject)
+        );
+    }, window.wrappedJSObject, { defineAs: '__fdGetChallenge' });
+
     const RUNNER = `(function() {
         const RK = 'O43z0dpjhgX20SCx4KAo';
         const AK = 'AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw';
@@ -91,6 +116,8 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
         // cml = how long it may be trusted (from the SERVER, see below),
         // cmp = in-flight attestation, so concurrent mints share one run.
         let cm = null, cmt = 0, cml = 0, cmp = null;
+        // How many attestations this page has made.
+        let cmn = 0;
 
         // Fallback only — used when the server doesn't tell us the integrity
         // token's lifetime. Previously this 5h was applied UNCONDITIONALLY.
@@ -99,20 +126,50 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
         // can't land just after it lapses.
         const CM_TTL_MARGIN = 300000;
 
-        async function attest(vd) {
-            const BG = window.BG;
-            const cv = '2.20260401.01.00';
-            const ctx = {client:{clientName:'WEB',clientVersion:cv,hl:'en',gl:'US',visitorData:vd||''}};
+        // What the last attestation did, for the native log: which
+        // challenge made the minter, and why an earlier one did not.
+        let lastAttest = '';
 
+        // What the attestation VM can see of this page: a hidden session
+        // has no view, and the VM reports the page it runs in.
+        function pageShape() {
+            try {
+                return 'page=' + document.visibilityState
+                    + ' focus=' + document.hasFocus()
+                    + ' inner=' + window.innerWidth + 'x' + window.innerHeight
+                    + ' outer=' + window.outerWidth + 'x' + window.outerHeight
+                    + ' screen=' + screen.width + 'x' + screen.height
+                    + ' dpr=' + window.devicePixelRatio
+                    + ' type=' + document.contentType;
+            } catch (e) { return 'page=?'; }
+        }
+
+        async function pageChallenge() {
+            const found = await window.__fdGetChallenge();
+            if (!found) throw new Error('no challenge in page');
+            const o = JSON.parse(found);
+            if (!o.bgChallenge || !o.bgChallenge.program) throw new Error('no program');
+            return { ch: o.bgChallenge, cv: o.clientVersion || '' };
+        }
+
+        async function attGetChallenge(vd, name, num, cv) {
+            const ctx = {client:{clientName:name,clientVersion:cv,hl:'en',gl:'US',visitorData:vd||''}};
             const cr = await fetch('https://www.youtube.com/youtubei/v1/att/get?prettyPrint=false&alt=json',{
-                method:'POST',headers:{'Accept':'*/*','Content-Type':'application/json','X-Goog-Visitor-Id':vd||'','X-Youtube-Client-Version':cv,'X-Youtube-Client-Name':'1'},
+                method:'POST',headers:{'Accept':'*/*','Content-Type':'application/json','X-Goog-Visitor-Id':vd||'','X-Youtube-Client-Version':cv,'X-Youtube-Client-Name':num},
                 body:JSON.stringify({engagementType:'ENGAGEMENT_TYPE_UNBOUND',context:ctx})
             });
             if (!cr.ok) throw new Error('att/get '+cr.status);
             const cd = await cr.json();
             if (!cd.bgChallenge) throw new Error('no bgChallenge');
+            return { ch: cd.bgChallenge, cv: cv };
+        }
 
-            let iu = cd.bgChallenge.interpreterUrl.privateDoNotAccessOrElseTrustedResourceUrlWrappedValue;
+        // One challenge → interpreter VM → snapshot → GenerateIT → minter.
+        async function attestWith(ch) {
+            const BG = window.BG;
+            const wrapped = ch.interpreterUrl || ch.interpreterSafeUrl || {};
+            let iu = wrapped.privateDoNotAccessOrElseTrustedResourceUrlWrappedValue;
+            if (!iu) throw new Error('no interpreter url');
             if (iu.startsWith('//')) iu='https:'+iu;
 
             // Use content script's fetch to bypass CORS (page fetch blocked by google.com CORS)
@@ -120,7 +177,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             if (!js) throw new Error('empty VM');
             new Function(js)();
 
-            const bg = await BG.BotGuardClient.create({program:cd.bgChallenge.program,globalName:cd.bgChallenge.globalName,globalObj:window});
+            const bg = await BG.BotGuardClient.create({program:ch.program,globalName:ch.globalName,globalObj:window});
             const wps = [];
             const bgr = await bg.snapshot({webPoSignalOutput:wps},10000);
             if (!bgr) throw new Error('empty snapshot');
@@ -129,8 +186,16 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                 method:'POST',headers:{'Content-Type':'application/json+protobuf','x-goog-api-key':AK,'x-user-agent':'grpc-web-javascript/0.1'},
                 body:JSON.stringify([RK,bgr])
             });
-            const ij = await ir.json();
-            if (typeof ij[0]!=='string') throw new Error('no IT');
+            const it = await ir.text();
+            let ij = null;
+            try { ij = JSON.parse(it); } catch (e) {}
+            if (!Array.isArray(ij) || typeof ij[0]!=='string') {
+                // The server's answer in shape only: types and lengths.
+                const shape = Array.isArray(ij)
+                    ? '['+ij.map(v => v===null ? 'null' : (typeof v==='string' ? 'str'+v.length : typeof v)).join(',')+']'
+                    : 'len'+it.length;
+                throw new Error('no IT (http '+ir.status+' program='+String(ch.program).length+' snapshot='+String(bgr).length+' answer='+shape+')');
+            }
 
             // ij = [integrityToken, estimatedTtlSecs, mintRefreshThreshold, ...].
             // HONOUR ij[1]. Every token this minter produces is bound to THIS
@@ -141,12 +206,41 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             // regardless of what the server said is what made that
             // intermittent rather than never.
             const ttl = (typeof ij[1] === 'number' && ij[1] > 0) ? ij[1]*1000 : 0;
-            cml = ttl ? Math.max(60000, ttl - CM_TTL_MARGIN) : CM_TTL_FALLBACK;
-
             const m = await BG.WebPoMinter.create({integrityToken:ij[0]},wps);
-            cm=m; cmt=Date.now();
-            if (window.__fdDebug) console.log('[BG-robots] attested, minter valid for '+Math.round(cml/1000)+'s');
-            return m;
+            cml = ttl ? Math.max(60000, ttl - CM_TTL_MARGIN) : CM_TTL_FALLBACK;
+            cm=m; cmt=Date.now(); cmn++;
+            return 'snapshot='+String(bgr).length+' integrity='+ij[0].length+' ttl='+ij[1]+' '+pageShape();
+        }
+
+        // Tries each source of a challenge until one yields a minter:
+        // the challenge the m.youtube.com page carries (what YouTube's own
+        // player attests with), then att/get as the client the streams
+        // belong to (MWEB), then att/get as WEB. A source that fails at
+        // any step (no challenge, the VM, a GenerateIT answer with no
+        // integrity token) is recorded and the next one tried, so a mint
+        // fails only when none works.
+        async function attest(vd) {
+            const MWEB_CV = '2.20261106.00.00';
+            const sources = [
+                ['page', () => pageChallenge()],
+                ['att/get-mweb', () => attGetChallenge(vd, 'MWEB', '2', MWEB_CV)],
+                ['att/get-web', () => attGetChallenge(vd, 'WEB', '1', '2.20260401.01.00')]
+            ];
+            const failed = [];
+            for (const [name, get] of sources) {
+                try {
+                    const c = await get();
+                    const done = await attestWith(c.ch);
+                    lastAttest = 'challenge='+name+' cver='+(c.cv||'?')+' '+done
+                        + (failed.length ? ' after '+failed.join('; ') : '');
+                    if (window.__fdDebug) console.log('[BG-robots] attested: '+lastAttest);
+                    return cm;
+                } catch (e) {
+                    failed.push(name+': '+(e && e.message ? e.message : e));
+                }
+            }
+            lastAttest = '';
+            throw new Error(failed.join('; '));
         }
 
         async function gen(vid, vd, forceFresh, binding) {
@@ -154,20 +248,19 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
             if (!BG) throw new Error('BG not loaded');
             // CONTENT BINDING — the identifier the token is minted over,
             // which the server checks against the request it rides on:
-            //   'visitor' → visitorData. The videoplayback / SABR token
-            //               (Google Video Server; yt-dlp's GVS context —
-            //               logged-out WEB client binds to visitor data).
-            //   'video'   → videoId. The player request + timedtext token.
-            // These are NOT interchangeable, and the failure is SILENT: a
-            // video-bound token on videoplayback is accepted unchecked most
-            // of the time and refused only when the server spot-checks the
-            // session — STREAM_PROTECTION_STATUS 2 ("pending") from the
-            // first response, then 3 at ~60 s, and every re-mint refused at
-            // once because it carries the same wrong binding. Shipped as
-            // "the download fails, then works after restarting the app".
-            // Java (PoTokenGenerator.Binding) names the binding per caller;
-            // a message without one is the pre-field Java side, which only
-            // ever minted video-bound tokens.
+            //   'visitor' → visitorData.
+            //   'video'   → videoId.
+            // The player request and timedtext take the video id. The
+            // videoplayback / SABR token takes ONE of the two, depending
+            // on a player experiment of the session that produced the
+            // streaming URL (html5_generate_content_po_token: the video
+            // id with it, the visitor data without). A wrong binding
+            // fails SILENTLY: STREAM_PROTECTION_STATUS 2 ("pending") from
+            // the first response, then 3 around a minute of media, and
+            // every re-mint over the same identifier refused at once.
+            // Java (SabrStrategy) starts from the binding that last
+            // worked and switches on a refusal; a message without a
+            // binding is video-bound.
             const id = (binding === 'visitor') ? (vd || vid) : (vid || vd);
             // forceFresh = the server refused the token this minter produced
             // (SABR STREAM_PROTECTION_STATUS 3). The minter is bound to ONE
@@ -206,7 +299,10 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
         window.__fdGenPoToken = async function(vid,vd,rid,forceFresh,binding) {
             try {
                 const t = await gen(vid,vd,forceFresh,binding);
-                window.__fdPoTokenCB(JSON.stringify({requestId:rid,token:t}));
+                // age: how old the attestation behind this token is. The
+                // native side holds a token back until it has settled.
+                const age = cmt ? Date.now()-cmt : -1;
+                window.__fdPoTokenCB(JSON.stringify({requestId:rid,token:t,info:lastAttest,age:age,attests:cmn}));
             } catch(e) {
                 window.__fdPoTokenCB(JSON.stringify({requestId:rid,error:e.message}));
             }
@@ -245,7 +341,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                 // (page crash, runtime fault), which matters because
                 // listeners would otherwise accumulate on a long-lived
                 // robots.txt session.
-                const token = await new Promise((resolve, reject) => {
+                const minted = await new Promise((resolve, reject) => {
                     let timerId;
                     const cleanup = () => {
                         window.removeEventListener('fdPoTokenResult', handler);
@@ -257,7 +353,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                         if (!data || data.requestId !== requestId) return;
                         cleanup();
                         if (data.error) reject(new Error(data.error));
-                        else resolve(data.token);
+                        else resolve({ token: data.token, info: data.info || '', age: data.age, attests: data.attests });
                     };
                     timerId = setTimeout(() => {
                         cleanup();
@@ -271,7 +367,7 @@ if (location.pathname === '/robots.txt' && location.hash === '#fd-native') {
                             msg.forceFresh === true,
                             msg.binding === 'visitor' ? 'visitor' : 'video');
                 });
-                natPort.postMessage({ type: 'mintResult', requestId, token });
+                natPort.postMessage({ type: 'mintResult', requestId, token: minted.token, info: minted.info, age: minted.age, attests: minted.attests });
             } catch (e) {
                 natPort.postMessage({ type: 'mintResult', requestId, error: e.message });
             }

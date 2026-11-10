@@ -192,7 +192,7 @@
     <string name="browser_tabs_empty_archive">Brak ostatnio zamkniętych kart.</string>
     <string name="cancel">Anulować</string>
     <string name="capture_empty_message">Brak multimediów do pobrania.</string>
-    <string name="capture_empty_subtext">Załaduj ponownie witrynę, a Firedown wykryje dostępne multimedia.</string>
+    <string name="capture_empty_subtext">Niektóre filmy pojawiają się dopiero po naciśnięciu odtwarzania.</string>
     <string name="clipboard">Skopiowane do schowka</string>
     <string name="clipboard_from">Ze schowka</string>
     <string name="close_tab">Zamknij kartę</string>
@@ -588,8 +588,6 @@
     <string name="task_frame_failed">Nie udało się zapisać klatki</string>
     <string name="task_frame_cancelled">Anulowano zapisywanie klatki</string>
     <string name="capture_help_menu">Pomoc</string>
-    <string name="capture_help_banner_title">Nie ma filmu na liście?</string>
-    <string name="capture_help_banner">Niektóre osadzone multimedia trzeba najpierw odtworzyć. Dotknij, aby dowiedzieć się jak.</string>
     <string name="tabs_more_options">Więcej opcji</string>
     <string name="trackers_info_summary">%1$s zablokowano</string>
     <string name="most_visited">Najczęściej odwiedzane</string>
@@ -1298,4 +1296,6 @@
     <string name="bottom_bar_downloading">%1$s, pobieranie</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Otwieraj linki z innych aplikacji w karcie prywatnej</string>
+    <string name="settings_external_links_private_summary">Nie trafiają do historii, a ich pobrane pliki trafiają do Bezpiecznego folderu.</string>
 </resources>

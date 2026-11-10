@@ -173,7 +173,7 @@
     <string name="browser_tabs_empty_archive">Nenhuma guia fechada recentemente.</string>
     <string name="cancel">Cancelar</string>
     <string name="capture_empty_message">Nenhuma mídia disponível para download.</string>
-    <string name="capture_empty_subtext">Recarregue o site e o Firedown detectará a mídia disponível.</string>
+    <string name="capture_empty_subtext">Alguns vídeos só aparecem depois de você tocar em reproduzir.</string>
     <string name="clipboard">Copiado para a área de transferência</string>
     <string name="clipboard_from">Da área de transferência</string>
     <string name="connection_secure">A conexão é segura</string>
@@ -584,8 +584,6 @@
     <string name="task_frame_failed">Não foi possível salvar o quadro</string>
     <string name="task_frame_cancelled">Captura do quadro cancelada</string>
     <string name="capture_help_menu">Ajuda</string>
-    <string name="capture_help_banner_title">Vídeo não listado?</string>
-    <string name="capture_help_banner">Algumas mídias incorporadas precisam ser reproduzidas primeiro. Toque para saber como.</string>
     <string name="tabs_more_options">Mais opções</string>
     <string name="trackers_info_summary">%1$s bloqueados</string>
     <string name="most_visited">Mais visitados</string>
@@ -1271,4 +1269,6 @@
     <string name="bottom_bar_downloading">%1$s, baixando</string>
     <string name="bottom_bar_downloading_count_percent">%1$s, %2$s, %3$d%%</string>
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
+    <string name="settings_external_links_private_title">Abrir links de outros apps em uma aba privativa</string>
+    <string name="settings_external_links_private_summary">Eles não ficam no seu histórico, e os downloads vão para a Pasta segura.</string>
 </resources>

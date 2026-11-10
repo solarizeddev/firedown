@@ -16,6 +16,13 @@ public class Keys {
 
     public static final String IS_INCOGNITO = "com.solarized.firedown.IS_INCOGNTO";
     public static final String OPEN_INCOGNITO = "com.solarized.firedown.OPEN_INCOGNTO";
+
+    /**
+     * On a SEND that SearchIntentActivity forwards for text selected inside
+     * Firedown itself: not a link from another app, so the "open links from
+     * other apps in a private tab" setting leaves it alone.
+     */
+    public static final String FROM_FIREDOWN = "com.solarized.firedown.FROM_FIREDOWN";
     public static final String ITEM_BOOKMARK = "com.solarized.firedown.ITEM_BOOKMARK";
     public static final String ITEM_URL = "com.solarized.firedown.ITEM_URL";
     public static final String ITEM_ID = "com.solarized.firedown.ITEM_ID";
@@ -52,6 +59,11 @@ public class Keys {
     // When UpdateFinalizeWorker started rebuilding/verifying the finished
     // download: while it is recent, a new check must not remove that download.
     public static final String UPDATE_DOWNLOAD_FINALIZING_AT = "com.solarized.firedown.UPDATE_DOWNLOAD_FINALIZING_AT";
+    // A direct download (UpdateDirectDownload, when the Download Manager
+    // can't take it): the id it finished as, and its runs in a row that
+    // downloaded nothing. Both belong to the recorded download and go with it.
+    public static final String UPDATE_DIRECT_DONE = "com.solarized.firedown.UPDATE_DIRECT_DONE";
+    public static final String UPDATE_DIRECT_STALLS = "com.solarized.firedown.UPDATE_DIRECT_STALLS";
     // The version whose patch / .xz failed to rebuild the expected APK, so the
     // next round goes straight to the next step for that version.
     public static final String UPDATE_PATCH_FAILED_VERSION = "com.solarized.firedown.UPDATE_PATCH_FAILED_VERSION";
@@ -71,6 +83,11 @@ public class Keys {
     public static final String UPDATE_READY = "com.solarized.firedown.UPDATE_READY";
     public static final String UPDATE_READY_VERSION_CODE = "com.solarized.firedown.UPDATE_READY_VERSION_CODE";
     public static final String UPDATE_READY_NAME = "com.solarized.firedown.UPDATE_READY_NAME";
+    // When status.json was first seen naming a version OLDER than the ready
+    // APK (the release was pulled). The ready APK is dropped only when a later
+    // check still says so, a day on, so a stale copy of status.json (a CDN
+    // edge, a mirror deploying minutes behind) never deletes a good update.
+    public static final String UPDATE_PULLED_SEEN_AT = "com.solarized.firedown.UPDATE_PULLED_SEEN_AT";
     // Per-version SNOOZE bookkeeping for the in-app update sheet: which version
     // the snooze belongs to, the wall-clock time the sheet may show again, and
     // how many times it has been dismissed for that version (the last dismissal

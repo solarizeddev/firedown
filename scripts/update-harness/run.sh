@@ -12,7 +12,9 @@
 #      mirrors, a patch for another base, device failures (retry once, then
 #      skip), no room for a delta step, the finalize claim (live, stale,
 #      unclaimed), a stopped worker, stale broadcasts, a record from before
-#      plans, an unreadable record, clearPending — plus planted bugs.
+#      plans, an unreadable record, clearPending, and the direct download
+#      the Download Manager can't take (UpdateDirectDownload against a fake
+#      server: resume, stalls, stale runs) — plus planted bugs.
 #   2. Fuzz (UpdateFuzz): 300 random edits round-tripped through the real
 #      generator (app/src/updatetool) and the app's applier (UpdatePatch);
 #      3000 random corruptions of a real patch and 500 random headers, every
@@ -131,6 +133,36 @@ junit() { # classes-dir test-classes… ; output to $OUT/junit.log
     java -cp "$cls:$CP" org.junit.runner.JUnitCore "$@" > "$OUT/junit.log" 2>&1
 }
 
+echo "== 0. Android compile check"
+# The update classes that only run on a phone (the installer, its receiver
+# and worker, the notifications, the check worker, the scheduler) compiled
+# against the real Android framework (Robolectric's android-all, API 35) and
+# signature stubs of the androidx / app classes they call (android-stub).
+# Catches a missing import, a wrong framework call or a typo before a device
+# build does. ANDROID_COMPILE=0 skips it (android-all is ~190 MB, cached).
+if [ "${ANDROID_COMPILE:-1}" != 0 ]; then
+    AALL=$(fetch org.robolectric android-all 15-robolectric-14663667) || exit 1
+    AC="$OUT/android-compile"
+    mkdir -p "$AC/src/com/solarized/firedown/utils" "$AC/src/com/solarized/firedown/update" "$AC/out"
+    cp -r "$HERE/android-stub/." "$AC/src/"
+    for f in Keys UpdateInstaller UpdateInstallReceiver UpdateNotification UpdateInstallWorker UpdateWorker \
+             UpdateScheduler UpdateReadyLiveData UpdateDownloader UpdateInstallProgress UpdateFinalizeWorker \
+             UpdateManifest UpdatePlan UpdateInstalledApk UpdateDirectDownload UpdateDirectDownloadWorker; do
+        cp "$ROOT/app/src/main/java/com/solarized/firedown/$f.java" "$AC/src/com/solarized/firedown/"
+    done
+    cp "$ROOT/app/src/main/java/com/solarized/firedown/utils/NotificationID.java" "$AC/src/com/solarized/firedown/utils/"
+    cp "$ROOT/app/src/main/java/com/solarized/firedown/update/UpdatePatch.java" "$AC/src/com/solarized/firedown/update/"
+    if javac -nowarn -proc:none -encoding UTF-8 -d "$AC/out" -cp "$AALL:$XZJAR" $(find "$AC/src" -name '*.java') \
+            > "$AC/log" 2>&1; then
+        ok "the update classes compile against the Android framework"
+    else
+        bad "the update classes do not compile against the Android framework"
+        grep -v JAVA_TOOL_OPTIONS "$AC/log" | head -30 | sed 's/^/     | /'
+    fi
+else
+    echo "skip: ANDROID_COMPILE=0"
+fi
+
 echo "== 1. JUnit"
 compile "$SRC" "$OUT/classes"
 if [ ! -f "$OUT/classes/com/solarized/firedown/update/UpdatePatch.class" ]; then
@@ -152,7 +184,7 @@ echo "== 1b. The download state machine (UpdateFlowHarness)"
 FLOW="$OUT/flow-src"
 mkdir -p "$FLOW/com/solarized/firedown/update"
 cp -r "$HERE/flow/stub/." "$HERE/flow/src/." "$FLOW/"
-for f in Keys UpdateManifest UpdatePlan UpdateDownloader UpdateFinalizeWorker UpdateInstalledApk; do
+for f in Keys UpdateManifest UpdatePlan UpdateDownloader UpdateFinalizeWorker UpdateInstalledApk UpdateDirectDownload; do
     cp "$ROOT/app/src/main/java/com/solarized/firedown/$f.java" "$FLOW/com/solarized/firedown/"
 done
 cp "$ROOT/app/src/main/java/com/solarized/firedown/update/UpdatePatch.java" \
@@ -200,8 +232,30 @@ if [ "${MUTANTS:-1}" != 0 ]; then
     fmutant 'clearPending leaves the download' $D 's/removeDownload\(context, prefs\(context\)\.getLong\(Keys\.UPDATE_DOWNLOAD_ID, -1\)\);\n(\s*)deleteArtifacts\(context\);\n(\s*)clearPendingLocked/deleteArtifacts(context);\n$2clearPendingLocked/'
     fmutant 'no space check before a delta step' $D 's/return dir\.getUsableSpace\(\) >= step\.size/return true || dir.getUsableSpace() >= step.size/'
     fmutant 'an unreadable record is kept' $D 's/if \(pending == null\) \{\n(\s*)\/\/ An id with no readable record/if (false) {\n$1\/\/ An id with no readable record/'
+    fmutant 'a new download keeps the old ready record' $D 's/clearReadyRecordLocked\(context\);\n\n(\s*)\/\/ A patch or \.xz needs room/\n$1\/\/ A patch or .xz needs room/'
+    fmutant 'ready trusted beside a recorded download' $D 's/if \(p\.getLong\(Keys\.UPDATE_DOWNLOAD_ID, -1\) != -1\) \{\n(\s*)return false;/if (false) {\n$1return false;/'
+    fmutant 'a retry time a year away is believed' $D 's/return remaining > 0 && remaining <= BACKOFF_MAX_MS \+ BACKOFF_MAX_MS \/ 5;/return remaining > 0;/'
+    fmutant 'a claim from the future is believed' $D 's/return age > -CLAIM_CLOCK_SLACK_MS && age < FINALIZE_CLAIM_MS;/return age < FINALIZE_CLAIM_MS;/'
+    fmutant 'a cleared ready record leaves its notification' $D 's/\n(\s*)UpdateNotification\.cancelInstallProgress\(context\);\n/\n/'
+    fmutant 'one sighting drops a pulled release' $D 's/if \(now - seenAt < PULLED_CONFIRM_MS\) \{/if (false) {/'
+    fmutant 'a disabled DownloadManager throws out of clearPending' $D 's/\} catch \(RuntimeException e\) \{\n(\s*)\/\/ The Download Manager app disabled/} catch (IllegalStateException e) {\n$1\/\/ The Download Manager app disabled/'
+    fmutant 'a refused Download Manager download is not downloaded directly' $D 's/if \(direct\) \{\n(\s*)downloadId = newDirectId\(\);/if (direct) {\n$1return;/'
+    fmutant 'a direct download in flight is started again' $D 's/UpdateDirectDownloadWorker\.enqueue\(context, previousId\);\n(\s*)return true;/return false;/'
+    fmutant 'a moved-on record still takes a finished direct file' $D 's/if \(pending == null \|\| pending\.downloadId != downloadId\) \{\n(\s*)part\.delete\(\);\n(\s*)return false;/if (pending == null) {\n$1part.delete();\n$2return false;/'
+    fmutant 'a removed direct download keeps running' $D 's/\n(\s*)UpdateDirectDownloadWorker\.cancel\(context, id\);//'
+    fmutant 'a disabled Download Manager throws out of a status query' $D 's/\} catch \(RuntimeException e\) \{\n(\s*)\/\/ A Download Manager disabled after/} catch (IllegalStateException e) {\n$1\/\/ A Download Manager disabled after/'
+    fmutant 'room for a delta measured on external storage only' $D 's/File dir = Preferences\.getUpdateApkFile\(context\)\.getParentFile\(\);\n(\s*)if \(dir == null\) \{\n(\s*)return false;\n(\s*)\}\n(\s*)return dir\.getUsableSpace\(\) >= step\.size/File dir = context.getExternalFilesDir(null);\n$1if (dir == null) {\n$2return false;\n$3}\n$4return dir.getUsableSpace() >= step.size/'
+    X=com/solarized/firedown/UpdateDirectDownload.java
+    fmutant 'a resume overwrites what it kept' $X 's/new FileOutputStream\(part, have > 0\)/new FileOutputStream(part, false)/'
+    fmutant 'a 200 to a resume is appended' $X 's/have = 0L;\n(\s*)start = 0L;\n//'
+    fmutant 'a 206 for another range is appended' $X 's/if \(answer\.rangeStart != have\) \{/if (false) {/'
+    fmutant 'a direct download never gives up' $X 's/MAX_STALLS = 6;/MAX_STALLS = 1000;/'
+    fmutant 'progress does not reset the stall count' $X 's/if \(progressed\) \{/if (false) {/'
+    fmutant 'a 5xx is a refusal' $X 's/ \|\| answer\.code >= 500\)/)/'
+    fmutant 'a Content-Length past status.json is read anyway' $X 's/if \(expected > 0 && total > 0 && total != expected\) \{/if (false) {/'
     W=com/solarized/firedown/UpdateFinalizeWorker.java
     fmutant 'a device failure walks the plan' $W 's/UpdateDownloader\.onDeviceFailed\(context, pending\.downloadId\);\n(\s*)return Result\.success\(\);\n(\s*)\}\n(\s*)\}/UpdateDownloader.onStepFailed(context, pending.downloadId);\n$1return Result.success();\n$2}\n$3}/'
+    fmutant 'a finished direct download reads as failed' $W 's/return UpdateDownloader\.isDownloadComplete\(context, downloadId\);/return !UpdateDownloader.isDirect(downloadId) \&\& UpdateDownloader.isDownloadComplete(context, downloadId);/'
     fmutant 'a wrong download skips the whole step' $W 's/downloaded\.delete\(\);\n(\s*)UpdateDownloader\.onAttemptFailed\(context, downloadId\);/downloaded.delete();\n$1UpdateDownloader.onStepFailed(context, downloadId);/'
 fi
 
@@ -326,9 +380,15 @@ EOF
 ext.android = [defaultConfig: [versionCode: 1206, versionName: '1.2.6']]
 apply from: '$ROOT/app/release.gradle'
 EOF
-    rg() {
+    # The test APKs are numbered below the first app that reads patches
+    # (1206), so the runs that build patches lower that bound; rg_default
+    # keeps it.
+    rg_default() {
         "$GRADLE_BIN" -p "$PROJ" --offline --no-daemon --console=plain --warning-mode=all -g "$OUT/guh" :app:releaseStatus \
             -Pfiredown.updateMirror=https://mirror.test/updates -Pfiredown.patchJobs=2 "$@" > "$OUT/gradle.log" 2>&1
+    }
+    rg() {
+        rg_default -Pfiredown.patchMinFrom=0 "$@"
     }
     if rg; then
         ok "releaseStatus ran"
@@ -378,6 +438,22 @@ EOF
             bad "uploadUpdateRelease"
             cat "$OUT/gh.log" 2>/dev/null | sed 's/^/     | gh /'
             tail -15 "$OUT/gradle.log" | sed 's/^/     | /'
+        fi
+        # By default no patch is made from a release whose app can't apply
+        # one (before 1206): every source here is older, so status.json lists
+        # the .xz and no patches, and the upload folder holds none.
+        if rg_default; then
+            if ! grep -q '"patches"' "$PROJ/status.json" && grep -q '"compressed"' "$PROJ/status.json" \
+                && ! ls "$PROJ/app/build/outputs/update/v1.2.6/" | grep -q fdpatch \
+                && grep -q 'apps before 1206 read no patches' "$OUT/gradle.log"; then
+                ok "no patch from a release whose app reads none (before 1206)"
+            else
+                bad "patches were made for releases that can't apply them"
+                grep -o '"patches"[^]]*' "$PROJ/status.json" | head -3 | sed 's/^/     | /'
+            fi
+        else
+            bad "releaseStatus with the default patch bound failed"
+            tail -30 "$OUT/gradle.log" | sed 's/^/     | /'
         fi
         if rg -Pfiredown.updateDeltas=false; then
             java -cp "$OUT/classes:$CP" com.solarized.firedown.update.ReleaseCheck bare "$PROJ" 2>&1 \

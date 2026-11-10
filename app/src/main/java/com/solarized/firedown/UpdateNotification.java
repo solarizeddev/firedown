@@ -1,15 +1,19 @@
 package com.solarized.firedown;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.service.notification.StatusBarNotification;
 import android.text.TextUtils;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.preference.PreferenceManager;
 
 import com.solarized.firedown.phone.LauncherActivity;
 import com.solarized.firedown.utils.BuildUtils;
@@ -76,6 +80,16 @@ public class UpdateNotification {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+        NotificationManagerCompat.from(context).notify(NotificationID.APK_UPDATE_PROMPT_INSTALL,
+                buildInstallProgress(context, percent));
+    }
+
+    /**
+     * The progress notification itself, also the foreground notice of
+     * {@link UpdateInstallWorker} where the system needs one (same id, so the
+     * progress posts replace it).
+     */
+    public static Notification buildInstallProgress(Context context, int percent) {
         boolean installing = percent < 0;
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, App.UPDATES_NOTIFICATION_ID);
         mBuilder.setSmallIcon(R.drawable.ic_firedown_notification);
@@ -89,7 +103,62 @@ public class UpdateNotification {
         mBuilder.setContentText(context.getText(installing
                 ? R.string.update_install_installing : R.string.update_install_preparing));
         mBuilder.setProgress(100, installing ? 0 : percent, installing);
-        NotificationManagerCompat.from(context).notify(NotificationID.APK_UPDATE_PROMPT_INSTALL, mBuilder.build());
+        return mBuilder.build();
+    }
+
+    /**
+     * Android needs the user to confirm the update (the first self-update of
+     * an install another app put on the phone, or any update before Android
+     * 12) and Firedown, in the background, could not open that dialog: a
+     * notification whose tap opens it. Removed by the install's outcome.
+     */
+    public static void showConfirmInstall(Context context, Intent confirmationIntent) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        Intent intent = new Intent(confirmationIntent);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        PendingIntent contentIntent = PendingIntent.getActivity(context,
+                NotificationID.APK_UPDATE_CONFIRM_INSTALL, intent,
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        String name = PreferenceManager.getDefaultSharedPreferences(context)
+                .getString(Keys.UPDATE_META, null);
+        CharSequence body = TextUtils.isEmpty(name)
+                ? context.getText(R.string.update_prompt_install_body)
+                : context.getString(R.string.update_prompt_install_body_versioned, name);
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, App.UPDATES_NOTIFICATION_ID);
+        mBuilder.setSmallIcon(R.drawable.ic_firedown_notification);
+        mBuilder.setOnlyAlertOnce(true);
+        mBuilder.setAutoCancel(true);
+        mBuilder.setWhen(System.currentTimeMillis());
+        mBuilder.setContentTitle(context.getText(R.string.update_prompt_install_title));
+        mBuilder.setContentText(body);
+        mBuilder.setContentIntent(contentIntent);
+        mBuilder.setOngoing(false);
+        NotificationManagerCompat.from(context).notify(NotificationID.APK_UPDATE_CONFIRM_INSTALL, mBuilder.build());
+    }
+
+    /** The install has an outcome: the confirmation has nothing left to open. */
+    public static void cancelConfirmInstall(Context context) {
+        NotificationManagerCompat.from(context).cancel(NotificationID.APK_UPDATE_CONFIRM_INSTALL);
+    }
+
+    /** Android's confirmation is waiting in the shade (see {@link #showConfirmInstall}). */
+    public static boolean isConfirmInstallShowing(Context context) {
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) {
+            return false;
+        }
+        try {
+            for (StatusBarNotification n : nm.getActiveNotifications()) {
+                if (n.getId() == NotificationID.APK_UPDATE_CONFIRM_INSTALL) {
+                    return true;
+                }
+            }
+        } catch (RuntimeException e) {
+            return false;
+        }
+        return false;
     }
 
     /** Android answered (or never did): the progress has nothing left to say. */

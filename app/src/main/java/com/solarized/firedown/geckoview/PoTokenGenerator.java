@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -226,11 +227,12 @@ public class PoTokenGenerator {
      *  <ul>
      *    <li>{@link #VIDEO}: bound to the video ID. What the player request
      *        and the timedtext (subtitles) request check.</li>
-     *    <li>{@link #VISITOR}: bound to the visitor data. What the
-     *        Google Video Server checks on {@code videoplayback} — the SABR
-     *        stream's {@code poToken} (yt-dlp's GVS context; on the WEB
-     *        client a logged-out session binds to visitor data).</li>
-     *  </ul> */
+     *    <li>{@link #VISITOR}: bound to the visitor data.</li>
+     *  </ul>
+     *  The Google Video Server ({@code videoplayback}, the SABR stream's
+     *  {@code poToken}) checks ONE of the two, depending on a player
+     *  experiment of the session; {@code SabrStrategy} tries one and
+     *  switches when the server does not accept it. */
     public enum Binding {
         VIDEO("video"),
         VISITOR("visitor");
@@ -263,6 +265,19 @@ public class PoTokenGenerator {
      *  (see {@link #generateFresh}). A retry after a refusal therefore pays
      *  one real attestation. Consumed on the first mint of that key. */
     @GuardedBy("lock") private final Set<String> forceFreshNext = new HashSet<>();
+
+    /** Tokens the page's own player sent for a video, newest last. */
+    @GuardedBy("lock") private final LinkedHashMap<String, CachedToken> playerTokens = new LinkedHashMap<>();
+    private static final int MAX_PLAYER_TOKENS = 32;
+    /** How long a token the page's player sent is offered to a download.
+     *  Half the lifetime the server states for the attestation behind a
+     *  token (12 h): how old the player's attestation was is not known. */
+    private static final long PLAYER_TOKEN_TTL_MS = 6L * 60 * 60 * 1000;
+
+    /** When this hidden session's first attestation was made (0 = none
+     *  yet) and how many it has made, as the page reports them. */
+    @GuardedBy("lock") private long firstAttestedAt;
+    @GuardedBy("lock") private int attestations;
 
     /** A minted token plus when we minted it, so {@link #TOKEN_CACHE_TTL_MS}
      *  can be enforced on read. */
@@ -339,16 +354,11 @@ public class PoTokenGenerator {
     }
 
     /**
-     * Mint the PO token a SABR / {@code videoplayback} request carries: bound
-     * to the VISITOR DATA, not the video ({@link Binding#VISITOR}). This is
-     * the token the Google Video Server validates, and it checks the binding
-     * against the session's visitor — a video-bound token there is accepted
-     * unchecked most of the time and refused the moment the server
-     * spot-checks, which is how a download used to die at ~60 s with
-     * {@code STREAM_PROTECTION_STATUS 3} after two immediate re-mint
-     * refusals, then work fine on the next launch. Same blocking contract as
-     * {@link #generate}. {@code videoId} is only carried for logging and
-     * for the page to fall back on when visitorData is empty.
+     * Mint a PO token bound to the VISITOR DATA ({@link Binding#VISITOR}):
+     * the stream token of a session whose Google Video Server checks the
+     * visitor and not the video (see {@link Binding}). Same blocking
+     * contract as {@link #generate}. {@code videoId} is only carried for
+     * logging and for the page to fall back on when visitorData is empty.
      */
     @Nullable
     public String generateForStream(@NonNull String videoId, @NonNull String visitorData) {
@@ -391,6 +401,36 @@ public class PoTokenGenerator {
     @Nullable
     public String generateFresh(@NonNull String videoId, @Nullable String visitorData) {
         return generate(Binding.VIDEO, videoId, visitorData, true);
+    }
+
+    /** Keeps the PO token the page's own player sent in a stream request
+     *  for {@code videoId}; the newest one replaces an earlier one. */
+    public void adoptPlayerToken(@NonNull String videoId, @NonNull String token) {
+        if (TextUtils.isEmpty(videoId) || TextUtils.isEmpty(token)) return;
+        synchronized (lock) {
+            playerTokens.remove(videoId);
+            playerTokens.put(videoId, new CachedToken(token, System.currentTimeMillis()));
+            Iterator<String> it = playerTokens.keySet().iterator();
+            while (playerTokens.size() > MAX_PLAYER_TOKENS && it.hasNext()) {
+                it.next();
+                it.remove();
+            }
+        }
+        Log.i(TAG, "adoptPlayerToken: " + videoId + " " + token.length() + " chars");
+    }
+
+    /** The page player's own token for {@code videoId}, or null. */
+    @Nullable
+    public String playerToken(@NonNull String videoId) {
+        synchronized (lock) {
+            CachedToken kept = playerTokens.get(videoId);
+            if (kept == null) return null;
+            if (System.currentTimeMillis() - kept.mintedAt > PLAYER_TOKEN_TTL_MS) {
+                playerTokens.remove(videoId);
+                return null;
+            }
+            return kept.token;
+        }
     }
 
     /** {@link #generateFresh} for the visitor-bound stream token — the
@@ -773,6 +813,9 @@ public class PoTokenGenerator {
                 // 2) Open the session — content scripts attach here.
                 s.open(runtime);
                 opened = true;
+                // A window of the screen's size: with no display the page
+                // reads 0x0, which the attestation VM reports.
+                HiddenSessionDisplay.attach(s);
                 // 3) Mark active so the WebExtension API treats this as a
                 //    live tab for content-script injection purposes.
                 s.setActive(true);
@@ -799,6 +842,7 @@ public class PoTokenGenerator {
                 }
                 if (abandoned) {
                     Log.w(TAG, "createSession: abandoned while queued — closing the orphan");
+                    HiddenSessionDisplay.release(s);
                     s.close();
                     return;
                 }
@@ -813,6 +857,7 @@ public class PoTokenGenerator {
                 // it holds a content process for the life of the app.
                 if (s != null && opened) {
                     try {
+                        HiddenSessionDisplay.release(s);
                         s.close();
                     } catch (Exception ignored) {
                         // Already dying; nothing useful left to do.
@@ -936,7 +981,10 @@ public class PoTokenGenerator {
                 String requestId = json.optString("requestId", "");
                 Log.i(TAG, "port: mintResult id=" + requestId
                         + " token=" + json.optString("token", "").length() + " chars"
-                        + " error=" + json.optString("error", ""));
+                        + " error=" + json.optString("error", "")
+                        + " minterAge=" + json.optLong("age", -1) + "ms"
+                        + " sinceFirstAttest=" + noteAttestation(json.optLong("age", -1), json.optInt("attests", 0)) + "ms"
+                        + " attest=" + json.optString("info", ""));
                 if (requestId.isEmpty()) {
                     Log.w(TAG, "mintResult missing requestId");
                     return;
@@ -966,12 +1014,28 @@ public class PoTokenGenerator {
     }
 
     /** Caller MUST hold {@link #lock}. */
+    /** Records the attestations the page reports with a mint reply (its
+     *  minter's age and how many attestations it has made), and returns how
+     *  long ago this session's first one was (-1 = not reported). */
+    private long noteAttestation(long minterAge, int count) {
+        if (minterAge < 0 || count <= 0) return -1;
+        final long now = System.currentTimeMillis();
+        synchronized (lock) {
+            if (count > attestations) {
+                attestations = count;
+                if (firstAttestedAt == 0) firstAttestedAt = now - minterAge;
+            }
+            return firstAttestedAt > 0 ? now - firstAttestedAt : -1;
+        }
+    }
+
     private void closeSessionLocked() {
         if (session != null) {
             final GeckoSession s = session;
             session = null;
             mainHandler.post(() -> {
                 try {
+                    HiddenSessionDisplay.release(s);
                     s.close();
                 } catch (Exception e) {
                     Log.w(TAG, "session.close failed", e);
@@ -987,6 +1051,8 @@ public class PoTokenGenerator {
         // A rebuilt session attests from scratch anyway, so a pending
         // force-fresh mark has nothing left to force.
         forceFreshNext.clear();
+        firstAttestedAt = 0;
+        attestations = 0;
         if (readyFuture != null && !readyFuture.isDone()) {
             readyFuture.completeExceptionally(new IllegalStateException("session closing"));
         }

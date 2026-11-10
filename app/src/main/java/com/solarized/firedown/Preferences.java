@@ -27,8 +27,8 @@ public class Preferences {
      * APK download now goes through DownloadManager (so it survives the app
      * process being evicted mid-download). App-specific external storage needs
      * no runtime permission. Falls back to internal storage only on the rare
-     * device with no external volume mounted (DownloadManager is skipped
-     * there — see UpdateWorker). The path matches
+     * device with no external volume mounted (DownloadManager can't write
+     * there; the download is direct — see UpdateDirectDownload). The path matches
      * DownloadManager.Request.setDestinationInExternalFilesDir(ctx, null,
      * UPDATE_APK) so the receiver reads exactly what was written.
      */
@@ -73,7 +73,6 @@ public class Preferences {
     // One-shot "you may need to play the embedded media first" banner on the
     // Capture sheet. Set once the user taps or dismisses it, so it never returns
     // (the toolbar Help item remains the permanent affordance).
-    public static final String CAPTURE_HELP_BANNER_DISMISSED = "com.solarized.firedown.preferences.capture.help.banner.dismissed";
 
     public static final String SORT_LOCAL = "com.solarized.firedown.preferences.sort.local";
 
@@ -244,6 +243,18 @@ public class Preferences {
             "com.solarized.firedown.preferences.browser.addressbar.hostonly";
 
     public static final boolean DEFAULT_ADDRESS_BAR_HOST_ONLY = false;
+
+    /**
+     * A link another app hands to Firedown (VIEW, SEND, a web search) opens
+     * in a PRIVATE tab: out of history, its downloads in the Safe Folder.
+     * Firefox for Android's "Open links in a private tab". OFF by default;
+     * read by IntentHandler when the link arrives. The launcher's "New
+     * private tab" shortcut (LauncherShortcuts) is the other way in.
+     */
+    public static final String SETTINGS_EXTERNAL_LINKS_PRIVATE =
+            "com.solarized.firedown.preferences.browser.external.private";
+
+    public static final boolean DEFAULT_EXTERNAL_LINKS_PRIVATE = false;
 
     public static final String SETTINGS_THEME = "com.solarized.firedown.preferences.theme";
 

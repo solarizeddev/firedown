@@ -261,8 +261,6 @@
         <item quantity="other">%d de solicitări blocate pe această pagină</item>
     </plurals>
     <string name="capture_help_menu">Ajutor</string>
-    <string name="capture_help_banner_title">Videoclipul nu apare?</string>
-    <string name="capture_help_banner">Unele conținuturi încorporate trebuie redate mai întâi. Atinge pentru a afla cum.</string>
     <string name="bookmark_export">Exportă marcajele</string>
     <string name="bookmark_export_done">%1$d marcaje exportate în Download/Firedown/backup</string>
     <string name="bookmark_import">Importă marcaje</string>
