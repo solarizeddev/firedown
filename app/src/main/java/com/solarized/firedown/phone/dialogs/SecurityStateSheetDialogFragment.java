@@ -572,9 +572,12 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         } else {
             mProtectionTitle.setText(R.string.shield_no_blocker_title);
         }
-        if (mBlockedCount > 0) {
+        if (on && mBlockedCount > 0) {
             mTotalCountTextView.setText(blockedSummary(mBlockedCount));
         } else {
+            // Off: a count left from before the user turned the blocker off
+            // would contradict the title until the page reloads; the tap
+            // still lists the hosts.
             mTotalCountTextView.setText(on ? R.string.blocked_page_empty : R.string.shield_no_blocker_summary);
         }
 
@@ -592,10 +595,12 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
             title = MaterialColors.getColor(mProtectionBanner, com.google.android.material.R.attr.colorOnSurface);
             subtitle = MaterialColors.getColor(mProtectionBanner,
                     com.google.android.material.R.attr.colorOnSurfaceVariant);
+            // Off is a plain row: the rows' own tone. A lighter card reads as
+            // selected here (the private sheet's brightest violet did).
             int tone = mIsIncognito
-                    ? IncognitoColors.getSurfaceContainerHighest(mProtectionBanner.getContext(), true)
+                    ? IncognitoColors.getSurfaceContainerLow(mProtectionBanner.getContext(), true)
                     : MaterialColors.getColor(mProtectionBanner,
-                    com.google.android.material.R.attr.colorSurfaceContainerHighest);
+                    com.google.android.material.R.attr.colorSurfaceContainerLow);
             ground = new int[]{tone, tone};
         }
         mProtectionTitle.setTextColor(title);
@@ -604,7 +609,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         // The address bar's protected and reduced shields (its secure-axis
         // variants are the connection row's business here).
         mProtectionIcon.setImageResource(on ? R.drawable.ic_shield_check_filled_24 : R.drawable.ic_shield_privacy_tip_24);
-        mProtectionIcon.setImageTintList(ColorStateList.valueOf(title));
+        mProtectionIcon.setImageTintList(ColorStateList.valueOf(on ? title : subtitle));
 
         GradientDrawable background = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, ground);
         float outer = getResources().getDimension(R.dimen.sheet_group_corner_outer);

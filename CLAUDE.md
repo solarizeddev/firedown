@@ -364,14 +364,23 @@ user runs (sketch: `sketches/shield-blockers.html`).
   is the shield's verdict from the SAME `AddonManager.shieldState` the
   address bar reads, so the two cannot disagree: "Protection is on" /
   "Protection is off for this site" / "No ad blocker is on"; under it the
-  page count (`blocked_ads_summary`, number bold), else "Nothing blocked on
-  this page yet" (on) or "Ads load on this page"; a tap opens the refused
+  page count (`blocked_ads_summary`, number bold) while ON, else "Nothing
+  blocked on this page yet" (on) or "Ads load on this page" (off or no
+  blocker: a count left from before the user turned the blocker off would
+  contradict the title until the page reloads); a tap opens the refused
   hosts. On: the logo's peach→coral gradient (`protection_banner_*`, a
   deeper start in light theme so its edge shows on the light sheet) under
   dark inks, 5.9:1 or more at every stop; no magenta end, which leans
-  toward the private-tab purple. Off or no blocker: a plain
-  surfaceContainerHighest ground (the incognito one in private tabs) and
-  theme inks, so colour alone says "off". The ground is a GradientDrawable
+  toward the private-tab purple. Dark theme DIMS the same stops
+  (`#D9A083`→`#DE736C`, canvas board G1, 2026-11): the light-theme pastel
+  was the brightest thing on the dark sheet (~10:1). It stays a light fill
+  under dark ink, never a dark coral under white (rust, and the one
+  inverted card), and never a tonal wash (picked against: too unlike the
+  light theme's banner). Off or no blocker: the ROWS' OWN tone
+  (surfaceContainerLow, the incognito one in private tabs), theme inks and
+  the privacy-tip shield, so "off" is a plain row and colour alone says
+  it; it was surfaceContainerHighest, which in a private tab is the
+  brightest violet and read as a selected card (on-device). The ground is a GradientDrawable
   on the card's child with the card's own corners (`hasCardAfterBanner`):
   a card cannot clip a child to unequal corners before Android 11. A
   24dp shield in the rows' icon column (the bar's own two shields, full
