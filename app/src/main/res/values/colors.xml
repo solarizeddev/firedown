@@ -364,13 +364,4 @@
          so fixed colours, the brand coral on white like other browsers'. -->
     <color name="shortcut_icon_background">#FFFFFF</color>
     <color name="shortcut_icon_glyph">#FF716C</color>
-    <!-- The security sheet's protection banner while protection is on: the
-         logo's peach to coral fills the 40dp disc behind the shield (the
-         card itself is a plain row), dark ink on it, 5.9:1 or more at every
-         stop. No magenta end, which leans toward the private-tab purple.
-         Light theme starts deeper, or the peach melts into the light row. -->
-    <color name="protection_banner_start">#FFFFA98A</color>
-    <color name="protection_banner_mid">#FFFF8F80</color>
-    <color name="protection_banner_end">#FFFF7068</color>
-    <color name="protection_banner_ink">#FF2B0613</color>
 </resources>

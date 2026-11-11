@@ -15,7 +15,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
-import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
@@ -39,6 +38,7 @@ import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.utils.NavigationUtils;
+import com.solarized.firedown.utils.SelectionStyling;
 import com.solarized.firedown.utils.SheetGroups;
 import com.solarized.firedown.utils.UrlStringUtils;
 import com.solarized.firedown.utils.WebUtils;
@@ -91,7 +91,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     private MaterialButton mProtectionButton;
     private ImageView mProtectionChevron;
     private ImageView mProtectionIcon;
-    private View mProtectionIconDisc;
     /** The page's blocked-request count, as last reported (the banner's subtitle). */
     private int mBlockedCount;
     private AppCompatImageView mHostImage;
@@ -154,7 +153,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mProtectionButton = mView.findViewById(R.id.protection_button);
         mProtectionChevron = mView.findViewById(R.id.protection_chevron);
         mProtectionIcon = mView.findViewById(R.id.protection_icon);
-        mProtectionIconDisc = mView.findViewById(R.id.protection_icon_disc);
 
         // The "N blocked on this page" summary row drills into the page's
         // refused hosts. The nav action popUpTo dialog_security_info
@@ -534,9 +532,9 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
      * AddonManager.shieldState the address bar's shield reads), the page's
      * count, and Turn on when no blocker runs here, the one switch the app
      * can flip itself (a blocker's per-site switch is in its own popup,
-     * the row below). A plain row in every state; on, the logo's
-     * peach-to-coral fills the disc behind the shield. Called on every count
-     * and every add-on change.
+     * the row below). A plain row in every state; the shield is coral while
+     * protection is on, grey off. Called on every count and every add-on
+     * change.
      */
     private void renderBanner() {
         if (mProtectionBanner == null || mGeckoState == null || !isAdded()) {
@@ -567,11 +565,11 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         }
 
         // A row like the ones under it in both states: the rows' own tone
-        // (the incognito one in private tabs) and the theme's inks. On, the
-        // logo's peach to coral fills the disc behind the shield and nothing
-        // else: the whole card in those colours was the loudest thing on the
-        // sheet, for the state nearly every page shows. Off: a grey shield,
-        // no disc, so the colour alone says protection is off.
+        // (the incognito one in private tabs) and the theme's inks. The
+        // shield carries the state: the brand coral while protection is on
+        // (the private tabs' primary in a private tab), grey off. A gradient
+        // card, then a gradient disc behind the shield, were both louder
+        // than a status row should be (canvas boards K and L).
         int title = MaterialColors.getColor(mProtectionBanner, com.google.android.material.R.attr.colorOnSurface);
         int subtitle = MaterialColors.getColor(mProtectionBanner,
                 com.google.android.material.R.attr.colorOnSurfaceVariant);
@@ -579,25 +577,16 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 ? IncognitoColors.getSurfaceContainerLow(mProtectionBanner.getContext(), true)
                 : MaterialColors.getColor(mProtectionBanner,
                 com.google.android.material.R.attr.colorSurfaceContainerLow);
+        int shieldInk = !on ? subtitle
+                : mIsIncognito ? IncognitoColors.getPrimary(mProtectionBanner.getContext(), true)
+                : SelectionStyling.selectionInk(mProtectionBanner.getContext());
         mProtectionTitle.setTextColor(title);
         mTotalCountTextView.setTextColor(subtitle);
         mProtectionChevron.setImageTintList(ColorStateList.valueOf(subtitle));
         // The address bar's protected and reduced shields (its secure-axis
         // variants are the connection row's business here).
         mProtectionIcon.setImageResource(on ? R.drawable.ic_shield_check_filled_24 : R.drawable.ic_shield_privacy_tip_24);
-        if (on) {
-            GradientDrawable disc = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{
-                    ContextCompat.getColor(requireContext(), R.color.protection_banner_start),
-                    ContextCompat.getColor(requireContext(), R.color.protection_banner_mid),
-                    ContextCompat.getColor(requireContext(), R.color.protection_banner_end)});
-            disc.setShape(GradientDrawable.OVAL);
-            mProtectionIconDisc.setBackground(disc);
-            mProtectionIcon.setImageTintList(ColorStateList.valueOf(
-                    ContextCompat.getColor(requireContext(), R.color.protection_banner_ink)));
-        } else {
-            mProtectionIconDisc.setBackground(null);
-            mProtectionIcon.setImageTintList(ColorStateList.valueOf(subtitle));
-        }
+        mProtectionIcon.setImageTintList(ColorStateList.valueOf(shieldInk));
 
         GradientDrawable background = new GradientDrawable();
         background.setColor(tone);
@@ -707,7 +696,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mProtectionButton = null;
         mProtectionChevron = null;
         mProtectionIcon = null;
-        mProtectionIconDisc = null;
         mView = null;
     }
 }

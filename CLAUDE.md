@@ -391,22 +391,22 @@ user runs (sketch: `sketches/shield-blockers.html`).
   also turned down putting the page's captures in this sheet: a second
   door to the Captured sheet, and blocked requests beside offered media
   read as a sum). A tap opens the refused hosts. **The banner is a plain row in every
-  state** (canvas board K, option B, 2026-11, reviewed with Fable): the
-  ROWS' OWN tone (surfaceContainerLow, the incognito one in private tabs)
-  and theme inks, a 16sp title like the rows'. While protection is on, the
-  logo's peach→coral (`protection_banner_*`, no magenta end, which leans
-  toward the private-tab purple) fills ONLY a 40dp disc behind the shield,
-  dark ink on it, its centre on the rows' icon column. It shipped for a
-  build as a full gradient CARD and was reported as too much: in dark
-  theme the brightest surface on the sheet, a promo slot on an ad
-  blocker's sheet, and the loudest colour spent on the state nearly every
-  page shows. History, for the next round: the card's dark-theme stops
-  were dimmed once (`#DFA080`→`#DE736C`, board G1; the disc keeps them), a
-  dark coral under white read rust, and a tonal wash was too unlike the
-  light theme. Don't bring the gradient back to the card. Off or no
-  blocker: no disc, the grey privacy-tip shield, so the colour alone says
-  it; the off ground was surfaceContainerHighest once, which in a private
-  tab is the brightest violet and read as a selected card (on-device).
+  state** (canvas boards K and L, 2026-11, reviewed with Fable): the ROWS'
+  OWN tone (surfaceContainerLow, the incognito one in private tabs), theme
+  inks, a 16sp title, and a blocker row's 64dp / 8dp padding. The shield in
+  the rows' 24dp icon column carries the state: the brand coral
+  (`SelectionStyling.selectionInk`, the private tabs' primary in a private
+  tab) while protection is on, the grey privacy-tip shield off. Two louder
+  versions shipped and were taken back on-device: a full peach→coral
+  gradient CARD (in dark theme the brightest surface on the sheet, a promo
+  slot on an ad blocker's sheet, the loudest colour spent on the state
+  nearly every page shows; its dark stops had already been dimmed once),
+  then the gradient on a 40dp disc behind the shield (read as a second
+  avatar under the page's 40dp site tile, the gradient came out as flat
+  salmon at that size, and two coloured shields stacked over uBlock's).
+  Don't bring a gradient or a container back to this row. The off ground
+  was surfaceContainerHighest once, which in a private tab is the
+  brightest violet and read as a selected card (on-device).
   The ground is a GradientDrawable
   on the card's child with the card's own corners (`hasCardAfterBanner`):
   a card cannot clip a child to unequal corners before Android 11. The

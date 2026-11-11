@@ -141,10 +141,9 @@
                      disagree), the page's count under it, and a tap into the
                      page's refused hosts (BlockedAdsDetailDialogFragment).
                      A row like the ones under it (the rows' tone, theme
-                     inks); while protection is on, the logo's peach→coral
-                     fills only the disc behind the shield (canvas board K,
-                     B: a full gradient card was the loudest thing on the
-                     sheet for the state every page shows). The fragment
+                     inks, the same 64dp and 8dp padding as a blocker row);
+                     the shield is coral while protection is on, grey off
+                     (canvas board L1). The fragment
                      paints the ground (protection_banner) with the card's
                      own corners: the card cannot clip a child to unequal
                      corners before Android 11. Its one button is
@@ -168,36 +167,21 @@
                         android:gravity="center_vertical"
                         android:minHeight="64dp"
                         android:orientation="horizontal"
-                        android:paddingVertical="10dp"
-                        android:paddingStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:paddingStart="16dp"
                         android:paddingEnd="12dp">
 
-                        <!-- The shield on a 40dp disc whose centre sits on the
-                             rows' icon column (8dp in: the rows' 24dp icon
-                             starts 16dp in). Padding, not a negative margin:
-                             the banner clips its children to its padding.
-                             On: the logo's gradient fills the disc, the only
-                             colour on the card. Off: no disc. -->
-                        <FrameLayout
-                            android:id="@+id/protection_icon_disc"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:importantForAccessibility="noHideDescendants">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:id="@+id/protection_icon"
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:layout_gravity="center"
-                                android:importantForAccessibility="no"
-                                app:srcCompat="@drawable/ic_shield_24" />
-
-                        </FrameLayout>
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/protection_icon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:importantForAccessibility="no"
+                            app:srcCompat="@drawable/ic_shield_24" />
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginStart="16dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
