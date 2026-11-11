@@ -394,9 +394,11 @@ user runs (sketch: `sketches/shield-blockers.html`).
   state** (canvas boards K and L, 2026-11, reviewed with Fable): the ROWS'
   OWN tone (surfaceContainerLow, the incognito one in private tabs), theme
   inks, a 16sp title, and a blocker row's 64dp / 8dp padding. The shield in
-  the rows' 24dp icon column is GREY in every state, like the address bar's;
-  its glyph (the tick, or the privacy-tip exclamation) and the words say on
-  or off. The sheet's colour is the blocker's own logo in the row below.
+  the rows' 24dp icon column is the address bar's own pair, GREY in every
+  state: the plain outline shield (`ic_shield_24`) on, the privacy-tip
+  exclamation off; the glyph and the words say on or off. (A filled
+  check-shield from the older Material Icons set sat there for a build: the
+  heaviest glyph on the sheet, beside uBlock's filled logo.) The sheet's colour is the blocker's own logo in the row below.
   Three louder versions shipped and were taken back on-device: a full
   peach→coral gradient CARD (in dark theme the brightest surface on the
   sheet, a promo slot on an ad blocker's sheet, the loudest colour spent on

@@ -582,7 +582,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mProtectionChevron.setImageTintList(ColorStateList.valueOf(subtitle));
         // The address bar's protected and reduced shields (its secure-axis
         // variants are the connection row's business here).
-        mProtectionIcon.setImageResource(on ? R.drawable.ic_shield_check_filled_24 : R.drawable.ic_shield_privacy_tip_24);
+        mProtectionIcon.setImageResource(on ? R.drawable.ic_shield_24 : R.drawable.ic_shield_privacy_tip_24);
         mProtectionIcon.setImageTintList(ColorStateList.valueOf(subtitle));
 
         GradientDrawable background = new GradientDrawable();
