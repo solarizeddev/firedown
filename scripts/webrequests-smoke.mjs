@@ -2613,38 +2613,69 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 
 // ---------------------------------------------------------------------------
 // pip-layout: Java's "the tab is in a PiP window" message puts ONE user-origin
-// sheet on that tab's frames; leaving takes it off the tab it was put on, and
-// a resend (the page in the window committed) takes it off before putting it
-// back, in order.
+// sheet on that tab's frames; a repeat for the same tab does nothing (a
+// remove-then-insert would flash the controls); leaving takes it off the tab
+// it was put on; an "off" the page lost track of still removes; a stale tab
+// id falls back to the active tab; a failed removal is retried.
 // ---------------------------------------------------------------------------
 {
   const portMessage = registrations["port.onMessage"];
-  const calls = [];
-  browser.tabs.insertCSS = async (tabId, d) => { calls.push(["insert", tabId, d]); };
-  browser.tabs.removeCSS = async (tabId, d) => { calls.push(["remove", tabId, d]); };
+  const realQuery = browser.tabs.query;
+  let calls = [];
+  let failInsert = new Set();
+  let failRemove = false;
+  browser.tabs.insertCSS = async (tabId, d) => {
+    calls.push(["insert", tabId, d]);
+    if (failInsert.has(tabId)) throw new Error("no tab");
+  };
+  browser.tabs.removeCSS = async (tabId, d) => {
+    calls.push(["remove", tabId, d]);
+    if (failRemove) throw new Error("gone");
+  };
+  browser.tabs.query = async () => [{ id: 42 }];
   const send = (msg) => { for (const fn of portMessage) fn(msg); };
   const settleChain = () => new Promise((r) => setTimeout(r, 20));
+  const seq = () => calls.map((c) => c[0] + c[1]).join(",");
+
+  send({ type: "pip-layout", on: false, tabId: 7 });
+  await settleChain();
+  expect(seq() === "remove7", `pip-layout: an off with no sheet known still removes from the tab named (got ${seq()})`);
+  calls = [];
   send({ type: "pip-layout", on: true, tabId: 7 });
   await settleChain();
-  expect(calls.length === 1 && calls[0][0] === "insert" && calls[0][1] === 7,
-    "pip-layout: entering puts the sheet on the tab");
-  const d = calls[0][2] || {};
-  expect(d.cssOrigin === "user" && d.allFrames === true && /:fullscreen:has\(video\)/.test(d.code || ""),
+  expect(seq() === "insert7", `pip-layout: entering puts the sheet on the tab (got ${seq()})`);
+  const d = calls[0] && calls[0][2] || {};
+  expect(d.cssOrigin === "user" && d.allFrames === true && d.matchAboutBlank === true
+      && /:fullscreen:has\(video\)/.test(d.code || ""),
     "pip-layout: a user-origin sheet on every frame, gated on a fullscreen video");
   send({ type: "pip-layout", on: true, tabId: 7 });
   await settleChain();
-  expect(calls.length === 3 && calls[1][0] === "remove" && calls[2][0] === "insert",
-    "pip-layout: a resend takes the sheet off before putting it back");
-  send({ type: "pip-layout", on: false, tabId: 9 });
-  send({ type: "pip-layout", on: true, tabId: 9 });
+  expect(seq() === "insert7", `pip-layout: a repeat for the same tab does nothing (got ${seq()})`);
   send({ type: "pip-layout", on: false, tabId: 9 });
   await settleChain();
-  const tail = calls.slice(3).map((c) => c[0] + c[1]).join(",");
-  expect(tail === "remove7,insert9,remove9",
-    `pip-layout: off/on/off run in order, each off on the tab the sheet is on (got ${tail})`);
-  send({ type: "pip-layout", on: false, tabId: 9 });
+  expect(seq() === "insert7,remove7", `pip-layout: an off takes the sheet off the tab it is on (got ${seq()})`);
+
+  calls = [];
+  failInsert = new Set([5]);
+  send({ type: "pip-layout", on: true, tabId: 5 });
   await settleChain();
-  expect(calls.length === 6, "pip-layout: an off with no sheet on does nothing");
+  expect(seq() === "insert5,insert42", `pip-layout: a stale tab id falls back to the active tab (got ${seq()})`);
+  calls = [];
+  failRemove = true;
+  send({ type: "pip-layout", on: false, tabId: 5 });
+  await settleChain();
+  failRemove = false;
+  send({ type: "pip-layout", on: false, tabId: 5 });
+  await settleChain();
+  expect(seq() === "remove42,remove42", `pip-layout: a failed removal is tried again (got ${seq()})`);
+  calls = [];
+  send({ type: "pip-layout", on: false, tabId: -1 });
+  send({ type: "pip-layout", on: true, tabId: "x" });
+  await settleChain();
+  expect(seq() === "insert42", `pip-layout: an invalid tab id goes to the active tab, an off with none does nothing (got ${seq()})`);
+  send({ type: "pip-layout", on: false, tabId: -1 });
+  await settleChain();
+  browser.tabs.query = realQuery;
 }
 
 if (failures) {

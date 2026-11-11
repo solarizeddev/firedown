@@ -2156,32 +2156,68 @@ const PIP_LAYOUT_DETAILS = { code: PIP_LAYOUT_CSS, allFrames: true, matchAboutBl
 let pipLayoutTab = -1;
 let pipLayoutChain = Promise.resolve();
 
-// Off, then on again when asked: a resend after the page in the window
-// commits or loads must reach its new document, and one sheet at a time.
 // Calls run in order, each after the last one's insert or removal settled.
+// Sent on entry and exit only: a document that replaces the fullscreen one is
+// not fullscreen and cannot become so in the window, so it has nothing to
+// hide, and a remove-then-insert would flash the controls.
 export function setPipLayout(on, tabId) {
   pipLayoutChain = pipLayoutChain.then(() => applyPipLayout(on, tabId));
   return pipLayoutChain;
 }
 
-async function applyPipLayout(on, tabId) {
-  if (pipLayoutTab >= 0) {
-    const previous = pipLayoutTab;
-    pipLayoutTab = -1;
-    try {
-      await browser.tabs.removeCSS(previous, PIP_LAYOUT_DETAILS);
-    } catch (e) {
-      if (DEBUG) console.warn('[req] pip layout removal failed:', e?.message);
-    }
+async function removePipLayout(tabId) {
+  try {
+    await browser.tabs.removeCSS(tabId, PIP_LAYOUT_DETAILS);
+    return true;
+  } catch (e) {
+    if (DEBUG) console.warn('[req] pip layout removal failed:', tabId, e?.message);
+    return false;
   }
-  if (!on || typeof tabId !== 'number' || tabId < 0) {
-    return;
-  }
-  pipLayoutTab = tabId;
+}
+
+async function insertPipLayout(tabId) {
   try {
     await browser.tabs.insertCSS(tabId, PIP_LAYOUT_DETAILS);
+    if (DEBUG) console.log('[req] pip layout on tab', tabId);
+    return true;
   } catch (e) {
-    if (DEBUG) console.warn('[req] pip layout failed:', e?.message);
+    if (DEBUG) console.warn('[req] pip layout failed:', tabId, e?.message);
+    return false;
+  }
+}
+
+async function applyPipLayout(on, tabId) {
+  const validTab = typeof tabId === 'number' && tabId >= 0;
+  if (on && validTab && tabId === pipLayoutTab) {
+    return;
+  }
+  if (pipLayoutTab >= 0) {
+    if (await removePipLayout(pipLayoutTab)) {
+      pipLayoutTab = -1;
+    }
+  } else if (!on && validTab) {
+    // A sheet this page lost track of (the background restarted): an "off"
+    // still takes it off the tab named, or the expanded video keeps no
+    // controls. Removing a sheet that is not there does nothing.
+    await removePipLayout(tabId);
+  }
+  if (!on) {
+    return;
+  }
+  // The tab id Java holds can lag (before the extension's first report, a
+  // tab a page just opened): the active tab is the one in the window.
+  if (validTab && await insertPipLayout(tabId)) {
+    pipLayoutTab = tabId;
+    return;
+  }
+  try {
+    const tabs = await browser.tabs.query({ active: true });
+    const active = tabs && tabs[0] && tabs[0].id;
+    if (typeof active === 'number' && active !== tabId && await insertPipLayout(active)) {
+      pipLayoutTab = active;
+    }
+  } catch (e) {
+    if (DEBUG) console.warn('[req] pip layout: no active tab:', e?.message);
   }
 }
 

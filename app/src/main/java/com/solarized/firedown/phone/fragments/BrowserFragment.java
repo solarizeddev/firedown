@@ -2117,6 +2117,7 @@ public class BrowserFragment extends BaseBrowserFragment
         if (target == mPipModeSession) {
             return;
         }
+        boolean hadLayout = mPipModeSession != null;
         if (mPipModeSession != null) {
             notifyPipMode(mPipModeSession, false);
             mPipModeSession = null;
@@ -2124,6 +2125,14 @@ public class BrowserFragment extends BaseBrowserFragment
         if (target != null && target.isOpen()) {
             notifyPipMode(target, true);
             mPipModeSession = target;
+        }
+        // The page's own controls laid over the video (a player whose video
+        // sits in a stacking context below them) are hidden by a stylesheet
+        // the capture extension holds while the tab is in the window. Entry
+        // and exit only: the resend is for Gecko's flag, a new document is
+        // not fullscreen and has nothing to hide.
+        if (hadLayout || mPipModeSession != null) {
+            mGeckoRuntimeHelper.setPipLayout(mPipModeSession != null);
         }
     }
 
@@ -2141,12 +2150,7 @@ public class BrowserFragment extends BaseBrowserFragment
         }
     }
 
-    private void notifyPipMode(GeckoSession session, boolean inPip) {
-        // The page's own controls laid over the video (a player whose video
-        // sits in a stacking context below them) are hidden by a stylesheet
-        // the capture extension holds; Gecko's rule cannot lift the video
-        // past them.
-        mGeckoRuntimeHelper.setPipLayout(inPip);
+    private static void notifyPipMode(GeckoSession session, boolean inPip) {
         if (!session.isOpen()) {
             return;
         }

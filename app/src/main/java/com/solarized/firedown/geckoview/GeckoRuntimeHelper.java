@@ -1230,9 +1230,8 @@ public class GeckoRuntimeHelper {
     /**
      * The tab on screen entered or left a picture-in-picture window: the
      * capture extension lays a user stylesheet over its fullscreen video's
-     * siblings while it is there (requests.js setPipLayout). Sent again with
-     * {@code true} when the page in the window commits or loads, since the
-     * sheet belongs to one document.
+     * siblings while it is there (requests.js setPipLayout). The extension
+     * falls back to its active tab when {@code mTabId} lags.
      */
     public void setPipLayout(boolean inPip) {
         try {

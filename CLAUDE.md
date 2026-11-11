@@ -13814,8 +13814,8 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   into another process).
 - **The page's own controls are hidden by a user stylesheet while in the
   window** (`requests.js` `setPipLayout` / `PIP_LAYOUT_CSS`, sent by
-  `GeckoRuntimeHelper.setPipLayout` from `notifyPipMode`, so on entry, on
-  exit and on every resend). Gecko's rule raises the `<video>` to the
+  `GeckoRuntimeHelper.setPipLayout` from `applyPipMode`, on entry and exit
+  only). Gecko's rule raises the `<video>` to the
   highest z-index, but only inside its own stacking context: a player that
   keeps its video in a wrapper with a z-index of its own and its controls
   in a sibling above it (mobile YouTube) kept the controls painted over the
@@ -13824,7 +13824,14 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   `<video>` that is neither a video nor holds one, and every pseudo-element
   in it; `tabs.insertCSS` with `cssOrigin: "user"` on all frames, so a
   page's own `!important` loses; one sheet at a time, taken off the tab it
-  was put on. Driven by the app's own PiP signal, never a size guess (a
+  was put on. Never re-sent with the flag's resend on commit/stop: a
+  replaced document is not fullscreen and has nothing to hide, and a
+  remove-then-insert flashed the controls on every autoplay-next (a
+  pushState). A stale tab id (before the extension's first report, a tab a
+  page just opened) falls back to the active tab; an "off" with no sheet
+  known still removes from the tab named, and a failed removal is retried
+  on the next one — a sheet left on would leave the expanded fullscreen
+  video with no controls. Driven by the app's own PiP signal, never a size guess (a
   content script measuring the window was built first and dropped: its
   threshold disagreed with pip-fix's and a small freeform window would lose
   its controls). A fullscreen element with no `<video>` in its light DOM
