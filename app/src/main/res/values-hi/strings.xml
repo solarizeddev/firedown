@@ -899,7 +899,6 @@
     <string name="update_check_found">अपडेट %1$s मिला। तैयार होने पर आपको सूचित किया जाएगा</string>
     <string name="update_check_failed">अपडेट की जांच नहीं हो सकी। बाद में फिर से प्रयास करें।</string>
     <string name="update_downloading_title">अपडेट डाउनलोड हो रहा है</string>
-    <string name="update_sheet_hide">छिपाएँ</string>
     <string name="update_downloading_label">डाउनलोड हो रहा है…</string>
     <string name="update_download_progress">%2$s में से %1$s</string>
     <string name="update_download_verifying">डाउनलोड की जाँच हो रही है…</string>

@@ -1186,7 +1186,6 @@
     <string name="update_available_sheet_whats_new">Yang baru</string>
     <string name="update_check_failed">Tidak dapat memeriksa pembaruan. Coba lagi nanti.</string>
     <string name="update_downloading_title">Mengunduh pembaruan</string>
-    <string name="update_sheet_hide">Sembunyikan</string>
     <string name="update_downloading_label">Mengunduh…</string>
     <string name="update_download_progress">%1$s dari %2$s</string>
     <string name="update_download_verifying">Memeriksa unduhan…</string>

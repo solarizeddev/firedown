@@ -14,6 +14,7 @@ import android.os.SystemClock;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -44,8 +45,8 @@ import dagger.hilt.android.EntryPointAccessors;
 
 /**
  * The "Update ready" sheet on a device: it opens by itself on Downloads with
- * no download size and a "Not now" button; "Not now" snoozes it and it stays
- * away; while a task runs it does not open by itself, and opened on purpose
+ * no download size and Install as its only button; Back (the dialog's
+ * cancel) snoozes it and it stays away; while a task runs it does not open by itself, and opened on purpose
  * (the ⋮ row's way in) it says what would stop and writes no snooze.
  *
  * <p>An update is faked as the debug UpdateTestReceiver does: the ready
@@ -137,32 +138,29 @@ public class UpdateSheetDeviceTest {
     }
 
     @Test
-    public void opensOnDownloadsWithNoSizeAndANotNowButton() {
+    public void opensOnDownloadsWithNoSizeAndInstallAlone() {
         launch();
         View sheet = awaitSheet();
         AtomicReference<String> version = new AtomicReference<>();
-        AtomicReference<Integer> notNow = new AtomicReference<>();
         AtomicReference<Integer> install = new AtomicReference<>();
         AtomicReference<Integer> busyLine = new AtomicReference<>();
         onMain(() -> {
             version.set(((TextView) sheet.findViewById(R.id.update_sheet_version)).getText().toString());
-            notNow.set(sheet.findViewById(R.id.update_sheet_not_now).getVisibility());
             install.set(sheet.findViewById(R.id.update_sheet_install).getVisibility());
             busyLine.set(sheet.findViewById(R.id.update_sheet_busy).getVisibility());
         });
         // The version alone: no "· 213 MB" after it.
         assertEquals(TEST_NAME, version.get());
-        assertEquals(View.VISIBLE, (int) notNow.get());
         assertEquals(View.VISIBLE, (int) install.get());
         assertEquals("nothing runs, so nothing would stop", View.GONE, (int) busyLine.get());
     }
 
     @Test
-    public void notNowSnoozesAndTheSheetStaysAway() {
+    public void backSnoozesAndTheSheetStaysAway() {
         launch();
         View sheet = awaitSheet();
         long before = System.currentTimeMillis();
-        onMain(() -> sheet.findViewById(R.id.update_sheet_not_now).performClick());
+        pressBackOnSheet();
         awaitNoSheet();
         assertEquals(mReadyCode, mPrefs.getInt(Keys.UPDATE_PROMPT_SNOOZE_VERSION, -1));
         assertEquals(1, mPrefs.getInt(Keys.UPDATE_PROMPT_SNOOZE_COUNT, 0));
@@ -195,7 +193,7 @@ public class UpdateSheetDeviceTest {
         assertEquals(View.VISIBLE, (int) busyLine.get());
         assertEquals(mApp.getString(R.string.update_busy_task), busyText.get());
 
-        onMain(() -> sheet.findViewById(R.id.update_sheet_not_now).performClick());
+        pressBackOnSheet();
         awaitNoSheet();
         assertEquals("a sheet the user opened writes no snooze",
                 -1, mPrefs.getInt(Keys.UPDATE_PROMPT_SNOOZE_VERSION, -1));
@@ -213,6 +211,14 @@ public class UpdateSheetDeviceTest {
         mScenario.onActivity(activity ->
                 found.set(activity.getSupportFragmentManager().findFragmentByTag(SHEET_TAG)));
         return found.get();
+    }
+
+    /** Back on the sheet: the dialog's cancel, which is how it is closed now. */
+    private void pressBackOnSheet() {
+        Fragment f = sheetFragment();
+        assertTrue("no update sheet to close", f instanceof DialogFragment);
+        DialogFragment sheet = (DialogFragment) f;
+        onMain(() -> sheet.requireDialog().cancel());
     }
 
     private View awaitSheet() {

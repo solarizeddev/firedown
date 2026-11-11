@@ -929,7 +929,6 @@
     <string name="update_check_found">Päivitys %1$s löytyi. Saat ilmoituksen, kun se on valmis</string>
     <string name="update_check_failed">Päivitysten tarkistus epäonnistui. Yritä myöhemmin uudelleen.</string>
     <string name="update_downloading_title">Ladataan päivitystä</string>
-    <string name="update_sheet_hide">Piilota</string>
     <string name="update_downloading_label">Ladataan…</string>
     <string name="update_download_progress">%1$s / %2$s</string>
     <string name="update_download_verifying">Tarkistetaan latausta…</string>

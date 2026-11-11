@@ -870,7 +870,6 @@
     <string name="update_check_found">Leiti uuendus %1$s. Saad teate, kui see on valmis</string>
     <string name="update_check_failed">Uuenduste kontroll ebaõnnestus. Proovi hiljem uuesti.</string>
     <string name="update_downloading_title">Värskenduse allalaadimine</string>
-    <string name="update_sheet_hide">Peida</string>
     <string name="update_downloading_label">Allalaadimine…</string>
     <string name="update_download_progress">%1$s / %2$s</string>
     <string name="update_download_verifying">Allalaaditu kontrollimine…</string>

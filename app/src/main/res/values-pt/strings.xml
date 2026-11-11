@@ -976,7 +976,6 @@
     <string name="update_check_found">Atualização %1$s encontrada. Você será notificado quando estiver pronta</string>
     <string name="update_check_failed">Não foi possível procurar atualizações. Tente novamente mais tarde.</string>
     <string name="update_downloading_title">A transferir a atualização</string>
-    <string name="update_sheet_hide">Ocultar</string>
     <string name="update_downloading_label">A transferir…</string>
     <string name="update_download_progress">%1$s de %2$s</string>
     <string name="update_download_verifying">A verificar a transferência…</string>

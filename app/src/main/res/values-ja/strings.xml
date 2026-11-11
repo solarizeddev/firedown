@@ -1057,7 +1057,6 @@
     <string name="update_check_found">アップデート %1$s が見つかりました。準備ができたら通知されます</string>
     <string name="update_check_failed">アップデートを確認できませんでした。後でもう一度お試しください。</string>
     <string name="update_downloading_title">アップデートをダウンロード中</string>
-    <string name="update_sheet_hide">非表示</string>
     <string name="update_downloading_label">ダウンロード中…</string>
     <string name="update_download_progress">%1$s / %2$s</string>
     <string name="update_download_verifying">ダウンロードを確認しています…</string>

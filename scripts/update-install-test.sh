@@ -482,7 +482,7 @@ no_sheet() {
 
 # open_sheet SHOT KIND [MB]: the update made ready (prepare_ready KIND MB),
 # Firedown started, its sheet on screen. A touch outside a sheet closes it
-# like "Not now", so a finger that closes it gets one more try. False, after
+# like Back, so a finger that closes it gets one more try. False, after
 # reporting why, when there is no sheet.
 open_sheet() {
     local shot=$1 kind=$2 mb=${3:-0} try seen
@@ -502,7 +502,7 @@ open_sheet() {
         fi
         seen=$(sheet_seen "sheet try $try")
         if [ "$try" = 1 ] && [ -n "$seen" ] && [ "$seen" != shown ] && [ "$SCREEN_READ" = 1 ]; then
-            info "a finger on the screen closed the sheet at $seen (a touch outside a sheet is Not now); trying once more. Keep your hands off the phone"
+            info "a finger on the screen closed the sheet at $seen (a touch outside a sheet closes it); trying once more. Keep your hands off the phone"
             continue
         fi
         no_sheet "$shot" "$seen"
