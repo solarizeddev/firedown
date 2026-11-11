@@ -18,8 +18,9 @@
 
     Protection leads because the address bar's icon is a shield whose state
     is the blocker's: the sheet opens on what the icon said. On a plain http
-    page group 2 leads instead (orderGroups), so "Protection is on" never
-    sits above "Connection is not secure".
+    page, or one whose certificate is not secure, group 2 leads instead
+    (orderGroups), so "Protection is on" never sits above "Connection is
+    not secure".
 
     Every row is a selectable MaterialCardView on colorSurfaceContainerLow
     over the sheet's High ground; rows that belong together are one GROUP
@@ -187,7 +188,8 @@
                                 style="@style/TextAppearance.Material3.TitleMedium"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:maxLines="2"
+                                android:ellipsize="end"
+                                android:maxLines="3"
                                 android:textSize="17sp"
                                 android:textStyle="bold"
                                 tools:text="Protection is on" />

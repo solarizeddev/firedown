@@ -267,6 +267,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
             mHostText.setCompoundDrawablesRelativeWithIntrinsicBounds(
                     isSecure ? R.drawable.encryption_light_24 : R.drawable.no_encryption_light_24, 0, 0, 0);
             mHostCert.setEnabled(true);
+            orderGroups();
         });
 
         // Favicon resolution is async and routinely races the user opening
@@ -442,26 +443,47 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     /**
      * Protection leads the sheet: the address bar's icon is a shield whose
      * state is the blocker's, so the sheet opens on what the icon said. On a
-     * plain http page the connection group leads instead, so "Protection is
-     * on" never sits above "Connection is not secure" as reassurance.
+     * page whose connection is not secure (plain http, or a certificate that
+     * arrived and is not secure) the connection group leads instead, so
+     * "Protection is on" never sits above "Connection is not secure" as
+     * reassurance. An https page whose certificate has not arrived yet keeps
+     * protection first; the certificate observer calls this again.
      */
     private void orderGroups() {
-        String url = mGeckoState.getEntityUri();
-        if (url == null || !url.startsWith("http://")) {
+        if (mView == null) {
             return;
         }
+        String url = mGeckoState.getEntityUri();
+        boolean insecure = (url != null && url.startsWith("http://"))
+                || (mCertificateInfoEntity != null && !mCertificateInfoEntity.isSecure);
         View connection = mView.findViewById(R.id.connection_group);
-        ViewGroup body = (ViewGroup) connection.getParent();
-        body.removeView(connection);
-        body.addView(connection, 0);
-        int gap = getResources().getDimensionPixelSize(R.dimen.sheet_group_gap);
-        ViewGroup.MarginLayoutParams first = (ViewGroup.MarginLayoutParams) connection.getLayoutParams();
-        first.topMargin = 0;
-        connection.setLayoutParams(first);
         View blockers = mView.findViewById(R.id.blockers_group);
-        ViewGroup.MarginLayoutParams second = (ViewGroup.MarginLayoutParams) blockers.getLayoutParams();
+        ViewGroup body = (ViewGroup) connection.getParent();
+        View lead = insecure ? connection : blockers;
+        View follower = insecure ? blockers : connection;
+        if (body.indexOfChild(lead) != 0) {
+            // The hint stays under the blockers group whichever way round.
+            View hint = mView.findViewById(R.id.blockers_hint);
+            body.removeView(connection);
+            body.removeView(blockers);
+            body.removeView(hint);
+            int at = 0;
+            if (insecure) {
+                body.addView(connection, at++);
+            }
+            body.addView(blockers, at++);
+            body.addView(hint, at++);
+            if (!insecure) {
+                body.addView(connection, at);
+            }
+        }
+        int gap = getResources().getDimensionPixelSize(R.dimen.sheet_group_gap);
+        ViewGroup.MarginLayoutParams first = (ViewGroup.MarginLayoutParams) lead.getLayoutParams();
+        first.topMargin = 0;
+        lead.setLayoutParams(first);
+        ViewGroup.MarginLayoutParams second = (ViewGroup.MarginLayoutParams) follower.getLayoutParams();
         second.topMargin = gap;
-        blockers.setLayoutParams(second);
+        follower.setLayoutParams(second);
     }
 
     /**
@@ -579,8 +601,8 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mProtectionTitle.setTextColor(title);
         mTotalCountTextView.setTextColor(subtitle);
         mProtectionChevron.setImageTintList(ColorStateList.valueOf(subtitle));
-        // The address bar's two shields: full when protected, the
-        // privacy-tip one when a layer is off (GeckoToolbar.updateShieldIcon).
+        // The address bar's protected and reduced shields (its secure-axis
+        // variants are the connection row's business here).
         mProtectionIcon.setImageResource(on ? R.drawable.ic_shield_24 : R.drawable.ic_shield_privacy_tip_24);
         mProtectionIcon.setImageTintList(ColorStateList.valueOf(title));
 
@@ -597,9 +619,13 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
             mProtectionButton.setEnabled(!busy);
             mProtectionButton.setOnClickListener(v -> mAddonManager.turnOnUblock(mIsIncognito));
             mProtectionButton.setVisibility(View.VISIBLE);
+            // The button is the action here; a chevron beside it would leave
+            // the title too narrow on a small phone.
+            mProtectionChevron.setVisibility(View.GONE);
         } else {
             mProtectionButton.setOnClickListener(null);
             mProtectionButton.setVisibility(View.GONE);
+            mProtectionChevron.setVisibility(View.VISIBLE);
         }
     }
 

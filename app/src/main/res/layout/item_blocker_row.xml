@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- One ad blocker behind the shield (SecurityStateSheetDialogFragment):
      its icon, its name on one line, what it does in this tab ("On for this
-     site", "Off for this site", "On", "Doesn't run in private tabs") and a
-     chevron to its popup — or a button instead of the chevron (Allow, Turn
-     on). No count: the add-on's own badge is in its popup, and beside the
-     sheet's page total it read as a share of it. The same row reads "No
-     ad blocker is on" when none runs here. -->
+     site · turn off in its menu", "Off for this site · turn on in its
+     menu", "On", "Doesn't run in private tabs") and a chevron to its popup,
+     or the tonal Allow instead of the chevron. No count: the add-on's own
+     badge is in its popup, and beside the sheet's page total it read as a
+     share of it. "No ad blocker is on" and its Turn on are the protection
+     banner's above the rows, not this row's; blocker_button stays hidden. -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     style="@style/Firedown.Widget.SheetRowCard">

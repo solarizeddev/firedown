@@ -349,10 +349,13 @@ user runs (sketch: `sketches/shield-blockers.html`).
   answer: an empty list would be a tap to learn "nothing"). Protection
   leads (2026-11, reviewed with Fable): the address-bar icon is a shield
   whose state is the blocker's, so the sheet opens on what the icon said,
-  and on HTTPS the connection row reads the same on nearly every page. On a
-  plain http page the connection group leads instead (`orderGroups`), so
+  and on HTTPS the connection row reads the same on nearly every page. On an
+  insecure page the connection group leads instead (`orderGroups`), so
   "Protection is on" never sits above "Connection is not secure" as
-  reassurance; a blocker not allowed in a
+  reassurance (also an https page whose certificate arrives not secure:
+  the certificate observer reorders; one not yet arrived keeps protection
+  first). While the banner shows Turn on its chevron hides and the title
+  takes up to three lines (a long locale on a 360dp phone); a blocker not allowed in a
   private tab says so with "Allow". More than one running adds one quiet
   line (no warning colour: the user chose it).
 - **The protection banner** (`ads_stat_card` / `renderBanner`; canvas
@@ -12336,8 +12339,8 @@ ONE ROW PER AD BLOCKER add-on (uBlock Origin first; a tap opens its popup,
 where its per-site switch lives); then the connection group (DRM when
 asked, "Connection is secure ›", Site permissions); then "Clear browsing
 data ›". Protection leads because the address-bar icon is a shield whose
-state is the blocker's; on a plain http page the connection group leads
-instead (`orderGroups`). See "Blockers behind the shield" for the order's
+state is the blocker's; on an insecure page (plain http, or a certificate
+that is not secure) the connection group leads instead (`orderGroups`). See "Blockers behind the shield" for the order's
 rules. The **"Block ads and trackers" switch is GONE** with the
 patched uBlock it talked to — see "Blockers behind the shield" for the
 rows, the shield rule and the count. Decisions, each a maintainer call
