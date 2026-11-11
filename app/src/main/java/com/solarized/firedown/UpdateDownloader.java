@@ -688,8 +688,9 @@ public final class UpdateDownloader {
                 return new Progress(Progress.Phase.DOWNLOADING, bytes, total, pending.versionCode, pending.name);
             }
         } catch (RuntimeException e) {
-            // A Download Manager disabled after the download was recorded.
-            Log.w(TAG, "could not read download " + id, e);
+            // The Download Manager turned off while it holds the download:
+            // the progress is unknown, never a crash of the screen asking.
+            Log.w(TAG, "could not read the progress of download " + id, e);
         }
         return new Progress(Progress.Phase.DOWNLOADING, 0L, total, pending.versionCode, pending.name);
     }

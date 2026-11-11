@@ -967,6 +967,15 @@ public final class UpdateFlowHarness {
         row.total = 5000;
         p = UpdateDownloader.progress(ctx);
         check(p.total == 5000 && p.percent() == 20, s + "the size the Download Manager reports wins");
+        dm.disabled = true;
+        try {
+            p = UpdateDownloader.progress(ctx);
+            check(p.phase == UpdateDownloader.Progress.Phase.DOWNLOADING && p.bytes == 0,
+                    s + "a Download Manager turned off mid-download reads as downloading, progress unknown");
+        } catch (RuntimeException e) {
+            check(false, s + "a Download Manager turned off mid-download throws out of progress(): " + e);
+        }
+        dm.disabled = false;
         finish(row);
         check(UpdateDownloader.progress(ctx).phase == UpdateDownloader.Progress.Phase.PREPARING,
                 s + "a finished download not yet claimed reads as preparing");
