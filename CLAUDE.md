@@ -394,17 +394,18 @@ user runs (sketch: `sketches/shield-blockers.html`).
   state** (canvas boards K and L, 2026-11, reviewed with Fable): the ROWS'
   OWN tone (surfaceContainerLow, the incognito one in private tabs), theme
   inks, a 16sp title, and a blocker row's 64dp / 8dp padding. The shield in
-  the rows' 24dp icon column carries the state: the brand coral
-  (`SelectionStyling.selectionInk`, the private tabs' primary in a private
-  tab) while protection is on, the grey privacy-tip shield off. Two louder
-  versions shipped and were taken back on-device: a full peach→coral
-  gradient CARD (in dark theme the brightest surface on the sheet, a promo
-  slot on an ad blocker's sheet, the loudest colour spent on the state
-  nearly every page shows; its dark stops had already been dimmed once),
-  then the gradient on a 40dp disc behind the shield (read as a second
-  avatar under the page's 40dp site tile, the gradient came out as flat
-  salmon at that size, and two coloured shields stacked over uBlock's).
-  Don't bring a gradient or a container back to this row. The off ground
+  the rows' 24dp icon column is GREY in every state, like the address bar's;
+  its glyph (the tick, or the privacy-tip exclamation) and the words say on
+  or off. The sheet's colour is the blocker's own logo in the row below.
+  Three louder versions shipped and were taken back on-device: a full
+  peach→coral gradient CARD (in dark theme the brightest surface on the
+  sheet, a promo slot on an ad blocker's sheet, the loudest colour spent on
+  the state nearly every page shows; its dark stops had already been
+  dimmed once), the gradient on a 40dp disc behind the shield (read as a
+  second avatar under the page's 40dp site tile, flat salmon at that
+  size), and a coral shield (two red shields stacked over uBlock's logo).
+  Don't bring a gradient, a container or a coloured shield back to this
+  row. The off ground
   was surfaceContainerHighest once, which in a private tab is the
   brightest violet and read as a selected card (on-device).
   The ground is a GradientDrawable

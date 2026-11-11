@@ -38,7 +38,6 @@ import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.utils.NavigationUtils;
-import com.solarized.firedown.utils.SelectionStyling;
 import com.solarized.firedown.utils.SheetGroups;
 import com.solarized.firedown.utils.UrlStringUtils;
 import com.solarized.firedown.utils.WebUtils;
@@ -532,8 +531,8 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
      * AddonManager.shieldState the address bar's shield reads), the page's
      * count, and Turn on when no blocker runs here, the one switch the app
      * can flip itself (a blocker's per-site switch is in its own popup,
-     * the row below). A plain row in every state; the shield is coral while
-     * protection is on, grey off. Called on every count and every add-on
+     * the row below). A plain row in every state, a grey shield whose glyph
+     * says on or off. Called on every count and every add-on
      * change.
      */
     private void renderBanner() {
@@ -565,11 +564,12 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         }
 
         // A row like the ones under it in both states: the rows' own tone
-        // (the incognito one in private tabs) and the theme's inks. The
-        // shield carries the state: the brand coral while protection is on
-        // (the private tabs' primary in a private tab), grey off. A gradient
-        // card, then a gradient disc behind the shield, were both louder
-        // than a status row should be (canvas boards K and L).
+        // (the incognito one in private tabs), the theme's inks, and a grey
+        // shield like the address bar's. The glyph (tick or exclamation)
+        // and the words carry the state; the colour on this sheet is the
+        // blocker's own logo in the row below. A gradient card, a gradient
+        // disc and a coral shield were each louder than a status row should
+        // be (canvas boards K and L, on-device).
         int title = MaterialColors.getColor(mProtectionBanner, com.google.android.material.R.attr.colorOnSurface);
         int subtitle = MaterialColors.getColor(mProtectionBanner,
                 com.google.android.material.R.attr.colorOnSurfaceVariant);
@@ -577,16 +577,13 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 ? IncognitoColors.getSurfaceContainerLow(mProtectionBanner.getContext(), true)
                 : MaterialColors.getColor(mProtectionBanner,
                 com.google.android.material.R.attr.colorSurfaceContainerLow);
-        int shieldInk = !on ? subtitle
-                : mIsIncognito ? IncognitoColors.getPrimary(mProtectionBanner.getContext(), true)
-                : SelectionStyling.selectionInk(mProtectionBanner.getContext());
         mProtectionTitle.setTextColor(title);
         mTotalCountTextView.setTextColor(subtitle);
         mProtectionChevron.setImageTintList(ColorStateList.valueOf(subtitle));
         // The address bar's protected and reduced shields (its secure-axis
         // variants are the connection row's business here).
         mProtectionIcon.setImageResource(on ? R.drawable.ic_shield_check_filled_24 : R.drawable.ic_shield_privacy_tip_24);
-        mProtectionIcon.setImageTintList(ColorStateList.valueOf(shieldInk));
+        mProtectionIcon.setImageTintList(ColorStateList.valueOf(subtitle));
 
         GradientDrawable background = new GradientDrawable();
         background.setColor(tone);

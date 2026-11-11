@@ -142,8 +142,8 @@
                      page's refused hosts (BlockedAdsDetailDialogFragment).
                      A row like the ones under it (the rows' tone, theme
                      inks, the same 64dp and 8dp padding as a blocker row);
-                     the shield is coral while protection is on, grey off
-                     (canvas board L1). The fragment
+                     a grey shield like the address bar's, its glyph (tick or
+                     exclamation) saying on or off. The fragment
                      paints the ground (protection_banner) with the card's
                      own corners: the card cannot clip a child to unequal
                      corners before Android 11. Its one button is
