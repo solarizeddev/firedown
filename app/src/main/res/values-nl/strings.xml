@@ -495,7 +495,6 @@
     <string name="update_auto_update_success_body">Bijgewerkt naar %1$s.</string>
     <string name="update_auto_update_success_default_body">Bijgewerkt naar de nieuwste versie.</string>
     <string name="update_auto_update_success_title">Firedown bijgewerkt</string>
-    <string name="update_available_sheet_current">Huidige versie %1$s</string>
     <string name="update_available_sheet_install">Installeren</string>
     <string name="update_install_preparing">Update voorbereiden…</string>
     <string name="update_install_installing">Installeren…</string>

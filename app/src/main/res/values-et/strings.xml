@@ -434,7 +434,6 @@
     <string name="update_auto_update_success_body">Uuendatud versioonile %1$s.</string>
     <string name="update_auto_update_success_default_body">Uuendatud uusimale versioonile.</string>
     <string name="update_auto_update_success_title">Firedown uuendatud</string>
-    <string name="update_available_sheet_current">Praegune versioon %1$s</string>
     <string name="update_available_sheet_install">Paigalda</string>
     <string name="update_install_preparing">Uuenduse ettevalmistamine…</string>
     <string name="update_install_installing">Paigaldamine…</string>

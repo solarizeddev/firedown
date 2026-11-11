@@ -598,7 +598,6 @@
     <string name="update_auto_update_success_body">バージョン%1$sに自動更新されました。</string>
     <string name="update_auto_update_success_default_body">最新バージョンに自動更新されました。</string>
     <string name="update_auto_update_success_title">Firedownを更新しました</string>
-    <string name="update_available_sheet_current">現在のバージョン %1$s</string>
     <string name="update_available_sheet_install">インストール</string>
     <string name="update_install_preparing">アップデートを準備しています…</string>
     <string name="update_install_installing">インストールしています…</string>

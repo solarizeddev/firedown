@@ -405,7 +405,7 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         // runs before it, and a stopped app needs no progress.
     }
 
-    /** The version line, the one it replaces, and the notes when there are any. */
+    /** The version line, and the notes when there are any. */
     private void bindVersion(@NonNull View view, @Nullable String name, @Nullable String changelog) {
         String shown = (name == null || name.isEmpty())
                 ? getString(R.string.app_name) : name;
@@ -416,10 +416,6 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         // patch of a few MB).
         TextView version = view.findViewById(R.id.update_sheet_version);
         version.setText(shown);
-
-        // ...and the version it replaces.
-        TextView current = view.findViewById(R.id.update_sheet_current);
-        current.setText(getString(R.string.update_available_sheet_current, App.getVersionName()));
 
         // "What's new" header + release notes — both shown only when status.json
         // carries a changelog for this version.

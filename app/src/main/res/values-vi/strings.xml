@@ -1176,7 +1176,6 @@
     <string name="update_auto_update_success_body">Đã cập nhật lên %1$s.</string>
     <string name="update_auto_update_success_default_body">Đã cập nhật lên phiên bản mới nhất.</string>
     <string name="update_auto_update_success_title">Đã cập nhật Firedown</string>
-    <string name="update_available_sheet_current">Phiên bản hiện tại %1$s</string>
     <string name="update_available_sheet_install">Cài đặt</string>
     <string name="update_ready_title">Bản cập nhật đã sẵn sàng</string>
     <string name="update_sheet_closes_note">Firedown sẽ đóng trong khi cài đặt bản cập nhật.</string>

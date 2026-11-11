@@ -495,7 +495,6 @@
     <string name="update_auto_update_success_body">%1$s sürümüne güncellendi.</string>
     <string name="update_auto_update_success_default_body">En son sürüme güncellendi.</string>
     <string name="update_auto_update_success_title">Firedown güncellendi</string>
-    <string name="update_available_sheet_current">Mevcut sürüm %1$s</string>
     <string name="update_available_sheet_install">Yükle</string>
     <string name="update_install_preparing">Güncelleme hazırlanıyor…</string>
     <string name="update_install_installing">Yükleniyor…</string>

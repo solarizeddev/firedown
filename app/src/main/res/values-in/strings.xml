@@ -1175,7 +1175,6 @@
     <string name="update_auto_update_success_body">Diperbarui ke %1$s.</string>
     <string name="update_auto_update_success_default_body">Diperbarui ke versi terbaru.</string>
     <string name="update_auto_update_success_title">Firedown diperbarui</string>
-    <string name="update_available_sheet_current">Versi saat ini %1$s</string>
     <string name="update_available_sheet_install">Pasang</string>
     <string name="update_ready_title">Pembaruan siap</string>
     <string name="update_sheet_closes_note">Firedown tertutup selama pembaruan dipasang.</string>

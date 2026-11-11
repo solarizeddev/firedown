@@ -606,7 +606,6 @@
     <string name="update_auto_update_success_body">Se actualizó automáticamente a la versión %1$s.</string>
     <string name="update_auto_update_success_default_body">Se actualizó automáticamente a la última versión.</string>
     <string name="update_auto_update_success_title">Firedown actualizado correctamente</string>
-    <string name="update_available_sheet_current">Versión actual %1$s</string>
     <string name="update_available_sheet_install">Instalar</string>
     <string name="update_install_preparing">Preparando la actualización…</string>
     <string name="update_install_installing">Instalando…</string>

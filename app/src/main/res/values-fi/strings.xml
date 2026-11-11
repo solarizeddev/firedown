@@ -465,7 +465,6 @@
     <string name="update_auto_update_success_body">Päivitetty versioon %1$s.</string>
     <string name="update_auto_update_success_default_body">Päivitetty uusimpaan versioon.</string>
     <string name="update_auto_update_success_title">Firedown päivitetty</string>
-    <string name="update_available_sheet_current">Nykyinen versio %1$s</string>
     <string name="update_available_sheet_install">Asenna</string>
     <string name="update_install_preparing">Valmistellaan päivitystä…</string>
     <string name="update_install_installing">Asennetaan…</string>

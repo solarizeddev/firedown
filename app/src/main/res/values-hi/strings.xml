@@ -408,7 +408,6 @@
     <string name="update_auto_update_success_body">%1$s पर अपडेट किया गया।</string>
     <string name="update_auto_update_success_default_body">नवीनतम संस्करण पर अपडेट किया गया।</string>
     <string name="update_auto_update_success_title">Firedown अपडेट हो गया</string>
-    <string name="update_available_sheet_current">वर्तमान संस्करण %1$s</string>
     <string name="update_available_sheet_install">इंस्टॉल करें</string>
     <string name="update_install_preparing">अपडेट तैयार हो रहा है…</string>
     <string name="update_install_installing">इंस्टॉल हो रहा है…</string>
