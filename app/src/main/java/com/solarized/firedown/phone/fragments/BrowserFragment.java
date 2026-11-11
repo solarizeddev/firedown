@@ -99,6 +99,7 @@ import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
+import com.solarized.firedown.phone.dialogs.AddonPopupSheetDialogFragment;
 import com.solarized.firedown.phone.dialogs.DrmSheetDialogFragment;
 import com.solarized.firedown.phone.dialogs.OpenInAppSheetDialogFragment;
 import com.solarized.firedown.ui.IncognitoColors;
@@ -1333,6 +1334,28 @@ public class BrowserFragment extends BaseBrowserFragment
                 OpenInAppSheetDialogFragment.RESULT_KEY,
                 getViewLifecycleOwner(),
                 (requestKey, result) -> onOpenInAppResult(result));
+
+        // Back from an add-on popup the shield sheet opened: the shield sheet
+        // again, now showing what the popup changed. Posted, so the popup's
+        // own pop has run and the browser is the current destination.
+        getParentFragmentManager().setFragmentResultListener(
+                AddonPopupSheetDialogFragment.RESULT_BACK_TO_SHIELD,
+                getViewLifecycleOwner(),
+                (requestKey, result) -> {
+                    View view = getView();
+                    if (view == null) {
+                        return;
+                    }
+                    view.post(() -> {
+                        if (getView() == null || mNavController == null) {
+                            return;
+                        }
+                        Bundle bundle = new Bundle();
+                        bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
+                        NavigationUtils.navigateSafe(mNavController, R.id.dialog_security_info,
+                                R.id.browser, bundle);
+                    });
+                });
 
         // The DRM sheet and the security sheet's "DRM is off" row both
         // answer here, so turning DRM on has one implementation.

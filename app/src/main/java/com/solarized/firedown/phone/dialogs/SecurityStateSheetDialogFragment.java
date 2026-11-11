@@ -415,6 +415,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 // switch lives there), which the browser shows in a sheet
                 // once this one is gone.
                 NavigationUtils.popBackStackSafe(mNavController, R.id.dialog_security_info);
+                mAddonManager.markShieldClick(item.addon.id);
                 action.click();
             });
         } else {

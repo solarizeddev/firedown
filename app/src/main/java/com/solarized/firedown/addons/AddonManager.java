@@ -224,12 +224,20 @@ public class AddonManager {
         @NonNull public final String addonId;
         @NonNull public final String name;
         @NonNull public final GeckoSession session;
+        /**
+         * Opened from the shield sheet's blocker row: leaving it with Back
+         * (or a tap outside) returns to that sheet, where the verdict now
+         * reflects what the user changed in the popup.
+         */
+        public final boolean fromShield;
         private final long mCreatedAt = SystemClock.elapsedRealtime();
 
-        Popup(@NonNull String addonId, @NonNull String name, @NonNull GeckoSession session) {
+        Popup(@NonNull String addonId, @NonNull String name, @NonNull GeckoSession session,
+              boolean fromShield) {
             this.addonId = addonId;
             this.name = name;
             this.session = session;
+            this.fromShield = fromShield;
         }
 
         /**
@@ -357,6 +365,10 @@ public class AddonManager {
     private final MutableLiveData<Prompt> mPrompt = new MutableLiveData<>(null);
     private final MutableLiveData<Event> mEvent = new MutableLiveData<>(null);
     private final MutableLiveData<Popup> mPopup = new MutableLiveData<>(null);
+    /** The add-on whose blocker row the shield sheet just opened, and when. */
+    @Nullable
+    private String mShieldClickAddon;
+    private long mShieldClickAt;
     private final MutableLiveData<Integer> mInstallsInFlight = new MutableLiveData<>(0);
     private final MutableLiveData<Set<String>> mInstalling = new MutableLiveData<>(Collections.emptySet());
     /** Add-ons whose update waits and whose question the user has not seen (the dots). */
@@ -1932,9 +1944,22 @@ public class AddonManager {
         session.setNavigationDelegate(mPopupNavigationDelegate);
         session.open(runtime);
         mPageSessions.put(session, extension.id);
-        Popup popup = new Popup(extension.id, AddonInfo.from(extension).name, session);
+        boolean fromShield = extension.id.equals(mShieldClickAddon)
+                && SystemClock.elapsedRealtime() - mShieldClickAt <= Popup.SHOW_WINDOW_MS;
+        mShieldClickAddon = null;
+        Popup popup = new Popup(extension.id, AddonInfo.from(extension).name, session, fromShield);
         mPopup.setValue(popup);
         return GeckoResult.fromValue(session);
+    }
+
+    /**
+     * The shield sheet's blocker row was tapped for this add-on: a popup it
+     * opens in the next moment came from that sheet ({@link Popup#fromShield}).
+     */
+    @UiThread
+    public void markShieldClick(@NonNull String addonId) {
+        mShieldClickAddon = addonId;
+        mShieldClickAt = SystemClock.elapsedRealtime();
     }
 
     /** The sheet closed, or the popup closed itself: the session goes with it. */

@@ -82,6 +82,19 @@ public class AddonPopupSheetDialogFragment extends BaseBottomSheetDialogFragment
         }
     }
 
+    /** Fragment result: the user left a popup opened from the shield sheet. */
+    public static final String RESULT_BACK_TO_SHIELD = "addon_popup_back_to_shield";
+
+    @Override
+    public void onCancel(@NonNull DialogInterface dialog) {
+        super.onCancel(dialog);
+        // Back or a tap outside, never the add-on closing its own popup
+        // (that is a pop, not a cancel): return to the sheet it came from.
+        if (mPopup != null && mPopup.fromShield) {
+            getParentFragmentManager().setFragmentResult(RESULT_BACK_TO_SHIELD, new Bundle());
+        }
+    }
+
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
