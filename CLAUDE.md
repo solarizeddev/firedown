@@ -412,12 +412,13 @@ user runs (sketch: `sketches/shield-blockers.html`).
   the Material Icons chevron was the heaviest stroke on the sheet. One
   exception, `search_caret_24`, the 14dp caret on the home search button,
   stays at weight 400 because weight 300 thins to under a pixel there.
-  The browser menu's top row (Back, Forward, Bookmark, Reload/Stop) is
-  that set too, through its own `bookmark_light_24`,
-  `bookmark_filled_light_24`, `refresh_light_24` and `close_light_24`:
-  the shared `ic_bookmark_*` / `ic_refresh_24` / `ic_clear_24` stay as they
-  are, since the bottom bar and the address bar use them beside other
-  weight-400 glyphs.
+  The browser menu's two quick rows (Back, Forward, Bookmark, Reload/Stop;
+  Find, Desktop, Share, Save) are that set too, through their own
+  `*_light_24` drawables (`bookmark`, `bookmark_filled`, `refresh`,
+  `close`, `search`, `computer`, `share`, `archive`):
+  the shared `ic_*` files stay as they are, since the bottom bar, the
+  address bar, the download sheets and the file-type glyphs use them beside
+  other weight-400 glyphs.
   Three louder versions shipped and were taken back on-device: a full
   peach→coral gradient CARD (in dark theme the brightest surface on the
   sheet, a promo slot on an ad blocker's sheet, the loudest colour spent on

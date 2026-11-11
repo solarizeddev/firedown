@@ -245,28 +245,28 @@
                     style="@style/Firedown.Widget.PopupQuickRowButton"
                     android:contentDescription="@string/browser_menu_find_in_page"
                     android:text="@string/browser_menu_find_short"
-                    app:icon="@drawable/ic_search_24" />
+                    app:icon="@drawable/search_light_24" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/popup_desktop"
                     style="@style/Firedown.Widget.PopupQuickRowButton"
                     android:contentDescription="@string/browser_menu_desktop_site"
                     android:text="@string/browser_menu_desktop_short"
-                    app:icon="@drawable/ic_computer_24" />
+                    app:icon="@drawable/computer_light_24" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/popup_share"
                     style="@style/Firedown.Widget.PopupQuickRowButton"
                     android:contentDescription="@string/browser_menu_share"
                     android:text="@string/browser_menu_share"
-                    app:icon="@drawable/ic_share_24" />
+                    app:icon="@drawable/share_light_24" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/popup_save_snapshot"
                     style="@style/Firedown.Widget.PopupQuickRowButton"
                     android:contentDescription="@string/browser_menu_save_snapshot"
                     android:text="@string/browser_menu_save_short"
-                    app:icon="@drawable/ic_baseline_archive_24" />
+                    app:icon="@drawable/archive_light_24" />
 
             </LinearLayout>
 
