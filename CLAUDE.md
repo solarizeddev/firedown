@@ -13828,7 +13828,9 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   replaced document is not fullscreen and has nothing to hide, and a
   remove-then-insert flashed the controls on every autoplay-next (a
   pushState). A stale tab id (before the extension's first report, a tab a
-  page just opened) falls back to the active tab; an "off" with no sheet
+  page just opened) falls back to the tab the extension saw activated last
+  (`lastActiveTabId`, never a `tabs.query` for the active tab: the hidden
+  sessions are active tabs too); an "off" with no sheet
   known still removes from the tab named, and a failed removal is retried
   on the next one — a sheet left on would leave the expanded fullscreen
   video with no controls. Driven by the app's own PiP signal, never a size guess (a

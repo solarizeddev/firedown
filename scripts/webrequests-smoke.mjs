@@ -2620,7 +2620,6 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
 // ---------------------------------------------------------------------------
 {
   const portMessage = registrations["port.onMessage"];
-  const realQuery = browser.tabs.query;
   let calls = [];
   let failInsert = new Set();
   let failRemove = false;
@@ -2632,7 +2631,8 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     calls.push(["remove", tabId, d]);
     if (failRemove) throw new Error("gone");
   };
-  browser.tabs.query = async () => [{ id: 42 }];
+  // The tab the file saw activated last (tabs.onActivated) is the fallback.
+  for (const fn of registrations["tabs.onActivated"]) fn({ tabId: 42 });
   const send = (msg) => { for (const fn of portMessage) fn(msg); };
   const settleChain = () => new Promise((r) => setTimeout(r, 20));
   const seq = () => calls.map((c) => c[0] + c[1]).join(",");
@@ -2659,7 +2659,7 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   failInsert = new Set([5]);
   send({ type: "pip-layout", on: true, tabId: 5 });
   await settleChain();
-  expect(seq() === "insert5,insert42", `pip-layout: a stale tab id falls back to the active tab (got ${seq()})`);
+  expect(seq() === "insert5,insert42", `pip-layout: a stale tab id falls back to the tab activated last (got ${seq()})`);
   calls = [];
   failRemove = true;
   send({ type: "pip-layout", on: false, tabId: 5 });
@@ -2672,10 +2672,9 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   send({ type: "pip-layout", on: false, tabId: -1 });
   send({ type: "pip-layout", on: true, tabId: "x" });
   await settleChain();
-  expect(seq() === "insert42", `pip-layout: an invalid tab id goes to the active tab, an off with none does nothing (got ${seq()})`);
+  expect(seq() === "insert42", `pip-layout: an invalid tab id goes to the tab activated last, an off with none does nothing (got ${seq()})`);
   send({ type: "pip-layout", on: false, tabId: -1 });
   await settleChain();
-  browser.tabs.query = realQuery;
 }
 
 if (failures) {

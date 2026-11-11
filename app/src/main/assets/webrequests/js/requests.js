@@ -2205,19 +2205,18 @@ async function applyPipLayout(on, tabId) {
     return;
   }
   // The tab id Java holds can lag (before the extension's first report, a
-  // tab a page just opened): the active tab is the one in the window.
+  // tab a page just opened): the tab this file saw activated last is the one
+  // in the window. Not a tabs.query for the active tab: the hidden sessions
+  // (the token page, the share engine) are active tabs too. A removal that
+  // failed above is forgotten here when the sheet lands elsewhere; it fails
+  // because its tab is gone.
   if (validTab && await insertPipLayout(tabId)) {
     pipLayoutTab = tabId;
     return;
   }
-  try {
-    const tabs = await browser.tabs.query({ active: true });
-    const active = tabs && tabs[0] && tabs[0].id;
-    if (typeof active === 'number' && active !== tabId && await insertPipLayout(active)) {
-      pipLayoutTab = active;
-    }
-  } catch (e) {
-    if (DEBUG) console.warn('[req] pip layout: no active tab:', e?.message);
+  const active = lastActiveTabId;
+  if (active >= 0 && active !== tabId && await insertPipLayout(active)) {
+    pipLayoutTab = active;
   }
 }
 
