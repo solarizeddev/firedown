@@ -196,9 +196,19 @@ public class SitePermissionsDialogFragment extends BaseBottomSheetDialogFragment
      * answer it had (a page holding the location or extra storage keeps
      * them until it loads again). Only the tab still showing this site.
      */
+    /** Left with Back or a tap outside: return to the shield sheet ({@link ShieldReturn}). */
+    private boolean mCancelled;
+
+    @Override
+    public void onCancel(@NonNull DialogInterface dialog) {
+        super.onCancel(dialog);
+        mCancelled = true;
+    }
+
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
+        ShieldReturn.onDismiss(this, mCancelled);
         if (!mChanged || mHost == null || mActivity == null) {
             return;
         }

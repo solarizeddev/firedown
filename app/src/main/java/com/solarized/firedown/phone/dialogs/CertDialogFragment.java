@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -317,5 +318,20 @@ public class CertDialogFragment extends BaseBottomSheetDialogFragment {
                     .setDuration(200)
                     .start();
         });
+    }
+
+    /** Left with Back or a tap outside: return to the shield sheet ({@link ShieldReturn}). */
+    private boolean mCancelled;
+
+    @Override
+    public void onCancel(@NonNull DialogInterface dialog) {
+        super.onCancel(dialog);
+        mCancelled = true;
+    }
+
+    @Override
+    public void onDismiss(@NonNull DialogInterface dialog) {
+        super.onDismiss(dialog);
+        ShieldReturn.onDismiss(this, mCancelled);
     }
 }

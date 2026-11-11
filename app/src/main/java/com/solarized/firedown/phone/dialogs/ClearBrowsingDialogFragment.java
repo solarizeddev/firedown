@@ -1,6 +1,7 @@
 package com.solarized.firedown.phone.dialogs;
 
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.Spanned;
@@ -60,10 +61,28 @@ public class ClearBrowsingDialogFragment extends BaseDialogFragment {
                 .setTitle(R.string.settings_clear_browsing)
                 .setMessage(message)
                 .setPositiveButton(R.string.delete, (dialog, which) -> clearBrowsingData())
-                .setNegativeButton(R.string.cancel, null)
+                .setNegativeButton(R.string.cancel, (dialog, which) -> mCancelled = true)
                 .create();
     }
 
+
+    /**
+     * Left with Cancel, Back or a tap outside: return to the shield sheet
+     * ({@link ShieldReturn}). Delete returns nowhere.
+     */
+    private boolean mCancelled;
+
+    @Override
+    public void onCancel(@NonNull DialogInterface dialog) {
+        super.onCancel(dialog);
+        mCancelled = true;
+    }
+
+    @Override
+    public void onDismiss(@NonNull DialogInterface dialog) {
+        super.onDismiss(dialog);
+        ShieldReturn.onDismiss(this, mCancelled);
+    }
 
     private void clearBrowsingData() {
         mGeckoRuntimeHelper

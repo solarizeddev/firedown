@@ -352,7 +352,20 @@ user runs (sketch: `sketches/shield-blockers.html`).
   and on HTTPS the connection row reads the same on nearly every page. On an
   insecure page the connection group leads instead (`orderGroups`), so
   "Protection is on" never sits above "Connection is not secure" as
-  reassurance (also an https page whose certificate arrives not secure:
+  reassurance. **Back from any page the sheet opens returns to the sheet**
+  (`ShieldReturn`, 2026-11, reviewed with Fable): the blocked hosts, the
+  certificate, Site permissions, Clear browsing data and a blocker's popup
+  replace the sheet (it pops itself: two stacked sheets would show at
+  once), and when the user leaves one with Back, a tap outside or Cancel,
+  its `onDismiss` sends `ShieldReturn.RESULT_KEY` and
+  `BrowserFragment.reopenShieldSheet` opens the sheet again once the page
+  is off the back stack (a dialog's dismiss runs before its navigator pops
+  it, so it waits for the browser destination). A page left by its own
+  action (Reset all, Delete, the add-on closing its popup) returns nowhere;
+  a popup counts as the sheet's only when the same add-on's opens within
+  3 s of the row tap (`AddonManager.markShieldClick`). Chrome's and
+  Firefox's site panels return from a sub-page the same way (also an https
+  page whose certificate arrives not secure:
   the certificate observer reorders; one not yet arrived keeps protection
   first). While the banner shows Turn on its chevron hides and the title
   takes up to three lines (a long locale on a 360dp phone); a blocker not allowed in a

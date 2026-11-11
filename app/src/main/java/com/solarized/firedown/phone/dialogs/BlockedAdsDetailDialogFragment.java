@@ -1,5 +1,6 @@
 package com.solarized.firedown.phone.dialogs;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -134,5 +135,20 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
 
         mSubtitle.setText(getResources().getQuantityString(
                 R.plurals.blocked_ads_summary, total, total));
+    }
+
+    /** Left with Back or a tap outside: return to the shield sheet ({@link ShieldReturn}). */
+    private boolean mCancelled;
+
+    @Override
+    public void onCancel(@NonNull DialogInterface dialog) {
+        super.onCancel(dialog);
+        mCancelled = true;
+    }
+
+    @Override
+    public void onDismiss(@NonNull DialogInterface dialog) {
+        super.onDismiss(dialog);
+        ShieldReturn.onDismiss(this, mCancelled);
     }
 }

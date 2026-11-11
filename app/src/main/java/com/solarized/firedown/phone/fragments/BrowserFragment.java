@@ -43,6 +43,7 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
 
 import com.google.android.material.card.MaterialCardView;
@@ -99,8 +100,8 @@ import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
-import com.solarized.firedown.phone.dialogs.AddonPopupSheetDialogFragment;
 import com.solarized.firedown.phone.dialogs.DrmSheetDialogFragment;
+import com.solarized.firedown.phone.dialogs.ShieldReturn;
 import com.solarized.firedown.phone.dialogs.OpenInAppSheetDialogFragment;
 import com.solarized.firedown.ui.IncognitoColors;
 import com.solarized.firedown.ui.OnItemClickListener;
@@ -1335,27 +1336,13 @@ public class BrowserFragment extends BaseBrowserFragment
                 getViewLifecycleOwner(),
                 (requestKey, result) -> onOpenInAppResult(result));
 
-        // Back from an add-on popup the shield sheet opened: the shield sheet
-        // again, now showing what the popup changed. Posted, so the popup's
-        // own pop has run and the browser is the current destination.
+        // Back from a page the shield sheet opened (its blocked hosts, the
+        // certificate, Site permissions, Clear browsing data, a blocker's
+        // popup): the shield sheet again (ShieldReturn).
         getParentFragmentManager().setFragmentResultListener(
-                AddonPopupSheetDialogFragment.RESULT_BACK_TO_SHIELD,
+                ShieldReturn.RESULT_KEY,
                 getViewLifecycleOwner(),
-                (requestKey, result) -> {
-                    View view = getView();
-                    if (view == null) {
-                        return;
-                    }
-                    view.post(() -> {
-                        if (getView() == null || mNavController == null) {
-                            return;
-                        }
-                        Bundle bundle = new Bundle();
-                        bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
-                        NavigationUtils.navigateSafe(mNavController, R.id.dialog_security_info,
-                                R.id.browser, bundle);
-                    });
-                });
+                (requestKey, result) -> reopenShieldSheet());
 
         // The DRM sheet and the security sheet's "DRM is off" row both
         // answer here, so turning DRM on has one implementation.
@@ -1365,6 +1352,49 @@ public class BrowserFragment extends BaseBrowserFragment
                 (requestKey, result) -> onDrmResult(result));
 
         Log.d(TAG, "onViewCreated finished");
+    }
+
+    /**
+     * Opens the shield sheet once the page that asked for it is off the back
+     * stack. A dialog's dismiss runs before its navigator pops its entry, so
+     * when the browser is not yet the current destination this waits for it
+     * to become so (and gives up if anything else comes on screen first).
+     */
+    private void reopenShieldSheet() {
+        if (mNavController == null || getView() == null) {
+            return;
+        }
+        NavDestination current = mNavController.getCurrentDestination();
+        if (current != null && current.getId() == R.id.browser) {
+            getView().post(this::navigateToShieldSheet);
+            return;
+        }
+        final int leaving = current != null ? current.getId() : 0;
+        mNavController.addOnDestinationChangedListener(new NavController.OnDestinationChangedListener() {
+            @Override
+            public void onDestinationChanged(@NonNull NavController controller,
+                                             @NonNull NavDestination destination,
+                                             @Nullable Bundle arguments) {
+                if (destination.getId() == leaving) {
+                    // Called at once with the destination still current.
+                    return;
+                }
+                controller.removeOnDestinationChangedListener(this);
+                View view = getView();
+                if (destination.getId() == R.id.browser && view != null) {
+                    view.post(BrowserFragment.this::navigateToShieldSheet);
+                }
+            }
+        });
+    }
+
+    private void navigateToShieldSheet() {
+        if (getView() == null || mNavController == null) {
+            return;
+        }
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognitoThemed);
+        NavigationUtils.navigateSafe(mNavController, R.id.dialog_security_info, R.id.browser, bundle);
     }
 
     /**
