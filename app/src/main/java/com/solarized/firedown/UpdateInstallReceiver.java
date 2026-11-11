@@ -58,8 +58,9 @@ public class UpdateInstallReceiver extends BroadcastReceiver {
         // The update is installed — drop the verified "ready" record (and the
         // downloaded APK it points at) plus any leftover pending-download record,
         // so the in-app sheet / notification don't re-offer an installed version.
-        UpdateDownloader.clearReady(context);
-        UpdateDownloader.clearPending(context);
+        // A download of a newer release stays: a check can start it while
+        // Android's confirmation for this one is still open.
+        UpdateDownloader.onAppReplaced(context, App.getVersionCode());
     }
 
     // ── Notification tap: user chose to install ──────────────────────────────

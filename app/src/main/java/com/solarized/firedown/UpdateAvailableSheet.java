@@ -21,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.Lifecycle;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.preference.PreferenceManager;
 
@@ -113,6 +114,7 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
      */
     private boolean mDownloadingFace;
     private boolean mObservingInstall;
+    private boolean mObservingReady;
     /** The version the download face's name and notes are for; -1 before the first read. */
     private int mBoundVersionCode = -1;
     private ExecutorService mPoller;
@@ -343,6 +345,33 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
             mObservingInstall = true;
             UpdateInstaller.state().observe(getViewLifecycleOwner(), this::render);
         }
+        if (!mObservingReady) {
+            mObservingReady = true;
+            new UpdateReadyLiveData(context).observe(getViewLifecycleOwner(), this::onReadyChanged);
+        }
+    }
+
+    /**
+     * The ready APK stopped being offered while the sheet is open: a check
+     * started a newer release's download (which takes its path), or the
+     * update was dropped. Install would only fail; the sheet follows the new
+     * download, or closes when there is none.
+     */
+    private void onReadyChanged(Boolean ready) {
+        View view = getView();
+        if (view == null || mDownloadingFace || ready == null || ready
+                || UpdateInstaller.isInstalling()) {
+            return;
+        }
+        // A version no longer offered: closing the sheet snoozes nothing.
+        mReadyVersionCode = -1;
+        mBoundVersionCode = -1;
+        bindDownloadingFace(view);
+        if (getViewLifecycleOwner().getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)
+                && mPoller == null) {
+            mPoller = Executors.newSingleThreadExecutor();
+            pollProgress();
+        }
     }
 
     /**
@@ -540,6 +569,7 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     public void onDestroyView() {
         stopPolling();
         mObservingInstall = false;
+        mObservingReady = false;
         super.onDestroyView();
     }
 

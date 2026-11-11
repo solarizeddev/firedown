@@ -83,6 +83,10 @@ public final class UpdateFlowHarness {
         noPatchForAnotherInstalledApk();
         aSignatureFailureOnTheApkTriesTheNextMirror();
         aNewerReleaseRetiresTheReadyOne();
+        aNewerReleaseReplacesAnOlderDownload();
+        aNewerReleaseWaitsForACheckInProgress();
+        theOlderUpdateKeepsItsNotes();
+        installingKeepsANewerDownload();
         aClockSetBackNeverHoldsAVersion();
         aPulledReleaseStopsBeingOffered();
         aDisabledDownloadManagerNeverThrows();
@@ -426,6 +430,148 @@ public final class UpdateFlowHarness {
         runWorker(row.id);
         check(UpdateDownloader.isVerifiedReady(ctx, 1207) && Arrays.equals(next, Files.readAllBytes(apk().toPath())),
                 s + "then 1207 is verified and ready");
+    }
+
+    /** 1207 as the APK alone, served. */
+    private static byte[] serve1207() {
+        byte[] next = newApk.clone();
+        next[3000] ^= 0x5A;
+        server.put("https://gh/app-1207.apk", next);
+        return next;
+    }
+
+    private static String manifest1207(byte[] next) {
+        return "{\"versionCode\":1207,\"versionName\":\"Firedown 1.2.7\","
+                + "\"updateUrl\":\"https://gh/app-1207.apk\",\"sha256\":\"" + sha(next) + "\"}";
+    }
+
+    /** A newer release while an older one is still downloading: it is replaced, not finished. */
+    private static void aNewerReleaseReplacesAnOlderDownload() throws Exception {
+        String s = "superseded download: ";
+        phone();
+        startUpdate(manifest());
+        DownloadManager.Row old = current();
+        check(old != null && old.status == DownloadManager.STATUS_RUNNING, s + "1206 is downloading");
+        byte[] next = serve1207();
+        startUpdate(manifest1207(next));
+        DownloadManager.Row row = current();
+        check(row != null && row.id != old.id && row.url.equals("https://gh/app-1207.apk"),
+                s + "1207 starts at once");
+        check(!dm.rows.containsKey(old.id), s + "the 1206 download is removed");
+        check(prefs().getInt(Keys.UPDATE_DOWNLOAD_VERSION_CODE, -1) == 1207, s + "the record is 1207's");
+        // A paused download (roaming, no network) is replaced too.
+        phone();
+        startUpdate(manifest());
+        old = current();
+        old.status = DownloadManager.STATUS_PAUSED;
+        startUpdate(manifest1207(serve1207()));
+        check(current().id != old.id && !dm.rows.containsKey(old.id), s + "a paused one is replaced too");
+        // The old download finishing late changes nothing.
+        phone();
+        startUpdate(manifest());
+        old = current();
+        next = serve1207();
+        startUpdate(manifest1207(next));
+        row = current();
+        runWorker(old.id);
+        check(current().id == row.id && !UpdateDownloader.isVerifiedReady(ctx, 1206)
+                && UpdateNotification.prompts == 0, s + "a late run for 1206 does nothing");
+        finish(row);
+        runWorker(row.id);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1207) && UpdateNotification.prompts == 1,
+                s + "1207 is verified and offered");
+        // The same version again, or an older one (a mirror behind), leaves it alone.
+        phone();
+        next = serve1207();
+        startUpdate(manifest1207(next));
+        row = current();
+        startUpdate(manifest1207(next));
+        check(current().id == row.id, s + "the same version is not restarted");
+        startUpdate(manifest());
+        check(current().id == row.id, s + "an older version does not replace a newer download");
+    }
+
+    /** A newer release while the older download is being checked: no prompt, a check now. */
+    private static void aNewerReleaseWaitsForACheckInProgress() throws Exception {
+        String s = "superseded check: ";
+        phone();
+        startUpdate(apkOnlyManifest());
+        DownloadManager.Row old = current();
+        finish(old);
+        UpdateFinalizeWorker worker = worker(old.id);
+        check(UpdateDownloader.beginFinalize(ctx, old.id) != null, s + "a worker claims 1206");
+        byte[] next = serve1207();
+        UpdateDownloader.setChangelog(ctx, 1207, "Firedown 1.2.7", "- seven");
+        startUpdate(manifest1207(next));
+        check(current().id == old.id && old.dest.exists(), s + "the download being checked is left alone");
+        WorkManager.INSTANCE.unique.clear();
+        worker.doWork();
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206), s + "1206 is still made ready");
+        check(UpdateNotification.prompts == 0, s + "but not announced");
+        check(WorkManager.INSTANCE.unique.containsKey("superseded_update_check"), s + "a check is asked for now");
+        startUpdate(manifest1207(next));
+        DownloadManager.Row row = current();
+        check(row != null && row.url.equals("https://gh/app-1207.apk") && !UpdateDownloader.isVerifiedReady(ctx, 1206),
+                s + "that check replaces it with 1207");
+        // No newer release seen: the prompt as before.
+        phone();
+        startUpdate(apkOnlyManifest());
+        DownloadManager.Row only = current();
+        finish(only);
+        UpdateDownloader.setChangelog(ctx, 1206, "Firedown 1.2.6", "- six");
+        WorkManager.INSTANCE.unique.clear();
+        runWorker(only.id);
+        check(UpdateNotification.prompts == 1 && !WorkManager.INSTANCE.unique.containsKey("superseded_update_check"),
+                s + "without a newer release it is announced");
+    }
+
+    /** The release notes of the version downloading or ready survive a newer status.json. */
+    private static void theOlderUpdateKeepsItsNotes() throws Exception {
+        String s = "notes: ";
+        phone();
+        UpdateDownloader.setChangelog(ctx, 1206, "Firedown 1.2.6", "- six");
+        startUpdate(apkOnlyManifest());
+        DownloadManager.Row row = current();
+        finish(row);
+        UpdateDownloader.beginFinalize(ctx, row.id);
+        UpdateDownloader.setChangelog(ctx, 1207, "Firedown 1.2.7", "- seven");
+        check("- six".equals(UpdateDownloader.getChangelogFor(ctx, 1206)), s + "1206's notes are kept while it is checked");
+        check("- seven".equals(UpdateDownloader.getChangelogFor(ctx, 1207)), s + "1207's are the newest");
+        runWorker(row.id);
+        UpdateDownloader.setChangelog(ctx, 1207, "Firedown 1.2.7", "- seven");
+        check("- six".equals(UpdateDownloader.getChangelogFor(ctx, 1206)), s + "and while it is ready");
+        startUpdate(manifest1207(serve1207()));
+        UpdateDownloader.setChangelog(ctx, 1207, "Firedown 1.2.7", "- seven");
+        check("".equals(UpdateDownloader.getChangelogFor(ctx, 1206)), s + "dropped once 1207 replaced it");
+        check(!prefs().contains(Keys.UPDATE_CHANGELOG_KEPT_VERSION_CODE), s + "nothing kept is left behind");
+        // A version nothing holds is not kept.
+        phone();
+        UpdateDownloader.setChangelog(ctx, 1206, "Firedown 1.2.6", "- six");
+        UpdateDownloader.setChangelog(ctx, 1207, "Firedown 1.2.7", "- seven");
+        check("".equals(UpdateDownloader.getChangelogFor(ctx, 1206)), s + "a version nothing downloads is not kept");
+    }
+
+    /**
+     * Android's confirmation for 1206 still open when a check starts 1207:
+     * confirming 1206 leaves the 1207 download alone.
+     */
+    private static void installingKeepsANewerDownload() throws Exception {
+        String s = "app replaced: ";
+        phone();
+        startUpdate(manifest1207(serve1207()));
+        DownloadManager.Row row = current();
+        UpdateDownloader.onAppReplaced(ctx, 1206);
+        check(current() != null && current().id == row.id && dm.rows.containsKey(row.id),
+                s + "a download of a newer release stays");
+        UpdateDownloader.onAppReplaced(ctx, 1207);
+        check(prefs().getLong(Keys.UPDATE_DOWNLOAD_ID, -1) == -1 && !dm.rows.containsKey(row.id),
+                s + "a download of the installed version goes");
+        phone();
+        verifiedApkOnly();
+        UpdateDownloader.onAppReplaced(ctx, 1205);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206), s + "a ready newer APK stays");
+        UpdateDownloader.onAppReplaced(ctx, 1206);
+        check(!UpdateDownloader.isVerifiedReady(ctx, 1206) && !apk().exists(), s + "the installed one's APK goes");
     }
 
     /** Retry times and claims written under a wrong clock. */

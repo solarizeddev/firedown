@@ -5497,6 +5497,35 @@ is **~75 MB**, the APK 205 MB.
     verified ready APK, so a sheet opened before the download began can't
     copy the partial file either. A check starts no download while an
     install copies (the download would begin by deleting that file).
+  - **A newer release REPLACES an older update, at whatever stage it is**
+    (Fable's review, 2026-11). A download of an older version, running or
+    paused (roaming, no network), is removed and the newer one starts on
+    the same check (`supersedesLocked` in `start`); it used to run to the
+    end, be offered for up to 6 h, then be thrown away, and a paused one
+    held the newer release back for as long as it stayed paused. The one
+    exception is a download a worker is checking right now (live claim):
+    its files are in use, so it finishes, is marked ready (a fallback if
+    the newer release's files can't be had) but NOT announced, and the
+    worker asks for a check at once (`newerReleaseSeen` →
+    `superseded_update_check`), which replaces it. An older or equal
+    version never replaces a recorded download (a mirror behind).
+  - **The older update keeps its own release notes**: status.json's notes
+    are one slot, overwritten on every check; the version downloading or
+    ready keeps its notes in a second slot when a newer one takes the first
+    (`setChangelog`, `UPDATE_CHANGELOG_KEPT_*`), dropped once nothing holds
+    that version. Its sheet and About's download face showed no "What's
+    new" before.
+  - **An open "Update ready" sheet follows the ready record**
+    (`UpdateReadyLiveData` in `bindReadyFace` → `onReadyChanged`): when a
+    check starts a newer download the sheet turns into its download face
+    (and closes when nothing downloads), instead of an Install that could
+    only fail with "Update failed". It snoozes nothing for the version it
+    no longer offers.
+  - **Installing one update never cancels a newer download**
+    (`onAppReplaced`, from `MY_PACKAGE_REPLACED`): Android's confirmation
+    for 1.2.10 can still be open when a check starts 1.2.11; confirming it
+    used to clear every pending record, killing the 1.2.11 download, which
+    then restarted from zero. Only what the installed version covers goes.
   - **A wrong clock never holds a version**: a retry time more than one
     backoff (6 h + 20%) away and a finalize claim more than 6 h in the
     future count as expired (`backoffActive`, `claimLive`). A phone that

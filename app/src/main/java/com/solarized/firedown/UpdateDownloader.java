@@ -121,11 +121,37 @@ public final class UpdateDownloader {
                 Log.d(TAG, "within backoff window for version " + versionCode + "; skipping");
                 return;
             }
+            if (supersedesLocked(context, versionCode)) {
+                enqueueLocked(context, plan, apkSha256, name, versionCode);
+                return;
+            }
             if (inFlightLocked(context)) {
                 return;
             }
             enqueueLocked(context, plan, apkSha256, name, versionCode);
         }
+    }
+
+    /**
+     * Must be called under LOCK. The recorded download is for an older
+     * version than {@code versionCode} (a newer release came out while it
+     * downloaded, or while it waited to be checked): it is replaced now
+     * rather than finished, offered and thrown away. A download a worker is
+     * checking right now is left to it (its files are in use); the worker
+     * then asks for a check instead of offering it ({@link #newerReleaseSeen}).
+     */
+    private static boolean supersedesLocked(Context context, int versionCode) {
+        Pending pending = readPendingLocked(context);
+        if (pending == null || pending.versionCode >= versionCode) {
+            return false;
+        }
+        long claimedAt = prefs(context).getLong(Keys.UPDATE_DOWNLOAD_FINALIZING_AT, 0L);
+        if (claimedAt != 0L && claimLive(System.currentTimeMillis() - claimedAt)) {
+            Log.d(TAG, "version " + pending.versionCode + " is being checked; " + versionCode + " waits for it");
+            return false;
+        }
+        Log.d(TAG, "version " + versionCode + " replaces the download of " + pending.versionCode);
+        return true;
     }
 
     /**
@@ -829,14 +855,14 @@ public final class UpdateDownloader {
     /**
      * Promote a verified APK to "ready" and clear the download record. After
      * this, {@link #isVerifiedReady} returns true and the install prompt / sheet
-     * may offer it.
+     * may offer it. False when the record moved on (nothing was promoted).
      */
-    public static void markReady(Context context, long downloadId, int versionCode, String name) {
+    public static boolean markReady(Context context, long downloadId, int versionCode, String name) {
         synchronized (LOCK) {
             Pending pending = readPendingLocked(context);
             if (pending == null || pending.downloadId != downloadId) {
                 Log.w(TAG, "verified a download no longer recorded; ignored");
-                return;
+                return false;
             }
             // For an APK step the DownloadManager row's file IS the ready APK,
             // and remove() would delete it, so the row is only forgotten. A
@@ -867,6 +893,7 @@ public final class UpdateDownloader {
                     .remove(Keys.UPDATE_FAILED_COUNT)
                     .remove(Keys.UPDATE_NEXT_RETRY_AT)
                     .apply();
+            return true;
         }
     }
 
@@ -952,25 +979,67 @@ public final class UpdateDownloader {
     /**
      * Remember a version's changelog + name (from status.json) so the in-app
      * sheet can show it later — the sheet has no access to the manifest at
-     * display time. Single slot keyed by versionCode; the worker refreshes it on
-     * every check (even when the version isn't newer), which is also what lets
-     * the DEBUG preview show the real notes.
+     * display time. The worker refreshes the slot on every check (even when
+     * the version isn't newer), which is also what lets the DEBUG preview
+     * show the real notes. When a newer release replaces the slot while the
+     * version it held is still downloading or ready to install, that
+     * version's notes are kept beside it: its sheet shows them until the
+     * newer download replaces it.
      */
     public static void setChangelog(Context context, int versionCode, String versionName, String changelog) {
-        prefs(context).edit()
-                .putInt(Keys.UPDATE_CHANGELOG_VERSION_CODE, versionCode)
-                .putString(Keys.UPDATE_CHANGELOG_NAME, versionName == null ? "" : versionName)
-                .putString(Keys.UPDATE_CHANGELOG_TEXT, changelog == null ? "" : changelog)
-                .apply();
+        synchronized (LOCK) {
+            SharedPreferences p = prefs(context);
+            SharedPreferences.Editor e = p.edit();
+            int previous = p.getInt(Keys.UPDATE_CHANGELOG_VERSION_CODE, -1);
+            if (previous > 0 && previous != versionCode && changelogInUseLocked(p, previous)) {
+                e.putInt(Keys.UPDATE_CHANGELOG_KEPT_VERSION_CODE, previous)
+                        .putString(Keys.UPDATE_CHANGELOG_KEPT_TEXT,
+                                p.getString(Keys.UPDATE_CHANGELOG_TEXT, ""));
+            } else {
+                int kept = p.getInt(Keys.UPDATE_CHANGELOG_KEPT_VERSION_CODE, -1);
+                if (kept == versionCode || !changelogInUseLocked(p, kept)) {
+                    e.remove(Keys.UPDATE_CHANGELOG_KEPT_VERSION_CODE)
+                            .remove(Keys.UPDATE_CHANGELOG_KEPT_TEXT);
+                }
+            }
+            e.putInt(Keys.UPDATE_CHANGELOG_VERSION_CODE, versionCode)
+                    .putString(Keys.UPDATE_CHANGELOG_NAME, versionName == null ? "" : versionName)
+                    .putString(Keys.UPDATE_CHANGELOG_TEXT, changelog == null ? "" : changelog)
+                    .apply();
+        }
+    }
+
+    /** Must be called under LOCK. {@code versionCode} is downloading or ready to install. */
+    private static boolean changelogInUseLocked(SharedPreferences p, int versionCode) {
+        if (versionCode <= 0) {
+            return false;
+        }
+        if (p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1) != -1
+                && p.getInt(Keys.UPDATE_DOWNLOAD_VERSION_CODE, -1) == versionCode) {
+            return true;
+        }
+        return p.getBoolean(Keys.UPDATE_READY, false)
+                && p.getInt(Keys.UPDATE_READY_VERSION_CODE, -1) == versionCode;
     }
 
     /** The stored changelog for {@code versionCode}, or "" if none matches. */
     public static String getChangelogFor(Context context, int versionCode) {
         SharedPreferences p = prefs(context);
-        if (p.getInt(Keys.UPDATE_CHANGELOG_VERSION_CODE, -1) != versionCode) {
-            return "";
+        if (p.getInt(Keys.UPDATE_CHANGELOG_VERSION_CODE, -1) == versionCode) {
+            return p.getString(Keys.UPDATE_CHANGELOG_TEXT, "");
         }
-        return p.getString(Keys.UPDATE_CHANGELOG_TEXT, "");
+        if (p.getInt(Keys.UPDATE_CHANGELOG_KEPT_VERSION_CODE, -1) == versionCode) {
+            return p.getString(Keys.UPDATE_CHANGELOG_KEPT_TEXT, "");
+        }
+        return "";
+    }
+
+    /**
+     * A status.json newer than {@code versionCode} has been read: the next
+     * check downloads it in place of {@code versionCode}.
+     */
+    public static boolean newerReleaseSeen(Context context, int versionCode) {
+        return prefs(context).getInt(Keys.UPDATE_CHANGELOG_VERSION_CODE, -1) > versionCode;
     }
 
     /** Last-seen changelog text (any version), for the DEBUG preview; "" if none. */
@@ -1015,6 +1084,40 @@ public final class UpdateDownloader {
                 .remove(Keys.UPDATE_DIRECT_DONE)
                 .remove(Keys.UPDATE_DIRECT_STALLS)
                 .apply();
+    }
+
+    /**
+     * The app was replaced by {@code installedVersionCode}. What that version
+     * covers is dropped (the ready APK and a download of it or of anything
+     * older); a download or a ready APK of a NEWER version stays. Android's
+     * confirmation for one update can still be open when a check starts the
+     * next release's download, and confirming it must not cancel that
+     * download.
+     */
+    public static void onAppReplaced(Context context, int installedVersionCode) {
+        synchronized (LOCK) {
+            SharedPreferences p = prefs(context);
+            boolean newerReady = p.getBoolean(Keys.UPDATE_READY, false)
+                    && p.getInt(Keys.UPDATE_READY_VERSION_CODE, -1) > installedVersionCode;
+            Pending pending = readPendingLocked(context);
+            boolean newerPending = pending != null && pending.versionCode > installedVersionCode;
+            if (!newerReady) {
+                clearReadyRecordLocked(context);
+                if (!newerPending) {
+                    // The pending download writes the APK's own path (or is
+                    // about to rebuild it there): its file is not ours to delete.
+                    File apk = Preferences.getUpdateApkFile(context);
+                    if (apk != null && apk.exists()) {
+                        apk.delete();
+                    }
+                }
+            }
+            if (!newerPending) {
+                removeDownload(context, p.getLong(Keys.UPDATE_DOWNLOAD_ID, -1));
+                deleteArtifacts(context);
+                clearPendingLocked(context);
+            }
+        }
     }
 
     /** Drop the verified "ready" record and delete the APK from disk. */
