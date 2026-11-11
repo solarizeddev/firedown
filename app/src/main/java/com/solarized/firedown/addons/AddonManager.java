@@ -376,7 +376,7 @@ public class AddonManager {
     @Nullable
     private String mShieldClickAddon;
     private long mShieldClickAt;
-    private int mShieldClickState;
+    private int mShieldClickState = -1;
     private final MutableLiveData<Integer> mInstallsInFlight = new MutableLiveData<>(0);
     private final MutableLiveData<Set<String>> mInstalling = new MutableLiveData<>(Collections.emptySet());
     /** Add-ons whose update waits and whose question the user has not seen (the dots). */
@@ -1954,9 +1954,11 @@ public class AddonManager {
         mPageSessions.put(session, extension.id);
         boolean fromShield = extension.id.equals(mShieldClickAddon)
                 && SystemClock.elapsedRealtime() - mShieldClickAt <= Popup.SHOW_WINDOW_MS;
+        int shieldClickState = mShieldClickState;
         mShieldClickAddon = null;
+        mShieldClickState = -1;
         Popup popup = new Popup(extension.id, AddonInfo.from(extension).name, session, fromShield,
-                mShieldClickState);
+                shieldClickState);
         mPopup.setValue(popup);
         return GeckoResult.fromValue(session);
     }

@@ -1355,12 +1355,6 @@ public class BrowserFragment extends BaseBrowserFragment
         Log.d(TAG, "onViewCreated finished");
     }
 
-    /**
-     * Opens the shield sheet once the page that asked for it is off the back
-     * stack. A dialog's dismiss runs before its navigator pops its entry, so
-     * when the browser is not yet the current destination this waits for it
-     * to become so (and gives up if anything else comes on screen first).
-     */
     private void onShieldReturn(@NonNull Bundle result) {
         String addonId = result.getString(ShieldReturn.EXTRA_ADDON_ID);
         if (addonId != null && blockerStateChanged(addonId,
@@ -1393,6 +1387,12 @@ public class BrowserFragment extends BaseBrowserFragment
         return true;
     }
 
+    /**
+     * Opens the shield sheet once the page that asked for it is off the back
+     * stack. A dialog's dismiss runs before its navigator pops its entry, so
+     * when the browser is not yet the current destination this waits for it
+     * to become so (and gives up if anything else comes on screen first).
+     */
     private void reopenShieldSheet() {
         if (mNavController == null || getView() == null) {
             return;
