@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- One ad blocker behind the shield (SecurityStateSheetDialogFragment):
      its icon, its name on one line, what it does in this tab ("On for this
-     site · turn off in its menu", "Off for this site · turn on in its
-     menu", "On", "Doesn't run in private tabs") and a chevron to its popup,
+     site · tap to change", "Off for this site · tap to change", "On",
+     "Doesn't run in private tabs", BodyMedium like the banner's subtitle) and a chevron to its popup,
      or the tonal Allow instead of the chevron. No count: the add-on's own
      badge is in its popup, and beside the sheet's page total it read as a
      share of it. "No ad blocker is on" and its Turn on are the protection
@@ -46,7 +46,7 @@
 
             <TextView
                 android:id="@+id/blocker_subtitle"
-                style="@style/TextAppearance.Material3.BodySmall"
+                style="@style/TextAppearance.Material3.BodyMedium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="?attr/colorOnSurfaceVariant"

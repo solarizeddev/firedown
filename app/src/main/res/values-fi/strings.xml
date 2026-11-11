@@ -1246,8 +1246,8 @@
     <string name="shield_blocker_not_private">Ei toimi yksityisissä välilehdissä</string>
     <string name="shield_blocker_off_site">Pois tällä sivustolla</string>
     <string name="shield_blocker_on">Päällä</string>
-    <string name="shield_blocker_on_site_switch">Päällä tällä sivustolla · poista käytöstä sen valikosta</string>
-    <string name="shield_blocker_off_site_switch">Pois tällä sivustolla · ota käyttöön sen valikosta</string>
+    <string name="shield_blocker_on_site_switch">Päällä tällä sivustolla · muuta napauttamalla</string>
+    <string name="shield_blocker_off_site_switch">Pois tällä sivustolla · muuta napauttamalla</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">%d mainostenestäjä on päällä.</item>
         <item quantity="other">%d mainostenestäjää on päällä. Yksi riittää yleensä, useampi voi rikkoa sivustoja.</item>

@@ -1279,8 +1279,8 @@
     <string name="shield_blocker_not_private">Nefunguje v anonymních kartách</string>
     <string name="shield_blocker_off_site">Vypnuto pro tento web</string>
     <string name="shield_blocker_on">Zapnuto</string>
-    <string name="shield_blocker_on_site_switch">Zapnuto pro tento web · vypnete v jeho nabídce</string>
-    <string name="shield_blocker_off_site_switch">Vypnuto pro tento web · zapnete v jeho nabídce</string>
+    <string name="shield_blocker_on_site_switch">Zapnuto pro tento web · klepnutím změníte</string>
+    <string name="shield_blocker_off_site_switch">Vypnuto pro tento web · klepnutím změníte</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">Je zapnutý %d blokátor reklam.</item>
         <item quantity="few">Jsou zapnuté %d blokátory reklam. Obvykle stačí jeden; víc jich může rozbít weby.</item>

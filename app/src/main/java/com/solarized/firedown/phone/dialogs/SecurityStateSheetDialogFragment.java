@@ -37,6 +37,7 @@ import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.ui.IncognitoColors;
+import com.solarized.firedown.utils.DataUris;
 import com.solarized.firedown.utils.NavigationUtils;
 import com.solarized.firedown.utils.SheetGroups;
 import com.solarized.firedown.utils.UrlStringUtils;
@@ -196,6 +197,11 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         if (mCertificateInfoEntity != null) {
             url = mCertificateInfoEntity.url;
             mDomain = mCertificateInfoEntity.host;
+            // A page with no network host (about:, file:, the error page)
+            // reports an empty certificate host.
+            if (TextUtils.isEmpty(mDomain)) {
+                mDomain = WebUtils.getDomainName(mGeckoState.getEntityUri());
+            }
         } else {
             url = mGeckoState.getEntityUri();
             mDomain = WebUtils.getDomainName(url);
@@ -207,8 +213,26 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         bindDrmRow();
         bindSitePermissionsRow();
 
-        host.setText(mGeckoState.getEntityTitle());
-        hostUrl.setText(mDomain);
+        // The site leads: it is what a security sheet is about, and the
+        // page's title is already on the page behind the sheet. The title
+        // follows, dim, and is left out when the page has none.
+        // A title that only repeats the site or the address (an image or a
+        // PDF titled by its URL) is left out too; with no site to show, the
+        // title leads.
+        String site = mDomain;
+        if (site != null && DataUris.isDataUri(site)) {
+            site = DataUris.stripPayload(site);
+        }
+        String title = mGeckoState.getEntityTitle();
+        boolean hasTitle = !UrlStringUtils.isBlankTitle(title)
+                && !title.equals(site) && !title.equals(url);
+        if (TextUtils.isEmpty(site) && hasTitle) {
+            site = title;
+            hasTitle = false;
+        }
+        host.setText(site);
+        hostUrl.setText(hasTitle ? title : null);
+        hostUrl.setVisibility(hasTitle ? View.VISIBLE : View.GONE);
 
         boolean isSecure = mCertificateInfoEntity != null && mCertificateInfoEntity.isSecure;
 

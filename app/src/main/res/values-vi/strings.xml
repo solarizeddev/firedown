@@ -1057,8 +1057,8 @@
     <string name="shield_blocker_not_private">Không chạy trong thẻ riêng tư</string>
     <string name="shield_blocker_off_site">Tắt cho trang này</string>
     <string name="shield_blocker_on">Bật</string>
-    <string name="shield_blocker_on_site_switch">Bật cho trang này · tắt trong menu của tiện ích</string>
-    <string name="shield_blocker_off_site_switch">Tắt cho trang này · bật trong menu của tiện ích</string>
+    <string name="shield_blocker_on_site_switch">Bật cho trang này · nhấn để thay đổi</string>
+    <string name="shield_blocker_off_site_switch">Tắt cho trang này · nhấn để thay đổi</string>
     <plurals name="shield_blockers_many">
         <item quantity="other">%d trình chặn quảng cáo đang bật. Thường chỉ cần một; nhiều hơn có thể làm hỏng trang web.</item>
     </plurals>

@@ -1264,8 +1264,8 @@
     <string name="shield_blocker_not_private">No funciona en pestañas privadas</string>
     <string name="shield_blocker_off_site">Desactivado en este sitio</string>
     <string name="shield_blocker_on">Activado</string>
-    <string name="shield_blocker_on_site_switch">Activado en este sitio · se desactiva en su menú</string>
-    <string name="shield_blocker_off_site_switch">Desactivado en este sitio · se activa en su menú</string>
+    <string name="shield_blocker_on_site_switch">Activado en este sitio · toca para cambiarlo</string>
+    <string name="shield_blocker_off_site_switch">Desactivado en este sitio · toca para cambiarlo</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">%d bloqueador de anuncios activado.</item>
         <item quantity="many">%d bloqueadores de anuncios activados. Suele bastar con uno; más pueden hacer que fallen algunos sitios.</item>

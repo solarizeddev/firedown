@@ -1234,8 +1234,8 @@
     <string name="shield_blocker_not_private">Не работи в поверителни раздели</string>
     <string name="shield_blocker_off_site">Изключено за този сайт</string>
     <string name="shield_blocker_on">Включено</string>
-    <string name="shield_blocker_on_site_switch">Включено за този сайт · изключва се в менюто му</string>
-    <string name="shield_blocker_off_site_switch">Изключено за този сайт · включва се в менюто му</string>
+    <string name="shield_blocker_on_site_switch">Включено за този сайт · докоснете, за да промените</string>
+    <string name="shield_blocker_off_site_switch">Изключено за този сайт · докоснете, за да промените</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">%d блокер на реклами е включен.</item>
         <item quantity="other">%d блокера на реклами са включени. Обикновено един е достатъчен; повече може да нарушат работата на сайтовете.</item>

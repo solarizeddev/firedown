@@ -1280,8 +1280,8 @@
     <string name="shield_blocker_not_private">Не работает в приватных вкладках</string>
     <string name="shield_blocker_off_site">Выключен для этого сайта</string>
     <string name="shield_blocker_on">Включён</string>
-    <string name="shield_blocker_on_site_switch">Включён для этого сайта · выключается в его меню</string>
-    <string name="shield_blocker_off_site_switch">Выключен для этого сайта · включается в его меню</string>
+    <string name="shield_blocker_on_site_switch">Включён для этого сайта · нажмите, чтобы изменить</string>
+    <string name="shield_blocker_off_site_switch">Выключен для этого сайта · нажмите, чтобы изменить</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">Включён %d блокировщик рекламы. Обычно хватает одного, а несколько могут нарушить работу сайтов.</item>
         <item quantity="few">Включено %d блокировщика рекламы. Обычно хватает одного, а несколько могут нарушить работу сайтов.</item>

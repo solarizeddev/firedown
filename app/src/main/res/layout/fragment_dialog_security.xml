@@ -2,7 +2,7 @@
 <!--
     Per-site security / protection sheet:
 
-      identity header  — favicon tile + title + host (the site anchor; stays
+      identity header  — favicon tile + host + title (the site anchor; stays
                          above the scroller as the drag zone)
       group 1          — the protection banner: the shield's verdict and
                          "N requests blocked on this page"   › (the hosts),
@@ -84,24 +84,27 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
+            <!-- The site first, in the rows' title ink; the page's title
+                 under it, dim (hidden when the page has none). -->
             <TextView
                 android:id="@+id/host"
-                style="@style/TextAppearance.Material3.TitleSmall.Emphasized"
+                style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                tools:text="CNN" />
+                android:textColor="?attr/colorOnSurface"
+                tools:text="www.cnn.com" />
 
             <TextView
                 android:id="@+id/host_url"
                 style="@style/TextAppearance.Material3.BodyMedium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="?attr/colorOnSurfaceVariant"
-                tools:text="www.cnn.com" />
+                tools:text="CNN" />
 
         </LinearLayout>
 
@@ -297,7 +300,7 @@
                             android:textColor="?attr/colorOnSurface" />
 
                         <TextView
-                            style="@style/TextAppearance.Material3.BodySmall"
+                            style="@style/TextAppearance.Material3.BodyMedium"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
@@ -403,7 +406,7 @@
 
                         <TextView
                             android:id="@+id/site_permissions_summary"
-                            style="@style/TextAppearance.Material3.BodySmall"
+                            style="@style/TextAppearance.Material3.BodyMedium"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"

@@ -1056,8 +1056,8 @@
     <string name="shield_blocker_not_private">Tidak berjalan di tab pribadi</string>
     <string name="shield_blocker_off_site">Nonaktif untuk situs ini</string>
     <string name="shield_blocker_on">Aktif</string>
-    <string name="shield_blocker_on_site_switch">Aktif untuk situs ini · nonaktifkan di menunya</string>
-    <string name="shield_blocker_off_site_switch">Nonaktif untuk situs ini · aktifkan di menunya</string>
+    <string name="shield_blocker_on_site_switch">Aktif untuk situs ini · ketuk untuk mengubah</string>
+    <string name="shield_blocker_off_site_switch">Nonaktif untuk situs ini · ketuk untuk mengubah</string>
     <plurals name="shield_blockers_many">
         <item quantity="other">%d pemblokir iklan aktif. Satu biasanya cukup; lebih banyak dapat merusak situs.</item>
     </plurals>

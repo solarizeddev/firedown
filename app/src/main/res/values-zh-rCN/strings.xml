@@ -1245,8 +1245,8 @@
     <string name="shield_blocker_not_private">不在隐私标签页中运行</string>
     <string name="shield_blocker_off_site">已对此网站关闭</string>
     <string name="shield_blocker_on">已开启</string>
-    <string name="shield_blocker_on_site_switch">已对此网站开启 · 可在其菜单中关闭</string>
-    <string name="shield_blocker_off_site_switch">已对此网站关闭 · 可在其菜单中开启</string>
+    <string name="shield_blocker_on_site_switch">已对此网站开启 · 点按即可更改</string>
+    <string name="shield_blocker_off_site_switch">已对此网站关闭 · 点按即可更改</string>
     <plurals name="shield_blockers_many">
         <item quantity="other">已开启 %d 个广告拦截器。通常一个就够了，多个可能导致网站出错。</item>
     </plurals>

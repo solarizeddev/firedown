@@ -339,11 +339,14 @@ user runs (sketch: `sketches/shield-blockers.html`).
 - **The sheet** (`SecurityStateSheetDialogFragment`): the **protection
   banner** heading the blockers group FIRST, followed by one row per blocker
   (`item_blocker_row`, uBlock first: its name on ONE line, a status line on
-  EVERY row — "On for this site · turn off in its menu" / "Off for this
-  site · turn on in its menu" for uBlock, "On" for any other, enabled being
+  EVERY row — "On for this site · tap to change" / "Off for this
+  site · tap to change" for uBlock, "On" for any other, enabled being
   all that can be read of it — a tap opens its popup, where uBlock's
-  per-site switch lives; the status line names the switch because the
-  banner has none, and on-device the user looked for one there); then the
+  per-site switch lives; the status line says the row changes it because
+  the banner has no switch, and on-device the user looked for one there;
+  it was "… turn off in its menu", and "its menu" was vague. The
+  status line is BodyMedium, the banner's subtitle size, as are the DRM
+  and Site permissions rows' second lines); then the
   connection group (DRM first when the page asked, the shield's dot points
   at it; connection; Site permissions, shown only when the site holds an
   answer: an empty list would be a tap to learn "nothing"). Protection
