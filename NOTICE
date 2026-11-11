@@ -1,7 +1,7 @@
 Firedown
 Copyright (c) 2026 solarizeddev
 
-Firedown's own source code is licensed under the Mozilla Public License 2.0.
+Firedown's own source code is licensed under the MIT License.
 See LICENSE for full terms.
 
 ================================================================================
@@ -18,6 +18,15 @@ GeckoView
   Copyright (c) Mozilla Foundation
   License: Mozilla Public License 2.0
   https://mozilla.github.io/geckoview/
+
+--------------------------------------------------------------------------------
+Firefox webcompat interventions
+  Copyright (c) Mozilla Foundation
+  License: Mozilla Public License 2.0
+  https://github.com/mozilla-firefox/firefox (browser/extensions/webcompat)
+
+  Ported, each in its own file with its MPL header:
+  app/src/main/assets/youtube/pip-fix.js and webcompat.js.
 
 --------------------------------------------------------------------------------
 XZ for Java

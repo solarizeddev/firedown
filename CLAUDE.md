@@ -1978,6 +1978,34 @@ network, so it pins the CONTAINMENT, not whether the solver still finds `n`
 on today's `base.js`; that is a device question
 (`adb logcat -s GeckoConsole:* | grep -E 'Solver|Cipher'`).
 
+**YouTube background playback: the page always reads visible, and two of
+Firefox's YouTube fixes.** YouTube pauses when the Page Visibility API says
+hidden, which is how it reserves background play for Premium. `content.js`'s
+first block (every youtube.com frame) defines `document.hidden` /
+`visibilityState` (and the webkit twins) as visible in the page world, drops
+the page's `window` `blur`/`pagehide` listeners, and stops `visibilitychange`
+in a capture listener on `window` registered from the content script at
+document_start: the first listener on the event's path, so no page listener
+hears it however it was registered (it replaced page-world patches of
+`document.addEventListener`/`dispatchEvent`, which missed
+`onvisibilitychange` and calls through `EventTarget.prototype`). Costs: other
+extensions' `visibilitychange` listeners are silenced on YouTube too, and a
+`document.open()` would remove the listener. `webcompat.js` (MPL-2.0, its own
+file; top frame of www, m and music.youtube.com, never `/robots.txt`, the
+token page) ports two of Firefox's webcompat interventions: the
+`performance.now()` precision fix (bugs 1842437/1964603, page world: equal
+consecutive readings made unique when timer precision is reduced) and the
+idle keep-alive of bug 2060611 (content-script world, where `document.hidden`
+is the REAL visibility through Xray: an Alt keydown/keyup once a minute while
+hidden AND a video plays, so long background playback does not stop at
+"Continue watching?"; Firefox sends it from every hidden page, Nightly only).
+Firefox's own pause-on-PiP-close in that script is not ported: the native
+PiP close pauses the tab's media. Verify with `node
+scripts/youtube-webcompat-smoke.mjs` (eight planted bugs each fail it); it
+cannot test the Xray boundary, so whether the keep-alive fires (the document
+really hidden while the app is backgrounded) is a device check: background
+playback past YouTube's idle prompt.
+
 **Video codec pick prefers H264 over AV1 at equal heights** (both
 `buildAdaptiveVariants` and `buildSabrOnlyVariants` sort with an avc-first
 tie-break before bitrate). AV1's higher-bitrate rendition used to win every
@@ -13593,7 +13621,9 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   fullscreen exit, and a video that ends in the window stays fullscreen
   on expand. Verify with `node scripts/youtube-pip-smoke.mjs` (the real
   file in a vm; five planted bugs each fail it). Firefox for Android ships
-  Mozilla's whole webcompat add-on; Firedown carries only this patch.
+  Mozilla's whole webcompat add-on; Firedown carries only this patch and
+  the two in `webcompat.js` (see "YouTube background playback" under
+  YouTube / SABR).
 - **Aspect** comes from `MediaSession.Delegate.onFullscreen`'s element
   metadata, stored per tab and ungated (`GeckoState.setMediaFullScreenSize`)
   and clamped by `PipPolicy.aspect` — the one clamp, which `PlayerActivity`

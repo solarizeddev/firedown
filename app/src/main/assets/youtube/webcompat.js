@@ -12,8 +12,8 @@
  *
  * 2. The idle keep-alive of bug2060611-youtube.com-background-video-playback.js:
  *    during long background playback YouTube shows "Video paused. Continue
- *    watching?". While the page is really hidden, an Alt keydown/keyup (a key
- *    that does nothing on its own) is sent once a minute. Content-script
+ *    watching?". While the page is really hidden and a video plays, an Alt
+ *    keydown/keyup (a key that does nothing on its own) is sent once a minute. Content-script
  *    world, so document.hidden is the real visibility, not the page world's
  *    override in content.js.
  *
@@ -48,8 +48,19 @@ if (window === window.top
     (document.head || document.documentElement).appendChild(s);
     s.remove();
 
+    // Firefox sends the keys from every hidden page; here only while a video
+    // plays, so a tab left in the background reports no activity.
+    const videoPlaying = () => {
+        for (const v of document.querySelectorAll('video')) {
+            if (!v.paused) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     window.setInterval(() => {
-        if (!document.hidden) {
+        if (!document.hidden || !videoPlaying()) {
             return;
         }
         for (const type of ['keydown', 'keyup']) {

@@ -19,10 +19,11 @@
     (document.head || document.documentElement).appendChild(s);
     s.remove();
     // The visibilitychange event itself is stopped at the window's capture
-    // phase, before any page listener, however the page registered it
-    // (addEventListener on document or window, onvisibilitychange, a call
-    // through EventTarget.prototype). Registered from the content script at
-    // document_start, so it is the first capture listener on the window.
+    // phase, before any page listener (addEventListener on document or
+    // window, onvisibilitychange, a call through EventTarget.prototype).
+    // Registered from the content script at document_start, so it is the
+    // first capture listener on the window. It silences other extensions'
+    // listeners on YouTube too, and a document.open() would remove it.
     for (const type of ['visibilitychange', 'webkitvisibilitychange']) {
         window.addEventListener(type, e => e.stopImmediatePropagation(), true);
     }
