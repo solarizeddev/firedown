@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import com.solarized.firedown.BuildConfig;
+
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.utils.WebUtils;
@@ -495,11 +497,24 @@ public class GeckoMediaController {
     }
 
     public void play()  {
+        trace("play current=" + mCurrentSessionId);
         executeOnCurrent(s -> s.getMediaSession().play());
     }
 
     public void pause() {
+        trace("pause current=" + mCurrentSessionId);
         executeOnCurrent(s -> s.getMediaSession().pause());
+    }
+
+    /**
+     * Debug builds: who asked the page to play or pause, with the caller's
+     * stack (adb logcat -s MediaTrace). The page's own pauses arrive as the
+     * "page onPause" lines GeckoComponents logs under the same tag.
+     */
+    public static void trace(String what) {
+        if (BuildConfig.DEBUG) {
+            Log.d("MediaTrace", what, new Throwable("caller"));
+        }
     }
 
     /**
@@ -507,6 +522,7 @@ public class GeckoMediaController {
      * page answers with onPause, which updates the notification.
      */
     public void pause(int sessionId) {
+        trace("pause tab=" + sessionId);
         GeckoMediaSession session = mSessionMap.get(sessionId);
         if (session != null) {
             session.getMediaSession().pause();
@@ -514,6 +530,7 @@ public class GeckoMediaController {
     }
 
     public void stop()  {
+        trace("stop current=" + mCurrentSessionId);
         executeOnCurrent(s -> s.getMediaSession().stop());
     }
 

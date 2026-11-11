@@ -1350,6 +1350,10 @@ public class GeckoComponents {
         public void onPlay(@NonNull final GeckoSession session, @NonNull final MediaSession mediaSession) {
             Log.d(TAG, "MediaSessionDelegate onPlay");
             final GeckoState geckoState = findGeckoState(session);
+            if (BuildConfig.DEBUG) {
+                Log.d("MediaTrace", "page onPlay tab="
+                        + (geckoState != null ? geckoState.getEntityId() : "?"));
+            }
 
             if(geckoState == null)
                 return;
@@ -1415,6 +1419,10 @@ public class GeckoComponents {
             Log.d(TAG, "MediaSessionDelegate onPause");
 
             final GeckoState geckoState = findGeckoState(session);
+            if (BuildConfig.DEBUG) {
+                Log.d("MediaTrace", "page onPause tab="
+                        + (geckoState != null ? geckoState.getEntityId() : "?"));
+            }
 
             if(geckoState == null)
                 return;

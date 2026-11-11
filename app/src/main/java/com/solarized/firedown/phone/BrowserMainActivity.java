@@ -11,6 +11,7 @@ import android.os.Looper;
 import android.os.PowerManager;
 import android.os.Process;
 import android.os.SystemClock;
+import android.util.Log;
 import android.util.Rational;
 
 import androidx.annotation.NonNull;
@@ -22,6 +23,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.solarized.firedown.ApplicationLifeCycleHandler;
 import com.solarized.firedown.BaseActivity;
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.R;
 import com.solarized.firedown.UpdatePromptPolicy;
 import com.solarized.firedown.phone.fragments.BrowserFragment;
@@ -217,6 +219,8 @@ public class BrowserMainActivity extends BaseActivity {
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode,
                                               @NonNull Configuration newConfig) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        trace("pip mode " + isInPictureInPictureMode + " config=" + newConfig.orientation
+                + " requested=" + getRequestedOrientation());
         BrowserFragment fragment = browserFragment();
         if (isInPictureInPictureMode) {
             mPipHandler.removeCallbacks(mSettleStoppedExit);
@@ -253,6 +257,7 @@ public class BrowserMainActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        trace("activity onResume pip=" + isInPictureInPictureMode());
         // Back on screen: an expanded PiP window ends here. No resource
         // bucket check here: the resources can still carry the PiP window's
         // size at this point, and a recreate mid-expand loses the fullscreen
@@ -279,6 +284,7 @@ public class BrowserMainActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        trace("activity onPause pip=" + isInPictureInPictureMode());
         mPip.onPause();
     }
 
@@ -297,6 +303,7 @@ public class BrowserMainActivity extends BaseActivity {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         boolean interactive = pm == null || pm.isInteractive();
         takeScreenOpenedInPipTask();
+        trace("activity onStop pip=" + isInPictureInPictureMode() + " interactive=" + interactive);
         // A recreate in the window (dark mode) stops it with the screen on,
         // like Samsung's drag-to-dismiss: isChangingConfigurations tells them apart.
         if (mPip.onStop(isInPictureInPictureMode(), interactive,
@@ -337,8 +344,16 @@ public class BrowserMainActivity extends BaseActivity {
         }
     }
 
+    /** Debug builds: the PiP steps beside the media calls (adb logcat -s MediaTrace). */
+    private static void trace(String what) {
+        if (BuildConfig.DEBUG) {
+            Log.d("MediaTrace", what);
+        }
+    }
+
     /** The user threw the PiP window away: the video ends. */
     private void pipDismissed() {
+        trace("pip dismissed");
         BrowserFragment fragment = browserFragment();
         if (fragment != null) {
             fragment.onPictureInPictureDismissed();

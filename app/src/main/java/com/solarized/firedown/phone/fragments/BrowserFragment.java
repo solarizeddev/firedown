@@ -47,6 +47,7 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
 import com.solarized.firedown.phone.PipPolicy;
 
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.UpdateReadyLiveData;
 import com.solarized.firedown.addons.AddonPolicy;
 import com.solarized.firedown.App;
@@ -2866,6 +2867,10 @@ public class BrowserFragment extends BaseBrowserFragment
             new OrientationController.OrientationDelegate() {
                 @Override
                 public GeckoResult<AllowOrDeny> onOrientationLock(int requestedOrientation) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d("MediaTrace", "page orientation lock " + requestedOrientation
+                                + " resumed=" + isResumed());
+                    }
                     if (!isResumed()) {
                         return GeckoResult.fromValue(AllowOrDeny.DENY);
                     }
@@ -2881,6 +2886,9 @@ public class BrowserFragment extends BaseBrowserFragment
 
                 @Override
                 public void onOrientationUnlock() {
+                    if (BuildConfig.DEBUG) {
+                        Log.d("MediaTrace", "page orientation unlock");
+                    }
                     if (isAdded()) {
                         mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
                     }

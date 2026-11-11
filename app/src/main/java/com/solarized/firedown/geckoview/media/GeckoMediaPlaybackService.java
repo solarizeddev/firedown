@@ -488,6 +488,7 @@ public class GeckoMediaPlaybackService extends Service {
      */
     private final AudioManager.OnAudioFocusChangeListener mAudioFocusListener = focusChange -> {
         Log.d(TAG, "onAudioFocusChange: " + focusChange);
+        GeckoMediaController.trace("audio focus change " + focusChange);
         switch (focusChange) {
             case AudioManager.AUDIOFOCUS_GAIN:
                 if (mPlayDelayed || mResumeOnFocusGain) {
