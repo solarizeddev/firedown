@@ -1070,7 +1070,6 @@
     <string name="update_check_found">Mise à jour %1$s trouvée. Vous serez averti lorsqu\'elle sera prête</string>
     <string name="update_check_failed">Impossible de rechercher des mises à jour. Réessayez plus tard.</string>
     <string name="update_downloading_title">Téléchargement de la mise à jour</string>
-    <string name="update_sheet_hide">Masquer</string>
     <string name="update_downloading_label">Téléchargement…</string>
     <string name="update_download_progress">%1$s sur %2$s</string>
     <string name="update_download_verifying">Vérification du téléchargement…</string>

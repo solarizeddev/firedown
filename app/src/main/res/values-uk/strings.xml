@@ -916,7 +916,6 @@
     <string name="update_check_found">Знайдено оновлення %1$s. Ви отримаєте сповіщення, коли воно буде готове</string>
     <string name="update_check_failed">Не вдалося перевірити оновлення. Спробуйте пізніше.</string>
     <string name="update_downloading_title">Завантаження оновлення</string>
-    <string name="update_sheet_hide">Сховати</string>
     <string name="update_downloading_label">Завантаження…</string>
     <string name="update_download_progress">%1$s з %2$s</string>
     <string name="update_download_verifying">Перевірка завантаження…</string>

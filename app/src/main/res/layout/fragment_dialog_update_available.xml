@@ -6,7 +6,7 @@
   ready", the new version, the current one), then "What's new" and the notes
   (hidden when status.json has none), then the pinned footer: what installing
   would stop (only when opened on purpose while something runs), that
-  Firedown closes while it installs, and Not now + Install.
+  Firedown closes while it installs, and Install.
 
   INSTALL IS PINNED, ONLY THE CHANGELOG SCROLLS — do not move the button back
   inside the NestedScrollView. It used to live at the bottom of the scrolled
@@ -135,13 +135,11 @@
     <!--
       Pinned footer: outside the scroll view on purpose (see the header).
 
-      Not now + Install, the shape the donation and notification sheets
-      have. A full-width "Later" under Install was removed once (a misclick
-      trap, and it only repeated what a swipe does); a TEXT button beside a
-      filled one is the normal Material pair and is not that trap. It does
-      what a swipe does — onDismiss snoozes for a day — and says so, and a
-      dismissed update now has somewhere to be found again: the ⋮ menu's
-      "Update ready" row.
+      Install alone, full width. There is no Not now / Hide button: a text
+      button beside Install read as Cancel and confused people, and Back, a
+      swipe or a tap outside already close the sheet. onDismiss snoozes for
+      a day either way, and a dismissed update has somewhere to be found
+      again: the ⋮ menu's "Update ready" row.
 
       After Install the footer shows the install instead of the buttons
       (UpdateAvailableSheet.render): "Preparing update… 42%" over a bar while
@@ -152,8 +150,8 @@
       above them.
 
       Opened from About's check while the update still downloads, the same
-      footer shows the download ABOVE the buttons (a 12dp gap set in code),
-      "Not now" reads "Hide" and Install waits, disabled, until the update
+      footer shows the download ABOVE Install (a 12dp gap set in code), and
+      Install waits, disabled, until the update
       has been checked; then the sheet becomes the ready face in place.
     -->
     <LinearLayout
@@ -265,14 +263,6 @@
             android:gravity="center_vertical"
             android:minHeight="48dp"
             android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/update_sheet_not_now"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="@string/translate_not_now" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/update_sheet_install"

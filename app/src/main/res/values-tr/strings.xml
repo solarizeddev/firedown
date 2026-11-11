@@ -971,7 +971,6 @@
     <string name="update_check_found">%1$s güncellemesi bulundu. Hazır olduğunda bildirim alacaksınız</string>
     <string name="update_check_failed">Güncellemeler kontrol edilemedi. Daha sonra tekrar deneyin.</string>
     <string name="update_downloading_title">Güncelleme indiriliyor</string>
-    <string name="update_sheet_hide">Gizle</string>
     <string name="update_downloading_label">İndiriliyor…</string>
     <string name="update_download_progress">%1$s / %2$s</string>
     <string name="update_download_verifying">İndirilen dosya denetleniyor…</string>

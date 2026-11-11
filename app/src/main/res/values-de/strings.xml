@@ -1065,7 +1065,6 @@
     <string name="update_check_found">Update %1$s gefunden. Du wirst benachrichtigt, sobald es bereit ist</string>
     <string name="update_check_failed">Updateprüfung fehlgeschlagen. Versuche es später erneut.</string>
     <string name="update_downloading_title">Update wird heruntergeladen</string>
-    <string name="update_sheet_hide">Ausblenden</string>
     <string name="update_downloading_label">Wird heruntergeladen…</string>
     <string name="update_download_progress">%1$s von %2$s</string>
     <string name="update_download_verifying">Download wird geprüft…</string>

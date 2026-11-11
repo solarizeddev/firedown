@@ -5270,15 +5270,18 @@ is **~75 MB**, the APK 205 MB.
   wrapped bullets indented under their text (only a "• ", "- " or "* "
   bullet is stripped, so "-5%" keeps its sign), the version line in
   `update_version_ink` (dark in light theme: coral is 2.2:1 there), and
-  Not now + Install. Not now does what a swipe does (snooze a day,
-  permanent after three); a full-width "Later" under Install was removed
-  once as a misclick trap with nowhere to come back to, and a text button
-  beside the filled one, with the ⋮ row as the way back, is neither. Both
+  Install, alone and full width. There is NO Not now / Hide button: a
+  full-width "Later" under Install was removed once as a misclick trap,
+  then a text "Not now" beside Install (and "Hide" on the download face)
+  read as Cancel and confused people (maintainer, 2026-11). Back, a swipe
+  or a tap outside close it and do what the button did (snooze a day,
+  permanent after three; no snooze when opened on purpose), and the ⋮
+  row is the way back. Don't put a dismiss button next to Install. Both
   paths open the sheet with `showNow`, so two callers in one frame find
   one sheet by its tag.
   Device check: `phone/UpdateSheetDeviceTest` (an update faked as the
   debug UpdateTestReceiver does; on Downloads the sheet opens with no size
-  and Not now, Not now snoozes and the recreated screen stays quiet, a
+  and Install alone, Back snoozes and the recreated screen stays quiet, a
   queued task holds it back and the on-purpose open names the task and
   writes no snooze). Written for 1.2.8; not run on a device at write time.
 - **About's "Check for updates" shows the download, on its row and in the
@@ -5300,7 +5303,7 @@ is **~75 MB**, the APK 205 MB.
   offline it sat queued with nothing on screen and the guard stuck. A found
   update opens `UpdateAvailableSheet.openDownloading` (on purpose: no
   snooze): the same sheet titled "Downloading update", the download above
-  the buttons, "Hide" for Not now, Install disabled; it polls each second
+  Install, Install disabled; it polls each second
   and turns into the ready face IN PLACE when the verified APK lands (one
   sheet, never a second surface). The download face never shows the busy
   line. The download stays hidden from the notification shade
@@ -5315,7 +5318,7 @@ is **~75 MB**, the APK 205 MB.
   the sheet's face names the version the download is for (`Progress.name`,
   `getChangelogFor`), never the last status.json's, and polls only between
   onStart and onStop. Kept on purpose: the download face is opened on
-  purpose, so Not now on it writes no snooze even after it turned ready,
+  purpose, so closing it writes no snooze even after it turned ready,
   the ⋮ row's rule. Pinned by the flow harness's
   `progress:` checks and two mutants (a finished download read as
   downloading, the Download Manager's size ignored); the screens are

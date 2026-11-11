@@ -1016,7 +1016,6 @@
          size). Verifying = the downloaded file being rebuilt and checked;
          waiting = a failed download's retry is scheduled. -->
     <string name="update_downloading_title">Downloading update</string>
-    <string name="update_sheet_hide">Hide</string>
     <string name="update_downloading_label">Downloading…</string>
     <string name="update_download_progress">%1$s of %2$s</string>
     <string name="update_download_verifying">Checking the download…</string>

@@ -105,7 +105,6 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     private TextView mProgressPercent;
     private LinearProgressIndicator mProgressBar;
     private TextView mTitle;
-    private MaterialButton mNotNow;
 
     /**
      * The download face: the update is still downloading or being checked,
@@ -276,7 +275,6 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         }
 
         mTitle = view.findViewById(R.id.update_sheet_title);
-        mNotNow = view.findViewById(R.id.update_sheet_not_now);
         mActions = view.findViewById(R.id.update_sheet_actions);
         mInstall = view.findViewById(R.id.update_sheet_install);
         mBusy = view.findViewById(R.id.update_sheet_busy);
@@ -289,9 +287,6 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         // progress_indicator set in the layout.
         int primary = MaterialColors.getColor(view, android.R.attr.colorPrimary, Color.BLACK);
         mProgressBar.setTrackColor(ColorUtils.setAlphaComponent(primary, 0x33));
-
-        // "Not now" does what a swipe does (see onDismiss), but says so.
-        mNotNow.setOnClickListener(v -> dismiss());
 
         if (savedInstanceState != null) {
             mSeenInstall = savedInstanceState.getLong(STATE_SEEN_INSTALL, -1);
@@ -340,7 +335,6 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         String name = UpdateDownloader.readyVersionName(context);
         bindVersion(view, name, UpdateDownloader.getChangelogFor(context, mReadyVersionCode));
         mTitle.setText(R.string.update_ready_title);
-        mNotNow.setText(R.string.translate_not_now);
         mInstall.setEnabled(true);
         mInstall.setOnClickListener(v -> onInstall(name));
         showButton(false);
@@ -365,7 +359,6 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         bindVersion(view, UpdateDownloader.getLastChangelogName(context),
                 UpdateDownloader.getLastChangelog(context));
         mTitle.setText(R.string.update_downloading_title);
-        mNotNow.setText(R.string.update_sheet_hide);
         mInstall.setEnabled(false);
         mInstall.setOnClickListener(null);
         mActions.setVisibility(View.VISIBLE);
@@ -743,7 +736,7 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     }
 
     /**
-     * Any dismissal — Not now, Install, swipe-down, back, tap-outside —
+     * Any dismissal — Install, swipe-down, back, tap-outside —
      * SNOOZES the sheet for this version for a day, and the
      * {@link UpdatePromptPolicy#MAX_PROMPTS}th makes that permanent (the ⋮
      * row, About and the notification still offer the update). A sheet the

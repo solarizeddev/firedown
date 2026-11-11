@@ -43,7 +43,7 @@ SDK = int(os.environ.get("FAKE_SDK", "34"))
 DIALOG = os.environ.get("FAKE_DIALOG", "") == "1" or SDK < 31
 SHADE = os.environ.get("FAKE_SHADE", "")
 # FAKE_SHEET=touched: a finger lands outside the first sheet the script
-# reads and closes it, as "Not now" does; =touched-twice does it to the next
+# reads and closes it, as Back does; =touched-twice does it to the next
 # one too.
 SHEET = os.environ.get("FAKE_SHEET", "")
 NOTIF_GRANTED = os.environ.get("FAKE_NOTIF_GRANTED", "1") == "1"
