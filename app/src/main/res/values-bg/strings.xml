@@ -449,7 +449,6 @@
     <string name="update_auto_update_success_body">Обновено до %1$s.</string>
     <string name="update_auto_update_success_default_body">Обновено до най-новата версия.</string>
     <string name="update_auto_update_success_title">Firedown е обновен</string>
-    <string name="update_available_sheet_current">Текуща версия %1$s</string>
     <string name="update_available_sheet_install">Инсталиране</string>
     <string name="update_install_preparing">Подготвяне на актуализацията…</string>
     <string name="update_install_installing">Инсталиране…</string>

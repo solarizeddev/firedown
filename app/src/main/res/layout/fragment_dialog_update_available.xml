@@ -3,7 +3,7 @@
   In-app "Update ready" sheet (UpdateAvailableSheet): a SHA+signature verified
   update APK is ready to install — also the surface for when
   POST_NOTIFICATIONS is denied. Centred header (a small illustration, "Update
-  ready", the new version, the current one), then "What's new" and the notes
+  ready" and the version being installed), then "What's new" and the notes
   (hidden when status.json has none), then the pinned footer: what installing
   would stop (only when opened on purpose while something runs), that
   Firedown closes while it installs, and Install.
@@ -88,17 +88,6 @@
                 android:textAppearance="?attr/textAppearanceTitleMedium"
                 android:textColor="@color/update_version_ink"
                 tools:text="Firedown 1.1.90" />
-
-            <TextView
-                android:id="@+id/update_sheet_current"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="24dp"
-                android:layout_marginTop="2dp"
-                android:gravity="center"
-                android:textAppearance="?attr/textAppearanceBodySmall"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                tools:text="Current version 1.1.81" />
 
             <!-- "What's new" + release notes. Both hidden when there's no changelog. -->
             <TextView

@@ -984,7 +984,6 @@
     <string name="update_busy_share">A file share is open. It ends when Firedown closes.</string>
     <string name="update_busy_playback">Playback stops when Firedown closes.</string>
     <!-- %1$s is the currently-installed version name. -->
-    <string name="update_available_sheet_current">Current version %1$s</string>
     <!-- New version + the size of the APK waiting to be installed; %1$s is the
          version name, %2$s the size. Punctuation-only join, so it carries no
          translatable words. -->

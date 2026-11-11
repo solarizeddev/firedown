@@ -426,7 +426,6 @@
     <string name="update_auto_update_success_body">Atualizado para %1$s.</string>
     <string name="update_auto_update_success_default_body">Atualizado para a versão mais recente.</string>
     <string name="update_auto_update_success_title">Firedown atualizado</string>
-    <string name="update_available_sheet_current">Versão atual %1$s</string>
     <string name="update_available_sheet_install">Instalar</string>
     <string name="update_install_preparing">Preparando a atualização…</string>
     <string name="update_install_installing">Instalando…</string>
