@@ -1282,4 +1282,6 @@
     <string name="site_permission_reset_description">Nollaa: %s</string>
     <string name="site_permissions_reset_all">Nollaa kaikki</string>
     <string name="site_permissions_note">Nollaus unohtaa vastauksesi. Sivusto kysyy seuraavalla kerralla uudelleen.</string>
+    <string name="shield_protection_on">Suojaus on päällä</string>
+    <string name="shield_protection_off_site">Suojaus on pois päältä tällä sivustolla</string>
 </resources>

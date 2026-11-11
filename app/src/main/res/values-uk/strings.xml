@@ -1316,4 +1316,6 @@
     <string name="site_permission_reset_description">Скинути: %s</string>
     <string name="site_permissions_reset_all">Скинути все</string>
     <string name="site_permissions_note">Скидання видаляє вашу відповідь. Наступного разу сайт запитає знову.</string>
+    <string name="shield_protection_on">Захист увімкнено</string>
+    <string name="shield_protection_off_site">Захист вимкнено для цього сайту</string>
 </resources>

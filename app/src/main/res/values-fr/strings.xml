@@ -1288,4 +1288,6 @@
     <string name="site_permission_reset_description">Réinitialiser : %s</string>
     <string name="site_permissions_reset_all">Tout réinitialiser</string>
     <string name="site_permissions_note">Réinitialiser efface votre réponse. Le site demandera à nouveau la prochaine fois.</string>
+    <string name="shield_protection_on">Protection activée</string>
+    <string name="shield_protection_off_site">Protection désactivée pour ce site</string>
 </resources>

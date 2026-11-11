@@ -1282,4 +1282,6 @@
     <string name="site_permission_reset_description">रीसेट करें: %s</string>
     <string name="site_permissions_reset_all">सभी रीसेट करें</string>
     <string name="site_permissions_note">रीसेट आपका जवाब भूल जाता है। अगली बार साइट फिर से पूछेगी।</string>
+    <string name="shield_protection_on">सुरक्षा चालू है</string>
+    <string name="shield_protection_off_site">इस साइट के लिए सुरक्षा बंद है</string>
 </resources>

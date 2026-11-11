@@ -1282,4 +1282,6 @@
     <string name="site_permission_reset_description">Lähtesta: %s</string>
     <string name="site_permissions_reset_all">Lähtesta kõik</string>
     <string name="site_permissions_note">Lähtestamine unustab sinu vastuse. Sait küsib järgmisel korral uuesti.</string>
+    <string name="shield_protection_on">Kaitse on sees</string>
+    <string name="shield_protection_off_site">Kaitse on selle saidi jaoks väljas</string>
 </resources>

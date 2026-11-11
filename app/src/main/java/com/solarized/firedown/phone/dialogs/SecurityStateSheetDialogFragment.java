@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -18,6 +19,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
@@ -65,9 +67,6 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragment
         implements View.OnClickListener {
 
-    /** The row that stands for "no ad blocker runs here" (it has no add-on id). */
-    private static final String NO_BLOCKER_ROW = "";
-
     @Inject
     AddonManager mAddonManager;
 
@@ -84,7 +83,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     private TextView mTotalCountTextView;
     private ViewGroup mBlockersGroup;
     private TextView mBlockersHint;
-    /** The blocker rows on screen, by add-on id ({@link #NO_BLOCKER_ROW} for none), in order. */
+    /** The blocker rows on screen, by add-on id, in order. */
     private final Map<String, MaterialCardView> mBlockerRows = new LinkedHashMap<>();
     /** Add-ons whose icon was already asked for while this sheet is open. */
     private final Set<String> mIconLoaded = new HashSet<>();
@@ -92,6 +91,12 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     private TextView mHostText;
     private View mHostCert;
     private View mAdsStatCard;
+    private View mProtectionBanner;
+    private TextView mProtectionTitle;
+    private MaterialButton mProtectionButton;
+    private ImageView mProtectionChevron;
+    /** The page's blocked-request count, as last reported (the banner's subtitle). */
+    private int mBlockedCount;
     private AppCompatImageView mHostImage;
     private String mDomain;
     private String mLastIconUrl;
@@ -147,6 +152,10 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mHostText = mView.findViewById(R.id.host_secure_text);
         mHostCert = mView.findViewById(R.id.host_secure);
         mAdsStatCard = mView.findViewById(R.id.ads_stat_card);
+        mProtectionBanner = mView.findViewById(R.id.protection_banner);
+        mProtectionTitle = mView.findViewById(R.id.protection_title);
+        mProtectionButton = mView.findViewById(R.id.protection_button);
+        mProtectionChevron = mView.findViewById(R.id.protection_chevron);
 
         // The "N blocked on this page" summary row drills into the page's
         // refused hosts. The nav action popUpTo dialog_security_info
@@ -224,9 +233,8 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         adsCountLive.observe(getViewLifecycleOwner(), count -> {
             int parsed = 0;
             try { parsed = Integer.parseInt(count.trim()); } catch (NumberFormatException ignored) { }
-            if (mTotalCountTextView != null) {
-                mTotalCountTextView.setText(blockedSummary(parsed));
-            }
+            mBlockedCount = parsed;
+            renderBanner();
         });
 
         // The blocker rows follow every button change (counts, "(off)") and
@@ -287,7 +295,8 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
 
     /**
      * One row per ad blocker that runs here (AddonManager.blockersFor),
-     * uBlock Origin first, or "No ad blocker is on" with Turn on. Rows are
+     * uBlock Origin first; with none, the banner says so and carries Turn
+     * on (renderBanner). Rows are
      * updated in place while the same add-ons are listed: buttons change many
      * times a page, and rebuilding restarted every icon from blank.
      */
@@ -307,11 +316,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         List<String> keys = new ArrayList<>();
         for (AddonManager.BlockerItem item : items) {
             keys.add(item.addon.id);
-        }
-        if (running == 0) {
-            // Turn on is offered beside a blocker that only lacks private
-            // tabs too: it brings back uBlock, which Firedown allows there.
-            keys.add(NO_BLOCKER_ROW);
         }
         if (!keys.equals(new ArrayList<>(mBlockerRows.keySet()))) {
             for (MaterialCardView row : mBlockerRows.values()) {
@@ -334,11 +338,8 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 bindBlocker(row, item);
             }
         }
-        MaterialCardView none = mBlockerRows.get(NO_BLOCKER_ROW);
-        if (none != null) {
-            bindNoBlocker(none);
-        }
         SheetGroups.applyCorners(mBlockersGroup);
+        renderBanner();
         if (running > 1) {
             mBlockersHint.setText(getResources().getQuantityString(
                     R.plurals.shield_blockers_many, running, running));
@@ -489,26 +490,89 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         });
     }
 
-    private void bindNoBlocker(@NonNull MaterialCardView row) {
-        ImageView icon = row.findViewById(R.id.blocker_icon);
-        icon.setImageResource(R.drawable.ic_shield_privacy_tip_24);
-        icon.setImageTintList(ColorStateList.valueOf(MaterialColors.getColor(icon,
-                com.google.android.material.R.attr.colorOnSurfaceVariant)));
-        ((TextView) row.findViewById(R.id.blocker_title)).setText(R.string.shield_no_blocker_title);
-        TextView subtitle = row.findViewById(R.id.blocker_subtitle);
-        subtitle.setText(R.string.shield_no_blocker_summary);
-        subtitle.setVisibility(View.VISIBLE);
-        row.findViewById(R.id.blocker_button_tonal).setVisibility(View.GONE);
-        row.findViewById(R.id.blocker_chevron).setVisibility(View.GONE);
-        MaterialButton button = row.findViewById(R.id.blocker_button);
-        Set<String> installing = mAddonManager.getInstalling().getValue();
-        boolean busy = installing != null && installing.contains(AddonPolicy.UBLOCK_ID);
-        button.setText(busy ? R.string.shield_installing : R.string.shield_turn_on);
-        button.setEnabled(!busy);
-        button.setVisibility(View.VISIBLE);
-        button.setOnClickListener(v -> mAddonManager.turnOnUblock(mIsIncognito));
-        row.setOnClickListener(null);
-        row.setClickable(false);
+    /**
+     * The protection banner: the shield's verdict (the same
+     * AddonManager.shieldState the address bar's shield reads), the page's
+     * count, and Turn on when no blocker runs here, the one switch the app
+     * can flip itself (a blocker's per-site switch is in its own popup,
+     * the row below). On: the logo's peach-to-coral under dark inks. Off or
+     * no blocker: a plain tonal ground and the theme's inks, so the colour
+     * alone says protection is off before the words do. Called on every
+     * count and every add-on change.
+     */
+    private void renderBanner() {
+        if (mProtectionBanner == null || mGeckoState == null || !isAdded()) {
+            return;
+        }
+        int shield = mAddonManager.shieldState(mGeckoState.getGeckoSession(), mIsIncognito,
+                mGeckoState.getEntityUri());
+        boolean on = shield == AddonPolicy.SHIELD_PROTECTED;
+        if (on) {
+            mProtectionTitle.setText(R.string.shield_protection_on);
+        } else if (shield == AddonPolicy.SHIELD_OFF_FOR_SITE) {
+            mProtectionTitle.setText(R.string.shield_protection_off_site);
+        } else {
+            mProtectionTitle.setText(R.string.shield_no_blocker_title);
+        }
+        if (mBlockedCount > 0) {
+            mTotalCountTextView.setText(blockedSummary(mBlockedCount));
+        } else {
+            mTotalCountTextView.setText(on ? R.string.blocked_page_empty : R.string.shield_no_blocker_summary);
+        }
+
+        int title;
+        int subtitle;
+        int[] ground;
+        if (on) {
+            title = ContextCompat.getColor(requireContext(), R.color.protection_banner_ink);
+            subtitle = ContextCompat.getColor(requireContext(), R.color.protection_banner_ink_variant);
+            ground = new int[]{
+                    ContextCompat.getColor(requireContext(), R.color.protection_banner_start),
+                    ContextCompat.getColor(requireContext(), R.color.protection_banner_mid),
+                    ContextCompat.getColor(requireContext(), R.color.protection_banner_end)};
+        } else {
+            title = MaterialColors.getColor(mProtectionBanner, com.google.android.material.R.attr.colorOnSurface);
+            subtitle = MaterialColors.getColor(mProtectionBanner,
+                    com.google.android.material.R.attr.colorOnSurfaceVariant);
+            int tone = mIsIncognito
+                    ? IncognitoColors.getSurfaceContainerHighest(mProtectionBanner.getContext(), true)
+                    : MaterialColors.getColor(mProtectionBanner,
+                    com.google.android.material.R.attr.colorSurfaceContainerHighest);
+            ground = new int[]{tone, tone};
+        }
+        mProtectionTitle.setTextColor(title);
+        mTotalCountTextView.setTextColor(subtitle);
+        mProtectionChevron.setImageTintList(ColorStateList.valueOf(subtitle));
+
+        GradientDrawable background = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, ground);
+        float outer = getResources().getDimension(R.dimen.sheet_group_corner_outer);
+        float bottom = hasCardAfterBanner() ? getResources().getDimension(R.dimen.sheet_group_corner_inner) : outer;
+        background.setCornerRadii(new float[]{outer, outer, outer, outer, bottom, bottom, bottom, bottom});
+        mProtectionBanner.setBackground(background);
+
+        if (shield == AddonPolicy.SHIELD_NO_BLOCKER) {
+            Set<String> installing = mAddonManager.getInstalling().getValue();
+            boolean busy = installing != null && installing.contains(AddonPolicy.UBLOCK_ID);
+            mProtectionButton.setText(busy ? R.string.shield_installing : R.string.shield_turn_on);
+            mProtectionButton.setEnabled(!busy);
+            mProtectionButton.setOnClickListener(v -> mAddonManager.turnOnUblock(mIsIncognito));
+            mProtectionButton.setVisibility(View.VISIBLE);
+        } else {
+            mProtectionButton.setOnClickListener(null);
+            mProtectionButton.setVisibility(View.GONE);
+        }
+    }
+
+    /** Whether a visible blocker row follows the banner (its bottom corners are then the inner ones). */
+    private boolean hasCardAfterBanner() {
+        for (int i = 0; i < mBlockersGroup.getChildCount(); i++) {
+            View child = mBlockersGroup.getChildAt(i);
+            if (child != mAdsStatCard && child instanceof MaterialCardView
+                    && child.getVisibility() == View.VISIBLE) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -568,6 +632,10 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mBlockerRows.clear();
         mHostImage = null;
         mAdsStatCard = null;
+        mProtectionBanner = null;
+        mProtectionTitle = null;
+        mProtectionButton = null;
+        mProtectionChevron = null;
         mView = null;
     }
 }

@@ -1315,4 +1315,6 @@
     <string name="site_permission_reset_description">Resetuj: %s</string>
     <string name="site_permissions_reset_all">Resetuj wszystko</string>
     <string name="site_permissions_note">Reset usuwa Twoją odpowiedź. Strona zapyta ponownie następnym razem.</string>
+    <string name="shield_protection_on">Ochrona jest włączona</string>
+    <string name="shield_protection_off_site">Ochrona jest wyłączona dla tej strony</string>
 </resources>

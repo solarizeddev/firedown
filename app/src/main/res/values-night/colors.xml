@@ -180,4 +180,13 @@
     <color name="mime_fallback_status">@color/md_theme_primary</color>
     <color name="mime_fallback_action">#FFFFFF</color>
 
+    <!-- The security sheet's protection banner while protection is on: the
+         logo's peach to coral (no magenta end, which leans toward the
+         private-tab purple), under dark inks: 5.9:1 or more at every stop.
+         Light theme starts deeper, or the peach melts into the light sheet. -->
+    <color name="protection_banner_start">#FFFFBE9A</color>
+    <color name="protection_banner_mid">#FFFF9A88</color>
+    <color name="protection_banner_end">#FFFF7A73</color>
+    <color name="protection_banner_ink">#FF2B0613</color>
+    <color name="protection_banner_ink_variant">#FF3D0D1A</color>
 </resources>

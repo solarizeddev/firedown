@@ -1286,4 +1286,6 @@
     <string name="site_permission_reset_description">Restablecer: %s</string>
     <string name="site_permissions_reset_all">Restablecer todo</string>
     <string name="site_permissions_note">Restablecer olvida tu respuesta. El sitio volverá a preguntar la próxima vez.</string>
+    <string name="shield_protection_on">Protección activada</string>
+    <string name="shield_protection_off_site">Protección desactivada en este sitio</string>
 </resources>

@@ -1267,4 +1267,6 @@
     <string name="site_permission_reset_description">重置：%s</string>
     <string name="site_permissions_reset_all">全部重置</string>
     <string name="site_permissions_note">重置会清除您的回答。网站下次会再次询问。</string>
+    <string name="shield_protection_on">保护已开启</string>
+    <string name="shield_protection_off_site">已对此网站关闭保护</string>
 </resources>

@@ -1513,4 +1513,6 @@
     <string name="site_permission_reset_description">Reset: %s</string>
     <string name="site_permissions_reset_all">Reset all</string>
     <string name="site_permissions_note">Reset forgets your answer. The site asks again next time.</string>
+    <string name="shield_protection_on">Protection is on</string>
+    <string name="shield_protection_off_site">Protection is off for this site</string>
 </resources>

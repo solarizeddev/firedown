@@ -1248,4 +1248,6 @@
     <string name="site_permission_reset_description">Đặt lại: %s</string>
     <string name="site_permissions_reset_all">Đặt lại tất cả</string>
     <string name="site_permissions_note">Đặt lại sẽ xóa câu trả lời của bạn. Lần sau trang web sẽ hỏi lại.</string>
+    <string name="shield_protection_on">Bảo vệ đang bật</string>
+    <string name="shield_protection_off_site">Bảo vệ đã tắt cho trang này</string>
 </resources>

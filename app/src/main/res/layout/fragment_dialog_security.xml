@@ -30,7 +30,8 @@
     Ids the fragment binds (host_image, host, host_url, host_secure,
     host_secure_text, connection_group, drm_row, drm_row_turn_on,
     site_permissions_row, site_permissions_summary,
-    ads_stat_card, security_total_count, blockers_group, blockers_hint,
+    ads_stat_card, protection_banner, protection_title, security_total_count,
+    protection_button, protection_chevron, blockers_group, blockers_hint,
     host_clear) — keep them if the rows move again.
 
     Outer LinearLayout is left unpadded because
@@ -299,9 +300,9 @@
 
             <!-- ── Group 2: what is blocked here, and by whom ────────── -->
 
-            <!-- The count row, then the fragment's blocker rows
+            <!-- The protection banner, then the fragment's blocker rows
                  (item_blocker_row): each ad blocker add-on, uBlock Origin
-                 first, or the "No ad blocker is on" row. -->
+                 first. -->
             <LinearLayout
                 android:id="@+id/blockers_group"
                 android:layout_width="match_parent"
@@ -309,59 +310,86 @@
                 android:layout_marginTop="@dimen/sheet_group_gap"
                 android:orientation="vertical">
 
-                <!-- "N requests blocked on this page ›", drills into the page's
-                     refused hosts (BlockedAdsDetailDialogFragment). ONE line
-                     from the blocked_ads_summary plural (the number set in
-                     bold by the fragment), so the words agree with the count
-                     in every language. It is the only number in the group:
-                     the blocker rows below carry no count of their own, an
-                     add-on's badge measures something else (trackers, or
-                     redirects this count never sees) and side by side the
-                     numbers read as a sum that does not add up. onSurface,
-                     not coral: the brand coral on this ground is under 3:1
-                     for 16sp text in light theme. -->
+                <!-- The protection banner (canvas "Shield protection card",
+                     board E): the shield's verdict as its title ("Protection
+                     is on" / "Protection is off for this site" / "No ad
+                     blocker is on", from the same AddonManager.shieldState
+                     the address bar's shield reads, so the two cannot
+                     disagree), the page's count under it, and a tap into the
+                     page's refused hosts (BlockedAdsDetailDialogFragment).
+                     On: the logo's peach→coral gradient under dark ink. Off
+                     or no blocker: a plain tonal ground, theme inks. The
+                     fragment paints the ground (protection_banner) with the
+                     card's own corners: the card cannot clip a child to
+                     unequal corners before Android 11. Its one button is
+                     "Turn on" when no blocker runs, the one switch the app
+                     can flip itself; a blocker's per-site switch is in its
+                     own popup, the row below. The count is the group's only
+                     number: the blocker rows carry no count (an add-on's
+                     badge measures something else, and side by side the
+                     numbers read as a sum that does not add up). -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/ads_stat_card"
                     style="@style/Firedown.Widget.SheetRowCard"
                     android:layout_marginTop="0dp"
+                    app:cardBackgroundColor="@android:color/transparent"
                     app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupTop">
 
                     <LinearLayout
+                        android:id="@+id/protection_banner"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
-                        android:minHeight="56dp"
+                        android:minHeight="64dp"
                         android:orientation="horizontal"
-                        android:paddingHorizontal="16dp">
+                        android:paddingVertical="10dp"
+                        android:paddingStart="20dp"
+                        android:paddingEnd="12dp">
 
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_marginEnd="16dp"
-                            android:contentDescription="@null"
-                            app:srcCompat="@drawable/ic_shield_24"
-                            app:tint="?attr/colorOnSurfaceVariant" />
-
-                        <TextView
-                            android:id="@+id/security_total_count"
-                            style="@style/TextAppearance.Material3.TitleMedium"
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:ellipsize="end"
-                            android:fontFeatureSettings="tnum"
-                            android:maxLines="2"
-                            android:paddingVertical="8dp"
-                            android:textColor="?attr/colorOnSurface"
-                            tools:text="27 requests blocked on this page" />
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/protection_title"
+                                style="@style/TextAppearance.Material3.TitleMedium"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:maxLines="2"
+                                android:textSize="17sp"
+                                android:textStyle="bold"
+                                tools:text="Protection is on" />
+
+                            <TextView
+                                android:id="@+id/security_total_count"
+                                style="@style/TextAppearance.Material3.BodyMedium"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFeatureSettings="tnum"
+                                android:maxLines="2"
+                                tools:text="27 requests blocked on this page" />
+
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/protection_button"
+                            style="@style/Widget.Material3.Button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:text="@string/shield_turn_on"
+                            android:visibility="gone" />
 
                         <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/protection_chevron"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:layout_marginStart="8dp"
                             android:contentDescription="@null"
-                            app:srcCompat="@drawable/ic_chevron_right_24"
-                            app:tint="?attr/colorOnSurfaceVariant" />
+                            app:srcCompat="@drawable/ic_chevron_right_24" />
 
                     </LinearLayout>
 

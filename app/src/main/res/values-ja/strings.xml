@@ -1267,4 +1267,6 @@
     <string name="site_permission_reset_description">リセット: %s</string>
     <string name="site_permissions_reset_all">すべてリセット</string>
     <string name="site_permissions_note">リセットすると回答が消えます。次回、サイトは再び確認します。</string>
+    <string name="shield_protection_on">保護はオンです</string>
+    <string name="shield_protection_off_site">このサイトでは保護がオフです</string>
 </resources>

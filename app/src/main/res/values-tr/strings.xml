@@ -1281,4 +1281,6 @@
     <string name="site_permission_reset_description">Sıfırla: %s</string>
     <string name="site_permissions_reset_all">Tümünü sıfırla</string>
     <string name="site_permissions_note">Sıfırlama yanıtınızı unutur. Site bir dahaki sefere yeniden sorar.</string>
+    <string name="shield_protection_on">Koruma açık</string>
+    <string name="shield_protection_off_site">Bu sitede koruma kapalı</string>
 </resources>

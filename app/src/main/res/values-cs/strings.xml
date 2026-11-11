@@ -1314,4 +1314,6 @@
     <string name="site_permission_reset_description">Obnovit: %s</string>
     <string name="site_permissions_reset_all">Obnovit vše</string>
     <string name="site_permissions_note">Obnovení zapomene vaši odpověď. Web se příště zeptá znovu.</string>
+    <string name="shield_protection_on">Ochrana je zapnutá</string>
+    <string name="shield_protection_off_site">Ochrana je pro tento web vypnutá</string>
 </resources>

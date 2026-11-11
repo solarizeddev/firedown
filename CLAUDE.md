@@ -336,16 +336,41 @@ user runs (sketch: `sketches/shield-blockers.html`).
   (`getActionsVersion`), every location change and every tab switch, in
   regular AND private tabs (the private toolbar used to show the full
   shield always).
-- **The sheet** (`SecurityStateSheetDialogFragment`): the connection row;
-  then "N requests blocked on this page ›" (one line from the
-  `blocked_ads_summary` plural, the number in bold) followed by one row per
-  blocker (`item_blocker_row`, uBlock first: its name on ONE line, a status
-  line on EVERY row — "On for this site" / "Off for this site" for uBlock,
-  "On" for any other, enabled being all that can be read of it — a tap
-  opens its popup, where uBlock's per-site switch lives); a blocker not
-  allowed in a private tab says so with "Allow"; with none running, "No ad
-  blocker is on · Ads and trackers load on this page · Turn on". More than
-  one running adds one quiet line (no warning colour: the user chose it).
+- **The sheet** (`SecurityStateSheetDialogFragment`): the connection
+  group (connection, DRM, Site permissions); then the **protection
+  banner** heading the blockers group, followed by one row per blocker
+  (`item_blocker_row`, uBlock first: its name on ONE line, a status line on
+  EVERY row — "On for this site" / "Off for this site" for uBlock, "On" for
+  any other, enabled being all that can be read of it — a tap opens its
+  popup, where uBlock's per-site switch lives); a blocker not allowed in a
+  private tab says so with "Allow". More than one running adds one quiet
+  line (no warning colour: the user chose it).
+- **The protection banner** (`ads_stat_card` / `renderBanner`; canvas
+  "Shield protection card", board E, picked 2026-11 over a verdict-only row
+  and an IronFox-style hero with the flame, reviewed with Fable). Its title
+  is the shield's verdict from the SAME `AddonManager.shieldState` the
+  address bar reads, so the two cannot disagree: "Protection is on" /
+  "Protection is off for this site" / "No ad blocker is on"; under it the
+  page count (`blocked_ads_summary`, number bold), else "Nothing blocked on
+  this page yet" (on) or "Ads load on this page"; a tap opens the refused
+  hosts. On: the logo's peach→coral gradient (`protection_banner_*`, a
+  deeper start in light theme so its edge shows on the light sheet) under
+  dark inks, 5.9:1 or more at every stop; no magenta end, which leans
+  toward the private-tab purple. Off or no blocker: a plain
+  surfaceContainerHighest ground (the incognito one in private tabs) and
+  theme inks, so colour alone says "off". The ground is a GradientDrawable
+  on the card's child with the card's own corners (`hasCardAfterBanner`):
+  a card cannot clip a child to unequal corners before Android 11. Rules
+  that came out of the review: **the banner has no Turn off button**
+  (Firedown cannot flip a blocker's per-site switch — that is in its
+  popup, the row below — and a button that only opens the popup, or turns
+  the add-on off everywhere, would say more than it does); its one button
+  is "Turn on" when no blocker runs (`turnOnUblock`), which replaced the
+  separate "No ad blocker is on" row. **The blockers stay on the main
+  sheet, never inside the banner's page**: "this site looks broken" is the
+  sheet's urgent job, and one page down it would be a fourth tap. No flame
+  or illustration: a big-total hero was built and removed in May
+  (`23a8a8e4`) for clashing with the list.
   Rows are updated in place, as in the ⋮ Add-ons sheet (titles change many
   times a page). **The page total is the sheet's ONLY number** (canvas
   `sketches/shield-sheet-numbers.html`, option A): each row used to carry

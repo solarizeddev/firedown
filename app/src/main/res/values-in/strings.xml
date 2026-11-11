@@ -1247,4 +1247,6 @@
     <string name="site_permission_reset_description">Setel ulang: %s</string>
     <string name="site_permissions_reset_all">Setel ulang semua</string>
     <string name="site_permissions_note">Setel ulang melupakan jawaban Anda. Situs akan bertanya lagi lain kali.</string>
+    <string name="shield_protection_on">Perlindungan aktif</string>
+    <string name="shield_protection_off_site">Perlindungan nonaktif untuk situs ini</string>
 </resources>
