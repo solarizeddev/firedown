@@ -13566,6 +13566,34 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   view gets the fullscreen layout back in `setGeckoViewSession` (Gecko
   sends no second fullscreen event) — never on a tab switch, where an exit
   may still be in flight.
+- **The page is told it is in the window** (`BrowserFragment.applyPipMode`,
+  Firefox's `CompositorController.onPipModeChanged` call): Gecko then lays
+  every `<video>` over the whole window (html.css's
+  `-moz-in-android-pip-mode` rule, `layout.css.android-pip.enabled`, on by
+  default), so the small window shows the picture, not the page shrunk into
+  it with the site's player UI on top. The flag lives in the tab's content
+  process (BrowserChild): one session holds it, it is cleared before
+  another gets it, on every dismissal (a drag-dismiss with no mode change
+  included), in onDestroyView and by an onResume belt; a set flag left
+  behind pins that tab's videos over the page in normal browsing. Gecko
+  never sends it again, so it is resent when the page in the window
+  commits or stops loading (a session opened in the window, a navigation
+  into another process).
+- **Mobile YouTube needs Firefox's site patch** (bug 1956165, ported as
+  `assets/youtube/pip-fix.js`, MPL-2.0, its own file): its player reads the
+  window's outer size dropping under a third of the screen
+  (`html5_picture_in_picture_logging_onresize_ratio`, default 0.33) as the
+  app going to the background, leaves fullscreen and pauses, ~260 ms into
+  the window. In the small window the page sees the screen's size as the
+  outer size and `exitFullscreen()` does nothing; top frame of
+  m.youtube.com only, page world, document_start. The token page
+  (www.youtube.com/robots.txt) is outside the gate on purpose: its 0x0
+  outer size would read as PiP. Consequences, shared with Firefox: a pane
+  under a third of the screen (split screen) ignores YouTube's own
+  fullscreen exit, and a video that ends in the window stays fullscreen
+  on expand. Verify with `node scripts/youtube-pip-smoke.mjs` (the real
+  file in a vm; five planted bugs each fail it). Firefox for Android ships
+  Mozilla's whole webcompat add-on; Firedown carries only this patch.
 - **Aspect** comes from `MediaSession.Delegate.onFullscreen`'s element
   metadata, stored per tab and ungated (`GeckoState.setMediaFullScreenSize`)
   and clamped by `PipPolicy.aspect` — the one clamp, which `PlayerActivity`
