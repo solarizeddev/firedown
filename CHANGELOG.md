@@ -6,7 +6,7 @@
 - A setting to open links from other apps in a private tab
 - Add-ons: each add-on's page lists the sites it can access, each with its own switch
 - Websites can ask for your location once you turn it on in Settings; it is off by default
-- The shield says at a glance whether the site is protected
+- The shield says at a glance whether the site is protected, and Back from its pages returns to it
 - The shield shows what a site may do, like keep its data or use its cookies, with Reset
 
 ## [1.2.8] - 2026-11-10
