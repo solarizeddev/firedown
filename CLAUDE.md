@@ -9647,8 +9647,9 @@ then failed because the app held no location permission. Now:
   `permissions.default.geo = 2` (DENY) to the user branch at every boot and
   on the switch, and FORGETS every site's stored location answer
   (`getAllPermissions` → `setPermission(VALUE_PROMPT)`) once per switch-off
-  (`LOCATION_ANSWERS_FORGOTTEN`; `getAllPermissions` serializes every stored
-  principal, too much for every boot). The forget is what makes off mean
+  (`LOCATION_ANSWERS_FORGOTTEN`, written only once Gecko answered, so a
+  failed read is retried at the next boot; `getAllPermissions` serializes
+  every stored principal, too much for every boot). The forget is what makes off mean
   off: a site's stored ALLOW outranks the default, and Gecko
   would hand that site the location without asking the app again. A
   request that still reaches the delegate (a stored PROMPT row) is answered
@@ -9671,7 +9672,8 @@ then failed because the app held no location permission. Now:
   `onLocationPermissionResult`. Refused by Android, a snackbar says so with
   a Settings action (the app's page). No browser resumed, or the switch
   off: refused. One request at a time; a second while Android's dialog is
-  up is refused, and one waiting past 2 minutes is refused and replaced.
+  up is refused, and one with no answer after 2 minutes (the browser
+  finished under Android's dialog) is refused by a posted timeout.
   Known: Gecko stores a refusal at this step (Android said no) as the
   site's DENY for good, so the site reads "Blocked" though the user tapped
   Allow, until Reset; the snackbar says why.
@@ -9714,7 +9716,13 @@ Rules, in `geckoview/SitePermissions` (pure, `SitePermissionsTest`):
   (`clearDataFromHost(host, PERMISSIONS)`) and writes back the answers the
   user did not reset. Regular tabs only (in a private tab clearing the host
   would clear the regular tab's answers too). The list is read again from
-  Gecko after every Reset, never trimmed locally.
+  Gecko after every Reset, never trimmed locally. Known, accepted: the
+  clear is wider than what is written back (Gecko's host cleaner also
+  takes subdomains, other schemes and ports, and private rows, while only
+  the page's own listed answers are restored); a kept self-granted cookie
+  row comes back under the frame key with no expiry (access unchanged);
+  and in a private tab such a row cannot be reset (it reappears; private
+  rows end with the session anyway).
 - Duplicates are one row (the latest wins; Reset forgets all of them);
   storage access is one row per embedded host (`hostOf`: scheme, port,
   `^` origin attributes, `www.` dropped, IPv6 kept).

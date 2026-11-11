@@ -1717,9 +1717,8 @@ public class GeckoComponents {
         /**
          * Android's location permission, asked through the browser on
          * screen. Refused when the switch is off, when no browser can ask
-         * (none resumed), or while another request waits on Android's
-         * dialog (one that has waited past the timeout is refused and
-         * replaced: its answer never came back).
+         * (none resumed), while another request waits on Android's dialog,
+         * or when no answer came back within the timeout.
          */
         private void requestLocation(@NonNull final Callback callback) {
             LocationPermissionRequester requester = mLocationRequester;
@@ -1738,6 +1737,13 @@ public class GeckoComponents {
             }
             mPendingLocation = callback;
             mPendingLocationSince = now;
+            // A result that never comes back (the browser finished while
+            // Android's dialog was up) must not leave the page waiting.
+            mMainHandler.postDelayed(() -> {
+                if (mPendingLocation == callback) {
+                    onLocationPermissionResult(false);
+                }
+            }, LOCATION_ANSWER_TIMEOUT_MS);
             try {
                 requester.launch();
             } catch (IllegalStateException e) {

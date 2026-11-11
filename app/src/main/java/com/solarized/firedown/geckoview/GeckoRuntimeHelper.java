@@ -1407,11 +1407,14 @@ public class GeckoRuntimeHelper {
             }
         } else if (!forgotten) {
             forgetLocationAnswers();
-            mSharedPreferences.edit().putBoolean(Preferences.LOCATION_ANSWERS_FORGOTTEN, true).apply();
         }
     }
 
-    /** Every site's stored location answer, forgotten (set back to PROMPT). */
+    /**
+     * Every site's stored location answer, forgotten (set back to PROMPT).
+     * The done flag is written only once Gecko answered, so a failed read is
+     * tried again at the next boot.
+     */
     private void forgetLocationAnswers() {
         StorageController storage = sGeckoRuntime.getStorageController();
         storage.getAllPermissions().accept(perms -> {
@@ -1425,6 +1428,7 @@ public class GeckoRuntimeHelper {
                             GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT);
                 }
             }
+            mSharedPreferences.edit().putBoolean(Preferences.LOCATION_ANSWERS_FORGOTTEN, true).apply();
         }, error -> {
             if (BuildConfig.DEBUG) {
                 Log.w(TAG, "forgetLocationAnswers", error);
