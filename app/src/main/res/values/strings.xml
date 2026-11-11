@@ -662,6 +662,12 @@
         <item quantity="one">%d request blocked on this page</item>
         <item quantity="other">%d requests blocked on this page</item>
     </plurals>
+    <!-- The shield sheet's banner title while protection is on: the
+         page's blocked count. Blocker-neutral, so no add-on is named. -->
+    <plurals name="shield_blocked_title">
+        <item quantity="one">%d blocked on this page</item>
+        <item quantity="other">%d blocked on this page</item>
+    </plurals>
     <string name="blocked_page_empty">Nothing blocked on this page yet</string>
     <string name="quit_application">Quitting the application to apply changes…</string>
     <string name="rename">Rename</string>

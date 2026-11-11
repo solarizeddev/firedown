@@ -446,6 +446,10 @@
         <item quantity="one">इस पृष्ठ पर %d अनुरोध अवरुद्ध</item>
         <item quantity="other">इस पृष्ठ पर %d अनुरोध अवरुद्ध</item>
     </plurals>
+    <plurals name="shield_blocked_title">
+        <item quantity="one">इस पेज पर %d ब्लॉक किया गया</item>
+        <item quantity="other">इस पेज पर %d ब्लॉक किए गए</item>
+    </plurals>
     <string name="security_block_ads_trackers">विज्ञापन और ट्रैकर अवरुद्ध करें</string>
     <string name="browser_menu_back">पीछे जाएं</string>
     <string name="browser_menu_desktop_site">डेस्कटॉप साइट</string>

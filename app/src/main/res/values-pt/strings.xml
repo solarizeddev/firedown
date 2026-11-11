@@ -489,6 +489,11 @@
         <item quantity="one">%d solicitação bloqueada nesta página</item>
         <item quantity="other">%d solicitações bloqueadas nesta página</item>
     </plurals>
+    <plurals name="shield_blocked_title">
+        <item quantity="one">%d bloqueado nesta página</item>
+        <item quantity="many">%d bloqueados nesta página</item>
+        <item quantity="other">%d bloqueados nesta página</item>
+    </plurals>
     <string name="security_block_ads_trackers">Bloquear anúncios e rastreadores</string>
     <string name="tabs_incognito_empty">Sem separadores privados</string>
     <string name="settings_oled_theme">Preto AMOLED</string>

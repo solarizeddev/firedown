@@ -652,6 +652,9 @@
     <plurals name="blocked_ads_summary">
         <item quantity="other">このページで %d 件のリクエストをブロック</item>
     </plurals>
+    <plurals name="shield_blocked_title">
+        <item quantity="other">このページで %d 件をブロック</item>
+    </plurals>
     <string name="security_block_ads_trackers">広告とトラッカーをブロック</string>
     <string name="compress">圧縮</string>
     <string name="media_tools">メディアツール</string>

@@ -373,15 +373,24 @@ user runs (sketch: `sketches/shield-blockers.html`).
   line (no warning colour: the user chose it).
 - **The protection banner** (`ads_stat_card` / `renderBanner`; canvas
   "Shield protection card", board E, picked 2026-11 over a verdict-only row
-  and an IronFox-style hero with the flame, reviewed with Fable). Its title
-  is the shield's verdict from the SAME `AddonManager.shieldState` the
-  address bar reads, so the two cannot disagree: "Protection is on" /
-  "Protection is off for this site" / "No ad blocker is on"; under it the
-  page count (`blocked_ads_summary`, number bold) while ON, else "Nothing
-  blocked on this page yet" (on) or "Ads load on this page" (off or no
-  blocker: a count left from before the user turned the blocker off would
-  contradict the title until the page reloads); a tap opens the refused
-  hosts. On: the logo's peach→coral gradient (`protection_banner_*`, a
+  and an IronFox-style hero with the flame, reviewed with Fable). The
+  verdict comes from the SAME `AddonManager.shieldState` the address bar
+  reads, so the two cannot disagree. ON: the page count is the title
+  (`shield_blocked_title`, "8 blocked on this page"; where a count would
+  have to agree with an unnamed noun, the translation puts it after a
+  colon) and the verdict "Protection is on" the subtitle, so the subtitle
+  keeps one shape while the count comes and goes; with nothing blocked the
+  title is "Nothing blocked on this page yet" (a "0" reads as failure).
+  OFF / NO BLOCKER: "Protection is off for this site" / "No ad blocker is
+  on" over "Ads load on this page", no count (one left from before the
+  user turned the blocker off would contradict the title until the page
+  reloads). **The banner names no add-on**: the count is blocker-neutral
+  (any blocker and Gecko's own blocking), so "uBlock Origin is filtering
+  this site" would claim what the counter cannot know; the rows below name
+  the blockers (canvas boards I and J, 2026-11, reviewed with Fable, who
+  also turned down putting the page's captures in this sheet: a second
+  door to the Captured sheet, and blocked requests beside offered media
+  read as a sum). A tap opens the refused hosts. On: the logo's peach→coral gradient (`protection_banner_*`, a
   deeper start in light theme so its edge shows on the light sheet) under
   dark inks, 5.9:1 or more at every stop; no magenta end, which leans
   toward the private-tab purple. Dark theme DIMS the same stops

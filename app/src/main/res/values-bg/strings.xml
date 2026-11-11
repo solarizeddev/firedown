@@ -638,6 +638,10 @@
         <item quantity="one">%d заявка е блокирана на тази страница</item>
         <item quantity="other">%d заявки са блокирани на тази страница</item>
     </plurals>
+    <plurals name="shield_blocked_title">
+        <item quantity="one">Блокирани на тази страница: %d</item>
+        <item quantity="other">Блокирани на тази страница: %d</item>
+    </plurals>
     <string name="bookmark_action_open">Отваряне в браузъра</string>
     <string name="bookmark_delete_action">Изтриване на отметката</string>
     <string name="bookmark_url_invalid">Въведете валиден URL</string>

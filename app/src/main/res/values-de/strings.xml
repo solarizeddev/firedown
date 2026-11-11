@@ -657,6 +657,10 @@
         <item quantity="one">%d Anfrage auf dieser Seite blockiert</item>
         <item quantity="other">%d Anfragen auf dieser Seite blockiert</item>
     </plurals>
+    <plurals name="shield_blocked_title">
+        <item quantity="one">%d auf dieser Seite blockiert</item>
+        <item quantity="other">%d auf dieser Seite blockiert</item>
+    </plurals>
     <string name="security_block_ads_trackers">Werbung und Tracker blockieren</string>
     <string name="compress">Komprimieren</string>
     <string name="media_tools">Medien-Tools</string>

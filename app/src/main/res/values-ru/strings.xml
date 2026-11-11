@@ -571,6 +571,12 @@
         <item quantity="many">%d запросов заблокировано на этой странице</item>
         <item quantity="other">%d запросов заблокировано на этой странице</item>
     </plurals>
+    <plurals name="shield_blocked_title">
+        <item quantity="one">Заблокировано на этой странице: %d</item>
+        <item quantity="few">Заблокировано на этой странице: %d</item>
+        <item quantity="many">Заблокировано на этой странице: %d</item>
+        <item quantity="other">Заблокировано на этой странице: %d</item>
+    </plurals>
     <string name="security_block_ads_trackers">Блокировать рекламу и трекеры</string>
     <string name="tabs_incognito_empty">Нет приватных вкладок</string>
     <string name="compress">Сжать</string>

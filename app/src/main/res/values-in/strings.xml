@@ -424,6 +424,9 @@
     <plurals name="blocked_ads_summary">
         <item quantity="other">%d permintaan diblokir di halaman ini</item>
     </plurals>
+    <plurals name="shield_blocked_title">
+        <item quantity="other">%d diblokir di halaman ini</item>
+    </plurals>
     <string name="bookmark_action_open">Buka di browser</string>
     <string name="bookmark_delete_action">Hapus markah</string>
     <string name="capture_help_menu">Bantuan</string>

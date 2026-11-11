@@ -515,6 +515,12 @@
         <item quantity="many">%d запитів заблоковано на цій сторінці</item>
         <item quantity="other">%d запиту заблоковано на цій сторінці</item>
     </plurals>
+    <plurals name="shield_blocked_title">
+        <item quantity="one">Заблоковано на цій сторінці: %d</item>
+        <item quantity="few">Заблоковано на цій сторінці: %d</item>
+        <item quantity="many">Заблоковано на цій сторінці: %d</item>
+        <item quantity="other">Заблоковано на цій сторінці: %d</item>
+    </plurals>
     <string name="capture_help_menu">Довідка</string>
     <string name="media_tools">Медіаінструменти</string>
     <string name="tabs_more_options">Більше параметрів</string>

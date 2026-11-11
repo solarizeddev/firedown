@@ -3,13 +3,9 @@ package com.solarized.firedown.phone.dialogs;
 import android.app.Dialog;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
-import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
-import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.TextUtils;
-import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,7 +50,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -425,23 +420,6 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     }
 
     /**
-     * "27 requests blocked on this page", the number in bold: one plural, so
-     * the words agree with the count in every language.
-     */
-    @NonNull
-    private CharSequence blockedSummary(int count) {
-        String number = String.format(Locale.getDefault(), "%d", count);
-        String text = getResources().getQuantityString(R.plurals.blocked_ads_summary, count, count);
-        SpannableString styled = new SpannableString(text);
-        int at = text.indexOf(number);
-        if (at >= 0) {
-            styled.setSpan(new StyleSpan(Typeface.BOLD), at, at + number.length(),
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        return styled;
-    }
-
-    /**
      * Protection leads the sheet: the address bar's icon is a shield whose
      * state is the blocker's, so the sheet opens on what the icon said. On a
      * page whose connection is not secure (plain http, or a certificate that
@@ -566,20 +544,25 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         int shield = mAddonManager.shieldState(mGeckoState.getGeckoSession(), mIsIncognito,
                 mGeckoState.getEntityUri());
         boolean on = shield == AddonPolicy.SHIELD_PROTECTED;
+        // On: the count is the title and the verdict the subtitle, so the
+        // subtitle keeps one shape while the count comes and goes. The count
+        // is blocker-neutral (any blocker, and Gecko's own), so the banner
+        // names no add-on: the rows below do.
         if (on) {
-            mProtectionTitle.setText(R.string.shield_protection_on);
-        } else if (shield == AddonPolicy.SHIELD_OFF_FOR_SITE) {
-            mProtectionTitle.setText(R.string.shield_protection_off_site);
+            if (mBlockedCount > 0) {
+                mProtectionTitle.setText(getResources().getQuantityString(
+                        R.plurals.shield_blocked_title, mBlockedCount, mBlockedCount));
+            } else {
+                mProtectionTitle.setText(R.string.blocked_page_empty);
+            }
+            mTotalCountTextView.setText(R.string.shield_protection_on);
         } else {
-            mProtectionTitle.setText(R.string.shield_no_blocker_title);
-        }
-        if (on && mBlockedCount > 0) {
-            mTotalCountTextView.setText(blockedSummary(mBlockedCount));
-        } else {
-            // Off: a count left from before the user turned the blocker off
-            // would contradict the title until the page reloads; the tap
+            mProtectionTitle.setText(shield == AddonPolicy.SHIELD_OFF_FOR_SITE
+                    ? R.string.shield_protection_off_site : R.string.shield_no_blocker_title);
+            // Off: no count. One left from before the user turned the blocker
+            // off would contradict the title until the page reloads; the tap
             // still lists the hosts.
-            mTotalCountTextView.setText(on ? R.string.blocked_page_empty : R.string.shield_no_blocker_summary);
+            mTotalCountTextView.setText(R.string.shield_no_blocker_summary);
         }
 
         int title;

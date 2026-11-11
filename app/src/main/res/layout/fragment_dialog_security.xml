@@ -189,10 +189,11 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:ellipsize="end"
+                                android:fontFeatureSettings="tnum"
                                 android:maxLines="3"
                                 android:textSize="17sp"
                                 android:textStyle="bold"
-                                tools:text="Protection is on" />
+                                tools:text="27 blocked on this page" />
 
                             <TextView
                                 android:id="@+id/security_total_count"
@@ -200,9 +201,8 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:fontFeatureSettings="tnum"
                                 android:maxLines="2"
-                                tools:text="27 requests blocked on this page" />
+                                tools:text="Protection is on" />
 
                         </LinearLayout>
 

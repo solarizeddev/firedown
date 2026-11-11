@@ -530,6 +530,12 @@
         <item quantity="few">%d požadavky blokovány na této stránce</item>
         <item quantity="other">%d požadavků blokováno na této stránce</item>
     </plurals>
+    <plurals name="shield_blocked_title">
+        <item quantity="one">Zablokováno na této stránce: %d</item>
+        <item quantity="few">Zablokováno na této stránce: %d</item>
+        <item quantity="many">Zablokováno na této stránce: %d</item>
+        <item quantity="other">Zablokováno na této stránce: %d</item>
+    </plurals>
     <string name="security_block_ads_trackers">Blokovat reklamy a sledovací prvky</string>
     <string name="tabs_incognito_empty">Žádné soukromé karty</string>
     <string name="compress">Komprimovat</string>
