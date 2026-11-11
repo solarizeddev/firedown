@@ -161,8 +161,6 @@
     <string name="quit_application">Zatvaranje aplikacije radi primjene promjena…</string>
     <string name="rename">Preimenuj</string>
     <string name="rename_file">Preimenuj datoteku</string>
-    <string name="request_storage">Dopustiti pristup pohrani uređaja za &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Dopustiti trećim stranama pristup prvoj pohrani za &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Ponovno pokretanje</string>
     <string name="save_file">Spremi datoteku kao</string>
     <string name="save_file_name">Naziv datoteke</string>

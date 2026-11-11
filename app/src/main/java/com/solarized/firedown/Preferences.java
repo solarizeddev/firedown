@@ -256,6 +256,19 @@ public class Preferences {
 
     public static final boolean DEFAULT_EXTERNAL_LINKS_PRIVATE = false;
 
+    /**
+     * Settings → Privacy → "Let sites ask for your location". OFF by
+     * default: no site gets the device's location and none asks. On, a site
+     * asks with a dialog, Android asks for the location permission the first
+     * time one is allowed, and each answer is kept per site (the shield's
+     * Site permissions list shows it, with Reset). Turning it off forgets
+     * every site's location answer (GeckoRuntimeHelper.setLocationPrompts).
+     */
+    public static final String SETTINGS_LOCATION_ASK =
+            "com.solarized.firedown.preferences.browser.location.ask";
+
+    public static final boolean DEFAULT_LOCATION_ASK = false;
+
     public static final String SETTINGS_THEME = "com.solarized.firedown.preferences.theme";
 
     public static final String SETTINGS_THEME_DEFAULT = "com.solarized.firedown.preferences.theme.default";

@@ -50,4 +50,14 @@
         <item quantity="many">Partagé · ouvert encore %d minutes.</item>
         <item quantity="other">Partagé · ouvert encore %d minutes.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d autorisée</item>
+        <item quantity="many">%d autorisées</item>
+        <item quantity="other">%d autorisées</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d bloquée</item>
+        <item quantity="many">%d bloquées</item>
+        <item quantity="other">%d bloquées</item>
+    </plurals>
 </resources>

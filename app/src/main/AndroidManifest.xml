@@ -19,6 +19,14 @@
          camera prompts stay OS-gated as before). Not required so camera-less
          devices can still install — the paste fallback covers them. -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Location for websites, only after Settings → Privacy → "Let sites
+         ask for your location" is turned on (off by default) and the user
+         allowed a site: requested at runtime from the browser
+         (BrowserFragment.mLocationPermission). COARSE beside FINE because
+         Android 12+ ignores a request for FINE alone, and "Approximate" is
+         enough. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"
         tools:ignore="RequestInstallPackagesPolicy" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION"/>
@@ -31,6 +39,18 @@
          camera-less devices from installing. -->
     <uses-feature
         android:name="android.hardware.camera.any"
+        android:required="false" />
+
+    <!-- The location permissions imply GPS hardware as required; websites'
+         location is optional, so devices without it can still install. -->
+    <uses-feature
+        android:name="android.hardware.location"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.location.network"
         android:required="false" />
 
     <!-- WebAuthn via Android Credential Manager (GeckoView WebAuthnCredentialManager,

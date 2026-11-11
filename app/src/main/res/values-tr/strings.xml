@@ -376,8 +376,8 @@
     <string name="quit_application">Değişiklikleri uygulamak için uygulamadan çıkılıyor…</string>
     <string name="rename">Yeniden isimlendirmek</string>
     <string name="rename_file">Dosyayı yeniden adlandır</string>
-    <string name="request_storage">&lt;b&gt;%s&lt;/b&gt; için cihaz depolama alanına erişime izin verilsin mi?</string>
-    <string name="request_storage_access">Üçüncü tarafların &lt;b&gt;%s&lt;/b&gt; için birinci taraf depolama alanına erişmesine izin verilsin mi?</string>
+    <string name="request_storage">&lt;b&gt;%s&lt;/b&gt; verilerini bu telefonda tutsun mu?</string>
+    <string name="request_storage_access">&lt;b&gt;%1$s&lt;/b&gt;, &lt;b&gt;%2$s&lt;/b&gt; üzerinde kendi çerezlerini kullansın mı?</string>
     <string name="restart_origin">Tekrar başlat</string>
     <string name="save_file">Farklı kaydet</string>
     <string name="save_file_name">Dosya adı</string>
@@ -1264,4 +1264,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">Diğer uygulamalardan gelen bağlantıları gizli sekmede aç</string>
     <string name="settings_external_links_private_summary">Geçmişinizde kalmazlar ve indirmeleri Güvenli klasöre gider.</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">Sitelerin konumunuzu sormasına izin ver</string>
+    <string name="settings_location_ask_summary">Kapalı: hiçbir site konumunuzu alamaz. Açık: site önce sorar.</string>
+    <string name="request_location">&lt;b&gt;%s&lt;/b&gt; konumunuzu bilsin mi?</string>
+    <string name="prompts_dont_allow">İzin verme</string>
+    <string name="location_android_refused">Android, Firedown\'un konumunuzu kullanmasına izin vermiyor</string>
+    <string name="site_permissions_title">Site izinleri</string>
+    <string name="site_permission_location">Konumunuzu bilme</string>
+    <string name="site_permission_storage">Verilerini bu telefonda tutma</string>
+    <string name="site_permission_cookies">%s burada kendi çerezlerini kullanabilir</string>
+    <string name="site_permission_cookies_unknown">Gömülü siteler burada kendi çerezlerini kullanabilir</string>
+    <string name="site_permission_allowed">İzin verildi</string>
+    <string name="site_permission_blocked">Engellendi</string>
+    <string name="site_permission_reset">Sıfırla</string>
+    <string name="site_permission_reset_description">Sıfırla: %s</string>
+    <string name="site_permissions_reset_all">Tümünü sıfırla</string>
+    <string name="site_permissions_note">Sıfırlama yanıtınızı unutur. Site bir dahaki sefere yeniden sorar.</string>
 </resources>

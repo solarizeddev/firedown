@@ -163,8 +163,6 @@
     <string name="quit_application">S’està tancant l’aplicació per aplicar els canvis…</string>
     <string name="rename">Canvia el nom</string>
     <string name="rename_file">Canvia el nom del fitxer</string>
-    <string name="request_storage">Vols permetre l\'accés a l\'emmagatzematge del dispositiu per a &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Vols permetre que tercers accedeixin a l\'emmagatzematge propi per a &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Reinicia</string>
     <string name="save_file">Desa el fitxer com a</string>
     <string name="save_file_name">Nom de l\'arxiu</string>

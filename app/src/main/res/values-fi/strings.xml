@@ -361,8 +361,8 @@
     <string name="quit_application">Lopetetaan sovellus, jotta muutokset tulevat voimaan…</string>
     <string name="rename">Nimeä uudelleen</string>
     <string name="rename_file">Nimeä tiedosto uudelleen</string>
-    <string name="request_storage">Sallitaanko laitteen &lt;b&gt;%s&lt;/b&gt; käyttö laitteen tallennustilaan?</string>
-    <string name="request_storage_access">Saako kolmansien osapuolien käyttää ensimmäisen osapuolen tallennustilaa verkkotunnukselle &lt;b&gt;%s&lt;/b&gt;?</string>
+    <string name="request_storage">Sallitaanko sivuston &lt;b&gt;%s&lt;/b&gt; säilyttää tietojaan tässä puhelimessa?</string>
+    <string name="request_storage_access">Sallitaanko sivuston &lt;b&gt;%1$s&lt;/b&gt; käyttää evästeitään sivustolla &lt;b&gt;%2$s&lt;/b&gt;?</string>
     <string name="restart_origin">Uudelleenkäynnistää</string>
     <string name="save_file">Tallenna tiedosto nimellä</string>
     <string name="save_file_name">Tiedoston nimi</string>
@@ -1265,4 +1265,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">Avaa muiden sovellusten linkit yksityisessä välilehdessä</string>
     <string name="settings_external_links_private_summary">Ne eivät jää historiaan, ja niiden lataukset menevät Turvakansioon.</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">Anna sivustojen kysyä sijaintiasi</string>
+    <string name="settings_location_ask_summary">Pois: mikään sivusto ei saa sijaintiasi. Päällä: sivusto kysyy ensin.</string>
+    <string name="request_location">Kerrotaanko sijaintisi sivustolle &lt;b&gt;%s&lt;/b&gt;?</string>
+    <string name="prompts_dont_allow">Älä salli</string>
+    <string name="location_android_refused">Android ei anna Firedownin käyttää sijaintiasi</string>
+    <string name="site_permissions_title">Sivuston oikeudet</string>
+    <string name="site_permission_location">Sijaintisi tietäminen</string>
+    <string name="site_permission_storage">Tietojen säilyttäminen tässä puhelimessa</string>
+    <string name="site_permission_cookies">%s saa käyttää täällä evästeitään</string>
+    <string name="site_permission_cookies_unknown">Upotetut sivustot saavat käyttää täällä evästeitään</string>
+    <string name="site_permission_allowed">Sallittu</string>
+    <string name="site_permission_blocked">Estetty</string>
+    <string name="site_permission_reset">Nollaa</string>
+    <string name="site_permission_reset_description">Nollaa: %s</string>
+    <string name="site_permissions_reset_all">Nollaa kaikki</string>
+    <string name="site_permissions_note">Nollaus unohtaa vastauksesi. Sivusto kysyy seuraavalla kerralla uudelleen.</string>
 </resources>

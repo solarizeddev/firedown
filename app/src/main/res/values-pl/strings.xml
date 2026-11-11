@@ -387,8 +387,8 @@
     <string name="quit_application">Wyłączanie aplikacji, aby zastosować zmiany…</string>
     <string name="rename">Przemianować</string>
     <string name="rename_file">Zmień nazwę pliku</string>
-    <string name="request_storage">Zezwolić na dostęp do pamięci urządzenia dla&lt;b&gt;%s&lt;/b&gt; ?</string>
-    <string name="request_storage_access">Zezwolić stronom trzecim na dostęp do pamięci masowej pierwszej strony&lt;b&gt;%s&lt;/b&gt; ?</string>
+    <string name="request_storage">Pozwolić &lt;b&gt;%s&lt;/b&gt; przechowywać dane na tym telefonie?</string>
+    <string name="request_storage_access">Pozwolić &lt;b&gt;%1$s&lt;/b&gt; używać swoich plików cookie na &lt;b&gt;%2$s&lt;/b&gt;?</string>
     <string name="restart_origin">Uruchom ponownie</string>
     <string name="save_file">Zapisz plik jako</string>
     <string name="save_file_name">Nazwa pliku</string>
@@ -1298,4 +1298,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">Otwieraj linki z innych aplikacji w karcie prywatnej</string>
     <string name="settings_external_links_private_summary">Nie trafiają do historii, a ich pobrane pliki trafiają do Bezpiecznego folderu.</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">Pozwól stronom pytać o Twoją lokalizację</string>
+    <string name="settings_location_ask_summary">Wyłączone: żadna strona nie dostaje Twojej lokalizacji. Włączone: strona najpierw pyta.</string>
+    <string name="request_location">Udostępnić &lt;b&gt;%s&lt;/b&gt; Twoją lokalizację?</string>
+    <string name="prompts_dont_allow">Nie zezwalaj</string>
+    <string name="location_android_refused">Android nie pozwala Firedown używać Twojej lokalizacji</string>
+    <string name="site_permissions_title">Uprawnienia strony</string>
+    <string name="site_permission_location">Dostęp do Twojej lokalizacji</string>
+    <string name="site_permission_storage">Przechowywanie danych na tym telefonie</string>
+    <string name="site_permission_cookies">%s może tu używać swoich plików cookie</string>
+    <string name="site_permission_cookies_unknown">Osadzone strony mogą tu używać swoich plików cookie</string>
+    <string name="site_permission_allowed">Dozwolone</string>
+    <string name="site_permission_blocked">Zablokowane</string>
+    <string name="site_permission_reset">Resetuj</string>
+    <string name="site_permission_reset_description">Resetuj: %s</string>
+    <string name="site_permissions_reset_all">Resetuj wszystko</string>
+    <string name="site_permissions_note">Reset usuwa Twoją odpowiedź. Strona zapyta ponownie następnym razem.</string>
 </resources>

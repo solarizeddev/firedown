@@ -69,4 +69,16 @@
         <item quantity="many">Udostępniono · otwarte jeszcze przez %d minut.</item>
         <item quantity="other">Udostępniono · otwarte jeszcze przez %d minuty.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d dozwolone</item>
+        <item quantity="few">%d dozwolone</item>
+        <item quantity="many">%d dozwolonych</item>
+        <item quantity="other">%d dozwolonych</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d zablokowane</item>
+        <item quantity="few">%d zablokowane</item>
+        <item quantity="many">%d zablokowanych</item>
+        <item quantity="other">%d zablokowanych</item>
+    </plurals>
 </resources>

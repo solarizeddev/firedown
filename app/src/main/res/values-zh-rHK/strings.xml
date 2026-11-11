@@ -123,8 +123,6 @@
     <string name="popup_toggle">切換視圖</string>
     <string name="rename">改名</string>
     <string name="rename_file">重新命名文件</string>
-    <string name="request_storage">允許存取 &lt;b&gt;%s&lt;/b&gt; 的裝置儲存空間嗎？</string>
-    <string name="request_storage_access">允許第三方存取 &lt;b&gt;%s&lt;/b&gt; 的第一方儲存空間嗎？</string>
     <string name="restart_origin">重新開始</string>
     <string name="save_file">將文件另存為</string>
     <string name="save_file_name">檔案名稱</string>

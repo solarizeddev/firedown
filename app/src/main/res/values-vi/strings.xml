@@ -312,8 +312,8 @@
     <string name="quit_application">Đang thoát ứng dụng để áp dụng các thay đổi…</string>
     <string name="rename">Đổi tên</string>
     <string name="rename_file">Đổi tên tập tin</string>
-    <string name="request_storage">Cho phép truy cập vào bộ nhớ thiết bị cho &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Cho phép bên thứ ba truy cập vào bộ nhớ của bên thứ nhất cho &lt;b&gt;%s&lt;/b&gt;?</string>
+    <string name="request_storage">Cho phép &lt;b&gt;%s&lt;/b&gt; lưu dữ liệu của trang trên điện thoại này?</string>
+    <string name="request_storage_access">Cho phép &lt;b&gt;%1$s&lt;/b&gt; dùng cookie của mình trên &lt;b&gt;%2$s&lt;/b&gt;?</string>
     <string name="restart_origin">Khởi động lại</string>
     <string name="save_file">Lưu tập tin dưới dạng</string>
     <string name="save_file_name">Tên tập tin</string>
@@ -1231,4 +1231,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">Mở liên kết từ ứng dụng khác trong thẻ riêng tư</string>
     <string name="settings_external_links_private_summary">Chúng không lưu vào lịch sử, và tệp tải xuống từ chúng vào Thư mục an toàn.</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">Cho phép trang web hỏi vị trí của bạn</string>
+    <string name="settings_location_ask_summary">Tắt: không trang nào nhận được vị trí của bạn. Bật: trang web hỏi trước.</string>
+    <string name="request_location">Cho &lt;b&gt;%s&lt;/b&gt; biết vị trí của bạn?</string>
+    <string name="prompts_dont_allow">Không cho phép</string>
+    <string name="location_android_refused">Android không cho phép Firedown dùng vị trí của bạn</string>
+    <string name="site_permissions_title">Quyền của trang web</string>
+    <string name="site_permission_location">Biết vị trí của bạn</string>
+    <string name="site_permission_storage">Lưu dữ liệu trên điện thoại này</string>
+    <string name="site_permission_cookies">%s có thể dùng cookie của mình ở đây</string>
+    <string name="site_permission_cookies_unknown">Các trang được nhúng có thể dùng cookie của mình ở đây</string>
+    <string name="site_permission_allowed">Được cho phép</string>
+    <string name="site_permission_blocked">Bị chặn</string>
+    <string name="site_permission_reset">Đặt lại</string>
+    <string name="site_permission_reset_description">Đặt lại: %s</string>
+    <string name="site_permissions_reset_all">Đặt lại tất cả</string>
+    <string name="site_permissions_note">Đặt lại sẽ xóa câu trả lời của bạn. Lần sau trang web sẽ hỏi lại.</string>
 </resources>

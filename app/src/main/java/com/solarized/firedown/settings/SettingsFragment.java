@@ -512,6 +512,11 @@ public class SettingsFragment extends BasePreferenceFragment
 
             mGeckoRuntimeHelper.setDiskCacheEnabled(!disable);
 
+        } else if (Preferences.SETTINGS_LOCATION_ASK.equals(key)) {
+
+            mGeckoRuntimeHelper.setLocationPrompts(sharedPreferences.getBoolean(key,
+                    Preferences.DEFAULT_LOCATION_ASK));
+
         } else if (Preferences.SETTINGS_DISABLE_SAFE_BROWSING.equals(key)) {
 
             boolean disable = sharedPreferences.getBoolean(key, Preferences.DEFAULT_DISABLE_SAFE_BROWSING);

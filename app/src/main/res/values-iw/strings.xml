@@ -174,8 +174,6 @@
     <string name="quit_application">היישום ייסגר לצורך להחלת השינויים…</string>
     <string name="rename">שנה שם</string>
     <string name="rename_file">שנה את שם הקובץ</string>
-    <string name="request_storage">האם לאפשר גישה לאחסון המכשיר עבור &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">האם לאפשר לצדדים שלישיים לגשת לאחסון של צד ראשון עבור &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">איתחול</string>
     <string name="save_file">שמור קובץ בשם</string>
     <string name="save_file_name">שם קובץ</string>

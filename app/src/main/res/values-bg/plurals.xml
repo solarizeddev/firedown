@@ -49,4 +49,12 @@
         <item quantity="one">Споделено · отворено още %d минута.</item>
         <item quantity="other">Споделено · отворено още %d минути.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d разрешено</item>
+        <item quantity="other">%d разрешени</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d блокирано</item>
+        <item quantity="other">%d блокирани</item>
+    </plurals>
 </resources>

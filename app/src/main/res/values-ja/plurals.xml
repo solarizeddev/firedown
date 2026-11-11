@@ -42,4 +42,10 @@
     <plurals name="p2p_link_open_for">
         <item quantity="other">共有済み · あと %d 分有効。</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="other">%d 件許可</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="other">%d 件ブロック</item>
+    </plurals>
 </resources>

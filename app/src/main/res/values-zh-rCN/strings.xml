@@ -406,8 +406,8 @@
     <string name="quit_application">退出应用程序以应用更改…</string>
     <string name="rename">重命名</string>
     <string name="rename_file">重命名文件</string>
-    <string name="request_storage">允许访问设备存储空间&lt;b&gt;%s&lt;/b&gt;？</string>
-    <string name="request_storage_access">允许第三方访问第一方存储&lt;b&gt;%s&lt;/b&gt;？</string>
+    <string name="request_storage">要允许 &lt;b&gt;%s&lt;/b&gt; 在此手机上保留其数据吗？</string>
+    <string name="request_storage_access">要允许 &lt;b&gt;%1$s&lt;/b&gt; 在 &lt;b&gt;%2$s&lt;/b&gt; 上使用其 Cookie 吗？</string>
     <string name="restart_origin">重新开始</string>
     <string name="save_file">将文件另存为</string>
     <string name="save_file_name">文件名</string>
@@ -1250,4 +1250,21 @@
     <string name="bottom_bar_downloads_status">%1$s，%2$s</string>
     <string name="settings_external_links_private_title">在隐私标签页中打开其他应用的链接</string>
     <string name="settings_external_links_private_summary">不会留在历史记录中，下载的文件保存到安全文件夹。</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">允许网站询问您的位置</string>
+    <string name="settings_location_ask_summary">关闭：任何网站都无法获取您的位置。开启：网站会先询问。</string>
+    <string name="request_location">要让 &lt;b&gt;%s&lt;/b&gt; 知道您的位置吗？</string>
+    <string name="prompts_dont_allow">不允许</string>
+    <string name="location_android_refused">Android 不允许 Firedown 使用您的位置</string>
+    <string name="site_permissions_title">网站权限</string>
+    <string name="site_permission_location">获取您的位置</string>
+    <string name="site_permission_storage">在此手机上保留数据</string>
+    <string name="site_permission_cookies">%s 可以在此使用其 Cookie</string>
+    <string name="site_permission_cookies_unknown">嵌入的网站可以在此使用其 Cookie</string>
+    <string name="site_permission_allowed">已允许</string>
+    <string name="site_permission_blocked">已阻止</string>
+    <string name="site_permission_reset">重置</string>
+    <string name="site_permission_reset_description">重置：%s</string>
+    <string name="site_permissions_reset_all">全部重置</string>
+    <string name="site_permissions_note">重置会清除您的回答。网站下次会再次询问。</string>
 </resources>

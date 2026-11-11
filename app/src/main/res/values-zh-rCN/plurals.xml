@@ -42,4 +42,10 @@
     <plurals name="p2p_link_open_for">
         <item quantity="other">已分享 · 还可打开 %d 分钟。</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="other">已允许 %d 项</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="other">已阻止 %d 项</item>
+    </plurals>
 </resources>

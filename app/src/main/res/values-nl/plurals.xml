@@ -49,4 +49,12 @@
         <item quantity="one">Gedeeld · nog %d minuut open.</item>
         <item quantity="other">Gedeeld · nog %d minuten open.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d toegestaan</item>
+        <item quantity="other">%d toegestaan</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d geblokkeerd</item>
+        <item quantity="other">%d geblokkeerd</item>
+    </plurals>
 </resources>

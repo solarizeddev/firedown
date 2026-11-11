@@ -228,7 +228,17 @@
             app:popUpTo="@+id/dialog_security_info"
             app:popUpToInclusive="true"
             app:destination="@id/dialog_blocked_ads_detail" />
+        <!-- The site's stored answers (location, data, embedded cookies),
+             each with a Reset. Pops the security sheet like the others. -->
+        <action
+            android:id="@+id/action_security_to_site_permissions"
+            app:popUpTo="@+id/dialog_security_info"
+            app:popUpToInclusive="true"
+            app:destination="@id/dialog_site_permissions" />
     </dialog>
+    <dialog
+        android:id="@+id/dialog_site_permissions"
+        android:name="com.solarized.firedown.phone.dialogs.SitePermissionsDialogFragment" />
     <dialog
         android:id="@+id/dialog_blocked_ads_detail"
         android:name="com.solarized.firedown.phone.dialogs.BlockedAdsDetailDialogFragment" />

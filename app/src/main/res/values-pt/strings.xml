@@ -335,8 +335,8 @@
     <string name="settings_wasm_disabled_summary">Impede que os sites executem módulos WASM compilados. Reduz a superfície de ataque, mas quebra alguns aplicativos</string>
     <string name="rename">Renomear</string>
     <string name="rename_file">Renomear arquivo</string>
-    <string name="request_storage">Permitir acesso ao armazenamento do dispositivo para &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Permitir que terceiros acessem o armazenamento primário para &lt;b&gt;%s&lt;/b&gt;?</string>
+    <string name="request_storage">Permitir que &lt;b&gt;%s&lt;/b&gt; mantenha seus dados neste telefone?</string>
+    <string name="request_storage_access">Permitir que &lt;b&gt;%1$s&lt;/b&gt; use seus cookies em &lt;b&gt;%2$s&lt;/b&gt;?</string>
     <string name="restart_origin">Reiniciar</string>
     <string name="save_file">Salvar arquivo como</string>
     <string name="save_file_name">Nome do arquivo</string>
@@ -1271,4 +1271,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">Abrir links de outros apps em uma aba privativa</string>
     <string name="settings_external_links_private_summary">Eles não ficam no seu histórico, e os downloads vão para a Pasta segura.</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">Permitir que sites peçam sua localização</string>
+    <string name="settings_location_ask_summary">Desativado: nenhum site recebe sua localização. Ativado: o site pergunta antes.</string>
+    <string name="request_location">Permitir que &lt;b&gt;%s&lt;/b&gt; saiba sua localização?</string>
+    <string name="prompts_dont_allow">Não permitir</string>
+    <string name="location_android_refused">O Android não permite que o Firedown use sua localização</string>
+    <string name="site_permissions_title">Permissões do site</string>
+    <string name="site_permission_location">Saber sua localização</string>
+    <string name="site_permission_storage">Manter seus dados neste telefone</string>
+    <string name="site_permission_cookies">%s pode usar seus cookies aqui</string>
+    <string name="site_permission_cookies_unknown">Sites incorporados podem usar seus cookies aqui</string>
+    <string name="site_permission_allowed">Permitido</string>
+    <string name="site_permission_blocked">Bloqueado</string>
+    <string name="site_permission_reset">Redefinir</string>
+    <string name="site_permission_reset_description">Redefinir: %s</string>
+    <string name="site_permissions_reset_all">Redefinir tudo</string>
+    <string name="site_permissions_note">Redefinir esquece sua resposta. O site pergunta de novo na próxima vez.</string>
 </resources>

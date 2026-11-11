@@ -49,4 +49,12 @@
         <item quantity="one">Paylaşıldı · %d dakika daha açık.</item>
         <item quantity="other">Paylaşıldı · %d dakika daha açık.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d izin verildi</item>
+        <item quantity="other">%d izin verildi</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d engellendi</item>
+        <item quantity="other">%d engellendi</item>
+    </plurals>
 </resources>

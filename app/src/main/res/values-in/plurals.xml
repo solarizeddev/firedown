@@ -45,4 +45,12 @@
     <plurals name="p2p_link_open_for">
         <item quantity="other">Dibagikan · terbuka %d menit lagi.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d diizinkan</item>
+        <item quantity="other">%d diizinkan</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d diblokir</item>
+        <item quantity="other">%d diblokir</item>
+    </plurals>
 </resources>

@@ -783,8 +783,8 @@
     <string name="player_subtitles_unsupported">Berkas ini bukan subtitel yang dapat ditampilkan pemutar</string>
     <string name="popup_group_this_page">Halaman ini</string>
     <string name="quality_section_title">Kualitas</string>
-    <string name="request_storage">Izinkan akses ke penyimpanan perangkat untuk &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
-    <string name="request_storage_access">Izinkan pihak ketiga mengakses penyimpanan pihak pertama untuk &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
+    <string name="request_storage">Izinkan &lt;b&gt;%s&lt;/b&gt; menyimpan datanya di ponsel ini?</string>
+    <string name="request_storage_access">Izinkan &lt;b&gt;%1$s&lt;/b&gt; memakai cookie-nya di &lt;b&gt;%2$s&lt;/b&gt;?</string>
     <string name="restore_downloads_button">Pulihkan unduhan sebelumnya</string>
     <string name="restore_downloads_choose">Pilih folder</string>
     <string name="restore_downloads_done">Unduhan dipulihkan: %1$d</string>
@@ -1230,4 +1230,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">Buka tautan dari aplikasi lain di tab pribadi</string>
     <string name="settings_external_links_private_summary">Tautan ini tidak masuk ke riwayat, dan unduhannya masuk ke Folder Aman.</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">Izinkan situs meminta lokasi Anda</string>
+    <string name="settings_location_ask_summary">Nonaktif: tidak ada situs yang mendapat lokasi Anda. Aktif: situs bertanya dulu.</string>
+    <string name="request_location">Izinkan &lt;b&gt;%s&lt;/b&gt; mengetahui lokasi Anda?</string>
+    <string name="prompts_dont_allow">Jangan izinkan</string>
+    <string name="location_android_refused">Android tidak mengizinkan Firedown memakai lokasi Anda</string>
+    <string name="site_permissions_title">Izin situs</string>
+    <string name="site_permission_location">Mengetahui lokasi Anda</string>
+    <string name="site_permission_storage">Menyimpan datanya di ponsel ini</string>
+    <string name="site_permission_cookies">%s boleh memakai cookie-nya di sini</string>
+    <string name="site_permission_cookies_unknown">Situs tersemat boleh memakai cookie-nya di sini</string>
+    <string name="site_permission_allowed">Diizinkan</string>
+    <string name="site_permission_blocked">Diblokir</string>
+    <string name="site_permission_reset">Setel ulang</string>
+    <string name="site_permission_reset_description">Setel ulang: %s</string>
+    <string name="site_permissions_reset_all">Setel ulang semua</string>
+    <string name="site_permissions_note">Setel ulang melupakan jawaban Anda. Situs akan bertanya lagi lain kali.</string>
 </resources>

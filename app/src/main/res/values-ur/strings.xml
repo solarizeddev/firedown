@@ -148,8 +148,6 @@
     <string name="quick_settings_sheet_secure_connection_2">کنکشن محفوظ ہے۔</string>
     <string name="rename">نام تبدیل کریں۔</string>
     <string name="rename_file">فائل کا نام تبدیل کریں۔</string>
-    <string name="request_storage">&lt;b&gt; %s &lt;/b&gt; کے لیے ڈیوائس اسٹوریج تک رسائی کی اجازت دیں؟</string>
-    <string name="request_storage_access">فریق ثالث کو &lt;b&gt; %s &lt;/b&gt; کے لیے فرسٹ پارٹی اسٹوریج تک رسائی کی اجازت دیں؟</string>
     <string name="restart_origin">دوبارہ شروع کریں</string>
     <string name="save_file">فائل کو بطور محفوظ کریں۔</string>
     <string name="save_file_name">فائل کا نام</string>

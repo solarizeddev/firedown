@@ -414,8 +414,8 @@
     <string name="quit_application">Fermeture de l’application pour appliquer les modifications…</string>
     <string name="rename">Renommer</string>
     <string name="rename_file">Renommer le fichier</string>
-    <string name="request_storage">Autoriser l’accès au stockage de l’appareil pour &lt;b&gt;%s&lt;/b&gt; ?</string>
-    <string name="request_storage_access">Autoriser des tiers à accéder au stockage propriétaire pour &lt;b&gt;%s&lt;/b&gt; ?</string>
+    <string name="request_storage">Autoriser &lt;b&gt;%s&lt;/b&gt; à conserver ses données sur ce téléphone ?</string>
+    <string name="request_storage_access">Autoriser &lt;b&gt;%1$s&lt;/b&gt; à utiliser ses cookies sur &lt;b&gt;%2$s&lt;/b&gt; ?</string>
     <string name="restart_origin">Redémarrage</string>
     <string name="save_file">Enregistrer le fichier sous</string>
     <string name="save_file_name">Nom de fichier</string>
@@ -1271,4 +1271,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">Ouvrir les liens des autres applis dans un onglet privé</string>
     <string name="settings_external_links_private_summary">Ils restent hors de votre historique et leurs téléchargements vont dans le Dossier sécurisé.</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">Autoriser les sites à demander votre position</string>
+    <string name="settings_location_ask_summary">Désactivé : aucun site n\'obtient votre position. Activé : un site demande d\'abord.</string>
+    <string name="request_location">Autoriser &lt;b&gt;%s&lt;/b&gt; à connaître votre position ?</string>
+    <string name="prompts_dont_allow">Ne pas autoriser</string>
+    <string name="location_android_refused">Android ne permet pas à Firedown d\'utiliser votre position</string>
+    <string name="site_permissions_title">Autorisations du site</string>
+    <string name="site_permission_location">Connaître votre position</string>
+    <string name="site_permission_storage">Conserver ses données sur ce téléphone</string>
+    <string name="site_permission_cookies">%s peut utiliser ses cookies ici</string>
+    <string name="site_permission_cookies_unknown">Les sites intégrés peuvent utiliser leurs cookies ici</string>
+    <string name="site_permission_allowed">Autorisé</string>
+    <string name="site_permission_blocked">Bloqué</string>
+    <string name="site_permission_reset">Réinitialiser</string>
+    <string name="site_permission_reset_description">Réinitialiser : %s</string>
+    <string name="site_permissions_reset_all">Tout réinitialiser</string>
+    <string name="site_permissions_note">Réinitialiser efface votre réponse. Le site demandera à nouveau la prochaine fois.</string>
 </resources>

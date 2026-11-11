@@ -321,8 +321,8 @@
     <string name="settings_jit_disabled_summary">JIT जावास्क्रिप्ट-भारी साइटों को तेज़ करता है लेकिन हमले की सतह बढ़ाता है। यह डिफ़ॉल्ट रूप से चालू है; ब्राउज़र को कुछ प्रदर्शन की कीमत पर सुरक्षित करने के लिए इसे चालू करें। यह परिवर्तन आपके ब्राउज़र को पुनः आरंभ करेगा</string>
     <string name="rename">नाम बदलें</string>
     <string name="rename_file">फ़ाइल का नाम बदलें</string>
-    <string name="request_storage">&lt;b&gt;%s&lt;/b&gt; के लिए डिवाइस संग्रहण तक पहुंच की अनुमति दें?</string>
-    <string name="request_storage_access">तीसरे पक्ष को &lt;b&gt;%s&lt;/b&gt; के लिए प्रथम पक्ष संग्रहण तक पहुंचने की अनुमति दें?</string>
+    <string name="request_storage">&lt;b&gt;%s&lt;/b&gt; को इस फ़ोन पर अपना डेटा रखने दें?</string>
+    <string name="request_storage_access">&lt;b&gt;%1$s&lt;/b&gt; को &lt;b&gt;%2$s&lt;/b&gt; पर अपनी कुकीज़ इस्तेमाल करने दें?</string>
     <string name="restart_origin">पुनः आरंभ करें</string>
     <string name="save_file">फ़ाइल को इस रूप में सहेजें</string>
     <string name="save_file_name">फ़ाइल का नाम</string>
@@ -1265,4 +1265,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">अन्य ऐप्स के लिंक निजी टैब में खोलें</string>
     <string name="settings_external_links_private_summary">ये आपके इतिहास में नहीं रहते, और इनके डाउनलोड सुरक्षित फ़ोल्डर में जाते हैं।</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">साइटों को आपकी लोकेशन पूछने दें</string>
+    <string name="settings_location_ask_summary">बंद: किसी साइट को आपकी लोकेशन नहीं मिलती। चालू: साइट पहले पूछती है।</string>
+    <string name="request_location">&lt;b&gt;%s&lt;/b&gt; को आपकी लोकेशन जानने दें?</string>
+    <string name="prompts_dont_allow">अनुमति न दें</string>
+    <string name="location_android_refused">Android, Firedown को आपकी लोकेशन इस्तेमाल नहीं करने देता</string>
+    <string name="site_permissions_title">साइट अनुमतियाँ</string>
+    <string name="site_permission_location">आपकी लोकेशन जानना</string>
+    <string name="site_permission_storage">इस फ़ोन पर अपना डेटा रखना</string>
+    <string name="site_permission_cookies">%s यहाँ अपनी कुकीज़ इस्तेमाल कर सकती है</string>
+    <string name="site_permission_cookies_unknown">एम्बेड की गई साइटें यहाँ अपनी कुकीज़ इस्तेमाल कर सकती हैं</string>
+    <string name="site_permission_allowed">अनुमत</string>
+    <string name="site_permission_blocked">ब्लॉक किया गया</string>
+    <string name="site_permission_reset">रीसेट करें</string>
+    <string name="site_permission_reset_description">रीसेट करें: %s</string>
+    <string name="site_permissions_reset_all">सभी रीसेट करें</string>
+    <string name="site_permissions_note">रीसेट आपका जवाब भूल जाता है। अगली बार साइट फिर से पूछेगी।</string>
 </resources>

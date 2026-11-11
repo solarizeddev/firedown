@@ -348,8 +348,8 @@
     <string name="quit_application">Приложението се затваря за прилагане на промени…</string>
     <string name="rename">Промяна на името</string>
     <string name="rename_file">Промяна на името на файла</string>
-    <string name="request_storage">Разрешаване на достъп до паметта на устройството за &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Да се разреши ли на трети страни достъп до паметта на първата страна за &lt;b&gt;%s&lt;/b&gt;?</string>
+    <string name="request_storage">Да се разреши на &lt;b&gt;%s&lt;/b&gt; да пази данните си на този телефон?</string>
+    <string name="request_storage_access">Да се разреши на &lt;b&gt;%1$s&lt;/b&gt; да използва своите бисквитки в &lt;b&gt;%2$s&lt;/b&gt;?</string>
     <string name="restart_origin">Рестартиране</string>
     <string name="save_file">Запаметяване на файла като</string>
     <string name="save_file_name">Име на файла</string>
@@ -1265,4 +1265,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">Отваряй връзки от други приложения в поверителен раздел</string>
     <string name="settings_external_links_private_summary">Те не остават в историята, а изтеглянията от тях отиват в Защитена папка.</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">Разрешаване на сайтовете да питат за местоположението ви</string>
+    <string name="settings_location_ask_summary">Изкл.: нито един сайт не получава местоположението ви. Вкл.: сайтът първо пита.</string>
+    <string name="request_location">Да се сподели местоположението ви с &lt;b&gt;%s&lt;/b&gt;?</string>
+    <string name="prompts_dont_allow">Не разрешавай</string>
+    <string name="location_android_refused">Android не разрешава на Firedown да използва местоположението ви</string>
+    <string name="site_permissions_title">Разрешения за сайта</string>
+    <string name="site_permission_location">Достъп до местоположението</string>
+    <string name="site_permission_storage">Пазене на данни на този телефон</string>
+    <string name="site_permission_cookies">%s може да използва тук своите бисквитки</string>
+    <string name="site_permission_cookies_unknown">Вградените сайтове могат да използват тук своите бисквитки</string>
+    <string name="site_permission_allowed">Разрешено</string>
+    <string name="site_permission_blocked">Блокирано</string>
+    <string name="site_permission_reset">Нулиране</string>
+    <string name="site_permission_reset_description">Нулиране: %s</string>
+    <string name="site_permissions_reset_all">Нулиране на всички</string>
+    <string name="site_permissions_note">Нулирането забравя отговора ви. Сайтът ще попита отново следващия път.</string>
 </resources>

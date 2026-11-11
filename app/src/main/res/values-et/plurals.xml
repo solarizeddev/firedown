@@ -49,4 +49,12 @@
         <item quantity="one">Jagatud · avatud veel %d minut.</item>
         <item quantity="other">Jagatud · avatud veel %d minutit.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d lubatud</item>
+        <item quantity="other">%d lubatud</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d blokeeritud</item>
+        <item quantity="other">%d blokeeritud</item>
+    </plurals>
 </resources>

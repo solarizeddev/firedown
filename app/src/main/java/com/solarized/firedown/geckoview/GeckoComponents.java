@@ -67,6 +67,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -299,6 +300,42 @@ public class GeckoComponents {
      * throws on a second complete(), so the latch is what keeps the dialog's
      * second call a no-op instead of a crash.
      */
+    /**
+     * Asks Android for the location permission on behalf of a site the user
+     * just allowed. Set by the browser while it is resumed (it owns the
+     * activity-result launcher); the answer is true when either location
+     * permission is granted, so "Approximate" counts.
+     */
+    public interface LocationPermissionRequester {
+        void request(@NonNull Consumer<Boolean> done);
+    }
+
+    private volatile LocationPermissionRequester mLocationRequester;
+
+    public void setLocationPermissionRequester(@Nullable LocationPermissionRequester requester) {
+        mLocationRequester = requester;
+    }
+
+    /** Clears the requester only if it is still this one (a newer browser may have set its own). */
+    public void clearLocationPermissionRequester(@NonNull LocationPermissionRequester requester) {
+        if (mLocationRequester == requester) {
+            mLocationRequester = null;
+        }
+    }
+
+    static boolean isLocationPermission(@Nullable String permission) {
+        return Manifest.permission.ACCESS_FINE_LOCATION.equals(permission)
+                || Manifest.permission.ACCESS_COARSE_LOCATION.equals(permission);
+    }
+
+    /** Either location permission: Gecko asks for FINE, and Android 12+ lets the user pick "Approximate". */
+    boolean holdsLocation() {
+        return ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
     public static final class PermissionResult {
         private final GeckoResult<Integer> mResult = new GeckoResult<>();
         private final AtomicBoolean mAnswered = new AtomicBoolean(false);
@@ -1611,12 +1648,20 @@ public class GeckoComponents {
         @Override
         public void onAndroidPermissionsRequest(
                 @NonNull final GeckoSession session, final String[] permissions, @NonNull final Callback callback) {
-            // Firedown asks Android for none of these (location is not even
-            // in the manifest). One the app already holds is granted, anything
-            // else refused: the callback was never answered, so a page asking
-            // for its location waited for good instead of getting an error.
+            // One the app already holds is granted, anything else refused,
+            // except location: Gecko asks for it right after the user allowed
+            // a site in its dialog, and then Android asks once (the
+            // requester the browser on screen sets). The callback must
+            // always be answered: a page waits for it.
             if (permissions != null) {
+                boolean needLocation = false;
                 for (String permission : permissions) {
+                    if (isLocationPermission(permission)) {
+                        if (!holdsLocation()) {
+                            needLocation = true;
+                        }
+                        continue;
+                    }
                     if (ContextCompat.checkSelfPermission(mContext, permission)
                             != PackageManager.PERMISSION_GRANTED) {
                         if (BuildConfig.DEBUG) {
@@ -1637,8 +1682,33 @@ public class GeckoComponents {
                         return;
                     }
                 }
+                if (needLocation) {
+                    requestLocation(callback);
+                    return;
+                }
             }
             callback.grant();
+        }
+
+        /**
+         * Android's location permission, asked through the browser on
+         * screen. Refused when the switch is off, when no browser can ask
+         * (none resumed), or when Android says no.
+         */
+        private void requestLocation(@NonNull final Callback callback) {
+            LocationPermissionRequester requester = mLocationRequester;
+            if (requester == null || !mSharedPreferences.getBoolean(Preferences.SETTINGS_LOCATION_ASK,
+                    Preferences.DEFAULT_LOCATION_ASK)) {
+                callback.reject();
+                return;
+            }
+            requester.request(granted -> {
+                if (granted) {
+                    callback.grant();
+                } else {
+                    callback.reject();
+                }
+            });
         }
 
         /**
@@ -1726,11 +1796,18 @@ public class GeckoComponents {
 
             switch (perm.permission) {
                 case PERMISSION_GEOLOCATION:
-                    // Firedown never shares the device's location: the app
-                    // holds no location permission, so an Allow could only
-                    // fail after the user agreed. The page gets a plain
-                    // "denied", as when a user refuses.
-                    return GeckoResult.fromValue(ContentPermission.VALUE_DENY);
+                    // Settings → Privacy → "Let sites ask for your location",
+                    // off by default. Off, the page gets a plain "denied" and
+                    // nothing is decided (PROMPT, not DENY: turned on later,
+                    // the site asks instead of being blocked by an answer the
+                    // user never gave). Gecko asks only while a PROMPT row is
+                    // stored: off sets its default to DENY.
+                    if (!mSharedPreferences.getBoolean(Preferences.SETTINGS_LOCATION_ASK,
+                            Preferences.DEFAULT_LOCATION_ASK)) {
+                        return GeckoResult.fromValue(ContentPermission.VALUE_PROMPT);
+                    }
+                    resId = R.string.request_location;
+                    break;
                 case PERMISSION_PERSISTENT_STORAGE:
                     resId = R.string.request_storage;
                     break;

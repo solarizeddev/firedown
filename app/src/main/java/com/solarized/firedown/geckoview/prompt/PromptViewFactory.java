@@ -180,7 +180,10 @@ public class PromptViewFactory {
                     handler.onPermission(state.getGeckoSession(),
                             GeckoSession.PermissionDelegate.ContentPermission.VALUE_ALLOW);
                 })
-                .setNegativeButton(android.R.string.cancel, (d, w) -> {
+                // "Don't allow" is a decision and is remembered (the shield's
+                // Site permissions list shows it, with Reset); it used to read
+                // "Cancel" while storing a refusal for good.
+                .setNegativeButton(R.string.prompts_dont_allow, (d, w) -> {
                     handler.onPermission(state.getGeckoSession(),
                             GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY);
                 });
@@ -195,9 +198,11 @@ public class PromptViewFactory {
             // dialog, which retains the Activity, leaking it through
             // the singleton-scoped GeckoState.
             state.setOnDeactivateAction(null);
-            // If no choice was made (dismissed by back/click-out), default to DENY or PROMPT
+            // No choice made (Back, a tap outside): the page is refused this
+            // time and nothing is decided, so the site may ask again. It
+            // used to store a DENY for good, invisible and with no way back.
             handler.onPermission(state.getGeckoSession(),
-                    GeckoSession.PermissionDelegate.ContentPermission.VALUE_DENY);
+                    GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT);
         });
 
         return dialog;

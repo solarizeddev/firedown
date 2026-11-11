@@ -9632,21 +9632,85 @@ itself). Now:
 On-device unverified at write time.
 
 **`onAndroidPermissionsRequest` always answers**: a permission the app
-already holds is granted, anything else refused. It used to log and return,
-so a page asking for its location (not even in the manifest) waited forever
-for an answer instead of getting an error.
+already holds is granted, location is asked for (below), anything else
+refused. It used to log and return, so a page asking for its location
+waited forever for an answer instead of getting an error.
 
-**Websites never get the device's location** (maintainer: "you have other
-browser for that"). `PERMISSION_GEOLOCATION` is answered DENY without a
-dialog, and `GeckoRuntimeHelper.denyGeolocation` writes
-`permissions.default.geo = 2` at every boot. There was a "Block location
-requests" switch (default on); turned off, it showed "Share your device
-location?" and then failed after Allow, because the app holds no location
-permission. The switch, its dialog, its strings and its icon are gone, and
-the boot write replaces the PROMPT (3) that switch left in the user branch.
-The API stays (a page gets a plain "denied", as when a user refuses);
-`geo.enabled = false` would remove `navigator.geolocation`, which some
-pages call without checking. Don't add the location permission back.
+**Location is OFF by default, and a site asks only once the user turns it
+on** (Settings → Privacy → "Let sites ask for your location",
+`SETTINGS_LOCATION_ASK`, default false; maintainer, 2026-11, after
+IronFox's model: blocked by default, allowed per site). Until 1.2.9 it was
+refused outright with no way back ("you have other browser for that"),
+after a "Block location requests" switch had shown a dialog whose Allow
+then failed because the app held no location permission. Now:
+- **Off**: `GeckoRuntimeHelper.setLocationPrompts(false)` writes
+  `permissions.default.geo = 2` (DENY) to the user branch at every boot and
+  on the switch, and FORGETS every site's stored location answer
+  (`getAllPermissions` → `setPermission(VALUE_PROMPT)`). The forget is what
+  makes off mean off: a site's stored ALLOW outranks the default, and Gecko
+  would hand that site the location without asking the app again. A
+  request that still reaches the delegate (a stored PROMPT row) is answered
+  `VALUE_PROMPT`, not DENY: turned on later, the site asks instead of being
+  blocked by an answer the user never gave. The API stays (a page gets a
+  plain "denied"); `geo.enabled = false` would remove
+  `navigator.geolocation`, which some pages call without checking.
+- **On**: the default is PROMPT (3), the delegate shows the content
+  permission dialog ("Let <site> know your location?", Allow / Don't
+  allow), and an Allow makes Gecko ask `onAndroidPermissionsRequest` for
+  `ACCESS_FINE_LOCATION`. `GeckoComponents.requestLocation` hands that to
+  the `LocationPermissionRequester` the browser on screen sets while
+  resumed (`BrowserFragment.mLocationPermission`, a
+  `RequestMultiplePermissions` launcher asking FINE and COARSE together:
+  Android 12+ ignores FINE alone, and "Approximate" counts as granted;
+  `GeckoAppShell` takes the best provider it may use). Refused by Android,
+  a snackbar says so with a Settings action (the app's page). No browser
+  resumed, or the switch off: refused. One request at a time; a second
+  while Android's dialog is up is refused.
+- **Manifest**: `ACCESS_COARSE_LOCATION` + `ACCESS_FINE_LOCATION`, and the
+  three `android.hardware.location*` features `required="false"` (the
+  permissions imply GPS hardware, which would filter devices out of
+  stores).
+- **Private tabs** are refused every content permission except DRM before
+  any of this, location included.
+- On-device unverified at write time: the whole Allow → Android prompt →
+  page gets a position path, "Approximate", a refusal's snackbar.
+
+**Site permissions — the shield sheet lists what a site holds, with
+Reset** (canvas "Site permissions in the shield", option B picked
+2026-11). The security sheet shows a "Site permissions · 2 allowed ›" row
+(`site_permissions_row`, last in the connection group) ONLY when the site
+holds an answer the user gave; it opens `SitePermissionsDialogFragment`
+(the security sheet pops on the way, like its other drill-ins): one card
+per answer — "Know your location", "Keep its data on this phone",
+"<embedded site> can use its cookies here" — Allowed or Blocked, each with
+Reset, then a line on what Reset does and "Reset all". Reset is
+`setPermission(VALUE_PROMPT)`: the site asks again; the page is reloaded
+when the sheet closes after a Reset (only the tab still on that host).
+Rules, in `geckoview/SitePermissions` (pure, `SitePermissionsTest`):
+- Gecko stores every answer GeckoView ever returned, a PROMPT row
+  included, plus DRM rows from pages that asked while DRM was off and
+  autoplay. Listed: only location, persistent storage and storage access,
+  only ALLOW or DENY. Anything else would put rows on every site.
+- A `3rdPartyStorage^` key (Gecko's own login-popup heuristics, not an
+  answer) is not listed: GeckoView's `setPermission` writes the
+  `3rdPartyFrameStorage^` key, so a Reset could not forget it. The key is
+  read from `ContentPermission.toJson()`'s `perm`.
+- Duplicates are one row (the latest wins; Reset forgets all of them);
+  storage access is one row per embedded host (`hostOf`: scheme, port,
+  `^` origin attributes, `www.` dropped, IPv6 kept).
+- `GeckoRuntimeHelper.loadSitePermissions` / `resetSitePermissions` are
+  the only Gecko calls; an error gives an empty list (the row stays
+  hidden). The row's result is applied to the view on screen at answer
+  time (a rotation can rebuild it first).
+The permission dialog changed with it: the negative button reads "Don't
+allow" (it said "Cancel" while storing a refusal for good), and Back or a
+tap outside answers PROMPT (the page is refused this time, nothing
+decided), not a hidden permanent DENY. Its wording is plain: "Let <site>
+keep its data on this phone?", "Let <embedded> use its cookies on
+<page>?" (it read "Allow third parties to access first party storage";
+the partial locales lost the old texts and fall back to English). Not
+built: notifications, camera and microphone stay refused outright and are
+not in this list.
 
 **Delegate coverage (2026-11 audit against GeckoView's api.txt and Firefox's
 GeckoEngineSession, independently re-checked).** What each previously
@@ -9687,7 +9751,7 @@ missing callback does now, and what stays off on purpose:
   refusal to the wrong place, as the first version of this did. Supporting calls would need a
   dialog, the microphone permission, a recording indicator
   (`MediaDelegate.onRecordingStatusChanged`) and a background service type;
-  declined by the maintainer, like location.
+  declined by the maintainer.
 - **viewport-fit is per tab** (`GeckoState.getViewportFit`): applied only
   for the tab on screen and re-applied on every attach (end of
   `setGeckoViewSession`, which a tab-grid switch to an open session reaches

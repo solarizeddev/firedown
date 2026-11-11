@@ -666,8 +666,8 @@
     <string name="quit_application">Quitting the application to apply changes…</string>
     <string name="rename">Rename</string>
     <string name="rename_file">Rename file</string>
-    <string name="request_storage">Allow access to device storage for &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
-    <string name="request_storage_access">Allow third parties to access first party storage for &lt;b&gt;&lt;font color=#ffffff&gt;%s&lt;/font&gt;&lt;/b&gt;?</string>
+    <string name="request_storage">Let &lt;b&gt;%s&lt;/b&gt; keep its data on this phone?</string>
+    <string name="request_storage_access">Let &lt;b&gt;%1$s&lt;/b&gt; use its cookies on &lt;b&gt;%2$s&lt;/b&gt;?</string>
     <string name="restart_origin">Restart</string>
     <string name="save_file">Save file as</string>
     <string name="save_file_name">File name</string>
@@ -1496,4 +1496,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">Open links from other apps in a private tab</string>
     <string name="settings_external_links_private_summary">They stay out of your history, and their downloads go to the Safe Folder.</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">Let sites ask for your location</string>
+    <string name="settings_location_ask_summary">Off: no site gets your location. On: a site asks first.</string>
+    <string name="request_location">Let &lt;b&gt;%s&lt;/b&gt; know your location?</string>
+    <string name="prompts_dont_allow">Don\'t allow</string>
+    <string name="location_android_refused">Android doesn\'t let Firedown use your location</string>
+    <string name="site_permissions_title">Site permissions</string>
+    <string name="site_permission_location">Know your location</string>
+    <string name="site_permission_storage">Keep its data on this phone</string>
+    <string name="site_permission_cookies">%s can use its cookies here</string>
+    <string name="site_permission_cookies_unknown">Embedded sites can use their cookies here</string>
+    <string name="site_permission_allowed">Allowed</string>
+    <string name="site_permission_blocked">Blocked</string>
+    <string name="site_permission_reset">Reset</string>
+    <string name="site_permission_reset_description">Reset: %s</string>
+    <string name="site_permissions_reset_all">Reset all</string>
+    <string name="site_permissions_note">Reset forgets your answer. The site asks again next time.</string>
 </resources>

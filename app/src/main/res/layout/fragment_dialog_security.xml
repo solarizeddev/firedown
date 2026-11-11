@@ -29,6 +29,7 @@
 
     Ids the fragment binds (host_image, host, host_url, host_secure,
     host_secure_text, connection_group, drm_row, drm_row_turn_on,
+    site_permissions_row, site_permissions_summary,
     ads_stat_card, security_total_count, blockers_group, blockers_hint,
     host_clear) — keep them if the rows move again.
 
@@ -224,6 +225,71 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/shield_turn_on" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- "Site permissions · 2 allowed ›": shown only when the site
+                 holds an answer the user gave (location, keeping its data,
+                 an embedded site's cookies; SitePermissions decides), so on
+                 nearly every site it is absent. Opens the list
+                 (SitePermissionsDialogFragment), where each answer has a
+                 Reset. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/site_permissions_row"
+                style="@style/Firedown.Widget.SheetRowCard"
+                android:visibility="gone"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FireDown.SheetGroupBottom">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="64dp"
+                    android:orientation="horizontal"
+                    android:paddingVertical="10dp"
+                    android:paddingHorizontal="16dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:importantForAccessibility="no"
+                        app:srcCompat="@drawable/tune_24"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/TextAppearance.Material3.TitleMedium"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/site_permissions_title"
+                            android:textColor="?attr/colorOnSurface" />
+
+                        <TextView
+                            android:id="@+id/site_permissions_summary"
+                            style="@style/TextAppearance.Material3.BodySmall"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            tools:text="2 allowed" />
+
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="8dp"
+                        android:contentDescription="@null"
+                        app:srcCompat="@drawable/ic_chevron_right_24"
+                        app:tint="?attr/colorOnSurfaceVariant" />
 
                 </LinearLayout>
 

@@ -163,8 +163,6 @@
     <string name="quit_application">Kilépés az alkalmazásból a módosítások alkalmazásához…</string>
     <string name="rename">Átnevezés</string>
     <string name="rename_file">Fájl átnevezése</string>
-    <string name="request_storage">Engedélyezi a hozzáférést az eszköztárhoz a következő számára: &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Engedélyezi harmadik feleknek a saját tárhely elérését a következőhöz: &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Újrakezd</string>
     <string name="save_file">Fájl mentése másként</string>
     <string name="save_file_name">Fájl név</string>

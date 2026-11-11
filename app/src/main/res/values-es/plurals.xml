@@ -49,4 +49,14 @@
         <item quantity="many">Compartido · abierto %d minutos más.</item>
         <item quantity="other">Compartido · abierto %d minutos más.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d permitido</item>
+        <item quantity="many">%d permitidos</item>
+        <item quantity="other">%d permitidos</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d bloqueado</item>
+        <item quantity="many">%d bloqueados</item>
+        <item quantity="other">%d bloqueados</item>
+    </plurals>
 </resources>

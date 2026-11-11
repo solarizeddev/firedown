@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -289,7 +290,8 @@ public class GeckoRuntimeHelper {
                 Preferences.DEFAULT_DISABLE_JIT));
         setWebGL(sharedPreferences.getBoolean(Preferences.SETTINGS_DISABLE_WEBGL,
                 Preferences.DEFAULT_DISABLE_WEBGL));
-        denyGeolocation();
+        setLocationPrompts(sharedPreferences.getBoolean(Preferences.SETTINGS_LOCATION_ASK,
+                Preferences.DEFAULT_LOCATION_ASK));
         setResistFingerPrinting(sharedPreferences.getBoolean(Preferences.SETTINGS_ENABLE_RESIST_FINGERPRINTING,
                 Preferences.DEFAULT_RESIST_FINGERPRINTING));
         setTimezoneSpoofing(sharedPreferences.getBoolean(Preferences.SETTINGS_SPOOF_TIMEZONE,
@@ -1079,6 +1081,55 @@ public class GeckoRuntimeHelper {
     }
 
     /**
+     * The answers stored for the page at {@code url} that the shield sheet's
+     * "Site permissions" list shows ({@link SitePermissions}), delivered on
+     * the calling thread's looper. An error, or a URL Gecko cannot read,
+     * gives an empty list: the row stays hidden. Main thread only.
+     */
+    public void loadSitePermissions(@NonNull String url, boolean privateMode,
+            @NonNull Consumer<SitePermissions<GeckoSession.PermissionDelegate.ContentPermission>> done) {
+        GeckoResult<List<GeckoSession.PermissionDelegate.ContentPermission>> result;
+        try {
+            result = getGeckoRuntime().getStorageController().getPermissions(url, privateMode);
+        } catch (RuntimeException e) {
+            done.accept(SitePermissions.of(null));
+            return;
+        }
+        result.accept(perms -> {
+            List<SitePermissions.Stored<GeckoSession.PermissionDelegate.ContentPermission>> stored =
+                    new ArrayList<>();
+            if (perms != null) {
+                for (GeckoSession.PermissionDelegate.ContentPermission perm : perms) {
+                    stored.add(new SitePermissions.Stored<>(perm.permission, perm.value,
+                            perm.thirdPartyOrigin, geckoKeyOf(perm), perm));
+                }
+            }
+            done.accept(SitePermissions.of(stored));
+        }, error -> {
+            Log.w(TAG, "loadSitePermissions", error);
+            done.accept(SitePermissions.of(null));
+        });
+    }
+
+    /** Forgets these stored answers: the site asks again next time. */
+    public void resetSitePermissions(@NonNull List<GeckoSession.PermissionDelegate.ContentPermission> perms) {
+        StorageController storage = getGeckoRuntime().getStorageController();
+        for (GeckoSession.PermissionDelegate.ContentPermission perm : perms) {
+            storage.setPermission(perm, GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT);
+        }
+    }
+
+    /** Gecko's own key for a stored answer ("geolocation", "3rdPartyFrameStorage^…"), null if unreadable. */
+    @Nullable
+    private static String geckoKeyOf(@NonNull GeckoSession.PermissionDelegate.ContentPermission perm) {
+        try {
+            return perm.toJson().optString("perm", null);
+        } catch (JSONException e) {
+            return null;
+        }
+    }
+
+    /**
      * Settings → Privacy → "Reject cookie banners", to the consent
      * extension: frames that load from now on are answered (or not).
      */
@@ -1285,17 +1336,46 @@ public class GeckoRuntimeHelper {
     }
 
 
-    @OptIn(markerClass = ExperimentalGeckoViewApi.class)
     /**
-     * Every site is denied the device's location, without asking. Written to
-     * the user branch at every boot: the removed "Block location requests"
-     * switch, turned off, saved PROMPT (3) there, and a saved user value
-     * outlives the switch that wrote it.
+     * Settings → Privacy → "Let sites ask for your location"
+     * ({@link Preferences#SETTINGS_LOCATION_ASK}, off by default).
+     *
+     * <p>Off: Gecko's default for location is DENY, so a site with no
+     * answer of its own is refused without asking anyone, and every stored
+     * location answer is forgotten. That last part is what makes off mean
+     * off: a site's stored ALLOW outranks the default, and Gecko would hand
+     * it the location without asking the app again. On: the default is
+     * PROMPT, so a site asks and {@code GeckoComponents} shows the dialog.
+     *
+     * <p>Written to the user branch at every boot: a saved user value
+     * outlives the build that wrote it (the removed "Block location
+     * requests" switch left PROMPT there).
      */
-    private void denyGeolocation() {
+    @OptIn(markerClass = ExperimentalGeckoViewApi.class)
+    public void setLocationPrompts(boolean ask) {
         // Gecko's permission actions: 1 allow, 2 deny, 3 prompt.
-        GeckoPreferenceController.setGeckoPref("permissions.default.geo", 2,
+        GeckoPreferenceController.setGeckoPref("permissions.default.geo", ask ? 3 : 2,
                 GeckoPreferenceController.PREF_BRANCH_USER);
+        if (!ask) {
+            forgetLocationAnswers();
+        }
+    }
+
+    /** Every site's stored location answer, forgotten (set back to PROMPT). */
+    private void forgetLocationAnswers() {
+        StorageController storage = sGeckoRuntime.getStorageController();
+        storage.getAllPermissions().accept(perms -> {
+            if (perms == null) {
+                return;
+            }
+            for (GeckoSession.PermissionDelegate.ContentPermission perm : perms) {
+                if (perm.permission == GeckoSession.PermissionDelegate.PERMISSION_GEOLOCATION
+                        && perm.value != GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT) {
+                    storage.setPermission(perm,
+                            GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT);
+                }
+            }
+        }, error -> Log.w(TAG, "forgetLocationAnswers", error));
     }
 
 

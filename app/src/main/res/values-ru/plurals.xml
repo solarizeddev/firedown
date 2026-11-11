@@ -69,4 +69,16 @@
         <item quantity="many">Отправлено · открыто ещё %d минут.</item>
         <item quantity="other">Отправлено · открыто ещё %d минуты.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d разрешено</item>
+        <item quantity="few">%d разрешено</item>
+        <item quantity="many">%d разрешено</item>
+        <item quantity="other">%d разрешено</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d заблокировано</item>
+        <item quantity="few">%d заблокировано</item>
+        <item quantity="many">%d заблокировано</item>
+        <item quantity="other">%d заблокировано</item>
+    </plurals>
 </resources>

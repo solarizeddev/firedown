@@ -123,8 +123,6 @@
     <string name="popup_toggle">Geuza Mwonekano</string>
     <string name="rename">Badilisha jina</string>
     <string name="rename_file">Badilisha jina la faili</string>
-    <string name="request_storage">Ungependa kuruhusu ufikiaji wa hifadhi ya kifaa kwa &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Ungependa kuruhusu wahusika wengine kufikia hifadhi ya mtu wa kwanza kwa &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Anzisha tena</string>
     <string name="save_file">Hifadhi faili kama</string>
     <string name="save_file_name">Jina la faili</string>

@@ -357,8 +357,8 @@
     <string name="quit_application">Закриття програми для застосування змін…</string>
     <string name="rename">Перейменувати</string>
     <string name="rename_file">Перейменувати файл</string>
-    <string name="request_storage">Надати доступ до пам’яті пристрою для &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Дозволити третім сторонам отримувати доступ до основного сховища для &lt;b&gt;%s&lt;/b&gt;?</string>
+    <string name="request_storage">Дозволити &lt;b&gt;%s&lt;/b&gt; зберігати свої дані на цьому телефоні?</string>
+    <string name="request_storage_access">Дозволити &lt;b&gt;%1$s&lt;/b&gt; використовувати свої cookie на &lt;b&gt;%2$s&lt;/b&gt;?</string>
     <string name="restart_origin">Перезапустити</string>
     <string name="save_file">Зберегти файл як</string>
     <string name="save_file_name">Ім\'я файлу</string>
@@ -1299,4 +1299,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">Відкривати посилання з інших застосунків у приватній вкладці</string>
     <string name="settings_external_links_private_summary">Вони не потрапляють до історії, а їхні завантаження йдуть до Захищеної папки.</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">Дозволяти сайтам запитувати ваше місцезнаходження</string>
+    <string name="settings_location_ask_summary">Вимк.: жоден сайт не отримує ваше місцезнаходження. Увімк.: сайт спершу запитує.</string>
+    <string name="request_location">Повідомити &lt;b&gt;%s&lt;/b&gt; ваше місцезнаходження?</string>
+    <string name="prompts_dont_allow">Не дозволяти</string>
+    <string name="location_android_refused">Android не дозволяє Firedown використовувати ваше місцезнаходження</string>
+    <string name="site_permissions_title">Дозволи сайту</string>
+    <string name="site_permission_location">Доступ до місцезнаходження</string>
+    <string name="site_permission_storage">Зберігання даних на цьому телефоні</string>
+    <string name="site_permission_cookies">%s може використовувати тут свої cookie</string>
+    <string name="site_permission_cookies_unknown">Вбудовані сайти можуть використовувати тут свої cookie</string>
+    <string name="site_permission_allowed">Дозволено</string>
+    <string name="site_permission_blocked">Заблоковано</string>
+    <string name="site_permission_reset">Скинути</string>
+    <string name="site_permission_reset_description">Скинути: %s</string>
+    <string name="site_permissions_reset_all">Скинути все</string>
+    <string name="site_permissions_note">Скидання видаляє вашу відповідь. Наступного разу сайт запитає знову.</string>
 </resources>

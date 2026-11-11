@@ -162,8 +162,6 @@
     <string name="quit_application">กำลังปิดแอปพลิเคชันเพื่อนำการเปลี่ยนแปลงไปใช้…</string>
     <string name="rename">เปลี่ยนชื่อ</string>
     <string name="rename_file">เปลี่ยนชื่อไฟล์</string>
-    <string name="request_storage">อนุญาตการเข้าถึงพื้นที่เก็บข้อมูลอุปกรณ์สำหรับ&lt;b&gt;%s&lt;/b&gt; ?</string>
-    <string name="request_storage_access">อนุญาตให้บุคคลที่สามเข้าถึงที่จัดเก็บข้อมูลของบุคคลที่หนึ่งสำหรับ&lt;b&gt;%s&lt;/b&gt; ?</string>
     <string name="restart_origin">เริ่มต้นใหม่</string>
     <string name="save_file">บันทึกไฟล์เป็น</string>
     <string name="save_file_name">ชื่อไฟล์</string>

@@ -1,5 +1,6 @@
 package com.solarized.firedown.phone.fragments;
 
+import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -11,6 +12,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.util.Log;
@@ -85,6 +87,7 @@ import com.solarized.firedown.geckoview.GeckoToolbar;
 import com.solarized.firedown.geckoview.GeckoToolbarBehavior;
 import com.solarized.firedown.geckoview.NestedGeckoView;
 import com.solarized.firedown.geckoview.NestedGeckoViewBehavior;
+import com.solarized.firedown.geckoview.SitePermissions;
 import com.solarized.firedown.geckoview.TranslationLanguageSettings;
 import com.solarized.firedown.geckoview.TranslationLanguages;
 import com.solarized.firedown.geckoview.prompt.GeckoPromptManager;
@@ -125,6 +128,7 @@ import org.mozilla.geckoview.WebExtensionController;
 import org.mozilla.geckoview.WebResponse;
 
 import java.util.Locale;
+import java.util.function.Consumer;
 
 
 public class BrowserFragment extends BaseBrowserFragment
@@ -281,6 +285,61 @@ public class BrowserFragment extends BaseBrowserFragment
      *  its initializer's lambda reads this, and a field initializer may not
      *  forward-reference a field declared later (JLS 8.3.3). */
     private GeckoState mFilePromptState;
+
+    /** The site's answer waiting on Android's location dialog (one at a time). */
+    private Consumer<Boolean> mPendingLocationAnswer;
+
+    /**
+     * Android's location permission, for a site the user just allowed in
+     * Gecko's dialog. Both permissions in one request: from Android 12 a
+     * request for FINE alone is ignored, and the user may pick
+     * "Approximate", which is enough (GeckoAppShell takes the best provider
+     * it may use).
+     */
+    private final ActivityResultLauncher<String[]> mLocationPermission = registerForActivityResult(
+            new ActivityResultContracts.RequestMultiplePermissions(),
+            result -> {
+                Consumer<Boolean> answer = mPendingLocationAnswer;
+                mPendingLocationAnswer = null;
+                boolean granted = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_FINE_LOCATION))
+                        || Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_COARSE_LOCATION));
+                if (answer != null) {
+                    answer.accept(granted);
+                }
+                if (!granted && getView() != null) {
+                    Snackbar snackbar = makeAnchoredSnackbar(R.string.location_android_refused);
+                    snackbar.setAction(R.string.navigation_settings, v -> openAppSettings());
+                    snackbar.show();
+                }
+            });
+
+    private final GeckoComponents.LocationPermissionRequester mLocationRequester = done -> {
+        if (mPendingLocationAnswer != null) {
+            done.accept(false);
+            return;
+        }
+        mPendingLocationAnswer = done;
+        try {
+            mLocationPermission.launch(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION});
+        } catch (IllegalStateException e) {
+            mPendingLocationAnswer = null;
+            done.accept(false);
+        }
+    };
+
+    /** The app's page in Android settings, where a refused permission is turned back on. */
+    private void openAppSettings() {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", mActivity.getPackageName(), null));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException ignored) {
+            // No settings app: nothing to open.
+        }
+    }
 
     private final ActivityResultLauncher<Intent> mPromptForResult = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -445,8 +504,17 @@ public class BrowserFragment extends BaseBrowserFragment
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+        // A dialog Android is showing keeps its pending answer: the result
+        // lands when this fragment resumes. Only new requests stop here.
+        mGeckoComponents.clearLocationPermissionRequester(mLocationRequester);
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
+        mGeckoComponents.setLocationPermissionRequester(mLocationRequester);
         // Settings is another Activity, so a toggle there lands here on the
         // way back — no navigation event would otherwise repaint the bar.
         applyAddressBarDisplayPref();
@@ -3119,8 +3187,19 @@ public class BrowserFragment extends BaseBrowserFragment
             res.complete(GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT);
             return;
         }
-        String message = String.format(getString(messageId),
-                Uri.parse(permission.uri).getAuthority());
+        String message;
+        if (permission.permission == GeckoSession.PermissionDelegate.PERMISSION_STORAGE_ACCESS) {
+            // The request comes from the embedded site (permission.uri is
+            // its own); the page is the tab's.
+            String embedded = SitePermissions.hostOf(permission.thirdPartyOrigin);
+            if (embedded == null) {
+                embedded = Uri.parse(permission.uri).getHost();
+            }
+            String page = SitePermissions.hostOf(geckoState.getEntityUri());
+            message = getString(messageId, embedded, page);
+        } else {
+            message = getString(messageId, SitePermissions.hostOf(permission.uri));
+        }
         mGeckoPromptManager.onContentPermission(mActivity, geckoState, mNavController, message, permission, res);
     }
 

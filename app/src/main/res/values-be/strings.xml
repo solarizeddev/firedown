@@ -155,8 +155,6 @@
     <string name="quit_application">Выхад з праграмы, каб прымяніць змены…</string>
     <string name="rename">Перайменаваць</string>
     <string name="rename_file">Перайменаваць файл</string>
-    <string name="request_storage">Дазволіць доступ да сховішча прылады для &lt;b&gt; %s &lt;/b&gt;?</string>
-    <string name="request_storage_access">Дазволіць староннім асобам доступ да ўласнага сховішча &lt;b&gt; %s &lt;/b&gt;?</string>
     <string name="restart_origin">Перазапуск</string>
     <string name="save_file">Захаваць файл як</string>
     <string name="save_file_name">Імя файла</string>

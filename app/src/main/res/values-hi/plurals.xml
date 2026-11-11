@@ -49,4 +49,12 @@
         <item quantity="one">शेयर किया गया · %d मिनट और खुला है।</item>
         <item quantity="other">शेयर किया गया · %d मिनट और खुला है।</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d अनुमत</item>
+        <item quantity="other">%d अनुमत</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d ब्लॉक</item>
+        <item quantity="other">%d ब्लॉक</item>
+    </plurals>
 </resources>

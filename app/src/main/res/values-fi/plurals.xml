@@ -49,4 +49,12 @@
         <item quantity="one">Jaettu · auki vielä %d minuutin.</item>
         <item quantity="other">Jaettu · auki vielä %d minuuttia.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d sallittu</item>
+        <item quantity="other">%d sallittu</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d estetty</item>
+        <item quantity="other">%d estetty</item>
+    </plurals>
 </resources>

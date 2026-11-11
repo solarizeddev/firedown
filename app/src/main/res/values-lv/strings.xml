@@ -123,8 +123,6 @@
     <string name="popup_toggle">Pārslēgt skatu</string>
     <string name="rename">Pārdēvēt</string>
     <string name="rename_file">Pārdēvēt failu</string>
-    <string name="request_storage">Vai atļaut piekļuvi ierīces krātuvei &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Vai atļaut trešajām pusēm piekļūt pirmās puses krātuvei &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Restartēt</string>
     <string name="save_file">Saglabāt failu kā</string>
     <string name="save_file_name">Faila nosaukums</string>

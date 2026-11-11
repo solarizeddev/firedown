@@ -121,8 +121,6 @@
     <string name="popup_toggle">Basculer la vue</string>
     <string name="rename">Renommer</string>
     <string name="rename_file">Renommer le fichier</string>
-    <string name="request_storage">Autoriser l’accès au stockage de l’appareil pour &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Autoriser des tiers à accéder au stockage propriétaire pour &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Redémarrage</string>
     <string name="save_file">Enregistrer le fichier sous</string>
     <string name="save_file_name">Nom de fichier</string>

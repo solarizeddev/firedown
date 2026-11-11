@@ -178,8 +178,6 @@
     <string name="quit_application">Chiusura in corso per applicare le modifiche…</string>
     <string name="rename">Rinomina</string>
     <string name="rename_file">Rinomina il file</string>
-    <string name="request_storage">Consentire l\'accesso allo spazio di archiviazione del dispositivo per &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Consentire a terze parti di accedere allo spazio di archiviazione della prima parte per &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Ricomincia</string>
     <string name="save_file">Salva file come</string>
     <string name="save_file_name">Nome del file</string>

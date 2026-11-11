@@ -335,8 +335,8 @@
     <string name="quick_settings_sheet_secure_connection_2">Turvaline ühendus</string>
     <string name="rename">Nimeta ümber</string>
     <string name="rename_file">Nimeta fail ümber</string>
-    <string name="request_storage">Kas lubada seadmele &lt;b&gt;%s&lt;/b&gt; juurdepääs seadme salvestusruumile?</string>
-    <string name="request_storage_access">Kas lubada kolmandatel osapooltel juurdepääs esimese osapoole salvestusruumile &lt;b&gt;%s&lt;/b&gt;?</string>
+    <string name="request_storage">Kas lubada saidil &lt;b&gt;%s&lt;/b&gt; hoida oma andmeid selles telefonis?</string>
+    <string name="request_storage_access">Kas lubada saidil &lt;b&gt;%1$s&lt;/b&gt; kasutada oma küpsiseid saidil &lt;b&gt;%2$s&lt;/b&gt;?</string>
     <string name="restart_origin">Taaskäivita</string>
     <string name="save_file">Salvesta fail nimega</string>
     <string name="save_file_name">Faili nimi</string>
@@ -1265,4 +1265,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">Ava teiste rakenduste lingid privaatsel kaardil</string>
     <string name="settings_external_links_private_summary">Need ei jää ajalukku ja nende allalaadimised lähevad turvalisse kausta.</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">Luba saitidel küsida sinu asukohta</string>
+    <string name="settings_location_ask_summary">Väljas: ükski sait ei saa sinu asukohta. Sees: sait küsib enne.</string>
+    <string name="request_location">Kas lubada saidil &lt;b&gt;%s&lt;/b&gt; teada sinu asukohta?</string>
+    <string name="prompts_dont_allow">Ära luba</string>
+    <string name="location_android_refused">Android ei luba Firedownil sinu asukohta kasutada</string>
+    <string name="site_permissions_title">Saidi õigused</string>
+    <string name="site_permission_location">Asukoha teadmine</string>
+    <string name="site_permission_storage">Andmete hoidmine selles telefonis</string>
+    <string name="site_permission_cookies">%s võib siin oma küpsiseid kasutada</string>
+    <string name="site_permission_cookies_unknown">Manustatud saidid võivad siin oma küpsiseid kasutada</string>
+    <string name="site_permission_allowed">Lubatud</string>
+    <string name="site_permission_blocked">Blokeeritud</string>
+    <string name="site_permission_reset">Lähtesta</string>
+    <string name="site_permission_reset_description">Lähtesta: %s</string>
+    <string name="site_permissions_reset_all">Lähtesta kõik</string>
+    <string name="site_permissions_note">Lähtestamine unustab sinu vastuse. Sait küsib järgmisel korral uuesti.</string>
 </resources>

@@ -63,4 +63,12 @@
         <item quantity="one">Shared · open for %d more minute.</item>
         <item quantity="other">Shared · open for %d more minutes.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d allowed</item>
+        <item quantity="other">%d allowed</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d blocked</item>
+        <item quantity="other">%d blocked</item>
+    </plurals>
 </resources>

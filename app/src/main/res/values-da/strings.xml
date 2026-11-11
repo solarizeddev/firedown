@@ -175,8 +175,6 @@
     <string name="quit_application">Afslutter appen for at anvende ændringerne…</string>
     <string name="rename">Omdøb</string>
     <string name="rename_file">Omdøb fil</string>
-    <string name="request_storage">Ønsker du at tillade adgang til enhedens lagerplads for &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Ønsker du at give tredjeparter adgang til førsteparts lagerplads for &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Genstart</string>
     <string name="save_file">Gem fil som</string>
     <string name="save_file_name">Filnavn</string>

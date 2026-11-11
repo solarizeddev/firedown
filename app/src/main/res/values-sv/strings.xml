@@ -136,8 +136,6 @@
     <string name="popup_toggle">Växla visa</string>
     <string name="rename">Döp om</string>
     <string name="rename_file">Döp om fil</string>
-    <string name="request_storage">Vill du tillåta åtkomst till enhetslagring för &lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">Vill du ge tredje part åtkomst till förstapartslagring för &lt;b&gt;%s&lt;/b&gt;?</string>
     <string name="restart_origin">Omstart</string>
     <string name="save_file">Spara fil som</string>
     <string name="save_file_name">Filnamn</string>

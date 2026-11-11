@@ -199,6 +199,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mHostCert.setEnabled(mCertificateInfoEntity != null);
 
         bindDrmRow();
+        bindSitePermissionsRow();
 
         host.setText(mGeckoState.getEntityTitle());
         hostUrl.setText(mDomain);
@@ -452,6 +453,39 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
             getParentFragmentManager().setFragmentResult(DrmSheetDialogFragment.RESULT_KEY,
                     DrmSheetDialogFragment.result(true, host, false));
             dismiss();
+        });
+    }
+
+    /**
+     * "Site permissions · 2 allowed ›" under the connection row, only when
+     * the site holds an answer the user gave (SitePermissions decides which).
+     * Gecko answers asynchronously; until then, and on a site with nothing
+     * stored, the row is absent.
+     */
+    private void bindSitePermissionsRow() {
+        View row = mView.findViewById(R.id.site_permissions_row);
+        row.setVisibility(View.GONE);
+        SheetGroups.applyCorners(mView.findViewById(R.id.connection_group));
+        String url = mGeckoState.getEntityUri();
+        if (url == null || !(url.startsWith("https://") || url.startsWith("http://"))) {
+            return;
+        }
+        mGeckoRuntimeHelper.loadSitePermissions(url, mIsIncognito, permissions -> {
+            if (mView == null || !isAdded() || permissions.isEmpty()) {
+                return;
+            }
+            // The view on screen now: a rotation can rebuild it before Gecko answers.
+            View shown = mView.findViewById(R.id.site_permissions_row);
+            TextView summary = mView.findViewById(R.id.site_permissions_summary);
+            summary.setText(SitePermissionsDialogFragment.summary(getResources(), permissions));
+            shown.setVisibility(View.VISIBLE);
+            SheetGroups.applyCorners(mView.findViewById(R.id.connection_group));
+            shown.setOnClickListener(v -> {
+                Bundle bundle = new Bundle();
+                bundle.putString(Keys.ITEM_ID, url);
+                bundle.putBoolean(Keys.IS_INCOGNITO, mIsIncognito);
+                NavigationUtils.navigateSafe(mNavController, R.id.action_security_to_site_permissions, bundle);
+            });
         });
     }
 

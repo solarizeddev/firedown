@@ -139,8 +139,6 @@
     <string name="popup_toggle">Görünüşü dəyişdirin</string>
     <string name="rename">Adını dəyişdirin</string>
     <string name="rename_file">Faylın adını dəyişdirin</string>
-    <string name="request_storage">&lt;b&gt; %s &lt;/b&gt; üçün cihaz yaddaşına giriş icazəsi verilsin?</string>
-    <string name="request_storage_access">Üçüncü tərəflərə &lt;b&gt; %s &lt;/b&gt; üçün birinci tərəf yaddaşına daxil olmağa icazə verilsin?</string>
     <string name="restart_origin">Yenidən başlamaq</string>
     <string name="save_file">Faylı qeyd edin</string>
     <string name="save_file_name">Fayl adı</string>

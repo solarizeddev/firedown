@@ -237,6 +237,19 @@
             android:title="@string/settings_external_links_private_title"
             app:icon="@drawable/ic_incognito_24" />
 
+        <!-- Websites' location (Preferences.SETTINGS_LOCATION_ASK). OFF by
+             default; defaultValue must match DEFAULT_LOCATION_ASK.
+             SettingsFragment applies it (GeckoRuntimeHelper
+             .setLocationPrompts); turning it off forgets every site's
+             answer. -->
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            app:singleLineTitle="false"
+            android:key="com.solarized.firedown.preferences.browser.location.ask"
+            android:summary="@string/settings_location_ask_summary"
+            android:title="@string/settings_location_ask_title"
+            app:icon="@drawable/location_on_24" />
+
 
         <SwitchPreferenceCompat
             android:defaultValue="true"

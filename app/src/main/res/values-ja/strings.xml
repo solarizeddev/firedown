@@ -406,8 +406,8 @@
     <string name="quit_application">変更を適用するためアプリケーションを終了します...</string>
     <string name="rename">名前の変更</string>
     <string name="rename_file">ファイルの名前を変更</string>
-    <string name="request_storage">デバイスのストレージへのアクセスを許可する&lt;b&gt;%s&lt;/b&gt;?</string>
-    <string name="request_storage_access">第三者がファーストパーティのストレージにアクセスできるようにしますか&lt;b&gt;%s&lt;/b&gt;?</string>
+    <string name="request_storage">&lt;b&gt;%s&lt;/b&gt; がこのスマートフォンにデータを保存することを許可しますか？</string>
+    <string name="request_storage_access">&lt;b&gt;%1$s&lt;/b&gt; が &lt;b&gt;%2$s&lt;/b&gt; で自身の Cookie を使うことを許可しますか？</string>
     <string name="restart_origin">再起動</string>
     <string name="save_file">ファイルを別名で保存</string>
     <string name="save_file_name">ファイル名</string>
@@ -1250,4 +1250,21 @@
     <string name="bottom_bar_downloads_status">%1$s、%2$s</string>
     <string name="settings_external_links_private_title">他のアプリからのリンクをプライベートタブで開く</string>
     <string name="settings_external_links_private_summary">履歴に残らず、ダウンロードはセーフフォルダに保存されます。</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">サイトに位置情報の確認を許可</string>
+    <string name="settings_location_ask_summary">オフ: 位置情報はどのサイトにも渡りません。オン: サイトが先に確認します。</string>
+    <string name="request_location">&lt;b&gt;%s&lt;/b&gt; に位置情報を知らせますか？</string>
+    <string name="prompts_dont_allow">許可しない</string>
+    <string name="location_android_refused">Android が Firedown の位置情報の使用を許可していません</string>
+    <string name="site_permissions_title">サイトの権限</string>
+    <string name="site_permission_location">位置情報の確認</string>
+    <string name="site_permission_storage">このスマートフォンへのデータ保存</string>
+    <string name="site_permission_cookies">%s はここで自身の Cookie を使えます</string>
+    <string name="site_permission_cookies_unknown">埋め込まれたサイトはここで自身の Cookie を使えます</string>
+    <string name="site_permission_allowed">許可</string>
+    <string name="site_permission_blocked">ブロック</string>
+    <string name="site_permission_reset">リセット</string>
+    <string name="site_permission_reset_description">リセット: %s</string>
+    <string name="site_permissions_reset_all">すべてリセット</string>
+    <string name="site_permissions_note">リセットすると回答が消えます。次回、サイトは再び確認します。</string>
 </resources>

@@ -51,4 +51,14 @@
         <item quantity="many">Compartilhado · aberto por mais %d minutos.</item>
         <item quantity="other">Compartilhado · aberto por mais %d minutos.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d permitida</item>
+        <item quantity="many">%d permitidas</item>
+        <item quantity="other">%d permitidas</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d bloqueada</item>
+        <item quantity="many">%d bloqueadas</item>
+        <item quantity="other">%d bloqueadas</item>
+    </plurals>
 </resources>

@@ -121,8 +121,6 @@
   <string name="popup_toggle">Cambiar vista</string>
   <string name="rename">Renombrar</string>
   <string name="rename_file">Renombrar archivo</string>
-  <string name="request_storage">¿Permitir el acceso al almacenamiento del dispositivo para &lt;b&gt;%s&lt;/b&gt;?</string>
-  <string name="request_storage_access">¿Permitir que terceros accedan al almacenamiento propio de &lt;b&gt;%s&lt;/b&gt;?</string>
   <string name="restart_origin">Reanudar</string>
   <string name="save_file">Guardar archivo como</string>
   <string name="save_file_name">Nombre del archivo</string>

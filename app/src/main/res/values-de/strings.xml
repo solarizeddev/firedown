@@ -410,8 +410,8 @@
     <string name="quit_application">Beenden der Anwendung, um Änderungen zu übernehmen…</string>
     <string name="rename">Umbenennen</string>
     <string name="rename_file">Datei umbenennen</string>
-    <string name="request_storage">Zugriff auf den Gerätespeicher für &lt;b&gt;%s&lt;/b&gt; erlauben?</string>
-    <string name="request_storage_access">Dritten Zugriff auf First-Party-Speicher für &lt;b&gt;%s&lt;/b&gt; gewähren?</string>
+    <string name="request_storage">&lt;b&gt;%s&lt;/b&gt; erlauben, Daten auf diesem Telefon zu behalten?</string>
+    <string name="request_storage_access">&lt;b&gt;%1$s&lt;/b&gt; erlauben, seine Cookies auf &lt;b&gt;%2$s&lt;/b&gt; zu verwenden?</string>
     <string name="restart_origin">Neu starten</string>
     <string name="save_file">Datei speichern als</string>
     <string name="save_file_name">Dateiname</string>
@@ -1264,4 +1264,21 @@
     <string name="bottom_bar_downloads_status">%1$s, %2$s</string>
     <string name="settings_external_links_private_title">Links aus anderen Apps in einem privaten Tab öffnen</string>
     <string name="settings_external_links_private_summary">Sie erscheinen nicht im Verlauf, und ihre Downloads landen im Sicheren Ordner.</string>
+    <!-- Site permissions and the location switch -->
+    <string name="settings_location_ask_title">Websites dürfen nach deinem Standort fragen</string>
+    <string name="settings_location_ask_summary">Aus: Keine Website erhält deinen Standort. An: Eine Website fragt zuerst.</string>
+    <string name="request_location">&lt;b&gt;%s&lt;/b&gt; deinen Standort mitteilen?</string>
+    <string name="prompts_dont_allow">Nicht erlauben</string>
+    <string name="location_android_refused">Android erlaubt Firedown keinen Zugriff auf deinen Standort</string>
+    <string name="site_permissions_title">Website-Berechtigungen</string>
+    <string name="site_permission_location">Deinen Standort kennen</string>
+    <string name="site_permission_storage">Daten auf diesem Telefon behalten</string>
+    <string name="site_permission_cookies">%s darf hier seine Cookies verwenden</string>
+    <string name="site_permission_cookies_unknown">Eingebettete Websites dürfen hier ihre Cookies verwenden</string>
+    <string name="site_permission_allowed">Erlaubt</string>
+    <string name="site_permission_blocked">Blockiert</string>
+    <string name="site_permission_reset">Zurücksetzen</string>
+    <string name="site_permission_reset_description">Zurücksetzen: %s</string>
+    <string name="site_permissions_reset_all">Alle zurücksetzen</string>
+    <string name="site_permissions_note">Zurücksetzen vergisst deine Antwort. Die Website fragt beim nächsten Mal erneut.</string>
 </resources>

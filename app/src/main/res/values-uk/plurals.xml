@@ -69,4 +69,16 @@
         <item quantity="many">Надіслано · відкрито ще %d хвилин.</item>
         <item quantity="other">Надіслано · відкрито ще %d хвилини.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d дозволено</item>
+        <item quantity="few">%d дозволено</item>
+        <item quantity="many">%d дозволено</item>
+        <item quantity="other">%d дозволено</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d заблоковано</item>
+        <item quantity="few">%d заблоковано</item>
+        <item quantity="many">%d заблоковано</item>
+        <item quantity="other">%d заблоковано</item>
+    </plurals>
 </resources>

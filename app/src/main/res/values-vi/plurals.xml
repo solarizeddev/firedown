@@ -45,4 +45,10 @@
     <plurals name="p2p_link_open_for">
         <item quantity="other">Đã chia sẻ · còn mở %d phút nữa.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="other">%d được cho phép</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="other">%d bị chặn</item>
+    </plurals>
 </resources>

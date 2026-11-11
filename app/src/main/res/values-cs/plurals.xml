@@ -69,4 +69,16 @@
         <item quantity="many">Sdíleno · otevřeno ještě %d minuty.</item>
         <item quantity="other">Sdíleno · otevřeno ještě %d minut.</item>
     </plurals>
+    <plurals name="site_permissions_allowed">
+        <item quantity="one">%d povoleno</item>
+        <item quantity="few">%d povolena</item>
+        <item quantity="many">%d povoleno</item>
+        <item quantity="other">%d povoleno</item>
+    </plurals>
+    <plurals name="site_permissions_blocked">
+        <item quantity="one">%d zablokováno</item>
+        <item quantity="few">%d zablokována</item>
+        <item quantity="many">%d zablokováno</item>
+        <item quantity="other">%d zablokováno</item>
+    </plurals>
 </resources>
