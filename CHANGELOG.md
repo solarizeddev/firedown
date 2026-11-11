@@ -1,3 +1,11 @@
+## [1.2.9] - 2026-11-11
+
+- Picture-in-picture: the video fills the window and keeps playing
+- Videos playing in the background no longer stop at a "still watching?" prompt
+- New tab and New private tab shortcuts when you long-press the app icon
+- A setting to open links from other apps in a private tab
+- Add-ons: each add-on's page lists the sites it can access, each with its own switch
+
 ## [1.2.8] - 2026-11-10
 
 - Updated the GeckoView browser engine to 160.0.20261104181552
