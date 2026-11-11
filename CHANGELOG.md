@@ -1,3 +1,9 @@
+## [1.2.10] - 2026-11-11
+
+- Picture-in-picture: the website's own controls no longer cover the video
+- A cleaner shield sheet, led by the site's name
+- Lighter, more modern arrows and icons across the app
+
 ## [1.2.9] - 2026-11-11
 
 - Picture-in-picture: the video fills the window and keeps playing
