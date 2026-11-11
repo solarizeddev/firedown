@@ -13,15 +13,19 @@
         Object.defineProperty(document,'visibilityState',{get:()=>'visible',configurable:false});
         Object.defineProperty(document,'webkitHidden',{get:()=>false,configurable:false});
         Object.defineProperty(document,'webkitVisibilityState',{get:()=>'visible',configurable:false});}catch(e){}
-        const d=document.addEventListener.bind(document);
-        document.addEventListener=function(t,l,o){if(t==='visibilitychange'||t==='webkitvisibilitychange')return;return d(t,l,o);};
         const w=window.addEventListener.bind(window);
         window.addEventListener=function(t,l,o){if(t==='pagehide'||t==='blur')return;return w(t,l,o);};
-        const p=document.dispatchEvent.bind(document);
-        document.dispatchEvent=function(e){if(e&&e.type==='visibilitychange')return true;return p(e);};
     })();`;
     (document.head || document.documentElement).appendChild(s);
     s.remove();
+    // The visibilitychange event itself is stopped at the window's capture
+    // phase, before any page listener, however the page registered it
+    // (addEventListener on document or window, onvisibilitychange, a call
+    // through EventTarget.prototype). Registered from the content script at
+    // document_start, so it is the first capture listener on the window.
+    for (const type of ['visibilitychange', 'webkitvisibilitychange']) {
+        window.addEventListener(type, e => e.stopImmediatePropagation(), true);
+    }
 })();
 
 // BOTGUARD ON ROBOTS.TXT ONLY — and only when Firedown owns the navigation
