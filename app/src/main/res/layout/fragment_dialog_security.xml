@@ -278,7 +278,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:importantForAccessibility="no"
-                        app:srcCompat="@drawable/ic_key_24"
+                        app:srcCompat="@drawable/key_light_24"
                         app:tint="?attr/brandInk" />
 
                     <LinearLayout
@@ -384,7 +384,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:importantForAccessibility="no"
-                        app:srcCompat="@drawable/tune_24"
+                        app:srcCompat="@drawable/tune_light_24"
                         app:tint="?attr/colorOnSurfaceVariant" />
 
                     <LinearLayout
@@ -452,7 +452,7 @@
                         android:maxLines="1"
                         android:text="@string/settings_clear_browsing"
                         android:textColor="?attr/colorOnSurface"
-                        app:drawableStartCompat="@drawable/ic_baseline_delete_24"
+                        app:drawableStartCompat="@drawable/delete_light_24"
                         app:drawableTint="?attr/colorOnSurfaceVariant" />
 
                     <androidx.appcompat.widget.AppCompatImageView

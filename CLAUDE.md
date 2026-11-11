@@ -399,6 +399,11 @@ user runs (sketch: `sketches/shield-blockers.html`).
   exclamation off; the glyph and the words say on or off. (A filled
   check-shield from the older Material Icons set sat there for a build: the
   heaviest glyph on the sheet, beside uBlock's filled logo.) The sheet's colour is the blocker's own logo in the row below.
+  Every other glyph on the sheet comes from the shield's set, Material
+  Symbols Outlined at weight 300, 24px (`encryption_light_24`,
+  `no_encryption_light_24`, `key_light_24`, `tune_light_24`,
+  `delete_light_24`): a filled trash and a 2dp padlock made the bottom
+  rows heavier than the lead row. Don't mix another icon set into it.
   Three louder versions shipped and were taken back on-device: a full
   peach→coral gradient CARD (in dark theme the brightest surface on the
   sheet, a promo slot on an ad blocker's sheet, the loudest colour spent on
