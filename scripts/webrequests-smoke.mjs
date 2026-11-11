@@ -2611,6 +2611,42 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
   globalThis.fetch = realFetch;
 }
 
+// ---------------------------------------------------------------------------
+// pip-layout: Java's "the tab is in a PiP window" message puts ONE user-origin
+// sheet on that tab's frames; leaving takes it off the tab it was put on, and
+// a resend (the page in the window committed) takes it off before putting it
+// back, in order.
+// ---------------------------------------------------------------------------
+{
+  const portMessage = registrations["port.onMessage"];
+  const calls = [];
+  browser.tabs.insertCSS = async (tabId, d) => { calls.push(["insert", tabId, d]); };
+  browser.tabs.removeCSS = async (tabId, d) => { calls.push(["remove", tabId, d]); };
+  const send = (msg) => { for (const fn of portMessage) fn(msg); };
+  const settleChain = () => new Promise((r) => setTimeout(r, 20));
+  send({ type: "pip-layout", on: true, tabId: 7 });
+  await settleChain();
+  expect(calls.length === 1 && calls[0][0] === "insert" && calls[0][1] === 7,
+    "pip-layout: entering puts the sheet on the tab");
+  const d = calls[0][2] || {};
+  expect(d.cssOrigin === "user" && d.allFrames === true && /:fullscreen:has\(video\)/.test(d.code || ""),
+    "pip-layout: a user-origin sheet on every frame, gated on a fullscreen video");
+  send({ type: "pip-layout", on: true, tabId: 7 });
+  await settleChain();
+  expect(calls.length === 3 && calls[1][0] === "remove" && calls[2][0] === "insert",
+    "pip-layout: a resend takes the sheet off before putting it back");
+  send({ type: "pip-layout", on: false, tabId: 9 });
+  send({ type: "pip-layout", on: true, tabId: 9 });
+  send({ type: "pip-layout", on: false, tabId: 9 });
+  await settleChain();
+  const tail = calls.slice(3).map((c) => c[0] + c[1]).join(",");
+  expect(tail === "remove7,insert9,remove9",
+    `pip-layout: off/on/off run in order, each off on the tab the sheet is on (got ${tail})`);
+  send({ type: "pip-layout", on: false, tabId: 9 });
+  await settleChain();
+  expect(calls.length === 6, "pip-layout: an off with no sheet on does nothing");
+}
+
 if (failures) {
   console.error(`\n${failures} failure(s)`);
   process.exit(1);

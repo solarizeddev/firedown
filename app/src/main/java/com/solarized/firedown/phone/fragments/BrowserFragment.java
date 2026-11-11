@@ -2141,7 +2141,12 @@ public class BrowserFragment extends BaseBrowserFragment
         }
     }
 
-    private static void notifyPipMode(GeckoSession session, boolean inPip) {
+    private void notifyPipMode(GeckoSession session, boolean inPip) {
+        // The page's own controls laid over the video (a player whose video
+        // sits in a stacking context below them) are hidden by a stylesheet
+        // the capture extension holds; Gecko's rule cannot lift the video
+        // past them.
+        mGeckoRuntimeHelper.setPipLayout(inPip);
         if (!session.isOpen()) {
             return;
         }

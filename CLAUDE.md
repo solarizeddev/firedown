@@ -13812,6 +13812,29 @@ wiring is `BrowserMainActivity` + `BrowserFragment`'s PiP block.
   never sends it again, so it is resent when the page in the window
   commits or stops loading (a session opened in the window, a navigation
   into another process).
+- **The page's own controls are hidden by a user stylesheet while in the
+  window** (`requests.js` `setPipLayout` / `PIP_LAYOUT_CSS`, sent by
+  `GeckoRuntimeHelper.setPipLayout` from `notifyPipMode`, so on entry, on
+  exit and on every resend). Gecko's rule raises the `<video>` to the
+  highest z-index, but only inside its own stacking context: a player that
+  keeps its video in a wrapper with a z-index of its own and its controls
+  in a sibling above it (mobile YouTube) kept the controls painted over the
+  picture, and in the window nothing hid them (reported on a Pixel 10 Pro
+  XL). The sheet hides every element of a fullscreen subtree holding a
+  `<video>` that is neither a video nor holds one, and every pseudo-element
+  in it; `tabs.insertCSS` with `cssOrigin: "user"` on all frames, so a
+  page's own `!important` loses; one sheet at a time, taken off the tab it
+  was put on. Driven by the app's own PiP signal, never a size guess (a
+  content script measuring the window was built first and dropped: its
+  threshold disagreed with pip-fix's and a small freeform window would lose
+  its controls). A fullscreen element with no `<video>` in its light DOM
+  (a shadow-DOM player, a canvas player) is left as it was; the page's DOM
+  captions go with the controls, native WebVTT cues stay. Verify with
+  `node scripts/pip-layout-harness.mjs` (the sheet in Chromium against a
+  player shaped like that; four mutants) and the smoke's `pip-layout:`
+  checks. On-device unverified at write time; if the controls still show,
+  check `MediaTrace compositor pip mode true` first (the flag may not have
+  reached the content process).
 - **Mobile YouTube needs Firefox's site patch** (bug 1956165, ported as
   `assets/youtube/pip-fix.js`, MPL-2.0, its own file): its player reads the
   window's outer size dropping under a third of the screen

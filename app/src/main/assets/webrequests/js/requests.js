@@ -2135,6 +2135,56 @@ export { parseHlsMasterChildren, parseHlsInitSegments, decideVtt, isRedirectStat
 // Native port
 // ---------------------------------------------------------------------------
 
+// The page in a picture-in-picture window: the fullscreen video and nothing
+// over it. Gecko's own rule for the window (html.css, under the chrome-only
+// -moz-in-android-pip-mode) lays every <video> over the window at the highest
+// z-index, but that z-index only counts inside the video's stacking context:
+// a player that keeps its video in a wrapper with a z-index of its own and
+// its controls in a sibling above it keeps the controls painted over the
+// picture, where nothing ever hides them. Java says when the tab enters and
+// leaves the window (BrowserFragment.applyPipMode); while it is there every
+// element of a fullscreen subtree holding a <video> that is neither a video
+// nor holds one is hidden, with every pseudo-element in it. A user-origin
+// sheet, so a page's own !important loses. Nothing changes for a fullscreen
+// element with no <video> in its light DOM.
+export const PIP_LAYOUT_CSS = ':fullscreen:has(video) :not(video):not(:has(video)),'
+  + ' :fullscreen:has(video)::before, :fullscreen:has(video)::after,'
+  + ' :fullscreen:has(video) *::before, :fullscreen:has(video) *::after'
+  + ' { visibility: hidden !important; }';
+
+const PIP_LAYOUT_DETAILS = { code: PIP_LAYOUT_CSS, allFrames: true, matchAboutBlank: true, cssOrigin: 'user' };
+let pipLayoutTab = -1;
+let pipLayoutChain = Promise.resolve();
+
+// Off, then on again when asked: a resend after the page in the window
+// commits or loads must reach its new document, and one sheet at a time.
+// Calls run in order, each after the last one's insert or removal settled.
+export function setPipLayout(on, tabId) {
+  pipLayoutChain = pipLayoutChain.then(() => applyPipLayout(on, tabId));
+  return pipLayoutChain;
+}
+
+async function applyPipLayout(on, tabId) {
+  if (pipLayoutTab >= 0) {
+    const previous = pipLayoutTab;
+    pipLayoutTab = -1;
+    try {
+      await browser.tabs.removeCSS(previous, PIP_LAYOUT_DETAILS);
+    } catch (e) {
+      if (DEBUG) console.warn('[req] pip layout removal failed:', e?.message);
+    }
+  }
+  if (!on || typeof tabId !== 'number' || tabId < 0) {
+    return;
+  }
+  pipLayoutTab = tabId;
+  try {
+    await browser.tabs.insertCSS(tabId, PIP_LAYOUT_DETAILS);
+  } catch (e) {
+    if (DEBUG) console.warn('[req] pip layout failed:', e?.message);
+  }
+}
+
 const nativePort = browser.runtime.connectNative('browser');
 
 nativePort.onMessage.addListener(async (msg) => {
@@ -2143,6 +2193,8 @@ nativePort.onMessage.addListener(async (msg) => {
     if (result) {
       nativePort.postMessage(result);
     }
+  } else if (msg.type === 'pip-layout') {
+    await setPipLayout(msg.on === true, msg.tabId);
   } else if (msg.type === 'capture-snapshot') {
     // The popup's "Save snapshot" row → GeckoRuntimeHelper.captureSnapshot()
     // arrives here. The serializer lives in the snapshot.js CONTENT script

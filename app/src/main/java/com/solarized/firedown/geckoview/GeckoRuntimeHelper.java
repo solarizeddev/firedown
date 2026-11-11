@@ -1227,6 +1227,25 @@ public class GeckoRuntimeHelper {
         }
     }
 
+    /**
+     * The tab on screen entered or left a picture-in-picture window: the
+     * capture extension lays a user stylesheet over its fullscreen video's
+     * siblings while it is there (requests.js setPipLayout). Sent again with
+     * {@code true} when the page in the window commits or loads, since the
+     * sheet belongs to one document.
+     */
+    public void setPipLayout(boolean inPip) {
+        try {
+            JSONObject msg = new JSONObject();
+            msg.put("type", "pip-layout");
+            msg.put("on", inPip);
+            msg.put("tabId", mTabId);
+            sendPortMessage("browser", msg);
+        } catch (JSONException e) {
+            Log.e(TAG, "setPipLayout error", e);
+        }
+    }
+
     private void sendPortMessage(String portName, JSONObject message) {
         WebExtension.Port port = mPorts.get(portName);
         if (port != null) {
