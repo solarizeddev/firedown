@@ -95,6 +95,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     private TextView mProtectionTitle;
     private MaterialButton mProtectionButton;
     private ImageView mProtectionChevron;
+    private ImageView mProtectionIcon;
     /** The page's blocked-request count, as last reported (the banner's subtitle). */
     private int mBlockedCount;
     private AppCompatImageView mHostImage;
@@ -156,6 +157,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mProtectionTitle = mView.findViewById(R.id.protection_title);
         mProtectionButton = mView.findViewById(R.id.protection_button);
         mProtectionChevron = mView.findViewById(R.id.protection_chevron);
+        mProtectionIcon = mView.findViewById(R.id.protection_icon);
 
         // The "N blocked on this page" summary row drills into the page's
         // refused hosts. The nav action popUpTo dialog_security_info
@@ -207,6 +209,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
 
         mHostCert.setEnabled(mCertificateInfoEntity != null);
 
+        orderGroups();
         bindDrmRow();
         bindSitePermissionsRow();
 
@@ -365,12 +368,14 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
                 sub = R.string.shield_blocker_not_private;
                 break;
             case AddonManager.BlockerItem.OFF_FOR_SITE:
-                sub = R.string.shield_blocker_off_site;
+                // The row is where the switch is: Firedown cannot flip a
+                // blocker's per-site switch, the tap opens its popup, which can.
+                sub = R.string.shield_blocker_off_site_switch;
                 break;
             default:
                 // Only uBlock says whether it is on for the site; for another
                 // blocker, enabled here is all there is to read.
-                sub = item.isUblock() ? R.string.shield_blocker_on_site : R.string.shield_blocker_on;
+                sub = item.isUblock() ? R.string.shield_blocker_on_site_switch : R.string.shield_blocker_on;
                 break;
         }
         // Every row carries its status line, so the rows read alike. No
@@ -435,7 +440,32 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     }
 
     /**
-     * "DRM is off   [Turn on]" under the connection row, while the page on
+     * Protection leads the sheet: the address bar's icon is a shield whose
+     * state is the blocker's, so the sheet opens on what the icon said. On a
+     * plain http page the connection group leads instead, so "Protection is
+     * on" never sits above "Connection is not secure" as reassurance.
+     */
+    private void orderGroups() {
+        String url = mGeckoState.getEntityUri();
+        if (url == null || !url.startsWith("http://")) {
+            return;
+        }
+        View connection = mView.findViewById(R.id.connection_group);
+        ViewGroup body = (ViewGroup) connection.getParent();
+        body.removeView(connection);
+        body.addView(connection, 0);
+        int gap = getResources().getDimensionPixelSize(R.dimen.sheet_group_gap);
+        ViewGroup.MarginLayoutParams first = (ViewGroup.MarginLayoutParams) connection.getLayoutParams();
+        first.topMargin = 0;
+        connection.setLayoutParams(first);
+        View blockers = mView.findViewById(R.id.blockers_group);
+        ViewGroup.MarginLayoutParams second = (ViewGroup.MarginLayoutParams) blockers.getLayoutParams();
+        second.topMargin = gap;
+        blockers.setLayoutParams(second);
+    }
+
+    /**
+     * "DRM is off   [Turn on]" at the head of the connection group, while the page on
      * screen asked for DRM and it is off: the row the shield's dot points
      * to. Turn on answers the way the DRM sheet does, so the browser turns
      * it on and reloads (one implementation, in BrowserFragment).
@@ -445,6 +475,12 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         boolean show = mGeckoState.isDrmRefusedHere()
                 && !Preferences.getDRMEnabled(mSharedPreferences);
         row.setVisibility(show ? View.VISIBLE : View.GONE);
+        // The DRM row leads its group (the shield's dot points at it); the
+        // connection row takes the 2dp row gap only when it follows it.
+        View connection = mView.findViewById(R.id.host_secure);
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) connection.getLayoutParams();
+        lp.topMargin = show ? getResources().getDimensionPixelSize(R.dimen.sheet_row_gap) : 0;
+        connection.setLayoutParams(lp);
         SheetGroups.applyCorners(mView.findViewById(R.id.connection_group));
         if (!show) {
             return;
@@ -543,6 +579,10 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mProtectionTitle.setTextColor(title);
         mTotalCountTextView.setTextColor(subtitle);
         mProtectionChevron.setImageTintList(ColorStateList.valueOf(subtitle));
+        // The address bar's two shields: full when protected, the
+        // privacy-tip one when a layer is off (GeckoToolbar.updateShieldIcon).
+        mProtectionIcon.setImageResource(on ? R.drawable.ic_shield_24 : R.drawable.ic_shield_privacy_tip_24);
+        mProtectionIcon.setImageTintList(ColorStateList.valueOf(title));
 
         GradientDrawable background = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, ground);
         float outer = getResources().getDimension(R.dimen.sheet_group_corner_outer);
@@ -636,6 +676,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mProtectionTitle = null;
         mProtectionButton = null;
         mProtectionChevron = null;
+        mProtectionIcon = null;
         mView = null;
     }
 }

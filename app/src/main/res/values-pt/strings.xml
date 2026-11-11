@@ -1241,7 +1241,8 @@
     <string name="shield_blocker_not_private">Não funciona em abas privativas</string>
     <string name="shield_blocker_off_site">Desativado para este site</string>
     <string name="shield_blocker_on">Ativado</string>
-    <string name="shield_blocker_on_site">Ativado para este site</string>
+    <string name="shield_blocker_on_site_switch">Ativado para este site · desative no menu dele</string>
+    <string name="shield_blocker_off_site_switch">Desativado para este site · ative no menu dele</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">%d bloqueador de anúncios está ativo.</item>
         <item quantity="many">%d bloqueadores de anúncios estão ativos. Um costuma bastar; mais podem quebrar sites.</item>

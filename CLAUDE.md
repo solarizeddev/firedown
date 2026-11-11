@@ -336,13 +336,23 @@ user runs (sketch: `sketches/shield-blockers.html`).
   (`getActionsVersion`), every location change and every tab switch, in
   regular AND private tabs (the private toolbar used to show the full
   shield always).
-- **The sheet** (`SecurityStateSheetDialogFragment`): the connection
-  group (connection, DRM, Site permissions); then the **protection
-  banner** heading the blockers group, followed by one row per blocker
+- **The sheet** (`SecurityStateSheetDialogFragment`): the **protection
+  banner** heading the blockers group FIRST, followed by one row per blocker
   (`item_blocker_row`, uBlock first: its name on ONE line, a status line on
-  EVERY row — "On for this site" / "Off for this site" for uBlock, "On" for
-  any other, enabled being all that can be read of it — a tap opens its
-  popup, where uBlock's per-site switch lives); a blocker not allowed in a
+  EVERY row — "On for this site · turn off in its menu" / "Off for this
+  site · turn on in its menu" for uBlock, "On" for any other, enabled being
+  all that can be read of it — a tap opens its popup, where uBlock's
+  per-site switch lives; the status line names the switch because the
+  banner has none, and on-device the user looked for one there); then the
+  connection group (DRM first when the page asked, the shield's dot points
+  at it; connection; Site permissions, shown only when the site holds an
+  answer: an empty list would be a tap to learn "nothing"). Protection
+  leads (2026-11, reviewed with Fable): the address-bar icon is a shield
+  whose state is the blocker's, so the sheet opens on what the icon said,
+  and on HTTPS the connection row reads the same on nearly every page. On a
+  plain http page the connection group leads instead (`orderGroups`), so
+  "Protection is on" never sits above "Connection is not secure" as
+  reassurance; a blocker not allowed in a
   private tab says so with "Allow". More than one running adds one quiet
   line (no warning colour: the user chose it).
 - **The protection banner** (`ads_stat_card` / `renderBanner`; canvas
@@ -360,7 +370,9 @@ user runs (sketch: `sketches/shield-blockers.html`).
   surfaceContainerHighest ground (the incognito one in private tabs) and
   theme inks, so colour alone says "off". The ground is a GradientDrawable
   on the card's child with the card's own corners (`hasCardAfterBanner`):
-  a card cannot clip a child to unequal corners before Android 11. Rules
+  a card cannot clip a child to unequal corners before Android 11. A
+  24dp shield in the rows' icon column (the bar's own two shields, full
+  or privacy-tip) puts the banner's text on the rows' title column. Rules
   that came out of the review: **the banner has no Turn off button**
   (Firedown cannot flip a blocker's per-site switch — that is in its
   popup, the row below — and a button that only opens the popup, or turns
@@ -12317,13 +12329,16 @@ and update **all** locale files, not just English.
 ### The security sheet — blocker rows, ETP is GLOBAL, M3 cards as rows
 
 `SecurityStateSheetDialogFragment` (`fragment_dialog_security.xml`, the
-shield tap): "Connection is secure ›" (first row under the identity header
-— it is the page's most important fact and drills into the certificate),
-then "N requests blocked on this page ›" (the capture extension's
-blocker-neutral per-page tally → `BlockedAdsDetailDialogFragment`, the
-sheet's only number) grouped with ONE ROW PER AD BLOCKER add-on (uBlock Origin first; a tap opens its popup, where its
-per-site switch lives) or "No ad blocker is on · Turn on", and "Clear
-browsing data ›". The **"Block ads and trackers" switch is GONE** with the
+shield tap): the protection banner over "N requests blocked on this
+page ›" (the capture extension's blocker-neutral per-page tally →
+`BlockedAdsDetailDialogFragment`, the sheet's only number), grouped with
+ONE ROW PER AD BLOCKER add-on (uBlock Origin first; a tap opens its popup,
+where its per-site switch lives); then the connection group (DRM when
+asked, "Connection is secure ›", Site permissions); then "Clear browsing
+data ›". Protection leads because the address-bar icon is a shield whose
+state is the blocker's; on a plain http page the connection group leads
+instead (`orderGroups`). See "Blockers behind the shield" for the order's
+rules. The **"Block ads and trackers" switch is GONE** with the
 patched uBlock it talked to — see "Blockers behind the shield" for the
 rows, the shield rule and the count. Decisions, each a maintainer call
 after sketches on the design canvas:

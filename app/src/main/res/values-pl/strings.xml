@@ -1266,7 +1266,8 @@
     <string name="shield_blocker_not_private">Nie działa w kartach prywatnych</string>
     <string name="shield_blocker_off_site">Wyłączony dla tej witryny</string>
     <string name="shield_blocker_on">Włączony</string>
-    <string name="shield_blocker_on_site">Włączony dla tej witryny</string>
+    <string name="shield_blocker_on_site_switch">Włączony dla tej witryny · wyłącz w jego menu</string>
+    <string name="shield_blocker_off_site_switch">Wyłączony dla tej witryny · włącz w jego menu</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">Włączona jest %d blokada reklam.</item>
         <item quantity="few">Włączone są %d blokady reklam. Zwykle wystarczy jedna; więcej może psuć strony.</item>

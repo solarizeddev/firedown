@@ -1235,7 +1235,8 @@
     <string name="shield_blocker_not_private">プライベートタブでは動作しません</string>
     <string name="shield_blocker_off_site">このサイトでオフ</string>
     <string name="shield_blocker_on">オン</string>
-    <string name="shield_blocker_on_site">このサイトでオン</string>
+    <string name="shield_blocker_on_site_switch">このサイトでオン · メニューでオフにできます</string>
+    <string name="shield_blocker_off_site_switch">このサイトでオフ · メニューでオンにできます</string>
     <plurals name="shield_blockers_many">
         <item quantity="other">%d 個の広告ブロッカーがオンです。通常は1つで十分で、複数あるとサイトが正しく動作しないことがあります。</item>
     </plurals>

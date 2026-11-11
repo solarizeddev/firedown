@@ -1254,7 +1254,8 @@
     <string name="shield_blocker_not_private">Ne fonctionne pas dans les onglets privés</string>
     <string name="shield_blocker_off_site">Désactivé sur ce site</string>
     <string name="shield_blocker_on">Activé</string>
-    <string name="shield_blocker_on_site">Activé sur ce site</string>
+    <string name="shield_blocker_on_site_switch">Activé sur ce site · à désactiver dans son menu</string>
+    <string name="shield_blocker_off_site_switch">Désactivé sur ce site · à activer dans son menu</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">%d bloqueur de publicités est activé.</item>
         <item quantity="many">%d bloqueurs de publicités sont activés. Un seul suffit en général ; plusieurs peuvent casser certains sites.</item>

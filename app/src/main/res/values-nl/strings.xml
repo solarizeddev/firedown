@@ -1235,7 +1235,8 @@
     <string name="shield_blocker_not_private">Werkt niet in privétabbladen</string>
     <string name="shield_blocker_off_site">Uit voor deze site</string>
     <string name="shield_blocker_on">Aan</string>
-    <string name="shield_blocker_on_site">Aan voor deze site</string>
+    <string name="shield_blocker_on_site_switch">Aan voor deze site · uitzetten in het menu ervan</string>
+    <string name="shield_blocker_off_site_switch">Uit voor deze site · aanzetten in het menu ervan</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">%d adblocker staat aan.</item>
         <item quantity="other">%d adblockers staan aan. Eén is meestal genoeg; meer kan sites breken.</item>

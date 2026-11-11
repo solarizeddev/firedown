@@ -1235,7 +1235,8 @@
     <string name="shield_blocker_not_private">Gizli sekmelerde çalışmaz</string>
     <string name="shield_blocker_off_site">Bu sitede kapalı</string>
     <string name="shield_blocker_on">Açık</string>
-    <string name="shield_blocker_on_site">Bu sitede açık</string>
+    <string name="shield_blocker_on_site_switch">Bu sitede açık · menüsünden kapatın</string>
+    <string name="shield_blocker_off_site_switch">Bu sitede kapalı · menüsünden açın</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">%d reklam engelleyici açık.</item>
         <item quantity="other">%d reklam engelleyici açık. Genellikle biri yeterlidir; fazlası siteleri bozabilir.</item>

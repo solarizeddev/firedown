@@ -1256,7 +1256,8 @@
     <string name="shield_blocker_not_private">Не працює в приватних вкладках</string>
     <string name="shield_blocker_off_site">Вимкнено для цього сайту</string>
     <string name="shield_blocker_on">Увімкнено</string>
-    <string name="shield_blocker_on_site">Увімкнено для цього сайту</string>
+    <string name="shield_blocker_on_site_switch">Увімкнено для цього сайту · вимикається в його меню</string>
+    <string name="shield_blocker_off_site_switch">Вимкнено для цього сайту · вмикається в його меню</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">Увімкнено %d блокувальник реклами. Зазвичай досить одного, а кілька можуть порушити роботу сайтів.</item>
         <item quantity="few">Увімкнено %d блокувальники реклами. Зазвичай досить одного, а кілька можуть порушити роботу сайтів.</item>

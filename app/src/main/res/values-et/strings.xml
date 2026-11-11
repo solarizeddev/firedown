@@ -1214,7 +1214,8 @@
     <string name="shield_blocker_not_private">Ei tööta privaatsetes vahelehtedes</string>
     <string name="shield_blocker_off_site">Sellel saidil väljas</string>
     <string name="shield_blocker_on">Sees</string>
-    <string name="shield_blocker_on_site">Sellel saidil sees</string>
+    <string name="shield_blocker_on_site_switch">Sellel saidil sees · lülita välja selle menüüs</string>
+    <string name="shield_blocker_off_site_switch">Sellel saidil väljas · lülita sisse selle menüüs</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">%d reklaamiblokeerija on sees.</item>
         <item quantity="other">%d reklaamiblokeerijat on sees. Tavaliselt piisab ühest, rohkem võib saite rikkuda.</item>

@@ -1248,7 +1248,8 @@
     <string name="shield_blocker_not_private">Läuft nicht in privaten Tabs</string>
     <string name="shield_blocker_off_site">Auf dieser Website deaktiviert</string>
     <string name="shield_blocker_on">Aktiv</string>
-    <string name="shield_blocker_on_site">Auf dieser Website aktiv</string>
+    <string name="shield_blocker_on_site_switch">Auf dieser Website aktiv · in seinem Menü ausschalten</string>
+    <string name="shield_blocker_off_site_switch">Auf dieser Website deaktiviert · in seinem Menü einschalten</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">%d Werbeblocker ist aktiv.</item>
         <item quantity="other">%d Werbeblocker sind aktiv. Einer reicht meist; mehrere können Websites beeinträchtigen.</item>

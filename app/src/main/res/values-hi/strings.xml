@@ -1225,7 +1225,8 @@
     <string name="shield_blocker_not_private">निजी टैब में नहीं चलता</string>
     <string name="shield_blocker_off_site">इस साइट के लिए बंद</string>
     <string name="shield_blocker_on">चालू</string>
-    <string name="shield_blocker_on_site">इस साइट के लिए चालू</string>
+    <string name="shield_blocker_on_site_switch">इस साइट के लिए चालू · इसके मेनू में बंद करें</string>
+    <string name="shield_blocker_off_site_switch">इस साइट के लिए बंद · इसके मेनू में चालू करें</string>
     <plurals name="shield_blockers_many">
         <item quantity="one">%d विज्ञापन ब्लॉकर चालू है।</item>
         <item quantity="other">%d विज्ञापन ब्लॉकर चालू हैं। आमतौर पर एक ही काफ़ी होता है; ज़्यादा होने पर साइटें खराब हो सकती हैं।</item>

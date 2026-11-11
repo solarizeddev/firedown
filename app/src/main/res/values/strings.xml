@@ -690,7 +690,8 @@
          on this page". -->
     <!-- The shield sheet's ad blocker rows (one per blocker add-on). -->
     <string name="shield_blocker_on">On</string>
-    <string name="shield_blocker_on_site">On for this site</string>
+    <string name="shield_blocker_on_site_switch">On for this site · turn off in its menu</string>
+    <string name="shield_blocker_off_site_switch">Off for this site · turn on in its menu</string>
     <string name="shield_blocker_off_site">Off for this site</string>
     <string name="shield_blocker_not_private">Doesn\'t run in private tabs</string>
     <string name="shield_blocker_allow">Allow</string>
