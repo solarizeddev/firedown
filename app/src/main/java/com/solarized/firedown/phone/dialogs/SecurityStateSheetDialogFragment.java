@@ -603,7 +603,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mProtectionChevron.setImageTintList(ColorStateList.valueOf(subtitle));
         // The address bar's protected and reduced shields (its secure-axis
         // variants are the connection row's business here).
-        mProtectionIcon.setImageResource(on ? R.drawable.ic_shield_24 : R.drawable.ic_shield_privacy_tip_24);
+        mProtectionIcon.setImageResource(on ? R.drawable.ic_shield_check_filled_24 : R.drawable.ic_shield_privacy_tip_24);
         mProtectionIcon.setImageTintList(ColorStateList.valueOf(title));
 
         GradientDrawable background = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, ground);
@@ -622,11 +622,21 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
             // The button is the action here; a chevron beside it would leave
             // the title too narrow on a small phone.
             mProtectionChevron.setVisibility(View.GONE);
+            setBannerEndPadding(R.dimen.protection_banner_end_button);
         } else {
             mProtectionButton.setOnClickListener(null);
             mProtectionButton.setVisibility(View.GONE);
             mProtectionChevron.setVisibility(View.VISIBLE);
+            // The chevron on the rows' chevron column (16dp in).
+            setBannerEndPadding(R.dimen.protection_banner_end_chevron);
         }
+    }
+
+    private void setBannerEndPadding(int dimen) {
+        mProtectionBanner.setPaddingRelative(mProtectionBanner.getPaddingStart(),
+                mProtectionBanner.getPaddingTop(),
+                getResources().getDimensionPixelSize(dimen),
+                mProtectionBanner.getPaddingBottom());
     }
 
     /** Whether a visible blocker row follows the banner (its bottom corners are then the inner ones). */

@@ -89,6 +89,11 @@
     <dimen name="sheet_group_corner_outer">16dp</dimen>
     <dimen name="sheet_group_corner_inner">4dp</dimen>
     <dimen name="sheet_row_gap">2dp</dimen>
+    <!-- The protection banner's end padding: 16dp puts its chevron on the
+         rows' chevron column; 12dp beside its Turn on button, as the rows'
+         buttons sit. -->
+    <dimen name="protection_banner_end_chevron">16dp</dimen>
+    <dimen name="protection_banner_end_button">12dp</dimen>
     <!-- The one-time DRM tip under the address bar's shield (popup_drm_shield_tip). -->
     <dimen name="drm_tip_width">260dp</dimen>
     <!-- An add-on's icon in a settings row or the Add-ons sheet: the row glyphs' size. -->
