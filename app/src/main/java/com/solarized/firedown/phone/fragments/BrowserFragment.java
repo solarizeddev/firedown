@@ -188,6 +188,12 @@ public class BrowserFragment extends BaseBrowserFragment
     /** The tab whose video went to the PiP window. */
     @Nullable
     private GeckoState mPipTab;
+    /**
+     * The orientation the activity asked for when it entered PiP (a video's
+     * landscape lock), released for the window and given back on expand;
+     * null when there is none to give back.
+     */
+    private Integer mPipOrientation;
 
     // ── Toolbar scroll policy (Fenix ToolbarBehaviorController equivalent) ───────────────────────
     //
@@ -1930,6 +1936,18 @@ public class BrowserFragment extends BaseBrowserFragment
      */
     public void onPictureInPictureEntered() {
         mPipTab = peekCurrentGeckoState();
+        // A landscape lock has no meaning in a floating window (Android 16
+        // ignores locks in multi-window), and kept, the window's config says
+        // landscape while the page's screen says portrait. Released here,
+        // given back on expand.
+        int requested = mActivity.getRequestedOrientation();
+        if (requested != ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                && requested != ActivityInfo.SCREEN_ORIENTATION_USER) {
+            mPipOrientation = requested;
+            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        } else {
+            mPipOrientation = null;
+        }
         if (mFullScreenHint != null) {
             mFullScreenHint.dismiss();
             mFullScreenHint = null;
@@ -1943,6 +1961,15 @@ public class BrowserFragment extends BaseBrowserFragment
      * exit the page made meanwhile is applied now.
      */
     public void onPictureInPictureLeft() {
+        // The lock comes back only if the page is still fullscreen and nothing
+        // set another orientation meanwhile (a fullscreen exit sets USER).
+        Integer pipOrientation = mPipOrientation;
+        mPipOrientation = null;
+        GeckoState shown = peekCurrentGeckoState();
+        if (pipOrientation != null && shown != null && shown.isFullScreen()
+                && mActivity.getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
+            mActivity.setRequestedOrientation(pipOrientation);
+        }
         if (!mFullScreenExitDeferred) {
             return;
         }
