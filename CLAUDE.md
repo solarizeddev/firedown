@@ -390,23 +390,28 @@ user runs (sketch: `sketches/shield-blockers.html`).
   the blockers (canvas boards I and J, 2026-11, reviewed with Fable, who
   also turned down putting the page's captures in this sheet: a second
   door to the Captured sheet, and blocked requests beside offered media
-  read as a sum). A tap opens the refused hosts. On: the logo's peach→coral gradient (`protection_banner_*`, a
-  deeper start in light theme so its edge shows on the light sheet) under
-  dark inks, 5.9:1 or more at every stop; no magenta end, which leans
-  toward the private-tab purple. Dark theme DIMS the same stops
-  (`#DFA080`→`#DE736C`, canvas board G1, 2026-11): the light-theme pastel
-  was the brightest thing on the dark sheet (~10:1). It stays a light fill
-  under dark ink, never a dark coral under white (rust, and the one
-  inverted card), and never a tonal wash (picked against: too unlike the
-  light theme's banner). Off or no blocker: the ROWS' OWN tone
-  (surfaceContainerLow, the incognito one in private tabs), theme inks and
-  the privacy-tip shield, so "off" is a plain row and colour alone says
-  it; it was surfaceContainerHighest, which in a private tab is the
-  brightest violet and read as a selected card (on-device). The ground is a GradientDrawable
+  read as a sum). A tap opens the refused hosts. **The banner is a plain row in every
+  state** (canvas board K, option B, 2026-11, reviewed with Fable): the
+  ROWS' OWN tone (surfaceContainerLow, the incognito one in private tabs)
+  and theme inks, a 16sp title like the rows'. While protection is on, the
+  logo's peach→coral (`protection_banner_*`, no magenta end, which leans
+  toward the private-tab purple) fills ONLY a 40dp disc behind the shield,
+  dark ink on it, its centre on the rows' icon column. It shipped for a
+  build as a full gradient CARD and was reported as too much: in dark
+  theme the brightest surface on the sheet, a promo slot on an ad
+  blocker's sheet, and the loudest colour spent on the state nearly every
+  page shows. History, for the next round: the card's dark-theme stops
+  were dimmed once (`#DFA080`→`#DE736C`, board G1; the disc keeps them), a
+  dark coral under white read rust, and a tonal wash was too unlike the
+  light theme. Don't bring the gradient back to the card. Off or no
+  blocker: no disc, the grey privacy-tip shield, so the colour alone says
+  it; the off ground was surfaceContainerHighest once, which in a private
+  tab is the brightest violet and read as a selected card (on-device).
+  The ground is a GradientDrawable
   on the card's child with the card's own corners (`hasCardAfterBanner`):
-  a card cannot clip a child to unequal corners before Android 11. A
-  24dp shield in the rows' icon column (the bar's own two shields, full
-  or privacy-tip) puts the banner's text on the rows' title column. Rules
+  a card cannot clip a child to unequal corners before Android 11. The
+  shield (the bar's own two, full or privacy-tip) sits centred on the rows'
+  icon column, so the banner's text starts on the rows' title column. Rules
   that came out of the review: **the banner has no Turn off button**
   (Firedown cannot flip a blocker's per-site switch — that is in its
   popup, the row below — and a button that only opens the popup, or turns

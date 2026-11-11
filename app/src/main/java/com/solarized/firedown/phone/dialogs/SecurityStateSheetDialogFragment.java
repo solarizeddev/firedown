@@ -91,6 +91,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
     private MaterialButton mProtectionButton;
     private ImageView mProtectionChevron;
     private ImageView mProtectionIcon;
+    private View mProtectionIconDisc;
     /** The page's blocked-request count, as last reported (the banner's subtitle). */
     private int mBlockedCount;
     private AppCompatImageView mHostImage;
@@ -153,6 +154,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mProtectionButton = mView.findViewById(R.id.protection_button);
         mProtectionChevron = mView.findViewById(R.id.protection_chevron);
         mProtectionIcon = mView.findViewById(R.id.protection_icon);
+        mProtectionIconDisc = mView.findViewById(R.id.protection_icon_disc);
 
         // The "N blocked on this page" summary row drills into the page's
         // refused hosts. The nav action popUpTo dialog_security_info
@@ -532,10 +534,9 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
      * AddonManager.shieldState the address bar's shield reads), the page's
      * count, and Turn on when no blocker runs here, the one switch the app
      * can flip itself (a blocker's per-site switch is in its own popup,
-     * the row below). On: the logo's peach-to-coral under dark inks. Off or
-     * no blocker: a plain tonal ground and the theme's inks, so the colour
-     * alone says protection is off before the words do. Called on every
-     * count and every add-on change.
+     * the row below). A plain row in every state; on, the logo's
+     * peach-to-coral fills the disc behind the shield. Called on every count
+     * and every add-on change.
      */
     private void renderBanner() {
         if (mProtectionBanner == null || mGeckoState == null || !isAdded()) {
@@ -565,37 +566,41 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
             mTotalCountTextView.setText(R.string.shield_no_blocker_summary);
         }
 
-        int title;
-        int subtitle;
-        int[] ground;
-        if (on) {
-            title = ContextCompat.getColor(requireContext(), R.color.protection_banner_ink);
-            subtitle = ContextCompat.getColor(requireContext(), R.color.protection_banner_ink_variant);
-            ground = new int[]{
-                    ContextCompat.getColor(requireContext(), R.color.protection_banner_start),
-                    ContextCompat.getColor(requireContext(), R.color.protection_banner_mid),
-                    ContextCompat.getColor(requireContext(), R.color.protection_banner_end)};
-        } else {
-            title = MaterialColors.getColor(mProtectionBanner, com.google.android.material.R.attr.colorOnSurface);
-            subtitle = MaterialColors.getColor(mProtectionBanner,
-                    com.google.android.material.R.attr.colorOnSurfaceVariant);
-            // Off is a plain row: the rows' own tone. A lighter card reads as
-            // selected here (the private sheet's brightest violet did).
-            int tone = mIsIncognito
-                    ? IncognitoColors.getSurfaceContainerLow(mProtectionBanner.getContext(), true)
-                    : MaterialColors.getColor(mProtectionBanner,
-                    com.google.android.material.R.attr.colorSurfaceContainerLow);
-            ground = new int[]{tone, tone};
-        }
+        // A row like the ones under it in both states: the rows' own tone
+        // (the incognito one in private tabs) and the theme's inks. On, the
+        // logo's peach to coral fills the disc behind the shield and nothing
+        // else: the whole card in those colours was the loudest thing on the
+        // sheet, for the state nearly every page shows. Off: a grey shield,
+        // no disc, so the colour alone says protection is off.
+        int title = MaterialColors.getColor(mProtectionBanner, com.google.android.material.R.attr.colorOnSurface);
+        int subtitle = MaterialColors.getColor(mProtectionBanner,
+                com.google.android.material.R.attr.colorOnSurfaceVariant);
+        int tone = mIsIncognito
+                ? IncognitoColors.getSurfaceContainerLow(mProtectionBanner.getContext(), true)
+                : MaterialColors.getColor(mProtectionBanner,
+                com.google.android.material.R.attr.colorSurfaceContainerLow);
         mProtectionTitle.setTextColor(title);
         mTotalCountTextView.setTextColor(subtitle);
         mProtectionChevron.setImageTintList(ColorStateList.valueOf(subtitle));
         // The address bar's protected and reduced shields (its secure-axis
         // variants are the connection row's business here).
         mProtectionIcon.setImageResource(on ? R.drawable.ic_shield_check_filled_24 : R.drawable.ic_shield_privacy_tip_24);
-        mProtectionIcon.setImageTintList(ColorStateList.valueOf(on ? title : subtitle));
+        if (on) {
+            GradientDrawable disc = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{
+                    ContextCompat.getColor(requireContext(), R.color.protection_banner_start),
+                    ContextCompat.getColor(requireContext(), R.color.protection_banner_mid),
+                    ContextCompat.getColor(requireContext(), R.color.protection_banner_end)});
+            disc.setShape(GradientDrawable.OVAL);
+            mProtectionIconDisc.setBackground(disc);
+            mProtectionIcon.setImageTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(requireContext(), R.color.protection_banner_ink)));
+        } else {
+            mProtectionIconDisc.setBackground(null);
+            mProtectionIcon.setImageTintList(ColorStateList.valueOf(subtitle));
+        }
 
-        GradientDrawable background = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, ground);
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(tone);
         float outer = getResources().getDimension(R.dimen.sheet_group_corner_outer);
         float bottom = hasCardAfterBanner() ? getResources().getDimension(R.dimen.sheet_group_corner_inner) : outer;
         background.setCornerRadii(new float[]{outer, outer, outer, outer, bottom, bottom, bottom, bottom});
@@ -702,6 +707,7 @@ public class SecurityStateSheetDialogFragment extends BaseBottomSheetDialogFragm
         mProtectionButton = null;
         mProtectionChevron = null;
         mProtectionIcon = null;
+        mProtectionIconDisc = null;
         mView = null;
     }
 }
