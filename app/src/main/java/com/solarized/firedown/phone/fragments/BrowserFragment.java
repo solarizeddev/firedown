@@ -45,6 +45,7 @@ import androidx.navigation.NavDestination;
 
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.snackbar.Snackbar;
+import com.solarized.firedown.phone.BrowserMainActivity;
 import com.solarized.firedown.phone.PipPolicy;
 
 import com.solarized.firedown.BuildConfig;
@@ -453,6 +454,8 @@ public class BrowserFragment extends BaseBrowserFragment
         // dot so it never outlives the row, and bring the page on screen in
         // line with the switch.
         refreshShield();
+        // A PiP exit this fragment missed: the page must not keep the layout.
+        applyPipMode(inPipWindow());
         // Back from a PiP window (or any trip away) on a fullscreen page:
         // the system may have shown its bars meanwhile.
         if (mUiState == UiState.FULL_SCREEN) {
@@ -1793,6 +1796,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // itself refuses to enable while the keyboard is up.
         mPageLoading = false;
         applyToolbarScrollPolicy();
+        resendPipMode(geckoState);
         // Spinner bookkeeping before the autocomplete gate — same stuck-
         // mRefreshing reasoning as updateProgress.
         mSwipeRefreshLayout.setProgressRefreshing(100);
@@ -1820,6 +1824,7 @@ public class BrowserFragment extends BaseBrowserFragment
         // URL after the user had already typed a new one (the value read back was
         // whatever the last NavigationDelegate write left, not this event's).
         mGeckoToolbar.onLocationChange(url);
+        resendPipMode(geckoState);
         dismissDrmTip();
         refreshShield();
         // A navigation while find-in-page is active dismisses the search bar.
@@ -1992,6 +1997,16 @@ public class BrowserFragment extends BaseBrowserFragment
      * phone screen. Only one session holds the flag; it is cleared from the
      * one that had it before any other gets it.
      */
+    /**
+     * In the PiP window, as the activity knows it: a recreate inside the
+     * window can come up before the framework reports the mode.
+     */
+    private boolean inPipWindow() {
+        return mActivity instanceof BrowserMainActivity
+                ? ((BrowserMainActivity) mActivity).inPipWindow()
+                : mActivity.isInPictureInPictureMode();
+    }
+
     private void applyPipMode(boolean inPip) {
         GeckoSession target = inPip && mGeckoView != null ? mGeckoView.getSession() : null;
         if (target == mPipModeSession) {
@@ -2001,26 +2016,34 @@ public class BrowserFragment extends BaseBrowserFragment
             notifyPipMode(mPipModeSession, false);
             mPipModeSession = null;
         }
-        if (target != null && notifyPipMode(target, true)) {
+        if (target != null && target.isOpen()) {
+            notifyPipMode(target, true);
             mPipModeSession = target;
         }
     }
 
-    private static boolean notifyPipMode(GeckoSession session, boolean inPip) {
+    /**
+     * Gecko keeps the flag in the tab's content process and never sends it
+     * again: a page that loads after the call (a session opened in the
+     * window, a navigation to another site's process) starts without it.
+     * Sent again when the page in the window commits or finishes loading.
+     */
+    private void resendPipMode(GeckoState geckoState) {
+        GeckoSession session = geckoState.getGeckoSession();
+        if (session != null && session == mPipModeSession
+                && mGeckoView != null && mGeckoView.getSession() == session) {
+            notifyPipMode(session, true);
+        }
+    }
+
+    private static void notifyPipMode(GeckoSession session, boolean inPip) {
         if (!session.isOpen()) {
-            return false;
+            return;
         }
         if (BuildConfig.DEBUG) {
             Log.d("MediaTrace", "compositor pip mode " + inPip);
         }
-        try {
-            session.getCompositorController().onPipModeChanged(inPip);
-            return true;
-        } catch (RuntimeException e) {
-            // No compositor attached yet: the window keeps the page as laid out.
-            Log.w(TAG, "onPipModeChanged", e);
-            return false;
-        }
+        session.getCompositorController().onPipModeChanged(inPip);
     }
 
     /** The chrome back from page fullscreen: bars, layout, system bars, rotation. */
@@ -2039,6 +2062,9 @@ public class BrowserFragment extends BaseBrowserFragment
      * fullscreen video with no way to tell it is the browser.
      */
     public void onPictureInPictureDismissed() {
+        // A dismissal the system reports with no mode change (a drag off the
+        // screen on some ROMs) must still clear the page's PiP layout.
+        applyPipMode(false);
         GeckoState current = peekCurrentGeckoState();
         // The tab that went to the window, which a page's new window may have
         // replaced on screen meanwhile.
@@ -3481,7 +3507,7 @@ public class BrowserFragment extends BaseBrowserFragment
         newSession.setActive(true);
         // A session attached while in a PiP window (a recreate in the window,
         // another tab put on screen) is the one in the window now.
-        applyPipMode(mActivity.isInPictureInPictureMode());
+        applyPipMode(inPipWindow());
         // Every attach, the plain tab switch included (an open session skips
         // applyOpenUriUi): the window's cutout mode is the tab's own.
         applyViewportFit(geckoState.getViewportFit());

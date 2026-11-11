@@ -604,23 +604,35 @@ public class BrowserPipDeviceTest {
         assertTrue("the video stopped in the PiP window. " + report, mMedia.isPlaying(tab.getEntityId()));
         // Gecko's PiP layout (the page told it is in the window) lays the
         // video over the whole window, whatever size the page gave it.
+        assertTrue("the page left fullscreen in the PiP window. " + report, second.contains(" fs=true"));
+        int[] video = probeSize(second, "vr");
+        int[] viewport = probeSize(second, "vp");
+        assertTrue("no video or viewport size in the title. " + report, video != null && viewport != null);
         assertTrue("the video does not fill the PiP window. " + report,
-                probeSize(second, "vr").equals(probeSize(second, "vp")));
+                Math.abs(video[0] - viewport[0]) <= 1 && Math.abs(video[1] - viewport[1]) <= 1);
     }
 
-    /** A "WxH" value from the probe page's title, "" when absent. */
-    private static String probeSize(String title, String key) {
+    /** A "WxH" value from the probe page's title, null when absent. */
+    private static int[] probeSize(String title, String key) {
         if (title == null) {
-            return "";
+            return null;
         }
         String marker = " " + key + "=";
         int at = title.indexOf(marker);
         if (at < 0) {
-            return "";
+            return null;
         }
         int start = at + marker.length();
         int end = title.indexOf(' ', start);
-        return title.substring(start, end < 0 ? title.length() : end);
+        String[] parts = title.substring(start, end < 0 ? title.length() : end).split("x");
+        if (parts.length != 2) {
+            return null;
+        }
+        try {
+            return new int[] {Integer.parseInt(parts[0]), Integer.parseInt(parts[1])};
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private String currentTitle() {
@@ -1126,14 +1138,18 @@ public class BrowserPipDeviceTest {
                     + "<meta name=\"viewport\" content=\"width=device-width\">"
                     + "<title>loading</title>"
                     + "<style>html,body{margin:0;height:100%;background:#000}"
-                    + "video{width:100%;height:100%}</style></head>"
-                    + "<body><video id=\"v\" src=\"/tone.wav\" loop playsinline></video>"
+                    + "#w,video{width:100%;height:100%}</style></head>"
+                    + "<body><div id=\"w\"><video id=\"v\" src=\"/tone.wav\" loop playsinline></video></div>"
                     + "<script>"
                     + "const v = document.getElementById('v');"
                     + "const q = new URLSearchParams(location.search);"
                     + "v.volume = 0.02;"
                     + "document.addEventListener('click', function () {"
-                    + "  if (!q.has('inline')) { v.requestFullscreen().catch(function (e) {"
+                    // The probe puts the player's box in fullscreen, not the
+                    // video: the video's size is then the page's, not the
+                    // fullscreen rule's.
+                    + "  const f = q.has('probe') ? document.getElementById('w') : v;"
+                    + "  if (!q.has('inline')) { f.requestFullscreen().catch(function (e) {"
                     + "    document.title = 'fullscreen refused: ' + e; }); }"
                     + "  v.play().catch(function (e) { document.title = 'play refused: ' + e; });"
                     + "});"
@@ -1159,8 +1175,8 @@ public class BrowserPipDeviceTest {
                     + "document.addEventListener('fullscreenchange', function () {"
                     + "  if (!q.has('probe') || !document.fullscreenElement) return;"
                     + "  probing = true;"
-                    // A player sizes its video in pixels for the fullscreen it
-                    // entered and does not follow the window (mobile YouTube).
+                    // A player that sizes its video in pixels for the
+                    // fullscreen it entered and does not follow the window.
                     + "  v.style.width = innerWidth + 'px'; v.style.height = innerHeight + 'px';"
                     + "  if (!q.has('nolock')) { lock(); setTimeout(lock, 800); }"
                     + "});"

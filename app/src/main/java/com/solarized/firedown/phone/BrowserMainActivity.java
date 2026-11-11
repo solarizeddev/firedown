@@ -351,6 +351,14 @@ public class BrowserMainActivity extends BaseActivity {
         }
     }
 
+    /**
+     * In the PiP window: the framework's answer, or this activity's own when
+     * it was recreated inside the window and the framework has not said so yet.
+     */
+    public boolean inPipWindow() {
+        return isInPictureInPictureMode() || mPip.inPipStay();
+    }
+
     /** The user threw the PiP window away: the video ends. */
     private void pipDismissed() {
         trace("pip dismissed");
