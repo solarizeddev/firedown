@@ -1,10 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Material Symbols Outlined "expand_more", weight 300, 24px: the set every
+     glyph on the shield sheet uses (ic_shield_24). The layout or code tints it. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="960"
     android:viewportHeight="960"
     android:tint="?attr/colorOnSurfaceVariant">
-  <path
-      android:fillColor="@android:color/white"
-      android:pathData="M296,345L240,401L480,641L720,401L664,345L480,529L296,345Z"/>
+    <group android:translateY="960">
+        <path
+            android:fillColor="@android:color/white"
+            android:pathData="M480-358.46 253.85-584.62 296-626.77l184 184 184-184 42.15 42.15L480-358.46Z" />
+    </group>
 </vector>

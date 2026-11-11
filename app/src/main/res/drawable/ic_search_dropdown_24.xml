@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Home address-bar button glyph: the stock Material magnifier (ic_search_24)
-  with the stock chevron (keyboard_arrow_down_24) to its right, composed as a
+  with a caret (search_caret_24) to its right, composed as a
   layer-list so we reuse the real, properly-drawn Material assets instead of a
   hand-rolled combined path. The button opens the search-engine picker, so the
   caret reads as "selector". The magnifier is inset (android:left=12dp) so in the
@@ -20,6 +20,6 @@
     <item
         android:width="14dp"
         android:height="14dp"
-        android:drawable="@drawable/keyboard_arrow_down_24"
+        android:drawable="@drawable/search_caret_24"
         android:gravity="end|center_vertical" />
 </layer-list>

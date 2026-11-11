@@ -407,6 +407,11 @@ user runs (sketch: `sketches/shield-blockers.html`).
   `no_encryption_light_24`, `key_light_24`, `tune_light_24`,
   `delete_light_24`): a filled trash and a 2dp padlock made the bottom
   rows heavier than the lead row. Don't mix another icon set into it.
+  The app's chevrons are that set too, everywhere (`ic_chevron_right_24`,
+  `ic_chevron_back_24`, `keyboard_arrow_down/up_24`, `expand_more_24`):
+  the Material Icons chevron was the heaviest stroke on the sheet. One
+  exception, `search_caret_24`, the 14dp caret on the home search button,
+  stays at weight 400 because weight 300 thins to under a pixel there.
   Three louder versions shipped and were taken back on-device: a full
   peach→coral gradient CARD (in dark theme the brightest surface on the
   sheet, a promo slot on an ad blocker's sheet, the loudest colour spent on

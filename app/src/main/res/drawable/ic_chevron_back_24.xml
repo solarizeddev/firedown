@@ -1,18 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Thin left chevron for the browser popup Back button (matches the design
-     render's stroked ‹ rather than the chunky filled arrow ic_arrow_back_24).
-     strokeColor is a placeholder — the quick-row button's iconTint recolors it
-     (incl. the disabled-state alpha). autoMirrored so it flips in RTL. -->
+<!-- Material Symbols Outlined "chevron_left", weight 300, 24px: the set every
+     glyph on the shield sheet uses (ic_shield_24). The layout or code tints it. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24"
+    android:viewportWidth="960"
+    android:viewportHeight="960"
     android:autoMirrored="true">
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M15,6 L9,12 L15,18" />
+    <group android:translateY="960">
+        <path
+            android:fillColor="@android:color/white"
+            android:pathData="M560-253.85 333.85-480 560-706.15 602.15-664l-184 184 184 184L560-253.85Z" />
+    </group>
 </vector>
