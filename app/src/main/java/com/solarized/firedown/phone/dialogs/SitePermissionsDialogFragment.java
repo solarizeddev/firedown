@@ -191,7 +191,14 @@ public class SitePermissionsDialogFragment extends BaseBottomSheetDialogFragment
         return R.drawable.cookie_24;
     }
 
-    /** Left with Back or a tap outside: return to the shield sheet ({@link ShieldReturn}). */
+    @Override
+    public void onStart() {
+        super.onStart();
+        mExit.watch(getDialog());
+    }
+
+    /** Left with Back: return to the shield sheet ({@link ShieldReturn}). */
+    private final ShieldReturn.Exit mExit = new ShieldReturn.Exit();
     private boolean mCancelled;
 
     @Override
@@ -208,7 +215,7 @@ public class SitePermissionsDialogFragment extends BaseBottomSheetDialogFragment
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
-        ShieldReturn.onDismiss(this, mCancelled);
+        ShieldReturn.onDismiss(this, mExit.leftWithBack(mCancelled));
         if (!mChanged || mHost == null || mActivity == null) {
             return;
         }

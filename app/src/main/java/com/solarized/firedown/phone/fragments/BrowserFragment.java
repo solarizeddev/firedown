@@ -53,6 +53,7 @@ import com.solarized.firedown.phone.PipPolicy;
 
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.UpdateReadyLiveData;
+import com.solarized.firedown.addons.AddonManager;
 import com.solarized.firedown.addons.AddonPolicy;
 import com.solarized.firedown.App;
 import com.solarized.firedown.IntentActions;
@@ -1342,7 +1343,7 @@ public class BrowserFragment extends BaseBrowserFragment
         getParentFragmentManager().setFragmentResultListener(
                 ShieldReturn.RESULT_KEY,
                 getViewLifecycleOwner(),
-                (requestKey, result) -> reopenShieldSheet());
+                (requestKey, result) -> onShieldReturn(result));
 
         // The DRM sheet and the security sheet's "DRM is off" row both
         // answer here, so turning DRM on has one implementation.
@@ -1360,6 +1361,38 @@ public class BrowserFragment extends BaseBrowserFragment
      * when the browser is not yet the current destination this waits for it
      * to become so (and gives up if anything else comes on screen first).
      */
+    private void onShieldReturn(@NonNull Bundle result) {
+        String addonId = result.getString(ShieldReturn.EXTRA_ADDON_ID);
+        if (addonId != null && blockerStateChanged(addonId,
+                result.getInt(ShieldReturn.EXTRA_BLOCKER_STATE, -1))) {
+            // The user turned the blocker on or off for the site in its
+            // popup: the page is what they want now, not the sheet.
+            return;
+        }
+        reopenShieldSheet();
+    }
+
+    /**
+     * Whether a blocker's state for the site differs from the one its shield
+     * row showed. uBlock retitles its button on an idle callback (up to
+     * ~0.7 s), so a Back pressed at once after the switch can still read the
+     * old state and return to the sheet, which then shows the new one.
+     */
+    private boolean blockerStateChanged(@NonNull String addonId, int before) {
+        GeckoState state = peekCurrentGeckoState();
+        if (state == null || before < 0) {
+            return false;
+        }
+        for (AddonManager.BlockerItem item : mAddonManager.blockersFor(
+                state.getGeckoSession(), mIsIncognitoThemed, state.getEntityUri())) {
+            if (item.addon.id.equals(addonId)) {
+                return item.state != before;
+            }
+        }
+        // No longer a running blocker (turned off everywhere, removed).
+        return true;
+    }
+
     private void reopenShieldSheet() {
         if (mNavController == null || getView() == null) {
             return;

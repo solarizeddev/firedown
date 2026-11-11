@@ -61,27 +61,27 @@ public class ClearBrowsingDialogFragment extends BaseDialogFragment {
                 .setTitle(R.string.settings_clear_browsing)
                 .setMessage(message)
                 .setPositiveButton(R.string.delete, (dialog, which) -> clearBrowsingData())
-                .setNegativeButton(R.string.cancel, (dialog, which) -> mCancelled = true)
+                .setNegativeButton(R.string.cancel, (dialog, which) -> mExit.markBack())
                 .create();
     }
 
 
     /**
-     * Left with Cancel, Back or a tap outside: return to the shield sheet
-     * ({@link ShieldReturn}). Delete returns nowhere.
+     * Left with Cancel or Back: return to the shield sheet
+     * ({@link ShieldReturn}). A tap outside and Delete return nowhere.
      */
-    private boolean mCancelled;
+    private final ShieldReturn.Exit mExit = new ShieldReturn.Exit();
 
     @Override
-    public void onCancel(@NonNull DialogInterface dialog) {
-        super.onCancel(dialog);
-        mCancelled = true;
+    public void onStart() {
+        super.onStart();
+        mExit.watch(getDialog());
     }
 
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
-        ShieldReturn.onDismiss(this, mCancelled);
+        ShieldReturn.onDismiss(this, mExit.leftWithBack(false));
     }
 
     private void clearBrowsingData() {

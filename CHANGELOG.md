@@ -1,7 +1,7 @@
 ## [1.2.10] - 2026-11-11
 
 - Picture-in-picture: the website's own controls no longer cover the video
-- A cleaner shield sheet, led by the site's name
+- A cleaner shield sheet, led by the site's name; a tap outside its pages closes them all
 - Lighter, more modern arrows and icons across the app
 
 ## [1.2.9] - 2026-11-11

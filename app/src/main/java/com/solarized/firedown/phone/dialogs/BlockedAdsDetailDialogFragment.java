@@ -137,7 +137,14 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
                 R.plurals.blocked_ads_summary, total, total));
     }
 
-    /** Left with Back or a tap outside: return to the shield sheet ({@link ShieldReturn}). */
+    @Override
+    public void onStart() {
+        super.onStart();
+        mExit.watch(getDialog());
+    }
+
+    /** Left with Back: return to the shield sheet ({@link ShieldReturn}). */
+    private final ShieldReturn.Exit mExit = new ShieldReturn.Exit();
     private boolean mCancelled;
 
     @Override
@@ -149,6 +156,6 @@ public class BlockedAdsDetailDialogFragment extends BaseBottomSheetDialogFragmen
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
-        ShieldReturn.onDismiss(this, mCancelled);
+        ShieldReturn.onDismiss(this, mExit.leftWithBack(mCancelled));
     }
 }

@@ -359,15 +359,25 @@ user runs (sketch: `sketches/shield-blockers.html`).
   (`ShieldReturn`, 2026-11, reviewed with Fable): the blocked hosts, the
   certificate, Site permissions, Clear browsing data and a blocker's popup
   replace the sheet (it pops itself: two stacked sheets would show at
-  once), and when the user leaves one with Back, a tap outside or Cancel,
+  once), and when the user leaves one with Back (or Clear data's Cancel),
   its `onDismiss` sends `ShieldReturn.RESULT_KEY` and
   `BrowserFragment.reopenShieldSheet` opens the sheet again once the page
   is off the back stack (a dialog's dismiss runs before its navigator pops
-  it, so it waits for the browser destination). A page left by its own
-  action (Reset all, Delete, the add-on closing its popup) returns nowhere;
-  a popup counts as the sheet's only when the same add-on's opens within
-  3 s of the row tap (`AddonManager.markShieldClick`). Chrome's and
-  Firefox's site panels return from a sub-page the same way (also an https
+  it, so it waits for the browser destination). **A tap outside or a swipe
+  down closes everything** (`ShieldReturn.Exit`, 2026-11, Fable's review
+  of the first cut): those mean "get me out", and Chrome's and Firefox's
+  site panels go back on Back but close on a tap outside. A sheet can't
+  catch Back itself (with predictive back Material hides it and cancels),
+  so `Exit` records the opposite: a touch on the sheet's `touch_outside`
+  view or a `STATE_DRAGGING`, and a cancel with neither is Back; a centred
+  dialog (Clear data) takes Back on its own dispatcher. A page left by its
+  own action (Reset all, Delete, the add-on closing its popup) returns
+  nowhere; a popup counts as the sheet's only when the same add-on's opens
+  within 3 s of the row tap (`AddonManager.markShieldClick`), and **a
+  blocker popup whose switch for the site changed returns to the page,
+  not the sheet** (`BrowserFragment.onShieldReturn` compares the blocker's
+  state with the one its row showed; uBlock retitles on an idle callback,
+  so a Back within ~0.7 s of the switch still returns). (On the order: an https
   page whose certificate arrives not secure:
   the certificate observer reorders; one not yet arrived keeps protection
   first). While the banner shows Turn on its chevron hides and the title

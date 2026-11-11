@@ -80,9 +80,14 @@ public class AddonPopupSheetDialogFragment extends BaseBottomSheetDialogFragment
             BottomSheetBehavior<View> behavior = BottomSheetBehavior.from((View) mView.getParent());
             behavior.setDraggable(false);
         }
+        mExit.watch(getDialog());
     }
 
-    /** Left with Back or a tap outside: never the add-on closing its own popup (a pop, not a cancel). */
+    /**
+     * Left with Back: never a tap outside, never the add-on closing its own
+     * popup (a pop, not a cancel).
+     */
+    private final ShieldReturn.Exit mExit = new ShieldReturn.Exit();
     private boolean mCancelled;
 
     @Override
@@ -105,7 +110,12 @@ public class AddonPopupSheetDialogFragment extends BaseBottomSheetDialogFragment
             mAddonManager.closePopup(mPopup);
             // Return to the sheet it came from, once this one is off the
             // back stack (closePopup pops it, through the observer above).
-            ShieldReturn.onDismiss(this, mCancelled && mPopup.fromShield);
+            // The browser skips it when the blocker's switch for the site
+            // changed meanwhile: the user wants the page then, not the sheet.
+            Bundle result = new Bundle();
+            result.putString(ShieldReturn.EXTRA_ADDON_ID, mPopup.addonId);
+            result.putInt(ShieldReturn.EXTRA_BLOCKER_STATE, mPopup.shieldBlockerState);
+            ShieldReturn.onDismiss(this, mPopup.fromShield && mExit.leftWithBack(mCancelled), result);
         }
     }
 
