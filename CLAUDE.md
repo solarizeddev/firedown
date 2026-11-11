@@ -372,7 +372,7 @@ user runs (sketch: `sketches/shield-blockers.html`).
   deeper start in light theme so its edge shows on the light sheet) under
   dark inks, 5.9:1 or more at every stop; no magenta end, which leans
   toward the private-tab purple. Dark theme DIMS the same stops
-  (`#D9A083`→`#DE736C`, canvas board G1, 2026-11): the light-theme pastel
+  (`#DFA080`→`#DE736C`, canvas board G1, 2026-11): the light-theme pastel
   was the brightest thing on the dark sheet (~10:1). It stays a light fill
   under dark ink, never a dark coral under white (rust, and the one
   inverted card), and never a tonal wash (picked against: too unlike the
