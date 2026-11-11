@@ -156,6 +156,7 @@ public class BrowserPipDeviceTest {
     private GeckoState mPrivateTab;
     private GeckoMediaController mMedia;
     private final Map<String, Object> mSavedLock = new HashMap<>();
+    private boolean mLockSaved;
     private PageServer mServer;
     private DownloadEngineStressTest.ByteServer mByteServer;
     private final List<String> mDownloadUrls = new ArrayList<>();
@@ -187,6 +188,7 @@ public class BrowserPipDeviceTest {
                 mSavedLock.put(key, all.get(key));
             }
         }
+        mLockSaved = true;
         mPrefs.edit().putBoolean(Preferences.SETTINGS_APP_LOCK, false).commit();
 
         finishStrayActivities();
@@ -197,6 +199,12 @@ public class BrowserPipDeviceTest {
 
     @After
     public void tearDown() {
+        // A setUp that stopped before saving the app lock (the phone locked,
+        // no PiP) changed nothing; its own failure is the one to report, and
+        // restoreLock would remove the lock settings it never saved.
+        if (!mLockSaved) {
+            return;
+        }
         try {
             if (mPrivateTab != null) {
                 GeckoState privateTab = mPrivateTab;
@@ -209,7 +217,7 @@ public class BrowserPipDeviceTest {
                 });
             }
             GeckoState tab = currentTab();
-            if (tab != null && tab.getEntityUri() != null
+            if (tab != null && mServer != null && tab.getEntityUri() != null
                     && tab.getEntityUri().startsWith(mServer.url(""))) {
                 onMain(() -> {
                     mMedia.pause(tab.getEntityId());
