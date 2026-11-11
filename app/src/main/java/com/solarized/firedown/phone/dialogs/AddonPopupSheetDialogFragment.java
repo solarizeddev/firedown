@@ -85,14 +85,13 @@ public class AddonPopupSheetDialogFragment extends BaseBottomSheetDialogFragment
     /** Fragment result: the user left a popup opened from the shield sheet. */
     public static final String RESULT_BACK_TO_SHIELD = "addon_popup_back_to_shield";
 
+    /** Left with Back or a tap outside: never the add-on closing its own popup (a pop, not a cancel). */
+    private boolean mCancelled;
+
     @Override
     public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
-        // Back or a tap outside, never the add-on closing its own popup
-        // (that is a pop, not a cancel): return to the sheet it came from.
-        if (mPopup != null && mPopup.fromShield) {
-            getParentFragmentManager().setFragmentResult(RESULT_BACK_TO_SHIELD, new Bundle());
-        }
+        mCancelled = true;
     }
 
     @Override
@@ -107,6 +106,11 @@ public class AddonPopupSheetDialogFragment extends BaseBottomSheetDialogFragment
                 mGeckoView.releaseSession();
             }
             mAddonManager.closePopup(mPopup);
+            // Return to the sheet it came from, once this one is off the
+            // back stack (closePopup pops it, through the observer above).
+            if (mCancelled && mPopup.fromShield && isAdded()) {
+                getParentFragmentManager().setFragmentResult(RESULT_BACK_TO_SHIELD, new Bundle());
+            }
         }
     }
 
