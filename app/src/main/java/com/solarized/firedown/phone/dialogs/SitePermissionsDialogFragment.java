@@ -40,6 +40,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public class SitePermissionsDialogFragment extends BaseBottomSheetDialogFragment {
 
+    private static final String STATE_CHANGED = "site_permissions_changed";
+
     private String mUrl;
     private String mHost;
     private final List<SitePermissions.Row<ContentPermission>> mRows = new ArrayList<>();
@@ -67,6 +69,13 @@ public class SitePermissionsDialogFragment extends BaseBottomSheetDialogFragment
         Bundle args = getArguments();
         mUrl = args != null ? args.getString(Keys.ITEM_ID) : null;
         mHost = SitePermissions.hostOf(mUrl);
+        mChanged = savedInstanceState != null && savedInstanceState.getBoolean(STATE_CHANGED);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(STATE_CHANGED, mChanged);
     }
 
     @Nullable
@@ -83,8 +92,11 @@ public class SitePermissionsDialogFragment extends BaseBottomSheetDialogFragment
             for (SitePermissions.Row<ContentPermission> row : mRows) {
                 all.addAll(row.handles);
             }
-            reset(all);
-            dismiss();
+            reset(all, () -> {
+                if (isAdded()) {
+                    dismiss();
+                }
+            });
         });
         return mView;
     }
@@ -96,6 +108,11 @@ public class SitePermissionsDialogFragment extends BaseBottomSheetDialogFragment
             dismiss();
             return;
         }
+        load();
+    }
+
+    /** The answers as Gecko holds them now; the list is redrawn from them. */
+    private void load() {
         mGeckoRuntimeHelper.loadSitePermissions(mUrl, mIsIncognito, permissions -> {
             if (mView == null || !isAdded()) {
                 return;
@@ -124,21 +141,31 @@ public class SitePermissionsDialogFragment extends BaseBottomSheetDialogFragment
             View reset = card.findViewById(R.id.site_permission_reset);
             reset.setContentDescription(getString(R.string.site_permission_reset_description, title));
             reset.setOnClickListener(v -> {
-                reset(row.handles);
-                mRows.remove(row);
-                render();
+                v.setEnabled(false);
+                reset(row.handles, this::load);
             });
             group.addView(card);
         }
         SheetGroups.applyCorners(group);
     }
 
-    private void reset(@NonNull List<ContentPermission> perms) {
+    /**
+     * Forgets these answers, then {@code then} once Gecko is done. The list
+     * is read again afterwards rather than trimmed here: what Gecko holds
+     * is what the list shows (GeckoRuntimeHelper.resetSitePermissions may
+     * have to clear the site and write the other answers back).
+     */
+    private void reset(@NonNull List<ContentPermission> perms, @NonNull Runnable then) {
         if (perms.isEmpty()) {
+            then.run();
             return;
         }
-        mGeckoRuntimeHelper.resetSitePermissions(perms);
         mChanged = true;
+        mGeckoRuntimeHelper.resetSitePermissions(mUrl, mIsIncognito, perms, () -> {
+            if (mView != null && isAdded()) {
+                then.run();
+            }
+        });
     }
 
     @NonNull

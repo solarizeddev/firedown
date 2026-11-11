@@ -18,8 +18,11 @@ import java.util.Map;
  * returned, a PROMPT row included (it stores whatever the delegate answers),
  * DRM rows from pages that asked while DRM was off, autoplay. None of those
  * is a decision the user made here, and listing them would put rows on
- * every site, so only an ALLOW or a DENY of the three kinds is shown, and
- * only one the user gave (not a cookie grant Gecko made by itself).
+ * every site, so only an ALLOW or a DENY of the three kinds is shown.
+ * Cookie access Gecko granted by itself (its login-popup heuristics, key
+ * {@code 3rdPartyStorage^}) is listed too: it is real access, and
+ * GeckoView does not tell it apart (ContentPermission reports both keys as
+ * storage access).
  *
  * @param <T> the caller's handle on a stored answer (GeckoView's
  *            ContentPermission), kept so Reset can forget it
@@ -33,28 +36,17 @@ public final class SitePermissions<T> {
     public static final int VALUE_ALLOW = 1;
     public static final int VALUE_DENY = 2;
 
-    /**
-     * Gecko's key for cookie access it granted by itself (its login-popup
-     * heuristics), not by an answer to a dialog. Not listed: the user never
-     * answered it, and GeckoView's setPermission writes the
-     * {@code 3rdPartyFrameStorage^} key, so a Reset could not forget it.
-     */
-    static final String AUTOMATIC_STORAGE_KEY_PREFIX = "3rdPartyStorage^";
-
     /** One stored answer as Gecko reports it. */
     public static final class Stored<T> {
         final int type;
         final int value;
         final String thirdPartyOrigin;
-        /** Gecko's own key for the answer ("geolocation", "3rdPartyFrameStorage^…"), when known. */
-        final String key;
         final T handle;
 
-        public Stored(int type, int value, String thirdPartyOrigin, String key, T handle) {
+        public Stored(int type, int value, String thirdPartyOrigin, T handle) {
             this.type = type;
             this.value = value;
             this.thirdPartyOrigin = thirdPartyOrigin;
-            this.key = key;
             this.handle = handle;
         }
     }
@@ -118,9 +110,6 @@ public final class SitePermissions<T> {
                     continue;
                 }
                 if (s.value != VALUE_ALLOW && s.value != VALUE_DENY) {
-                    continue;
-                }
-                if (s.key != null && s.key.startsWith(AUTOMATIC_STORAGE_KEY_PREFIX)) {
                     continue;
                 }
                 String host = s.type == TYPE_STORAGE_ACCESS ? hostOf(s.thirdPartyOrigin) : null;

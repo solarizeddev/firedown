@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.OpenableColumns;
 import android.text.TextUtils;
 import android.util.Log;
@@ -67,7 +68,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -291,26 +291,23 @@ public class GeckoComponents {
     }
 
     /**
-     * A content-permission request's reply channel: the GeckoResult plus a
-     * one-shot latch. The latch is load-bearing, not defensive — the
-     * permission dialog answers TWICE by construction: a button click fires
-     * the handler, then the dialog's dismissal fires it again with DENY as
-     * the no-choice default. The old shared-slot plumbing survived that only
-     * because the slot was consumed by the first call; GeckoResult itself
-     * throws on a second complete(), so the latch is what keeps the dialog's
-     * second call a no-op instead of a crash.
-     */
-    /**
-     * Asks Android for the location permission on behalf of a site the user
-     * just allowed. Set by the browser while it is resumed (it owns the
-     * activity-result launcher); the answer is true when either location
-     * permission is granted, so "Approximate" counts.
+     * Shows Android's location dialog for a site the user just allowed. Set
+     * by the browser while it is resumed (it owns the activity-result
+     * launcher); the launcher's result comes back through
+     * {@link #onLocationPermissionResult}, to whichever browser exists then
+     * (a recreate while the dialog is up delivers it to the new one).
      */
     public interface LocationPermissionRequester {
-        void request(@NonNull Consumer<Boolean> done);
+        void launch();
     }
 
+    /** How long a location request may wait on Android's dialog before a new one replaces it. */
+    private static final long LOCATION_ANSWER_TIMEOUT_MS = 2 * 60 * 1000;
+
     private volatile LocationPermissionRequester mLocationRequester;
+    /** Gecko's callback waiting on Android's dialog (one at a time), main thread only. */
+    private GeckoSession.PermissionDelegate.Callback mPendingLocation;
+    private long mPendingLocationSince;
 
     public void setLocationPermissionRequester(@Nullable LocationPermissionRequester requester) {
         mLocationRequester = requester;
@@ -320,6 +317,23 @@ public class GeckoComponents {
     public void clearLocationPermissionRequester(@NonNull LocationPermissionRequester requester) {
         if (mLocationRequester == requester) {
             mLocationRequester = null;
+        }
+    }
+
+    /**
+     * Android's answer, from the browser's launcher. Answers the waiting
+     * callback; Gecko's page is waiting on it. Main thread.
+     */
+    public void onLocationPermissionResult(boolean granted) {
+        GeckoSession.PermissionDelegate.Callback callback = mPendingLocation;
+        mPendingLocation = null;
+        if (callback == null) {
+            return;
+        }
+        if (granted) {
+            callback.grant();
+        } else {
+            callback.reject();
         }
     }
 
@@ -336,6 +350,16 @@ public class GeckoComponents {
                 == PackageManager.PERMISSION_GRANTED;
     }
 
+    /**
+     * A content-permission request's reply channel: the GeckoResult plus a
+     * one-shot latch. The latch is load-bearing, not defensive — the
+     * permission dialog answers TWICE by construction: a button click fires
+     * the handler, then the dialog's dismissal fires it again with PROMPT as
+     * the no-choice default. The old shared-slot plumbing survived that only
+     * because the slot was consumed by the first call; GeckoResult itself
+     * throws on a second complete(), so the latch is what keeps the dialog's
+     * second call a no-op instead of a crash.
+     */
     public static final class PermissionResult {
         private final GeckoResult<Integer> mResult = new GeckoResult<>();
         private final AtomicBoolean mAnswered = new AtomicBoolean(false);
@@ -1693,7 +1717,9 @@ public class GeckoComponents {
         /**
          * Android's location permission, asked through the browser on
          * screen. Refused when the switch is off, when no browser can ask
-         * (none resumed), or when Android says no.
+         * (none resumed), or while another request waits on Android's
+         * dialog (one that has waited past the timeout is refused and
+         * replaced: its answer never came back).
          */
         private void requestLocation(@NonNull final Callback callback) {
             LocationPermissionRequester requester = mLocationRequester;
@@ -1702,13 +1728,21 @@ public class GeckoComponents {
                 callback.reject();
                 return;
             }
-            requester.request(granted -> {
-                if (granted) {
-                    callback.grant();
-                } else {
+            long now = SystemClock.elapsedRealtime();
+            if (mPendingLocation != null) {
+                if (now - mPendingLocationSince < LOCATION_ANSWER_TIMEOUT_MS) {
                     callback.reject();
+                    return;
                 }
-            });
+                onLocationPermissionResult(false);
+            }
+            mPendingLocation = callback;
+            mPendingLocationSince = now;
+            try {
+                requester.launch();
+            } catch (IllegalStateException e) {
+                onLocationPermissionResult(false);
+            }
         }
 
         /**
@@ -1788,9 +1822,13 @@ public class GeckoComponents {
                 return onDrmRequest(findGeckoState);
             }
 
-            //Don't allow in incognito
-            if(findGeckoState != null && findGeckoState.isIncognito())
-                return GeckoResult.fromValue(ContentPermission.VALUE_DENY);
+            // Private tabs are refused, and nothing is decided: PROMPT, not
+            // DENY, which GeckoView would store for the private principal
+            // and the shield's Site permissions list would then show as an
+            // answer the user never gave.
+            if (findGeckoState != null && findGeckoState.isIncognito()) {
+                return GeckoResult.fromValue(ContentPermission.VALUE_PROMPT);
+            }
 
             final int resId;
 
@@ -1823,8 +1861,9 @@ public class GeckoComponents {
 
             final GeckoState geckoState = findGeckoState(session);
 
-            if(geckoState == null)
-                return GeckoResult.fromValue(ContentPermission.VALUE_DENY);
+            if (geckoState == null) {
+                return GeckoResult.fromValue(ContentPermission.VALUE_PROMPT);
+            }
 
             final PermissionResult permissionResult = new PermissionResult();
 

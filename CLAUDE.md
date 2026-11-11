@@ -9646,8 +9646,10 @@ then failed because the app held no location permission. Now:
 - **Off**: `GeckoRuntimeHelper.setLocationPrompts(false)` writes
   `permissions.default.geo = 2` (DENY) to the user branch at every boot and
   on the switch, and FORGETS every site's stored location answer
-  (`getAllPermissions` → `setPermission(VALUE_PROMPT)`). The forget is what
-  makes off mean off: a site's stored ALLOW outranks the default, and Gecko
+  (`getAllPermissions` → `setPermission(VALUE_PROMPT)`) once per switch-off
+  (`LOCATION_ANSWERS_FORGOTTEN`; `getAllPermissions` serializes every stored
+  principal, too much for every boot). The forget is what makes off mean
+  off: a site's stored ALLOW outranks the default, and Gecko
   would hand that site the location without asking the app again. A
   request that still reaches the delegate (a stored PROMPT row) is answered
   `VALUE_PROMPT`, not DENY: turned on later, the site asks instead of being
@@ -9657,21 +9659,30 @@ then failed because the app held no location permission. Now:
 - **On**: the default is PROMPT (3), the delegate shows the content
   permission dialog ("Let <site> know your location?", Allow / Don't
   allow), and an Allow makes Gecko ask `onAndroidPermissionsRequest` for
-  `ACCESS_FINE_LOCATION`. `GeckoComponents.requestLocation` hands that to
-  the `LocationPermissionRequester` the browser on screen sets while
-  resumed (`BrowserFragment.mLocationPermission`, a
+  `ACCESS_FINE_LOCATION`. `GeckoComponents.requestLocation` keeps Gecko's
+  callback (`mPendingLocation`, in the singleton, NOT the fragment: a
+  recreate while Android's dialog is up delivers the result to a new
+  fragment, and a callback lost with the old one left the page waiting for
+  good) and asks the `LocationPermissionRequester` the browser on screen
+  sets while resumed to launch `BrowserFragment.mLocationPermission` (a
   `RequestMultiplePermissions` launcher asking FINE and COARSE together:
   Android 12+ ignores FINE alone, and "Approximate" counts as granted;
-  `GeckoAppShell` takes the best provider it may use). Refused by Android,
-  a snackbar says so with a Settings action (the app's page). No browser
-  resumed, or the switch off: refused. One request at a time; a second
-  while Android's dialog is up is refused.
+  `GeckoAppShell` takes the best provider it may use), whose result calls
+  `onLocationPermissionResult`. Refused by Android, a snackbar says so with
+  a Settings action (the app's page). No browser resumed, or the switch
+  off: refused. One request at a time; a second while Android's dialog is
+  up is refused, and one waiting past 2 minutes is refused and replaced.
+  Known: Gecko stores a refusal at this step (Android said no) as the
+  site's DENY for good, so the site reads "Blocked" though the user tapped
+  Allow, until Reset; the snackbar says why.
 - **Manifest**: `ACCESS_COARSE_LOCATION` + `ACCESS_FINE_LOCATION`, and the
   three `android.hardware.location*` features `required="false"` (the
   permissions imply GPS hardware, which would filter devices out of
   stores).
 - **Private tabs** are refused every content permission except DRM before
-  any of this, location included.
+  any of this, location included, with `VALUE_PROMPT` (nothing decided):
+  a DENY would be stored for the private principal and listed as an
+  answer the user never gave.
 - On-device unverified at write time: the whole Allow → Android prompt →
   page gets a position path, "Approximate", a refusal's snackbar.
 
@@ -9685,16 +9696,25 @@ per answer — "Know your location", "Keep its data on this phone",
 "<embedded site> can use its cookies here" — Allowed or Blocked, each with
 Reset, then a line on what Reset does and "Reset all". Reset is
 `setPermission(VALUE_PROMPT)`: the site asks again; the page is reloaded
-when the sheet closes after a Reset (only the tab still on that host).
+when the sheet closes after a Reset (only the tab still on that host; the
+flag survives rotation).
 Rules, in `geckoview/SitePermissions` (pure, `SitePermissionsTest`):
 - Gecko stores every answer GeckoView ever returned, a PROMPT row
   included, plus DRM rows from pages that asked while DRM was off and
   autoplay. Listed: only location, persistent storage and storage access,
   only ALLOW or DENY. Anything else would put rows on every site.
-- A `3rdPartyStorage^` key (Gecko's own login-popup heuristics, not an
-  answer) is not listed: GeckoView's `setPermission` writes the
-  `3rdPartyFrameStorage^` key, so a Reset could not forget it. The key is
-  read from `ContentPermission.toJson()`'s `perm`.
+- Cookie access Gecko granted by itself (`3rdPartyStorage^`, its
+  login-popup heuristics) IS listed: it is real access, and GeckoView
+  cannot tell it apart (`ContentPermission` reports both keys as storage
+  access, and `toJson()` writes the normalized type, never the raw key: a
+  first version filtered on that key and could never match). Its Reset is
+  the hard part: `setPermission` writes the `3rdPartyFrameStorage^` key, so
+  `GeckoRuntimeHelper.resetSitePermissions` reads the site again after the
+  reset and, when cookie access survived, clears the site's permissions
+  (`clearDataFromHost(host, PERMISSIONS)`) and writes back the answers the
+  user did not reset. Regular tabs only (in a private tab clearing the host
+  would clear the regular tab's answers too). The list is read again from
+  Gecko after every Reset, never trimmed locally.
 - Duplicates are one row (the latest wins; Reset forgets all of them);
   storage access is one row per embedded host (`hostOf`: scheme, port,
   `^` origin attributes, `www.` dropped, IPv6 kept).

@@ -128,7 +128,6 @@ import org.mozilla.geckoview.WebExtensionController;
 import org.mozilla.geckoview.WebResponse;
 
 import java.util.Locale;
-import java.util.function.Consumer;
 
 
 public class BrowserFragment extends BaseBrowserFragment
@@ -286,26 +285,21 @@ public class BrowserFragment extends BaseBrowserFragment
      *  forward-reference a field declared later (JLS 8.3.3). */
     private GeckoState mFilePromptState;
 
-    /** The site's answer waiting on Android's location dialog (one at a time). */
-    private Consumer<Boolean> mPendingLocationAnswer;
-
     /**
      * Android's location permission, for a site the user just allowed in
      * Gecko's dialog. Both permissions in one request: from Android 12 a
      * request for FINE alone is ignored, and the user may pick
      * "Approximate", which is enough (GeckoAppShell takes the best provider
-     * it may use).
+     * it may use). The waiting answer lives in GeckoComponents, not here: a
+     * recreate while Android's dialog is up delivers the result to a new
+     * fragment, and the page must still get its answer.
      */
     private final ActivityResultLauncher<String[]> mLocationPermission = registerForActivityResult(
             new ActivityResultContracts.RequestMultiplePermissions(),
             result -> {
-                Consumer<Boolean> answer = mPendingLocationAnswer;
-                mPendingLocationAnswer = null;
                 boolean granted = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_FINE_LOCATION))
                         || Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_COARSE_LOCATION));
-                if (answer != null) {
-                    answer.accept(granted);
-                }
+                mGeckoComponents.onLocationPermissionResult(granted);
                 if (!granted && getView() != null) {
                     Snackbar snackbar = makeAnchoredSnackbar(R.string.location_android_refused);
                     snackbar.setAction(R.string.navigation_settings, v -> openAppSettings());
@@ -313,21 +307,10 @@ public class BrowserFragment extends BaseBrowserFragment
                 }
             });
 
-    private final GeckoComponents.LocationPermissionRequester mLocationRequester = done -> {
-        if (mPendingLocationAnswer != null) {
-            done.accept(false);
-            return;
-        }
-        mPendingLocationAnswer = done;
-        try {
+    private final GeckoComponents.LocationPermissionRequester mLocationRequester = () ->
             mLocationPermission.launch(new String[]{
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION});
-        } catch (IllegalStateException e) {
-            mPendingLocationAnswer = null;
-            done.accept(false);
-        }
-    };
 
     /** The app's page in Android settings, where a refused permission is turned back on. */
     private void openAppSettings() {
@@ -506,8 +489,9 @@ public class BrowserFragment extends BaseBrowserFragment
     @Override
     public void onPause() {
         super.onPause();
-        // A dialog Android is showing keeps its pending answer: the result
-        // lands when this fragment resumes. Only new requests stop here.
+        // A dialog Android is showing keeps its waiting answer (in
+        // GeckoComponents): the result lands when a browser resumes. Only
+        // new requests stop here.
         mGeckoComponents.clearLocationPermissionRequester(mLocationRequester);
     }
 
@@ -3196,9 +3180,11 @@ public class BrowserFragment extends BaseBrowserFragment
                 embedded = Uri.parse(permission.uri).getHost();
             }
             String page = SitePermissions.hostOf(geckoState.getEntityUri());
-            message = getString(messageId, embedded, page);
+            message = getString(messageId, embedded != null ? embedded : permission.uri,
+                    page != null ? page : geckoState.getEntityUri());
         } else {
-            message = getString(messageId, SitePermissions.hostOf(permission.uri));
+            String host = SitePermissions.hostOf(permission.uri);
+            message = getString(messageId, host != null ? host : permission.uri);
         }
         mGeckoPromptManager.onContentPermission(mActivity, geckoState, mNavController, message, permission, res);
     }

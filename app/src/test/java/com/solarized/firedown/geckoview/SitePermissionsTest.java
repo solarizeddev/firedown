@@ -21,7 +21,7 @@ public class SitePermissionsTest {
     private static final int PROMPT = 3;
 
     private static SitePermissions.Stored<String> s(int type, int value, String third, String id) {
-        return new SitePermissions.Stored<>(type, value, third, null, id);
+        return new SitePermissions.Stored<>(type, value, third, id);
     }
 
     @Test
@@ -85,17 +85,6 @@ public class SitePermissionsTest {
                 s(SitePermissions.TYPE_STORAGE_ACCESS, SitePermissions.VALUE_ALLOW, null, "x")));
         assertEquals(1, p.rows.size());
         assertNull(p.rows.get(0).thirdPartyHost);
-    }
-
-    @Test
-    public void cookieAccessGeckoGrantedByItselfIsNotListed() {
-        SitePermissions<String> p = SitePermissions.of(Arrays.asList(
-                new SitePermissions.Stored<>(SitePermissions.TYPE_STORAGE_ACCESS, SitePermissions.VALUE_ALLOW,
-                        "https://login.example", "3rdPartyStorage^https://login.example", "auto"),
-                new SitePermissions.Stored<>(SitePermissions.TYPE_STORAGE_ACCESS, SitePermissions.VALUE_ALLOW,
-                        "https://comments.example", "3rdPartyFrameStorage^https://comments.example", "asked")));
-        assertEquals(1, p.rows.size());
-        assertEquals("comments.example", p.rows.get(0).thirdPartyHost);
     }
 
     @Test

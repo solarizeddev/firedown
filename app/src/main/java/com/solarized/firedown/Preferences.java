@@ -269,6 +269,10 @@ public class Preferences {
 
     public static final boolean DEFAULT_LOCATION_ASK = false;
 
+    /** Every stored location answer was forgotten since the switch was last on (GeckoRuntimeHelper). */
+    public static final String LOCATION_ANSWERS_FORGOTTEN =
+            "com.solarized.firedown.preferences.browser.location.forgotten";
+
     public static final String SETTINGS_THEME = "com.solarized.firedown.preferences.theme";
 
     public static final String SETTINGS_THEME_DEFAULT = "com.solarized.firedown.preferences.theme.default";

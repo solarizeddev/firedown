@@ -42,6 +42,7 @@ import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoRuntime;
 import org.mozilla.geckoview.GeckoRuntimeSettings;
 import org.mozilla.geckoview.GeckoSession;
+import org.mozilla.geckoview.GeckoSession.PermissionDelegate.ContentPermission;
 import org.mozilla.geckoview.StorageController;
 import org.mozilla.geckoview.WebExtension;
 import org.mozilla.geckoview.WebExtensionController;
@@ -1087,8 +1088,8 @@ public class GeckoRuntimeHelper {
      * gives an empty list: the row stays hidden. Main thread only.
      */
     public void loadSitePermissions(@NonNull String url, boolean privateMode,
-            @NonNull Consumer<SitePermissions<GeckoSession.PermissionDelegate.ContentPermission>> done) {
-        GeckoResult<List<GeckoSession.PermissionDelegate.ContentPermission>> result;
+            @NonNull Consumer<SitePermissions<ContentPermission>> done) {
+        GeckoResult<List<ContentPermission>> result;
         try {
             result = getGeckoRuntime().getStorageController().getPermissions(url, privateMode);
         } catch (RuntimeException e) {
@@ -1096,37 +1097,77 @@ public class GeckoRuntimeHelper {
             return;
         }
         result.accept(perms -> {
-            List<SitePermissions.Stored<GeckoSession.PermissionDelegate.ContentPermission>> stored =
-                    new ArrayList<>();
+            List<SitePermissions.Stored<ContentPermission>> stored = new ArrayList<>();
             if (perms != null) {
-                for (GeckoSession.PermissionDelegate.ContentPermission perm : perms) {
+                for (ContentPermission perm : perms) {
                     stored.add(new SitePermissions.Stored<>(perm.permission, perm.value,
-                            perm.thirdPartyOrigin, geckoKeyOf(perm), perm));
+                            perm.thirdPartyOrigin, perm));
                 }
             }
             done.accept(SitePermissions.of(stored));
         }, error -> {
-            Log.w(TAG, "loadSitePermissions", error);
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "loadSitePermissions", error);
+            }
             done.accept(SitePermissions.of(null));
         });
     }
 
-    /** Forgets these stored answers: the site asks again next time. */
-    public void resetSitePermissions(@NonNull List<GeckoSession.PermissionDelegate.ContentPermission> perms) {
+    /**
+     * Forgets these stored answers for the page at {@code url} (the site
+     * asks again next time), then runs {@code done} on the calling looper.
+     *
+     * <p>{@code setPermission(VALUE_PROMPT)} forgets location, persistent
+     * storage and the cookie access a user allowed ({@code
+     * 3rdPartyFrameStorage^}). It cannot forget cookie access Gecko granted
+     * by itself ({@code 3rdPartyStorage^}, its login-popup heuristics):
+     * GeckoView reports that as storage access too, and writes the frame
+     * key. So when cookie access survives the reset, the site's permissions
+     * are cleared ({@code clearDataFromHost}) and the answers the user did
+     * not reset are written back. Regular tabs only: in a private tab
+     * clearing the host would also clear the regular tab's answers.
+     */
+    public void resetSitePermissions(@NonNull String url, boolean privateMode,
+            @NonNull List<ContentPermission> perms, @NonNull Runnable done) {
         StorageController storage = getGeckoRuntime().getStorageController();
-        for (GeckoSession.PermissionDelegate.ContentPermission perm : perms) {
-            storage.setPermission(perm, GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT);
+        List<String> cookieHosts = new ArrayList<>();
+        for (ContentPermission perm : perms) {
+            storage.setPermission(perm, ContentPermission.VALUE_PROMPT);
+            if (perm.permission == GeckoSession.PermissionDelegate.PERMISSION_STORAGE_ACCESS) {
+                cookieHosts.add(SitePermissions.hostOf(perm.thirdPartyOrigin));
+            }
         }
-    }
-
-    /** Gecko's own key for a stored answer ("geolocation", "3rdPartyFrameStorage^…"), null if unreadable. */
-    @Nullable
-    private static String geckoKeyOf(@NonNull GeckoSession.PermissionDelegate.ContentPermission perm) {
-        try {
-            return perm.toJson().optString("perm", null);
-        } catch (JSONException e) {
-            return null;
+        String pageHost = Uri.parse(url).getHost();
+        if (cookieHosts.isEmpty() || privateMode || pageHost == null) {
+            done.run();
+            return;
         }
+        loadSitePermissions(url, false, after -> {
+            boolean survived = false;
+            List<ContentPermission> keep = new ArrayList<>();
+            for (SitePermissions.Row<ContentPermission> row : after.rows) {
+                if (row.type == SitePermissions.TYPE_STORAGE_ACCESS && cookieHosts.contains(row.thirdPartyHost)) {
+                    survived = true;
+                } else {
+                    keep.addAll(row.handles);
+                }
+            }
+            if (!survived) {
+                done.run();
+                return;
+            }
+            storage.clearDataFromHost(pageHost, StorageController.ClearFlags.PERMISSIONS).accept(unused -> {
+                for (ContentPermission perm : keep) {
+                    storage.setPermission(perm, perm.value);
+                }
+                done.run();
+            }, error -> {
+                if (BuildConfig.DEBUG) {
+                    Log.w(TAG, "resetSitePermissions", error);
+                }
+                done.run();
+            });
+        });
     }
 
     /**
@@ -1356,8 +1397,17 @@ public class GeckoRuntimeHelper {
         // Gecko's permission actions: 1 allow, 2 deny, 3 prompt.
         GeckoPreferenceController.setGeckoPref("permissions.default.geo", ask ? 3 : 2,
                 GeckoPreferenceController.PREF_BRANCH_USER);
-        if (!ask) {
+        // The forget runs once per switch-off (and once on the first boot
+        // of a build with the switch), not at every boot: getAllPermissions
+        // serializes every stored principal.
+        boolean forgotten = mSharedPreferences.getBoolean(Preferences.LOCATION_ANSWERS_FORGOTTEN, false);
+        if (ask) {
+            if (forgotten) {
+                mSharedPreferences.edit().putBoolean(Preferences.LOCATION_ANSWERS_FORGOTTEN, false).apply();
+            }
+        } else if (!forgotten) {
             forgetLocationAnswers();
+            mSharedPreferences.edit().putBoolean(Preferences.LOCATION_ANSWERS_FORGOTTEN, true).apply();
         }
     }
 
@@ -1375,7 +1425,11 @@ public class GeckoRuntimeHelper {
                             GeckoSession.PermissionDelegate.ContentPermission.VALUE_PROMPT);
                 }
             }
-        }, error -> Log.w(TAG, "forgetLocationAnswers", error));
+        }, error -> {
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "forgetLocationAnswers", error);
+            }
+        });
     }
 
 
