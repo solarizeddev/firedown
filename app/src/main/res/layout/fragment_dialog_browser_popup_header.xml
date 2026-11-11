@@ -65,14 +65,14 @@
     <com.solarized.firedown.ui.browser.BookmarkBrowserButton
         android:id="@+id/popup_bookmark_star"
         style="@style/Firedown.Widget.PopupQuickRowButton"
-        app:icon="@drawable/ic_bookmark_border_24"
+        app:icon="@drawable/bookmark_light_24"
         android:text="@string/browser_menu_bookmark_short" />
 
 
     <com.solarized.firedown.ui.browser.ReloadBrowserButton
         android:id="@+id/popup_reload"
         style="@style/Firedown.Widget.PopupQuickRowButton"
-        app:icon="@drawable/ic_refresh_24"
+        app:icon="@drawable/refresh_light_24"
         android:text="@string/browser_menu_refresh" />
 
 

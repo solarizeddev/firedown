@@ -626,8 +626,8 @@ public class PopupBrowserSheetDialogFragment extends BaseBottomSheetDialogFragme
                 : R.string.browser_menu_bookmark_short);
 
         mStarButton.setIconResource(mHasBookmark
-                ? R.drawable.ic_bookmark_24
-                : R.drawable.ic_bookmark_border_24);
+                ? R.drawable.bookmark_filled_light_24
+                : R.drawable.bookmark_light_24);
         // Amber accent when saved so the filled star reads as "on";
         // default header selector (onSurfaceVariant) when unsaved so it
         // sits level with the sibling icons.

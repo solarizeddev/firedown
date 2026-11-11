@@ -25,7 +25,7 @@ public class ReloadBrowserButton extends BasicBrowserButton {
     }
 
     public void setLoading(boolean value){
-        setIconResource(value ? R.drawable.ic_clear_24 : R.drawable.ic_refresh_24);
+        setIconResource(value ? R.drawable.close_light_24 : R.drawable.refresh_light_24);
         setId(value ? R.id.popup_stop : R.id.popup_reload);
         setText(value ? R.string.browser_menu_stop : R.string.browser_menu_refresh) ;
     }
