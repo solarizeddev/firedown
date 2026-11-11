@@ -191,11 +191,6 @@ public class SitePermissionsDialogFragment extends BaseBottomSheetDialogFragment
         return R.drawable.cookie_24;
     }
 
-    /**
-     * After a Reset, the page on screen is reloaded so it runs without the
-     * answer it had (a page holding the location or extra storage keeps
-     * them until it loads again). Only the tab still showing this site.
-     */
     /** Left with Back or a tap outside: return to the shield sheet ({@link ShieldReturn}). */
     private boolean mCancelled;
 
@@ -205,6 +200,11 @@ public class SitePermissionsDialogFragment extends BaseBottomSheetDialogFragment
         mCancelled = true;
     }
 
+    /**
+     * After a Reset, the page on screen is reloaded so it runs without the
+     * answer it had (a page holding the location or extra storage keeps
+     * them until it loads again). Only the tab still showing this site.
+     */
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
