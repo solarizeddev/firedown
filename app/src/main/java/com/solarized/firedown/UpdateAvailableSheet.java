@@ -114,6 +114,8 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
      */
     private boolean mDownloadingFace;
     private boolean mObservingInstall;
+    /** The version the download face's name and notes are for; -1 before the first read. */
+    private int mBoundVersionCode = -1;
     private ExecutorService mPoller;
     private final Runnable mPoll = this::pollProgress;
 
@@ -377,8 +379,8 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         if (!mProgressBar.isIndeterminate()) {
             mProgressBar.setIndeterminate(true);
         }
-        mPoller = Executors.newSingleThreadExecutor();
-        pollProgress();
+        // Polling starts in onStart (and stops in onStop): onViewCreated
+        // runs before it, and a stopped app needs no progress.
     }
 
     /** The version line, the one it replaces, and the notes when there are any. */
@@ -437,6 +439,13 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         if (ready) {
             bindReadyFace(view);
             return;
+        }
+        if (progress.versionCode > 0 && progress.versionCode != mBoundVersionCode) {
+            // The version this download is for, never the last status.json's
+            // (a pulled release, or a newer one seen during a backoff).
+            mBoundVersionCode = progress.versionCode;
+            bindVersion(view, progress.name,
+                    UpdateDownloader.getChangelogFor(requireContext(), progress.versionCode));
         }
         if (!progress.active()) {
             // Nothing downloads and nothing is ready: the download was
@@ -517,6 +526,21 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
             mPoller.shutdownNow();
             mPoller = null;
         }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (mDownloadingFace && mPoller == null) {
+            mPoller = Executors.newSingleThreadExecutor();
+            pollProgress();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        stopPolling();
+        super.onStop();
     }
 
     @Override

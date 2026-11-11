@@ -655,6 +655,12 @@ public final class UpdateDownloader {
             return Progress.NONE;
         }
         long total = pending.plan.current().size;
+        if (finalizingAt != 0L && !claimLive(System.currentTimeMillis() - finalizingAt)) {
+            // A claim a dead worker left: nothing is being checked. The next
+            // check hands the download on (inFlightLocked); until then the
+            // row offers that check rather than a check that never ends.
+            return Progress.NONE;
+        }
         if (finalizingAt != 0L) {
             return new Progress(Progress.Phase.PREPARING, 0L, total, pending.versionCode, pending.name);
         }

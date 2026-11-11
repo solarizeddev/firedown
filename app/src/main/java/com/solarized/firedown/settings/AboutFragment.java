@@ -68,8 +68,19 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
     /** The update download as last read; drives the row while one runs. */
     private UpdateDownloader.Progress mProgress = UpdateDownloader.Progress.NONE;
 
+    /** Whether a verified update was on disk at the last read. */
+    private boolean mReady;
+
     private ExecutorService mPoller;
     private final Runnable mPoll = this::pollProgress;
+
+    /**
+     * A check still queued this long after the tap is waiting for a network
+     * that went away after {@link #hasNetwork} said yes: answered as offline.
+     */
+    private static final long CHECK_QUEUED_TIMEOUT_MS = 20_000L;
+    private Runnable mCheckTimeout;
+    private WorkInfo.State mCheckState;
 
 
     @Override
@@ -145,9 +156,10 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
             // only outcome is the download we already have; install it instead.
             if (UpdateDownloader.isVerifiedReady(requireContext(), App.getVersionCode() + 1)) {
                 installReadyUpdate();
-            } else if (mProgress.active()) {
-                // Downloading, being checked, or waiting to retry: the
-                // update sheet shows it, and turns into Install when ready.
+            } else if (isDownloading(mProgress)) {
+                // Downloading or being checked: the update sheet shows it,
+                // and turns into Install when ready. Waiting for a retry, a
+                // tap checks again instead.
                 UpdateAvailableSheet.openDownloading(mActivity.getSupportFragmentManager());
             } else {
                 runManualUpdateCheck();
@@ -171,6 +183,7 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
         // pipeline and the row's poll, only the answer on the row is dropped.
         mUpdateCheckRunning = false;
         mCheckSummary = 0;
+        mCheckTimeout = null;
     }
 
     @Override
@@ -213,12 +226,16 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
         Context app = requireContext().getApplicationContext();
         poller.execute(() -> {
             UpdateDownloader.Progress progress = UpdateDownloader.progress(app);
+            boolean ready = UpdateDownloader.isVerifiedReady(app, App.getVersionCode() + 1);
             view.post(() -> {
                 if (getView() != view || mPoller != poller) {
                     return;
                 }
-                if (!progress.equals(mProgress)) {
+                // Ready read too: a small patch can download and be checked
+                // between two reads, and the progress then never changes.
+                if (!progress.equals(mProgress) || ready != mReady) {
                     mProgress = progress;
+                    mReady = ready;
                     refreshUpdateRow();
                 }
                 view.removeCallbacks(mPoll);
@@ -279,11 +296,14 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
             } else if (install != null && install.phase == UpdateInstallProgress.Phase.INSTALLING) {
                 row.setSummary(R.string.update_install_installing);
             }
-        } else if (mProgress.active()) {
-            // A download, its check, or the wait before its next try: the
-            // row says so, and a tap opens the update sheet on it.
-            row.setTitle(R.string.update_downloading_title);
-            row.setIcon(R.drawable.download_24);
+        } else if (mProgress.active() && !mUpdateCheckRunning) {
+            // A download or its check: the row says so, and a tap opens the
+            // update sheet on it. Waiting for a retry, the row stays "Check
+            // for updates" (a tap checks) with the wait as its summary.
+            boolean downloading = isDownloading(mProgress);
+            row.setTitle(downloading
+                    ? R.string.update_downloading_title : R.string.settings_update_check_title);
+            row.setIcon(downloading ? R.drawable.download_24 : R.drawable.ic_refresh_24);
             String state = progressSummary(context, mProgress);
             row.setSummary(mProgress.name.isEmpty() ? state : mProgress.name + " · " + state);
         } else {
@@ -300,6 +320,11 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
         if (row instanceof BusyPreference) {
             ((BusyPreference) row).setBusy(!ready && mUpdateCheckRunning);
         }
+    }
+
+    private static boolean isDownloading(UpdateDownloader.Progress progress) {
+        return progress.phase == UpdateDownloader.Progress.Phase.DOWNLOADING
+                || progress.phase == UpdateDownloader.Progress.Phase.PREPARING;
     }
 
     /** "42% of 19 MB", "Checking the download…", or the wait. */
@@ -377,6 +402,19 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
         UUID workId = mUpdateScheduler.enqueueManualCheck();
         WorkManager workManager = WorkManager.getInstance(requireContext());
         LiveData<WorkInfo> liveData = workManager.getWorkInfoByIdLiveData(workId);
+        mCheckState = WorkInfo.State.ENQUEUED;
+        View view = getView();
+        if (view != null) {
+            Runnable timeout = () -> {
+                if (mUpdateCheckRunning && mCheckState == WorkInfo.State.ENQUEUED) {
+                    workManager.cancelWorkById(workId);
+                    mUpdateCheckRunning = false;
+                    answer(R.string.update_check_offline);
+                }
+            };
+            mCheckTimeout = timeout;
+            view.postDelayed(timeout, CHECK_QUEUED_TIMEOUT_MS);
+        }
 
         liveData.observe(getViewLifecycleOwner(), new Observer<WorkInfo>() {
             @Override
@@ -384,6 +422,7 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
                 if (info == null) {
                     return;
                 }
+                mCheckState = info.getState();
                 boolean done = false;
                 if (info.getState() == WorkInfo.State.SUCCEEDED) {
                     done = true;
@@ -412,6 +451,11 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
                 }
                 if (done) {
                     liveData.removeObserver(this);
+                    View v = getView();
+                    if (v != null && mCheckTimeout != null) {
+                        v.removeCallbacks(mCheckTimeout);
+                    }
+                    mCheckTimeout = null;
                 }
             }
         });
@@ -438,14 +482,14 @@ public class AboutFragment extends BasePreferenceFragment implements Preference.
                     return;
                 }
                 mProgress = progress;
+                mReady = ready;
                 refreshUpdateRow();
                 if (!isResumed()) {
                     return;
                 }
                 if (ready) {
                     UpdateAvailableSheet.openOnPurpose(app, mActivity.getSupportFragmentManager());
-                } else if (progress.phase == UpdateDownloader.Progress.Phase.DOWNLOADING
-                        || progress.phase == UpdateDownloader.Progress.Phase.PREPARING) {
+                } else if (isDownloading(progress)) {
                     UpdateAvailableSheet.openDownloading(mActivity.getSupportFragmentManager());
                 } else if (versionName != null && !progress.active()) {
                     Snackbar.make(mActivity.getSnackAnchorView(),

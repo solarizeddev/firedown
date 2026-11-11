@@ -982,6 +982,12 @@ public final class UpdateFlowHarness {
         check(UpdateDownloader.beginFinalize(ctx, row.id) != null
                         && UpdateDownloader.progress(ctx).phase == UpdateDownloader.Progress.Phase.PREPARING,
                 s + "and while it is rebuilt and checked");
+        long claimedAt = prefs().getLong(Keys.UPDATE_DOWNLOAD_FINALIZING_AT, 0L);
+        prefs().edit().putLong(Keys.UPDATE_DOWNLOAD_FINALIZING_AT,
+                System.currentTimeMillis() - 31L * 60L * 1000L).apply();
+        check(UpdateDownloader.progress(ctx).phase == UpdateDownloader.Progress.Phase.NONE,
+                s + "a claim a dead worker left is no check in progress");
+        prefs().edit().putLong(Keys.UPDATE_DOWNLOAD_FINALIZING_AT, claimedAt).apply();
         runWorker(row.id);
         check(UpdateDownloader.isVerifiedReady(ctx, 1206)
                         && UpdateDownloader.progress(ctx).phase == UpdateDownloader.Progress.Phase.NONE,

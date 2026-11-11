@@ -5304,7 +5304,19 @@ is **~75 MB**, the APK 205 MB.
   and turns into the ready face IN PLACE when the verified APK lands (one
   sheet, never a second surface). The download face never shows the busy
   line. The download stays hidden from the notification shade
-  (`VISIBILITY_HIDDEN`), as before. Pinned by the flow harness's
+  (`VISIBILITY_HIDDEN`), as before. From Fable's review of the build: the
+  poll also reads `isVerifiedReady` (a small patch can download and be
+  checked between two reads, leaving the progress unchanged); WAITING keeps
+  the "Check for updates" title and a tap checks again (a sheet with a
+  disabled Install could do nothing for up to 6 h); a check still queued
+  20 s after the tap is cancelled and answered "No connection" (the
+  network went away after the pre-check); a finalize claim a dead worker
+  left reads as NONE (`claimLive`), not "Checking the download…" for ever;
+  the sheet's face names the version the download is for (`Progress.name`,
+  `getChangelogFor`), never the last status.json's, and polls only between
+  onStart and onStop. Kept on purpose: the download face is opened on
+  purpose, so Not now on it writes no snooze even after it turned ready,
+  the ⋮ row's rule. Pinned by the flow harness's
   `progress:` checks and two mutants (a finished download read as
   downloading, the Download Manager's size ignored); the screens are
   on-device unverified at write time.
