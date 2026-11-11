@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.SpannableString;
+import android.text.format.Formatter;
 import android.text.Spanned;
 import android.text.style.LeadingMarginSpan;
 import android.util.Log;
@@ -34,6 +35,8 @@ import com.solarized.firedown.phone.dialogs.BaseBottomSheetDialogFragment;
 import com.solarized.firedown.phone.player.PlaybackHub;
 
 import java.text.NumberFormat;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import dagger.hilt.android.AndroidEntryPoint;
 import dagger.hilt.android.EntryPointAccessors;
@@ -75,6 +78,10 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     private static final String ARG_PREVIEW = "preview";
     /** Opened by the user (the ⋮ row): no snooze is written on dismissal. */
     private static final String ARG_ON_PURPOSE = "on_purpose";
+    /** Opened from About's check while the update downloads: the download face. */
+    private static final String ARG_DOWNLOADING = "downloading";
+    /** How often the download face reads the download's progress. */
+    private static final long PROGRESS_POLL_MS = 1000L;
     private static final String STATE_SEEN_INSTALL = "seen_install";
     /** Debug builds: one line per footer render, read by scripts/update-install-test.sh. */
     private static final String TRACE_TAG = "UpdateSheetTrace";
@@ -97,6 +104,18 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     private TextView mProgressLabel;
     private TextView mProgressPercent;
     private LinearProgressIndicator mProgressBar;
+    private TextView mTitle;
+    private MaterialButton mNotNow;
+
+    /**
+     * The download face: the update is still downloading or being checked,
+     * Install waits, and the footer shows the download. It turns into the
+     * ready face in place when the verified APK lands.
+     */
+    private boolean mDownloadingFace;
+    private boolean mObservingInstall;
+    private ExecutorService mPoller;
+    private final Runnable mPoll = this::pollProgress;
 
     /**
      * Opens the sheet by itself if {@link UpdatePromptPolicy} allows it here
@@ -145,6 +164,23 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         UpdateAvailableSheet sheet = new UpdateAvailableSheet();
         Bundle args = new Bundle();
         args.putBoolean(ARG_ON_PURPOSE, true);
+        sheet.setArguments(args);
+        sheet.showNow(fm, TAG);
+    }
+
+    /**
+     * Opens the sheet because the user asked for an update that is still
+     * downloading (About's "Check for updates"): the download face, which
+     * becomes the ready face when the update has been checked. Closing it
+     * writes no snooze and leaves the download running.
+     */
+    @MainThread
+    public static void openDownloading(@NonNull FragmentManager fm) {
+        if (fm.isStateSaved() || fm.findFragmentByTag(TAG) != null) return;
+        UpdateAvailableSheet sheet = new UpdateAvailableSheet();
+        Bundle args = new Bundle();
+        args.putBoolean(ARG_ON_PURPOSE, true);
+        args.putBoolean(ARG_DOWNLOADING, true);
         sheet.setArguments(args);
         sheet.showNow(fm, TAG);
     }
@@ -225,39 +261,128 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         Context context = requireContext();
 
         boolean preview = getArguments() != null && getArguments().getBoolean(ARG_PREVIEW, false);
+        boolean downloading = getArguments() != null && getArguments().getBoolean(ARG_DOWNLOADING, false);
+        boolean ready = UpdateDownloader.isVerifiedReady(context, App.getVersionCode() + 1);
 
         // Process death between show() and here, or a just-installed update, can
         // leave nothing ready — bail rather than show an empty sheet. Skipped in
-        // preview mode, which fabricates a name purely for layout testing.
-        if (!preview && !UpdateDownloader.isVerifiedReady(context, App.getVersionCode() + 1)) {
+        // preview mode, which fabricates a name purely for layout testing, and
+        // in the download face, whose first read of the download decides.
+        if (!preview && !ready && !downloading) {
             dismissAllowingStateLoss();
             return;
         }
 
+        mTitle = view.findViewById(R.id.update_sheet_title);
+        mNotNow = view.findViewById(R.id.update_sheet_not_now);
+        mActions = view.findViewById(R.id.update_sheet_actions);
+        mInstall = view.findViewById(R.id.update_sheet_install);
+        mBusy = view.findViewById(R.id.update_sheet_busy);
+        mError = view.findViewById(R.id.update_sheet_error);
+        mProgress = view.findViewById(R.id.update_sheet_progress);
+        mProgressLabel = view.findViewById(R.id.update_sheet_progress_label);
+        mProgressPercent = view.findViewById(R.id.update_sheet_progress_percent);
+        mProgressBar = view.findViewById(R.id.update_sheet_progress_bar);
+        // The Downloads row's track: colorPrimary at 20% under the
+        // progress_indicator set in the layout.
+        int primary = MaterialColors.getColor(view, android.R.attr.colorPrimary, Color.BLACK);
+        mProgressBar.setTrackColor(ColorUtils.setAlphaComponent(primary, 0x33));
+
+        // "Not now" does what a swipe does (see onDismiss), but says so.
+        mNotNow.setOnClickListener(v -> dismiss());
+
+        if (savedInstanceState != null) {
+            mSeenInstall = savedInstanceState.getLong(STATE_SEEN_INSTALL, -1);
+        }
+
+        if (preview) {
+            bindPreview(view);
+        } else if (ready) {
+            bindReadyFace(view);
+        } else {
+            bindDownloadingFace(view);
+        }
+    }
+
+    /** DEBUG preview: real notes when stored, Install plays the footer on a timer. */
+    private void bindPreview(@NonNull View view) {
+        Context context = requireContext();
+        // Prefer the REAL changelog/version the worker last stored from
+        // status.json; fall back to a fabricated sample only on a fresh
+        // install before any check has run (or a status.json with no
+        // changelog field).
         String name;
         String changelog;
-        if (preview) {
-            // Prefer the REAL changelog/version the worker last stored from
-            // status.json; fall back to a fabricated sample only on a fresh
-            // install before any check has run (or a status.json with no
-            // changelog field).
-            String storedChangelog = UpdateDownloader.getLastChangelog(context);
-            String storedName = UpdateDownloader.getLastChangelogName(context);
-            if (!storedChangelog.isEmpty()) {
-                name = storedName.isEmpty()
-                        ? getString(R.string.app_name) + " (preview)" : storedName;
-                changelog = storedChangelog;
-            } else {
-                name = getString(R.string.app_name) + " (preview)";
-                changelog = "• Faster, more reliable updates\n"
-                        + "• Fixed video capture on some sites\n"
-                        + "• Smaller download size";
-            }
+        String storedChangelog = UpdateDownloader.getLastChangelog(context);
+        String storedName = UpdateDownloader.getLastChangelogName(context);
+        if (!storedChangelog.isEmpty()) {
+            name = storedName.isEmpty()
+                    ? getString(R.string.app_name) + " (preview)" : storedName;
+            changelog = storedChangelog;
         } else {
-            mReadyVersionCode = UpdateDownloader.readyVersionCode(context);
-            name = UpdateDownloader.readyVersionName(context);
-            changelog = UpdateDownloader.getChangelogFor(context, mReadyVersionCode);
+            name = getString(R.string.app_name) + " (preview)";
+            changelog = "• Faster, more reliable updates\n"
+                    + "• Fixed video capture on some sites\n"
+                    + "• Smaller download size";
         }
+        bindVersion(view, name, changelog);
+        mInstall.setOnClickListener(v -> runPreview());
+    }
+
+    /** The verified APK is on disk: Install, and the install's own progress. */
+    private void bindReadyFace(@NonNull View view) {
+        Context context = requireContext();
+        mDownloadingFace = false;
+        stopPolling();
+        mReadyVersionCode = UpdateDownloader.readyVersionCode(context);
+        String name = UpdateDownloader.readyVersionName(context);
+        bindVersion(view, name, UpdateDownloader.getChangelogFor(context, mReadyVersionCode));
+        mTitle.setText(R.string.update_ready_title);
+        mNotNow.setText(R.string.translate_not_now);
+        mInstall.setEnabled(true);
+        mInstall.setOnClickListener(v -> onInstall(name));
+        showButton(false);
+        updateBusyLine();
+        if (!mObservingInstall) {
+            mObservingInstall = true;
+            UpdateInstaller.state().observe(getViewLifecycleOwner(), this::render);
+        }
+    }
+
+    /**
+     * The update is still downloading (or being rebuilt and checked): the
+     * same sheet, titled for it, with the download in the footer and Install
+     * waiting. Read every second; when the verified APK lands, the sheet
+     * becomes the ready face in place.
+     */
+    private void bindDownloadingFace(@NonNull View view) {
+        Context context = requireContext();
+        mDownloadingFace = true;
+        // The worker stores the newest status.json's name and notes on every
+        // check, the one that started this download included.
+        bindVersion(view, UpdateDownloader.getLastChangelogName(context),
+                UpdateDownloader.getLastChangelog(context));
+        mTitle.setText(R.string.update_downloading_title);
+        mNotNow.setText(R.string.update_sheet_hide);
+        mInstall.setEnabled(false);
+        mInstall.setOnClickListener(null);
+        mActions.setVisibility(View.VISIBLE);
+        mBusy.setVisibility(View.GONE);
+        mError.setVisibility(View.GONE);
+        mProgress.setVisibility(View.VISIBLE);
+        setProgressGap(true);
+        mProgressLabel.setText(R.string.update_downloading_label);
+        mProgressPercent.setText(null);
+        mProgressBar.setVisibility(View.VISIBLE);
+        if (!mProgressBar.isIndeterminate()) {
+            mProgressBar.setIndeterminate(true);
+        }
+        mPoller = Executors.newSingleThreadExecutor();
+        pollProgress();
+    }
+
+    /** The version line, the one it replaces, and the notes when there are any. */
+    private void bindVersion(@NonNull View view, @Nullable String name, @Nullable String changelog) {
         String shown = (name == null || name.isEmpty())
                 ? getString(R.string.app_name) : name;
 
@@ -279,44 +404,126 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         boolean hasChangelog = changelog != null && !changelog.trim().isEmpty();
         if (hasChangelog) {
             fillChangelog(changelogContainer, changelog.trim());
+        } else {
+            changelogContainer.removeAllViews();
         }
         int changelogVisibility = hasChangelog ? View.VISIBLE : View.GONE;
         whatsNew.setVisibility(changelogVisibility);
         changelogContainer.setVisibility(changelogVisibility);
+    }
 
-        mActions = view.findViewById(R.id.update_sheet_actions);
-        mInstall = view.findViewById(R.id.update_sheet_install);
-        mBusy = view.findViewById(R.id.update_sheet_busy);
-        mError = view.findViewById(R.id.update_sheet_error);
-        mProgress = view.findViewById(R.id.update_sheet_progress);
-        mProgressLabel = view.findViewById(R.id.update_sheet_progress_label);
-        mProgressPercent = view.findViewById(R.id.update_sheet_progress_percent);
-        mProgressBar = view.findViewById(R.id.update_sheet_progress_bar);
-        // The Downloads row's track: colorPrimary at 20% under the
-        // progress_indicator set in the layout.
-        int primary = MaterialColors.getColor(view, android.R.attr.colorPrimary, Color.BLACK);
-        mProgressBar.setTrackColor(ColorUtils.setAlphaComponent(primary, 0x33));
-
-        // In preview there's no real APK on disk, so Install plays the
-        // footer's states on a timer and closes.
-        mInstall.setOnClickListener(v -> {
-            if (preview) {
-                runPreview();
-            } else {
-                onInstall(name);
-            }
+    /** One read of the download, off the main thread; the answer is shown on it. */
+    private void pollProgress() {
+        View root = getView();
+        ExecutorService poller = mPoller;
+        if (root == null || poller == null || poller.isShutdown()) {
+            return;
+        }
+        Context app = requireContext().getApplicationContext();
+        poller.execute(() -> {
+            // Progress first: a download that turns ready in between reads as
+            // ready, never as gone.
+            UpdateDownloader.Progress progress = UpdateDownloader.progress(app);
+            boolean ready = UpdateDownloader.isVerifiedReady(app, App.getVersionCode() + 1);
+            root.post(() -> onProgress(progress, ready));
         });
+    }
 
-        // "Not now" does what a swipe does (see onDismiss), but says so.
-        view.findViewById(R.id.update_sheet_not_now).setOnClickListener(v -> dismiss());
-
-        if (savedInstanceState != null) {
-            mSeenInstall = savedInstanceState.getLong(STATE_SEEN_INSTALL, -1);
+    private void onProgress(@NonNull UpdateDownloader.Progress progress, boolean ready) {
+        View view = getView();
+        if (view == null || !mDownloadingFace) {
+            return;
         }
-        if (!preview) {
-            UpdateInstaller.state().observe(getViewLifecycleOwner(), this::render);
+        if (ready) {
+            bindReadyFace(view);
+            return;
         }
+        if (!progress.active()) {
+            // Nothing downloads and nothing is ready: the download was
+            // dropped (an update installed another way, a failure with no
+            // retry left). About's row says what comes next.
+            dismissAllowingStateLoss();
+            return;
+        }
+        showDownload(progress);
+        view.removeCallbacks(mPoll);
+        view.postDelayed(mPoll, PROGRESS_POLL_MS);
+    }
 
+    /** The footer for the download: sizes and a bar, the check, or the wait. */
+    private void showDownload(@NonNull UpdateDownloader.Progress progress) {
+        Context context = requireContext();
+        switch (progress.phase) {
+            case DOWNLOADING: {
+                int percent = progress.percent();
+                mProgressBar.setVisibility(View.VISIBLE);
+                if (percent >= 0) {
+                    mProgressLabel.setText(getString(R.string.update_download_progress,
+                            Formatter.formatShortFileSize(context, progress.bytes),
+                            Formatter.formatShortFileSize(context, progress.total)));
+                    mProgressPercent.setText(NumberFormat.getPercentInstance(
+                            getResources().getConfiguration().getLocales().get(0))
+                            .format(percent / 100.0));
+                    if (mProgressBar.isIndeterminate()) {
+                        mProgressBar.setIndeterminate(false);
+                    }
+                    mProgressBar.setProgressCompat(percent, true);
+                } else {
+                    mProgressLabel.setText(R.string.update_downloading_label);
+                    mProgressPercent.setText(progress.bytes > 0
+                            ? Formatter.formatShortFileSize(context, progress.bytes) : null);
+                    if (!mProgressBar.isIndeterminate()) {
+                        mProgressBar.setIndeterminate(true);
+                    }
+                }
+                break;
+            }
+            case PREPARING:
+                mProgressBar.setVisibility(View.VISIBLE);
+                mProgressLabel.setText(R.string.update_download_verifying);
+                mProgressPercent.setText(null);
+                if (!mProgressBar.isIndeterminate()) {
+                    mProgressBar.setIndeterminate(true);
+                }
+                break;
+            case WAITING:
+            default:
+                mProgressBar.setVisibility(View.GONE);
+                mProgressLabel.setText(R.string.update_download_waiting);
+                mProgressPercent.setText(null);
+                break;
+        }
+    }
+
+    /**
+     * The download face shows the progress ABOVE the buttons, with a gap;
+     * the install swaps the two (the 48dp progress in the 48dp row's place).
+     */
+    private void setProgressGap(boolean gap) {
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) mProgress.getLayoutParams();
+        int margin = gap ? Math.round(12 * getResources().getDisplayMetrics().density) : 0;
+        if (lp.bottomMargin != margin) {
+            lp.bottomMargin = margin;
+            mProgress.setLayoutParams(lp);
+        }
+    }
+
+    private void stopPolling() {
+        View view = getView();
+        if (view != null) {
+            view.removeCallbacks(mPoll);
+        }
+        if (mPoller != null) {
+            mPoller.shutdownNow();
+            mPoller = null;
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        stopPolling();
+        mObservingInstall = false;
+        super.onDestroyView();
     }
 
     @Override
@@ -325,9 +532,16 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
         if (mBusy == null) {
             return; // onViewCreated found nothing ready and dismissed
         }
-        // Opened on purpose while something runs: say what installing stops.
-        // Read again on every resume (a download can start or end meanwhile).
-        int line = busyLine(busyNow(requireContext()));
+        updateBusyLine();
+    }
+
+    /**
+     * Opened on purpose while something runs: say what installing stops.
+     * Read again on every resume (a download can start or end meanwhile).
+     * Only beside an Install that can be tapped.
+     */
+    private void updateBusyLine() {
+        int line = mDownloadingFace ? 0 : busyLine(busyNow(requireContext()));
         if (line != 0) {
             mBusy.setText(line);
         }
@@ -404,6 +618,8 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     }
 
     private void showPreparing(int percent) {
+        mProgressBar.setVisibility(View.VISIBLE);
+        setProgressGap(false);
         mActions.setVisibility(View.GONE);
         mBusy.setVisibility(View.GONE);
         mError.setVisibility(View.GONE);
@@ -418,6 +634,8 @@ public class UpdateAvailableSheet extends BaseBottomSheetDialogFragment {
     }
 
     private void showInstalling() {
+        mProgressBar.setVisibility(View.VISIBLE);
+        setProgressGap(false);
         mActions.setVisibility(View.GONE);
         mBusy.setVisibility(View.GONE);
         mError.setVisibility(View.GONE);

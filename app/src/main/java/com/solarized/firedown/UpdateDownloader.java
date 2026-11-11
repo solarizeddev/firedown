@@ -568,6 +568,132 @@ public final class UpdateDownloader {
         }
     }
 
+    // ── progress, for the screens that show it ───────────────────────────
+
+    /** What the update download is doing now, for About's row and the update sheet. */
+    public static final class Progress {
+
+        public enum Phase {
+            /** No update is being downloaded. */
+            NONE,
+            /** A step of the plan is downloading. */
+            DOWNLOADING,
+            /** Downloaded: being rebuilt from a patch or .xz, and verified. */
+            PREPARING,
+            /** A download failed; the next try waits out its backoff. */
+            WAITING
+        }
+
+        public static final Progress NONE = new Progress(Phase.NONE, 0L, 0L, -1, "");
+
+        public final Phase phase;
+        /** Bytes of the current step on disk (DOWNLOADING only). */
+        public final long bytes;
+        /** The current step's size, 0 when unknown. */
+        public final long total;
+        public final int versionCode;
+        /** "" when unknown. */
+        public final String name;
+
+        Progress(Phase phase, long bytes, long total, int versionCode, String name) {
+            this.phase = phase;
+            this.bytes = bytes;
+            this.total = total;
+            this.versionCode = versionCode;
+            this.name = name == null ? "" : name;
+        }
+
+        /** 0–100, or -1 when the size is unknown. */
+        public int percent() {
+            if (phase != Phase.DOWNLOADING || total <= 0) {
+                return -1;
+            }
+            return (int) Math.min(100L, Math.max(0L, bytes * 100L / total));
+        }
+
+        public boolean active() {
+            return phase != Phase.NONE;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof Progress)) {
+                return false;
+            }
+            Progress p = (Progress) o;
+            return phase == p.phase && bytes == p.bytes && total == p.total
+                    && versionCode == p.versionCode && name.equals(p.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return phase.hashCode() * 31 + Long.hashCode(bytes) * 17 + versionCode;
+        }
+    }
+
+    /**
+     * What the update download is doing now. The size is the current STEP's
+     * (a patch falling back to the APK starts again at 0 of a bigger size),
+     * never a total over the plan. Off the main thread: a Download Manager
+     * download is a query to its provider.
+     */
+    public static Progress progress(Context context) {
+        Pending pending;
+        long finalizingAt;
+        synchronized (LOCK) {
+            pending = readPendingLocked(context);
+            finalizingAt = prefs(context).getLong(Keys.UPDATE_DOWNLOAD_FINALIZING_AT, 0L);
+        }
+        if (pending == null) {
+            SharedPreferences p = prefs(context);
+            int failed = p.getInt(Keys.UPDATE_FAILED_VERSION_CODE, -1);
+            if (failed > App.getVersionCode() && isBackingOff(context, failed)) {
+                String name = p.getInt(Keys.UPDATE_CHANGELOG_VERSION_CODE, -1) == failed
+                        ? p.getString(Keys.UPDATE_CHANGELOG_NAME, "") : "";
+                return new Progress(Progress.Phase.WAITING, 0L, 0L, failed, name);
+            }
+            return Progress.NONE;
+        }
+        long total = pending.plan.current().size;
+        if (finalizingAt != 0L) {
+            return new Progress(Progress.Phase.PREPARING, 0L, total, pending.versionCode, pending.name);
+        }
+        long id = pending.downloadId;
+        if (isDirect(id)) {
+            if (prefs(context).getLong(Keys.UPDATE_DIRECT_DONE, 0L) == id) {
+                return new Progress(Progress.Phase.PREPARING, 0L, total, pending.versionCode, pending.name);
+            }
+            long bytes = directPartFile(context, id).length();
+            return new Progress(Progress.Phase.DOWNLOADING, bytes, total, pending.versionCode, pending.name);
+        }
+        DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (dm == null) {
+            return new Progress(Progress.Phase.DOWNLOADING, 0L, total, pending.versionCode, pending.name);
+        }
+        DownloadManager.Query query = new DownloadManager.Query().setFilterById(id);
+        try (Cursor cursor = dm.query(query)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int statusCol = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                int bytesCol = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
+                int totalCol = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
+                int status = statusCol >= 0 ? cursor.getInt(statusCol) : -1;
+                if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                    return new Progress(Progress.Phase.PREPARING, 0L, total, pending.versionCode, pending.name);
+                }
+                long bytes = bytesCol >= 0 ? Math.max(0L, cursor.getLong(bytesCol)) : 0L;
+                long reported = totalCol >= 0 ? cursor.getLong(totalCol) : -1L;
+                if (reported > 0) {
+                    total = reported;
+                }
+                return new Progress(Progress.Phase.DOWNLOADING, bytes, total, pending.versionCode, pending.name);
+            }
+        } catch (RuntimeException e) {
+            // A Download Manager disabled after the download was recorded.
+            Log.w(TAG, "could not read download " + id, e);
+        }
+        return new Progress(Progress.Phase.DOWNLOADING, 0L, total, pending.versionCode, pending.name);
+    }
+
     // ── direct downloads (UpdateDirectDownload) ──────────────────────────
 
     /** True for the id of a direct download: negative, and never -1 ("none"). */

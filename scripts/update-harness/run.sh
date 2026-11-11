@@ -238,6 +238,8 @@ if [ "${MUTANTS:-1}" != 0 ]; then
     fmutant 'a claim from the future is believed' $D 's/return age > -CLAIM_CLOCK_SLACK_MS && age < FINALIZE_CLAIM_MS;/return age < FINALIZE_CLAIM_MS;/'
     fmutant 'a cleared ready record leaves its notification' $D 's/\n(\s*)UpdateNotification\.cancelInstallProgress\(context\);\n/\n/'
     fmutant 'one sighting drops a pulled release' $D 's/if \(now - seenAt < PULLED_CONFIRM_MS\) \{/if (false) {/'
+    fmutant 'a finished download reads as downloading' $D 's/if \(status == DownloadManager\.STATUS_SUCCESSFUL\) \{\n(\s*)return new Progress\(Progress\.Phase\.PREPARING/if (false) {\n$1return new Progress(Progress.Phase.PREPARING/'
+    fmutant 'progress ignores the Download Manager'"'"'s size' $D 's/if \(reported > 0\) \{\n(\s*)total = reported;/if (false) {\n$1total = reported;/'
     fmutant 'a disabled DownloadManager throws out of clearPending' $D 's/\} catch \(RuntimeException e\) \{\n(\s*)\/\/ The Download Manager app disabled/} catch (IllegalStateException e) {\n$1\/\/ The Download Manager app disabled/'
     fmutant 'a refused Download Manager download is not downloaded directly' $D 's/if \(direct\) \{\n(\s*)downloadId = newDirectId\(\);/if (direct) {\n$1return;/'
     fmutant 'a direct download in flight is started again' $D 's/UpdateDirectDownloadWorker\.enqueue\(context, previousId\);\n(\s*)return true;/return false;/'

@@ -986,6 +986,13 @@
     <string name="update_check_up_to_date">У вас последняя версия</string>
     <string name="update_check_found">Найдено обновление %1$s. Вы получите уведомление, когда оно будет готово</string>
     <string name="update_check_failed">Не удалось проверить обновления. Повторите попытку позже.</string>
+    <string name="update_downloading_title">Загрузка обновления</string>
+    <string name="update_sheet_hide">Скрыть</string>
+    <string name="update_downloading_label">Загрузка…</string>
+    <string name="update_download_progress">%1$s из %2$s</string>
+    <string name="update_download_verifying">Проверка загрузки…</string>
+    <string name="update_download_waiting">Загрузка приостановлена. Firedown попробует снова позже.</string>
+    <string name="update_check_offline">Нет подключения. Подключитесь и повторите попытку.</string>
     <string name="settings_tabs_archive_duplicates_title">Архивировать дубликаты вкладок</string>
     <string name="settings_tabs_archive_duplicates_summary">Копии одной и той же страницы архивируются, остаётся только последняя использованная вкладка.</string>
     <string name="settings_tabs_archive_retention_note">Архивированные вкладки хранятся %1$d дн. (до %2$d), затем удаляются.</string>

@@ -1186,6 +1186,13 @@
     <string name="update_busy_playback">Việc phát sẽ dừng khi Firedown đóng.</string>
     <string name="update_available_sheet_whats_new">Có gì mới</string>
     <string name="update_check_failed">Không thể kiểm tra cập nhật. Hãy thử lại sau.</string>
+    <string name="update_downloading_title">Đang tải bản cập nhật</string>
+    <string name="update_sheet_hide">Ẩn</string>
+    <string name="update_downloading_label">Đang tải…</string>
+    <string name="update_download_progress">%1$s / %2$s</string>
+    <string name="update_download_verifying">Đang kiểm tra bản tải xuống…</string>
+    <string name="update_download_waiting">Đã tạm dừng tải xuống. Firedown sẽ thử lại sau.</string>
+    <string name="update_check_offline">Không có kết nối. Hãy kết nối rồi thử lại.</string>
     <string name="update_check_found">Đã tìm thấy bản cập nhật %1$s. Bạn sẽ được thông báo khi bản cập nhật sẵn sàng</string>
     <string name="update_check_running">Đang kiểm tra cập nhật…</string>
     <string name="update_check_up_to_date">Bạn đang dùng phiên bản mới nhất</string>

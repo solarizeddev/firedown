@@ -26,13 +26,13 @@
          update" (+ the waiting version as summary) whenever a verified APK
          is already on disk, which makes it the app's standing "an update is
          waiting" surface. See that method for why it lives here and not on
-         the home screen. -->
-    <Preference
+         the home screen. A BusyPreference for the spinner while a check runs;
+         while an update downloads the row shows it ("Downloading update",
+         "1.2.9 · 42% of 19 MB") and a tap opens the update sheet on it. -->
+    <com.solarized.firedown.settings.ui.BusyPreference
         android:key="com.solarized.firedown.preferences.about.update.check"
         android:title="@string/settings_update_check_title"
-        android:icon="@drawable/ic_refresh_24">
-
-    </Preference>
+        android:icon="@drawable/ic_refresh_24" />
 
     <!-- Folded in from the root Settings screen (the Fenix pattern — About
          carries the legal links): a once-ever row that doesn't earn root

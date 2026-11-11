@@ -64,7 +64,10 @@
                 android:importantForAccessibility="no"
                 app:srcCompat="@drawable/ill_small_install" />
 
+            <!-- "Update ready", or "Downloading update" in the download face
+                 (UpdateAvailableSheet.bindDownloadingFace). -->
             <TextView
+                android:id="@+id/update_sheet_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="24dp"
@@ -147,6 +150,11 @@
       the button row (48dp) swaps with the progress (48dp), so the sheet
       doesn't jump. A failure brings the buttons back with the error line
       above them.
+
+      Opened from About's check while the update still downloads, the same
+      footer shows the download ABOVE the buttons (a 12dp gap set in code),
+      "Not now" reads "Hide" and Install waits, disabled, until the update
+      has been checked; then the sheet becomes the ready face in place.
     -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -198,31 +206,6 @@
             android:textColor="?attr/colorOnSurfaceVariant" />
 
         <LinearLayout
-            android:id="@+id/update_sheet_actions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:minHeight="48dp"
-            android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/update_sheet_not_now"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:text="@string/translate_not_now" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/update_sheet_install"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/update_available_sheet_install" />
-
-        </LinearLayout>
-
-        <LinearLayout
             android:id="@+id/update_sheet_progress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -272,6 +255,31 @@
                 app:trackCornerRadius="50%"
                 app:trackStopIndicatorSize="0dp"
                 app:trackThickness="5dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/update_sheet_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/update_sheet_not_now"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="@string/translate_not_now" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/update_sheet_install"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/update_available_sheet_install" />
 
         </LinearLayout>
 

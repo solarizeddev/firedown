@@ -928,6 +928,13 @@
     <string name="update_check_up_to_date">Sinulla on uusin versio</string>
     <string name="update_check_found">Päivitys %1$s löytyi. Saat ilmoituksen, kun se on valmis</string>
     <string name="update_check_failed">Päivitysten tarkistus epäonnistui. Yritä myöhemmin uudelleen.</string>
+    <string name="update_downloading_title">Ladataan päivitystä</string>
+    <string name="update_sheet_hide">Piilota</string>
+    <string name="update_downloading_label">Ladataan…</string>
+    <string name="update_download_progress">%1$s / %2$s</string>
+    <string name="update_download_verifying">Tarkistetaan latausta…</string>
+    <string name="update_download_waiting">Lataus on keskeytetty. Firedown yrittää myöhemmin uudelleen.</string>
+    <string name="update_check_offline">Ei yhteyttä. Muodosta yhteys ja yritä uudelleen.</string>
     <string name="settings_tabs_archive_duplicates_title">Arkistoi päällekkäiset välilehdet</string>
     <string name="settings_tabs_archive_duplicates_summary">Saman sivun kopiot arkistoidaan; vain viimeksi käytetty välilehti säilytetään.</string>
     <string name="settings_tabs_archive_retention_note">Arkistoidut välilehdet säilytetään %1$d päivää (enintään %2$d), minkä jälkeen ne poistetaan.</string>

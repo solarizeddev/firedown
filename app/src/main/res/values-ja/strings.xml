@@ -1056,6 +1056,13 @@
     <string name="update_check_up_to_date">最新バージョンです</string>
     <string name="update_check_found">アップデート %1$s が見つかりました。準備ができたら通知されます</string>
     <string name="update_check_failed">アップデートを確認できませんでした。後でもう一度お試しください。</string>
+    <string name="update_downloading_title">アップデートをダウンロード中</string>
+    <string name="update_sheet_hide">非表示</string>
+    <string name="update_downloading_label">ダウンロード中…</string>
+    <string name="update_download_progress">%1$s / %2$s</string>
+    <string name="update_download_verifying">ダウンロードを確認しています…</string>
+    <string name="update_download_waiting">ダウンロードは一時停止中です。Firedown が後でもう一度試します。</string>
+    <string name="update_check_offline">接続されていません。接続してからもう一度お試しください。</string>
     <string name="cert_no_certificate">証明書なし</string>
     <string name="cert_no_certificate_detail">接続が確立されなかったため、サイトは証明書を提示しませんでした。</string>
     <string name="capture_copy_url">URLをコピー</string>

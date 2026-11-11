@@ -17,6 +17,8 @@ public class DownloadManager {
     public static final String ACTION_DOWNLOAD_COMPLETE = "android.intent.action.DOWNLOAD_COMPLETE";
     public static final String EXTRA_DOWNLOAD_ID = "extra_download_id";
     public static final String COLUMN_STATUS = "status";
+    public static final String COLUMN_BYTES_DOWNLOADED_SO_FAR = "bytes_so_far";
+    public static final String COLUMN_TOTAL_SIZE_BYTES = "total_size";
     public static final int STATUS_PENDING = 1;
     public static final int STATUS_RUNNING = 2;
     public static final int STATUS_PAUSED = 4;
@@ -28,6 +30,9 @@ public class DownloadManager {
         public final String url;
         public final File dest;
         public int status = STATUS_RUNNING;
+        /** What the row reports while it runs; -1 = not known yet (the real default). */
+        public long bytes;
+        public long total = -1;
         Row(long id, String url, File dest) { this.id = id; this.url = url; this.dest = dest; }
     }
 
@@ -57,8 +62,14 @@ public class DownloadManager {
         Row row = rows.get(query.id);
         return new Cursor() {
             public boolean moveToFirst() { return row != null; }
-            public int getColumnIndex(String name) { return COLUMN_STATUS.equals(name) ? 0 : -1; }
+            public int getColumnIndex(String name) {
+                if (COLUMN_STATUS.equals(name)) return 0;
+                if (COLUMN_BYTES_DOWNLOADED_SO_FAR.equals(name)) return 1;
+                if (COLUMN_TOTAL_SIZE_BYTES.equals(name)) return 2;
+                return -1;
+            }
             public int getInt(int column) { return row.status; }
+            public long getLong(int column) { return column == 1 ? row.bytes : column == 2 ? row.total : row.status; }
             public void close() { }
         };
     }

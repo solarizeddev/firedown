@@ -1009,6 +1009,19 @@
     <string name="update_check_up_to_date">You\'re up to date</string>
     <string name="update_check_found">Update %1$s found. You\'ll be notified when it\'s ready</string>
     <string name="update_check_failed">Couldn\'t check for updates. Try again later.</string>
+    <!-- While an update downloads: About's row title and the update sheet's
+         title ("Downloading update"), the sheet's dismiss button (the
+         download goes on), and the progress line ("8 MB of 19 MB" in the
+         sheet, "42% of 19 MB" on the row: %1$s is the part done, %2$s the
+         size). Verifying = the downloaded file being rebuilt and checked;
+         waiting = a failed download's retry is scheduled. -->
+    <string name="update_downloading_title">Downloading update</string>
+    <string name="update_sheet_hide">Hide</string>
+    <string name="update_downloading_label">Downloading…</string>
+    <string name="update_download_progress">%1$s of %2$s</string>
+    <string name="update_download_verifying">Checking the download…</string>
+    <string name="update_download_waiting">Download paused. Firedown tries again later.</string>
+    <string name="update_check_offline">No connection. Connect and try again.</string>
     <string name="vault_decrypting">Decrypting file, please wait…</string>
     <string name="vault_encrypting">Encrypting file, please wait…</string>
     <string name="vault_unsupported">Can\'t open this file here. Move it out of Safe Folder first.</string>

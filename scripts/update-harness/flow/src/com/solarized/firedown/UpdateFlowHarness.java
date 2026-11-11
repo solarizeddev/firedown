@@ -102,6 +102,7 @@ public final class UpdateFlowHarness {
         aDirectDownloadInFlightIsNotStartedTwice();
         everyDirectStepFailingBacksOff();
         contentRangeParsing();
+        progressFollowsTheDownload();
 
         System.out.println("update-flow: " + pass + " passed, " + fail + " failed");
         System.exit(fail == 0 ? 0 : 1);
@@ -947,6 +948,56 @@ public final class UpdateFlowHarness {
             }
         }
         return true;
+    }
+
+    // ── progress (About's row and the update sheet's download face) ──────
+
+    private static void progressFollowsTheDownload() throws Exception {
+        String s = "progress: ";
+        phone();
+        check(UpdateDownloader.progress(ctx).phase == UpdateDownloader.Progress.Phase.NONE,
+                s + "nothing downloading reads as none");
+        startUpdate(manifest());
+        DownloadManager.Row row = current();
+        row.bytes = 1000;
+        UpdateDownloader.Progress p = UpdateDownloader.progress(ctx);
+        check(p.phase == UpdateDownloader.Progress.Phase.DOWNLOADING && p.bytes == 1000
+                        && p.total == patch.length && p.versionCode == 1206 && p.name.equals("Firedown 1.2.6"),
+                s + "a running download: its bytes, and the step's size from status.json until the row knows one");
+        row.total = 5000;
+        p = UpdateDownloader.progress(ctx);
+        check(p.total == 5000 && p.percent() == 20, s + "the size the Download Manager reports wins");
+        finish(row);
+        check(UpdateDownloader.progress(ctx).phase == UpdateDownloader.Progress.Phase.PREPARING,
+                s + "a finished download not yet claimed reads as preparing");
+        check(UpdateDownloader.beginFinalize(ctx, row.id) != null
+                        && UpdateDownloader.progress(ctx).phase == UpdateDownloader.Progress.Phase.PREPARING,
+                s + "and while it is rebuilt and checked");
+        runWorker(row.id);
+        check(UpdateDownloader.isVerifiedReady(ctx, 1206)
+                        && UpdateDownloader.progress(ctx).phase == UpdateDownloader.Progress.Phase.NONE,
+                s + "ready: no download any more");
+
+        phone();
+        dm.disabled = true;
+        startUpdate(manifest());
+        long id = recordedId();
+        Files.write(UpdateDownloader.directPartFile(ctx, id).toPath(), new byte[300]);
+        p = UpdateDownloader.progress(ctx);
+        check(p.phase == UpdateDownloader.Progress.Phase.DOWNLOADING && p.bytes == 300 && p.total == patch.length,
+                s + "a direct download: its part file's length, with the Download Manager disabled");
+
+        phone();
+        UpdateDownloader.setChangelog(ctx, 1206, "Firedown 1.2.6", "");
+        prefs().edit().putInt(Keys.UPDATE_FAILED_VERSION_CODE, 1206)
+                .putLong(Keys.UPDATE_NEXT_RETRY_AT, System.currentTimeMillis() + 60L * 60L * 1000L).apply();
+        p = UpdateDownloader.progress(ctx);
+        check(p.phase == UpdateDownloader.Progress.Phase.WAITING && p.versionCode == 1206
+                        && p.name.equals("Firedown 1.2.6"),
+                s + "a failed download waiting for its retry reads as waiting, named");
+        prefs().edit().putInt(Keys.UPDATE_FAILED_VERSION_CODE, 1205).apply();
+        check(UpdateDownloader.progress(ctx).phase == UpdateDownloader.Progress.Phase.NONE,
+                s + "a backoff for the installed version is not an update waiting");
     }
 
     // ── the phone, the server, the steps ─────────────────────────────────

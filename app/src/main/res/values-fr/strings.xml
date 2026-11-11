@@ -1069,6 +1069,13 @@
     <string name="update_check_up_to_date">Vous êtes à jour</string>
     <string name="update_check_found">Mise à jour %1$s trouvée. Vous serez averti lorsqu\'elle sera prête</string>
     <string name="update_check_failed">Impossible de rechercher des mises à jour. Réessayez plus tard.</string>
+    <string name="update_downloading_title">Téléchargement de la mise à jour</string>
+    <string name="update_sheet_hide">Masquer</string>
+    <string name="update_downloading_label">Téléchargement…</string>
+    <string name="update_download_progress">%1$s sur %2$s</string>
+    <string name="update_download_verifying">Vérification du téléchargement…</string>
+    <string name="update_download_waiting">Téléchargement en pause. Firedown réessaiera plus tard.</string>
+    <string name="update_check_offline">Pas de connexion. Connectez-vous et réessayez.</string>
     <string name="cert_no_certificate">Aucun certificat</string>
     <string name="cert_no_certificate_detail">La connexion n\'a jamais été établie, le site n\'a donc présenté aucun certificat.</string>
     <string name="capture_copy_url">Copier l\'URL</string>

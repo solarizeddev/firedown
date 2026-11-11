@@ -1185,6 +1185,13 @@
     <string name="update_busy_playback">Pemutaran berhenti saat Firedown tertutup.</string>
     <string name="update_available_sheet_whats_new">Yang baru</string>
     <string name="update_check_failed">Tidak dapat memeriksa pembaruan. Coba lagi nanti.</string>
+    <string name="update_downloading_title">Mengunduh pembaruan</string>
+    <string name="update_sheet_hide">Sembunyikan</string>
+    <string name="update_downloading_label">Mengunduh…</string>
+    <string name="update_download_progress">%1$s dari %2$s</string>
+    <string name="update_download_verifying">Memeriksa unduhan…</string>
+    <string name="update_download_waiting">Unduhan dijeda. Firedown akan mencoba lagi nanti.</string>
+    <string name="update_check_offline">Tidak ada koneksi. Sambungkan lalu coba lagi.</string>
     <string name="update_check_found">Pembaruan %1$s ditemukan. Anda akan diberi tahu saat siap</string>
     <string name="update_check_running">Memeriksa pembaruan…</string>
     <string name="update_check_up_to_date">Anda menggunakan versi terbaru</string>

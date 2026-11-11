@@ -5281,6 +5281,33 @@ is **~75 MB**, the APK 205 MB.
   and Not now, Not now snoozes and the recreated screen stays quiet, a
   queued task holds it back and the on-purpose open names the task and
   writes no snooze). Written for 1.2.8; not run on a device at write time.
+- **About's "Check for updates" shows the download, on its row and in the
+  update sheet** (2026-11, canvas "Check for updates", A + B; reviewed with
+  Fable, who argued against a modal progress dialog: the download runs in
+  the background for seconds to minutes and survives leaving Settings).
+  `UpdateDownloader.progress()` (off the main thread) reads what exists: the
+  Download Manager row's bytes and total (`COLUMN_BYTES_DOWNLOADED_SO_FAR`,
+  `COLUMN_TOTAL_SIZE_BYTES`), a direct download's part-file length, the
+  finalize claim (PREPARING), the backoff (WAITING). The size is the current
+  STEP's, never a total over the plan (a patch falling back to the APK
+  starts again at 0). About polls it each second while resumed (3 s when
+  idle) and the row follows it: "Downloading update" / "Firedown 1.2.9 · 42%
+  of 19 MB", "Checking the download…", "Download paused…", then the existing
+  Install row; a tap while it downloads opens the sheet. The check itself
+  answers on the row (BusyPreference spinner, then "You're up to date",
+  "Couldn't check…", announced to TalkBack; no snackbars), and decides
+  "No connection" BEFORE queueing: the check waits for a network, and
+  offline it sat queued with nothing on screen and the guard stuck. A found
+  update opens `UpdateAvailableSheet.openDownloading` (on purpose: no
+  snooze): the same sheet titled "Downloading update", the download above
+  the buttons, "Hide" for Not now, Install disabled; it polls each second
+  and turns into the ready face IN PLACE when the verified APK lands (one
+  sheet, never a second surface). The download face never shows the busy
+  line. The download stays hidden from the notification shade
+  (`VISIBILITY_HIDDEN`), as before. Pinned by the flow harness's
+  `progress:` checks and two mutants (a finished download read as
+  downloading, the Download Manager's size ignored); the screens are
+  on-device unverified at write time.
 - **The install tap shows its progress; the download and the rebuild don't**
   (`UpdateInstallProgress`, published through `UpdateInstaller.state()`).
   Download, rebuild and checks finish before the user hears of the update, so

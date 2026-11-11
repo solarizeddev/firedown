@@ -869,6 +869,13 @@
     <string name="update_check_up_to_date">Sul on uusim versioon</string>
     <string name="update_check_found">Leiti uuendus %1$s. Saad teate, kui see on valmis</string>
     <string name="update_check_failed">Uuenduste kontroll ebaõnnestus. Proovi hiljem uuesti.</string>
+    <string name="update_downloading_title">Värskenduse allalaadimine</string>
+    <string name="update_sheet_hide">Peida</string>
+    <string name="update_downloading_label">Allalaadimine…</string>
+    <string name="update_download_progress">%1$s / %2$s</string>
+    <string name="update_download_verifying">Allalaaditu kontrollimine…</string>
+    <string name="update_download_waiting">Allalaadimine on peatatud. Firedown proovib hiljem uuesti.</string>
+    <string name="update_check_offline">Ühendus puudub. Loo ühendus ja proovi uuesti.</string>
     <string name="player_error_unsupported_format">See seade ei suuda selle video vormingut dekodeerida.</string>
     <string name="settings_tabs_archive_duplicates_title">Arhiveeri duplikaatvahelehed</string>
     <string name="settings_tabs_archive_duplicates_summary">Sama lehe koopiad arhiveeritakse; alles jääb ainult viimati kasutatud vaheleht.</string>

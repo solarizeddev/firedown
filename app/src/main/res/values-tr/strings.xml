@@ -970,6 +970,13 @@
     <string name="update_check_up_to_date">En son sürüme sahipsiniz</string>
     <string name="update_check_found">%1$s güncellemesi bulundu. Hazır olduğunda bildirim alacaksınız</string>
     <string name="update_check_failed">Güncellemeler kontrol edilemedi. Daha sonra tekrar deneyin.</string>
+    <string name="update_downloading_title">Güncelleme indiriliyor</string>
+    <string name="update_sheet_hide">Gizle</string>
+    <string name="update_downloading_label">İndiriliyor…</string>
+    <string name="update_download_progress">%1$s / %2$s</string>
+    <string name="update_download_verifying">İndirilen dosya denetleniyor…</string>
+    <string name="update_download_waiting">İndirme duraklatıldı. Firedown daha sonra yeniden deneyecek.</string>
+    <string name="update_check_offline">Bağlantı yok. Bağlanıp yeniden deneyin.</string>
     <string name="settings_tabs_archive_duplicates_title">Yinelenen sekmeleri arşivle</string>
     <string name="settings_tabs_archive_duplicates_summary">Aynı sayfanın kopyaları arşivlenir; yalnızca en son kullanılan sekme tutulur.</string>
     <string name="settings_tabs_archive_retention_note">Arşivlenen sekmeler %1$d gün (en fazla %2$d) tutulur, ardından kaldırılır.</string>

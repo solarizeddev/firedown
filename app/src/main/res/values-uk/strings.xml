@@ -915,6 +915,13 @@
     <string name="update_check_up_to_date">У вас найновіша версія</string>
     <string name="update_check_found">Знайдено оновлення %1$s. Ви отримаєте сповіщення, коли воно буде готове</string>
     <string name="update_check_failed">Не вдалося перевірити оновлення. Спробуйте пізніше.</string>
+    <string name="update_downloading_title">Завантаження оновлення</string>
+    <string name="update_sheet_hide">Сховати</string>
+    <string name="update_downloading_label">Завантаження…</string>
+    <string name="update_download_progress">%1$s з %2$s</string>
+    <string name="update_download_verifying">Перевірка завантаження…</string>
+    <string name="update_download_waiting">Завантаження призупинено. Firedown спробує знову пізніше.</string>
+    <string name="update_check_offline">Немає з’єднання. Підключіться та спробуйте ще раз.</string>
     <string name="settings_tabs_archive_duplicates_title">Архівувати дублікати вкладок</string>
     <string name="settings_tabs_archive_duplicates_summary">Копії однієї сторінки архівуються, залишається лише остання використана вкладка.</string>
     <string name="settings_tabs_archive_retention_note">Архівовані вкладки зберігаються %1$d дн. (до %2$d), потім видаляються.</string>

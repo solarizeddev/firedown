@@ -891,6 +891,13 @@
     <string name="update_check_up_to_date">Разполагате с най-новата версия</string>
     <string name="update_check_found">Намерено е обновление %1$s. Ще бъдете уведомени, когато е готово</string>
     <string name="update_check_failed">Проверката за обновления е неуспешна. Опитайте отново по-късно.</string>
+    <string name="update_downloading_title">Изтегляне на актуализацията</string>
+    <string name="update_sheet_hide">Скрий</string>
+    <string name="update_downloading_label">Изтегляне…</string>
+    <string name="update_download_progress">%1$s от %2$s</string>
+    <string name="update_download_verifying">Проверка на изтегленото…</string>
+    <string name="update_download_waiting">Изтеглянето е на пауза. Firedown ще опита отново по-късно.</string>
+    <string name="update_check_offline">Няма връзка. Свържете се и опитайте отново.</string>
     <string name="player_error_unsupported_format">Това устройство не може да декодира формата на това видео.</string>
     <string name="settings_tabs_archive_duplicates_title">Архивиране на дублирани раздели</string>
     <string name="settings_tabs_archive_duplicates_summary">Копията на една и съща страница се архивират; остава само последно използваният раздел.</string>

@@ -1064,6 +1064,13 @@
     <string name="update_check_up_to_date">Du bist auf dem neuesten Stand</string>
     <string name="update_check_found">Update %1$s gefunden. Du wirst benachrichtigt, sobald es bereit ist</string>
     <string name="update_check_failed">Updateprüfung fehlgeschlagen. Versuche es später erneut.</string>
+    <string name="update_downloading_title">Update wird heruntergeladen</string>
+    <string name="update_sheet_hide">Ausblenden</string>
+    <string name="update_downloading_label">Wird heruntergeladen…</string>
+    <string name="update_download_progress">%1$s von %2$s</string>
+    <string name="update_download_verifying">Download wird geprüft…</string>
+    <string name="update_download_waiting">Download pausiert. Firedown versucht es später erneut.</string>
+    <string name="update_check_offline">Keine Verbindung. Verbinde dich und versuche es erneut.</string>
     <string name="cert_no_certificate">Kein Zertifikat</string>
     <string name="cert_no_certificate_detail">Die Verbindung kam nie zustande, daher hat die Website kein Zertifikat vorgelegt.</string>
     <string name="capture_copy_url">URL kopieren</string>
