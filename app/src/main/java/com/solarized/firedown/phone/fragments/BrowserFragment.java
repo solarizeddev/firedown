@@ -188,6 +188,13 @@ public class BrowserFragment extends BaseBrowserFragment
     /** The tab whose video went to the PiP window. */
     @Nullable
     private GeckoState mPipTab;
+    /**
+     * The session told it is in a PiP window (applyPipMode), null when none.
+     * The flag lives in that tab's content process: one left set would keep
+     * its videos pinned over the page after the window is gone.
+     */
+    @Nullable
+    private GeckoSession mPipModeSession;
 
     // ── Toolbar scroll policy (Fenix ToolbarBehaviorController equivalent) ───────────────────────
     //
@@ -1353,6 +1360,9 @@ public class BrowserFragment extends BaseBrowserFragment
             mSwipeRefreshLayout.setOnRefreshListener(null);
             mSwipeRefreshLayout.setOnChildScrollUpCallback(null);
         }
+        // The session outlives this view: it must not keep the PiP layout
+        // (a recreate inside the window sets it again on the new view).
+        applyPipMode(false);
         if (mGeckoView != null) {
             Log.d(TAG, "onDestroyView: current viewSession=" + mGeckoView.getSession());
             mGeckoView.releaseSession();
@@ -1930,6 +1940,7 @@ public class BrowserFragment extends BaseBrowserFragment
      */
     public void onPictureInPictureEntered() {
         mPipTab = peekCurrentGeckoState();
+        applyPipMode(true);
         if (mFullScreenHint != null) {
             mFullScreenHint.dismiss();
             mFullScreenHint = null;
@@ -1943,6 +1954,7 @@ public class BrowserFragment extends BaseBrowserFragment
      * exit the page made meanwhile is applied now.
      */
     public void onPictureInPictureLeft() {
+        applyPipMode(false);
         if (!mFullScreenExitDeferred) {
             return;
         }
@@ -1969,6 +1981,46 @@ public class BrowserFragment extends BaseBrowserFragment
         }
         onFullScreen(geckoState, false);
         mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
+    }
+
+    /**
+     * Tells the page on screen whether it is in a PiP window, as Firefox does
+     * (CompositorController.onPipModeChanged). Gecko then lays the page's
+     * {@code <video>} over the whole window (html.css, the
+     * -moz-in-android-pip-mode rule) instead of the page shrunk into it: the
+     * small window shows the picture, not the site's player UI laid out for a
+     * phone screen. Only one session holds the flag; it is cleared from the
+     * one that had it before any other gets it.
+     */
+    private void applyPipMode(boolean inPip) {
+        GeckoSession target = inPip && mGeckoView != null ? mGeckoView.getSession() : null;
+        if (target == mPipModeSession) {
+            return;
+        }
+        if (mPipModeSession != null) {
+            notifyPipMode(mPipModeSession, false);
+            mPipModeSession = null;
+        }
+        if (target != null && notifyPipMode(target, true)) {
+            mPipModeSession = target;
+        }
+    }
+
+    private static boolean notifyPipMode(GeckoSession session, boolean inPip) {
+        if (!session.isOpen()) {
+            return false;
+        }
+        if (BuildConfig.DEBUG) {
+            Log.d("MediaTrace", "compositor pip mode " + inPip);
+        }
+        try {
+            session.getCompositorController().onPipModeChanged(inPip);
+            return true;
+        } catch (RuntimeException e) {
+            // No compositor attached yet: the window keeps the page as laid out.
+            Log.w(TAG, "onPipModeChanged", e);
+            return false;
+        }
     }
 
     /** The chrome back from page fullscreen: bars, layout, system bars, rotation. */
@@ -3427,6 +3479,9 @@ public class BrowserFragment extends BaseBrowserFragment
         // setActive is idempotent, so asserting it here is safe and removes
         // that dependency.
         newSession.setActive(true);
+        // A session attached while in a PiP window (a recreate in the window,
+        // another tab put on screen) is the one in the window now.
+        applyPipMode(mActivity.isInPictureInPictureMode());
         // Every attach, the plain tab switch included (an open session skips
         // applyOpenUriUi): the window's cutout mode is the tab's own.
         applyViewportFit(geckoState.getViewportFit());

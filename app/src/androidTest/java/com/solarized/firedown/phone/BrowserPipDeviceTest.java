@@ -602,6 +602,25 @@ public class BrowserPipDeviceTest {
                 probeValue(second, "raf") > probeValue(first, "raf"));
         assertTrue("the page paused its video. " + report, probeValue(second, "pz") == 0);
         assertTrue("the video stopped in the PiP window. " + report, mMedia.isPlaying(tab.getEntityId()));
+        // Gecko's PiP layout (the page told it is in the window) lays the
+        // video over the whole window, whatever size the page gave it.
+        assertTrue("the video does not fill the PiP window. " + report,
+                probeSize(second, "vr").equals(probeSize(second, "vp")));
+    }
+
+    /** A "WxH" value from the probe page's title, "" when absent. */
+    private static String probeSize(String title, String key) {
+        if (title == null) {
+            return "";
+        }
+        String marker = " " + key + "=";
+        int at = title.indexOf(marker);
+        if (at < 0) {
+            return "";
+        }
+        int start = at + marker.length();
+        int end = title.indexOf(' ', start);
+        return title.substring(start, end < 0 ? title.length() : end);
     }
 
     private String currentTitle() {
@@ -1140,6 +1159,9 @@ public class BrowserPipDeviceTest {
                     + "document.addEventListener('fullscreenchange', function () {"
                     + "  if (!q.has('probe') || !document.fullscreenElement) return;"
                     + "  probing = true;"
+                    // A player sizes its video in pixels for the fullscreen it
+                    // entered and does not follow the window (mobile YouTube).
+                    + "  v.style.width = innerWidth + 'px'; v.style.height = innerHeight + 'px';"
                     + "  if (!q.has('nolock')) { lock(); setTimeout(lock, 800); }"
                     + "});"
                     + "if (q.has('probe')) setInterval(function () {"
@@ -1149,6 +1171,8 @@ public class BrowserPipDeviceTest {
                     + "    + ' vp=' + innerWidth + 'x' + innerHeight + ' rs=' + resizes"
                     + "    + ' sc=' + screen.width + 'x' + screen.height + ' dpr=' + devicePixelRatio"
                     + "    + ' so=' + (screen.orientation ? screen.orientation.type : '?')"
+                    + "    + ' vr=' + Math.round(v.getBoundingClientRect().width) + 'x'"
+                    + "    + Math.round(v.getBoundingClientRect().height)"
                     + "    + ' fs=' + !!document.fullscreenElement + ' t=' + Math.round(performance.now());"
                     + "}, 500);"
                     + "document.title = 'ready';"
