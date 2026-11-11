@@ -116,6 +116,11 @@ public class Keys {
     public static final String UPDATE_CHANGELOG_VERSION_CODE = "com.solarized.firedown.UPDATE_CHANGELOG_VERSION_CODE";
     public static final String UPDATE_CHANGELOG_TEXT = "com.solarized.firedown.UPDATE_CHANGELOG_TEXT";
     public static final String UPDATE_CHANGELOG_NAME = "com.solarized.firedown.UPDATE_CHANGELOG_NAME";
+    // The notes of the version being downloaded or ready to install, kept when
+    // a newer status.json replaces the slot above (its sheet would otherwise
+    // show none).
+    public static final String UPDATE_CHANGELOG_KEPT_VERSION_CODE = "com.solarized.firedown.UPDATE_CHANGELOG_KEPT_VERSION_CODE";
+    public static final String UPDATE_CHANGELOG_KEPT_TEXT = "com.solarized.firedown.UPDATE_CHANGELOG_KEPT_TEXT";
 
     public static final String GIF_START_MS = "com.solarized.firedown.GIF_START_MS";
     public static final String GIF_END_MS = "com.solarized.firedown.GIF_END_MS";

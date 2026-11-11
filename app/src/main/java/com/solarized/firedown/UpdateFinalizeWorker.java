@@ -4,8 +4,10 @@ import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
+import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
@@ -58,6 +60,17 @@ public class UpdateFinalizeWorker extends Worker {
                 .build();
         WorkManager.getInstance(context).enqueueUniqueWork(
                 "update_finalize_" + downloadId, ExistingWorkPolicy.KEEP, request);
+    }
+
+    /** One update check, now (or as soon as there is a network). */
+    private static void enqueueCheck(Context context) {
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(UpdateWorker.class)
+                .setConstraints(new Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build())
+                .build();
+        WorkManager.getInstance(context).enqueueUniqueWork(
+                "superseded_update_check", ExistingWorkPolicy.REPLACE, request);
     }
 
     @NonNull
@@ -116,7 +129,18 @@ public class UpdateFinalizeWorker extends Worker {
         // reachable whether or not the app is open; the in-app sheet
         // (UpdateAvailableSheet, shown on resume) is the additional prominent
         // surface while the app is in use.
-        UpdateDownloader.markReady(context, downloadId, pending.versionCode, pending.name);
+        if (!UpdateDownloader.markReady(context, downloadId, pending.versionCode, pending.name)) {
+            return Result.success();
+        }
+        if (UpdateDownloader.newerReleaseSeen(context, pending.versionCode)) {
+            // A newer release came out while this one was being checked: the
+            // next check replaces it, so ask for that check now rather than
+            // announce a version about to be thrown away. Until then it stays
+            // ready, in case the newer one's files can't be had.
+            Log.d(TAG, "a newer release was seen while " + pending.versionCode + " was checked");
+            enqueueCheck(context);
+            return Result.success();
+        }
         UpdateNotification.showInstallPrompt(context, pending.name);
         return Result.success();
     }

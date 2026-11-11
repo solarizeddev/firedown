@@ -261,6 +261,11 @@ if [ "${MUTANTS:-1}" != 0 ]; then
     fmutant 'a device failure walks the plan' $W 's/UpdateDownloader\.onDeviceFailed\(context, pending\.downloadId\);\n(\s*)return Result\.success\(\);\n(\s*)\}\n(\s*)\}/UpdateDownloader.onStepFailed(context, pending.downloadId);\n$1return Result.success();\n$2}\n$3}/'
     fmutant 'a finished direct download reads as failed' $W 's/return UpdateDownloader\.isDownloadComplete\(context, downloadId\);/return !UpdateDownloader.isDirect(downloadId) \&\& UpdateDownloader.isDownloadComplete(context, downloadId);/'
     fmutant 'a wrong download skips the whole step' $W 's/downloaded\.delete\(\);\n(\s*)UpdateDownloader\.onAttemptFailed\(context, downloadId\);/downloaded.delete();\n$1UpdateDownloader.onStepFailed(context, downloadId);/'
+    fmutant 'a newer release waits for an older download' $D 's/if \(pending == null \|\| pending\.versionCode >= versionCode\) \{/if (true) {/'
+    fmutant 'a newer release replaces a download being checked' $D 's/if \(claimedAt != 0L && claimLive\(System\.currentTimeMillis\(\) - claimedAt\)\) \{\n(\s*)Log\.d/if (false) {\n$1Log.d/'
+    fmutant 'a superseded check is announced' $W 's/if \(UpdateDownloader\.newerReleaseSeen\(context, pending\.versionCode\)\) \{/if (false) {/'
+    fmutant 'the older update loses its notes' $D 's/if \(previous > 0 && previous != versionCode && changelogInUseLocked\(p, previous\)\) \{/if (false) {/'
+    fmutant 'installing an update cancels a newer download' $D 's/boolean newerPending = pending != null && pending\.versionCode > installedVersionCode;/boolean newerPending = false;/'
 fi
 
 echo "== 2. Fuzz"
