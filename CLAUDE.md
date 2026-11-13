@@ -11910,12 +11910,27 @@ X live broadcast (its `dynamic_delta.m3u8?type=live&_HLS_skip=YES`, 9
 segments, stalled after 3 s; the same URL without the directive is the full
 EVENT playlist). The extra parameter also hid the delta from the master's
 child list, so it was captured as a tile of its own. Pinned by the smoke's
-`decide:` delta checks. Known residuals of the live detection (Fable's
-review): hls.c recomputes `ctx->duration` from the master's FIRST variant
-only, so a live EVENT stream downloaded through its master at another
-quality flips to live only if that variant is still reloaded (unverified on
-a device); only `input[0]` is watched for growth; and the capture tile of a
-live EVENT playlist still shows its length so far.
+`decide:` delta checks.
+
+**Live is also said from the playlist text, before FFmpeg opens it**
+(`FFmpegMuxStrategy.isLivePlaylist` → `manager/PlaylistLiveness`, pure,
+`PlaylistLivenessTest`): the probe response the strategy already makes is
+read through an okio PEEK (nothing consumed; only when its first bytes are a
+playlist, at most 8 MB), and a media playlist with segments and no
+`#EXT-X-ENDLIST` (and not `PLAYLIST-TYPE:VOD`), or an MPD
+`type="dynamic"`, calls `onLiveStream(true)` (the sticky live flag, an
+indeterminate bar). A MASTER is answered by its first rendition, fetched once
+with the same headers (10 s call timeout), since every rendition of a stream
+is live or finished together. Why the native growth check is not enough:
+hls.c recomputes `ctx->duration` from the master's FIRST variant only
+(`variants[0]->playlists[0]`, end of `parse_playlist`), and the downloader
+discards every stream it did not select, so a live EVENT stream downloaded
+through its master at another quality may never see that length move (Fable's
+review of the first fix). It also removes the percentage the native check
+showed until the first reload. Any failure answers false and leaves the
+native check as the backstop. Residuals: only `input[0]` is watched natively
+for growth, and the capture tile of a live EVENT playlist still shows its
+length so far.
 
 ### HLS master stream selection — pair audio to the video's PROGRAM
 

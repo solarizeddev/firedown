@@ -23,12 +23,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import com.solarized.firedown.okhttp.SafeHeaders;
+import okhttp3.Call;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okio.BufferedSource;
 
 /**
  * Single-input FFmpeg download for HLS, DASH, and TS manifests.
@@ -40,6 +44,11 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
     private static final String TAG = FFmpegMuxStrategy.class.getSimpleName();
     private static final int BYTE_SIZE = 8192;
     private static final long UPDATE_RATE = 1500;
+    /** A playlist larger than this is not read for liveness (a long EVENT
+     *  playlist is a few hundred KB). */
+    private static final long PLAYLIST_MAX_BYTES = 8L * 1024 * 1024;
+    /** Bound on the extra fetch of a master's first rendition. */
+    private static final long VARIANT_FETCH_TIMEOUT_S = 10;
 
     private FFmpegDownloader downloader;
     private DownloadCallback callback;
@@ -87,6 +96,12 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
             // ICY detection
             if (isIcyStream(httpResponse)) {
                 totalLength = -1;
+                callback.onLiveStream(true);
+            } else if (isLivePlaylist(client, httpRequest, body)) {
+                // Said from the playlist text before FFmpeg opens it: the
+                // native downloader can only infer it, and not at all for a
+                // live EVENT stream downloaded through its master at a quality
+                // other than the first (see PlaylistLiveness).
                 callback.onLiveStream(true);
             }
 
@@ -299,4 +314,63 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
 
     @Override
     public void onFinished() {}
+
+    /**
+     * Whether the probed response is a live HLS or DASH playlist. Reads the
+     * body through a peek (nothing is consumed), only when its first bytes are
+     * a playlist and it fits {@link #PLAYLIST_MAX_BYTES}. For a master, the
+     * first rendition is fetched once (the same headers, bounded): every
+     * rendition of a stream is live or finished together. Any failure answers
+     * false and leaves the decision to the native downloader.
+     */
+    private static boolean isLivePlaylist(OkHttpClient client, Request probe, ResponseBody body) {
+        try {
+            String text = readPlaylist(body);
+            if (text == null) {
+                return false;
+            }
+            int state = PlaylistLiveness.of(text);
+            if (state != PlaylistLiveness.MASTER) {
+                return state == PlaylistLiveness.LIVE;
+            }
+            String uri = PlaylistLiveness.firstVariantUri(text);
+            HttpUrl variant = uri != null ? probe.url().resolve(uri) : null;
+            if (variant == null) {
+                return false;
+            }
+            Request request = probe.newBuilder().url(variant).build();
+            Call call = client.newCall(request);
+            call.timeout().timeout(VARIANT_FETCH_TIMEOUT_S, TimeUnit.SECONDS);
+            try (Response response = call.execute()) {
+                if (!response.isSuccessful()) {
+                    return false;
+                }
+                String variantText = readPlaylist(response.body());
+                return variantText != null
+                        && PlaylistLiveness.of(variantText) == PlaylistLiveness.LIVE;
+            }
+        } catch (IOException | RuntimeException e) {
+            return false;
+        }
+    }
+
+    /** The whole body as text when it starts like a playlist and fits the cap,
+     *  else null. Peeks, so the body itself is left unread. */
+    private static String readPlaylist(ResponseBody body) throws IOException {
+        if (body == null) {
+            return null;
+        }
+        BufferedSource head = body.source().peek();
+        head.request(16);
+        long headSize = Math.min(16, head.getBuffer().size());
+        if (!PlaylistLiveness.looksLikePlaylist(head.readUtf8(headSize))) {
+            return null;
+        }
+        BufferedSource all = body.source().peek();
+        if (all.request(PLAYLIST_MAX_BYTES + 1)) {
+            return null;
+        }
+        return all.readUtf8(all.getBuffer().size());
+    }
+
 }
