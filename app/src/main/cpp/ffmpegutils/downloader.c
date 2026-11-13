@@ -1303,6 +1303,18 @@ void *downloader_mux(void *data) {
         progress_total = AV_NOPTS_VALUE;
     }
 
+#if LOG_LEVEL >= 1
+    for (i = 0; i < downloader->nb_inputs; i++) {
+        LOGI(1, "downloader_mux input[%d]: format=%s duration=%"PRId64" method=%d unseekable=%d",
+             i, downloader->input_format_ctx[i]->iformat->name,
+             downloader->input_format_ctx[i]->duration,
+             (int) downloader->input_format_ctx[i]->duration_estimation_method,
+             (downloader->input_format_ctx[i]->ctx_flags & AVFMTCTX_UNSEEKABLE) ? 1 : 0);
+    }
+    LOGI(1, "downloader_mux mode: adaptive=%d live=%d total_size=%"PRId64" mode=%d total=%"PRId64,
+         is_adaptive, is_live, downloader->total_size, (int) progress_mode, progress_total);
+#endif
+
     av_dict_set(&dict, "movflags", "faststart", 0);
     ret = avformat_write_header(downloader->output_format_ctx, &dict);
     av_dict_free(&dict);
