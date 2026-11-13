@@ -77,7 +77,7 @@
 #include "queue.h"
 
 
-#define LOG_LEVEL 1
+#define LOG_LEVEL 0
 #define FFMPEG_LOG_LEVEL AV_LOG_QUIET
 #define LOG_TAG "downloader.c"
 #define LOGI(level, ...) if (level <= LOG_LEVEL) {__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__);}
