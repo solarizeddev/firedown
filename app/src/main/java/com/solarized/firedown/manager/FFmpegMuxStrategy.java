@@ -3,7 +3,6 @@ package com.solarized.firedown.manager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.data.Download;
 import com.solarized.firedown.data.di.NetworkModule;
 import com.solarized.firedown.ffmpegutils.FFmpegDownloader;
@@ -30,7 +29,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okio.BufferedSource;
 
 /**
  * Single-input FFmpeg download for HLS, DASH, and TS manifests.
@@ -85,10 +83,6 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
 
             body = httpResponse.body();
             long totalLength = body.contentLength();
-
-            if (BuildConfig.DEBUG) {
-                debugLogPlaylist(client, httpRequest, body);
-            }
 
             // ICY detection
             if (isIcyStream(httpResponse)) {
@@ -305,85 +299,4 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
 
     @Override
     public void onFinished() {}
-
-    // TEMPORARY (live-playlist investigation): logs the playlist this
-    // download opens, then fetches it twice more 10 s apart, so a device
-    // log shows whether it is a master, finished (ENDLIST), EVENT, or a
-    // playlist that stopped growing. Debug builds only.
-    private static void debugLogPlaylist(OkHttpClient client, Request httpRequest, ResponseBody body) {
-        String text;
-        try {
-            BufferedSource peek = body.source().peek();
-            peek.request(64 * 1024);
-            long n = Math.min(peek.getBuffer().size(), 64 * 1024);
-            text = peek.readUtf8(n);
-        } catch (Exception e) {
-            Log.d(TAG, "playlist: peek failed " + e);
-            return;
-        }
-        if (!text.startsWith("#EXTM3U")) {
-            return;
-        }
-        Log.d(TAG, "playlist url=" + httpRequest.url());
-        String[] lines = text.split("\n");
-        for (int i = 0; i < lines.length && i < 40; i++) {
-            Log.d(TAG, "playlist[" + i + "] " + lines[i]);
-        }
-        if (lines.length > 40) {
-            Log.d(TAG, "playlist ... " + (lines.length - 40) + " more lines, last: "
-                    + lines[lines.length - 1]);
-        }
-        Log.d(TAG, "playlist t=0 " + playlistSummary(text));
-        Thread t = new Thread(() -> {
-            for (int k = 1; k <= 2; k++) {
-                try {
-                    Thread.sleep(10_000);
-                    try (Response r = client.newCall(httpRequest).execute()) {
-                        ResponseBody b = r.body();
-                        String again = b != null ? b.string() : "";
-                        Log.d(TAG, "playlist t=" + (k * 10) + "s http=" + r.code() + " "
-                                + playlistSummary(again));
-                    }
-                } catch (Exception e) {
-                    Log.d(TAG, "playlist refetch failed " + e);
-                    return;
-                }
-            }
-        }, "playlist-debug");
-        t.setDaemon(true);
-        t.start();
-    }
-
-    private static String playlistSummary(String text) {
-        int extinf = 0;
-        double secs = 0;
-        String seq = "-";
-        String type = "-";
-        boolean endlist = false;
-        boolean master = false;
-        String last = "";
-        for (String line : text.split("\n")) {
-            String l = line.trim();
-            if (l.startsWith("#EXTINF:")) {
-                extinf++;
-                try {
-                    secs += Double.parseDouble(l.substring(8).split(",")[0]);
-                } catch (NumberFormatException ignored) {
-                }
-            } else if (l.startsWith("#EXT-X-MEDIA-SEQUENCE:")) {
-                seq = l.substring(22);
-            } else if (l.startsWith("#EXT-X-PLAYLIST-TYPE:")) {
-                type = l.substring(21);
-            } else if (l.startsWith("#EXT-X-ENDLIST")) {
-                endlist = true;
-            } else if (l.startsWith("#EXT-X-STREAM-INF")) {
-                master = true;
-            } else if (!l.isEmpty() && !l.startsWith("#")) {
-                last = l;
-            }
-        }
-        return "master=" + master + " segments=" + extinf + " secs=" + String.format(Locale.ROOT, "%.1f", secs)
-                + " seq=" + seq + " type=" + type + " endlist=" + endlist + " lastUri=" + last;
-    }
-
 }
