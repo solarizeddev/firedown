@@ -1929,6 +1929,14 @@ expect(!matchInParserBlocklist("https://e-cdns-images.dzcdn.net/images/cover/x/5
     expect(r.action === "reject" && r.reason === "hls-child-of-master", "decide: a rendition listed by a master the tab read is rejected");
     r = decide(wire("d-c2", CHILD, { tabId: 82, type: "xmlhttprequest", responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
     expect(r.action === "emit" && r.hold === false, "decide: the same rendition in a tab that never read the master emits");
+    // A Low-Latency HLS delta request of that rendition (_HLS_skip=YES lists
+    // only the newest segments behind EXT-X-SKIP, which FFmpeg cannot read)
+    // is the same rendition, and a capture never carries the directives.
+    r = decide(wire("d-c3", `${CHILD}?_HLS_msn=12&_HLS_skip=YES`, { tabId: 81, type: "xmlhttprequest", responseHeaders: ct("application/vnd.apple.mpegurl", 300) }));
+    expect(r.action === "reject" && r.reason === "hls-child-of-master", `decide: a delta request of a listed rendition is rejected as that rendition (got ${JSON.stringify(r)})`);
+    const delta = wire("d-c4", "https://cdn.example/live/dynamic_delta.m3u8?type=live&_HLS_skip=YES", { tabId: 83, type: "xmlhttprequest", responseHeaders: ct("application/vnd.apple.mpegurl", 300) });
+    r = decide(delta);
+    expect(r.action === "emit" && delta.url === "https://cdn.example/live/dynamic_delta.m3u8?type=live", `decide: a playlist captured with no master is taken without its _HLS_ directives (got ${delta.url})`);
     // An fMP4 media playlist's init segment (no URL rule can name it: a
     // host no parser owns, `segment.mp4?sid=0`, served as video/mp4) is
     // dropped once the tab read the playlist that names it.

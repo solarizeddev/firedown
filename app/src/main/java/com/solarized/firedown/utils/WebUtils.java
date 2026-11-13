@@ -36,7 +36,14 @@ public class WebUtils {
 
     private static final String TAG = WebUtils.class.getName();
 
-    private static final Set<String> RANGE_PARAMS = Set.of("bytes", "bytestart", "byteend", "range", "_HLS_msn", "_HLS_part", "start_seq", "r_range");
+    // _HLS_* are Low-Latency HLS request directives a player adds to a media
+    // playlist URL (RFC 8216bis 6.2.5). _HLS_skip=YES asks for a DELTA update
+    // that leaves out the older segments behind an EXT-X-SKIP tag, which FFmpeg
+    // does not read: it numbers the listed segments from the stated media
+    // sequence, finds the same numbers on every reload and waits forever.
+    // Without the directives the server sends the full playlist.
+    private static final Set<String> RANGE_PARAMS = Set.of("bytes", "bytestart", "byteend", "range",
+            "_HLS_msn", "_HLS_part", "_HLS_skip", "_HLS_push", "_HLS_report", "start_seq", "r_range");
 
     private static final Pattern META_PATTERN = Pattern.compile(
             "<meta\\s[^>]*?(?:property|name)\\s*=\\s*[\"']([^\"']*)[\"'][^>]*?content\\s*=\\s*[\"']([^\"']*)[\"'][^>]*/?>",

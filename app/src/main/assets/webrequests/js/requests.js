@@ -736,6 +736,11 @@ function decideCapture(data, listenerName, skipClassify = false) {
     return reject('ext-context');
   }
 
+  // A playlist fetched with Low-Latency HLS directives is the bare playlist
+  // (stripHlsDirectives): the master's child list names it that way, and a
+  // delta update cannot be downloaded.
+  data.url = stripHlsDirectives(data.url);
+
   const interesting = isInteresting(data.url, data.type);
 
   if (interesting) {
@@ -1342,7 +1347,7 @@ browser.webRequest.onResponseStarted.addListener(
   (data) => {
     listenerStats.responseStarted++;
     const rec = requestRecords.get(data.requestId);
-    if (rec && rec.decided && rec.decided.url === data.url) {
+    if (rec && rec.decided && rec.decided.url === stripHlsDirectives(data.url)) {
       // The same response, already decided (and emitted, if it was going to
       // be) — nothing to redo.
       listenerStats.responseStartedSkipped++;
@@ -1608,6 +1613,23 @@ export function dropDefaultPort(url) {
   if (https ? m[3] !== '443' : m[3] !== '80') return url;
   return `${m[1]}://${m[2]}${url.slice(m[0].length)}`;
 }
+// Low-Latency HLS request directives (_HLS_msn, _HLS_part, _HLS_skip,
+// _HLS_push, _HLS_report): query parameters a player ADDS to a media
+// playlist's URL to ask for a blocking reload or a delta update. They are
+// requests, not the playlist's address: the master lists the bare URL, and
+// a delta (_HLS_skip=YES) leaves out the older segments behind EXT-X-SKIP,
+// which FFmpeg does not read (it waits forever for segments it thinks it
+// has). Every capture is taken without them.
+export function stripHlsDirectives(url) {
+  if (typeof url !== 'string' || url.indexOf('_HLS_') < 0) return url;
+  const q = url.indexOf('?');
+  if (q < 0) return url;
+  const h = url.indexOf('#', q);
+  const end = h < 0 ? url.length : h;
+  const kept = url.slice(q + 1, end).split('&').filter((p) => p && !p.startsWith('_HLS_'));
+  return url.slice(0, q) + (kept.length ? '?' + kept.join('&') : '') + url.slice(end);
+}
+
 function urlKey(url) {
   const i = url.indexOf('#');
   return dropDefaultPort(i < 0 ? url : url.slice(0, i));
