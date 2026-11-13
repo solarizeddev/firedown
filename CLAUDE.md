@@ -11896,6 +11896,27 @@ live flag. VOD playlists report `AVFMT_DURATION_FROM_STREAM` and keep TIME.
 Verified on a host build of 9.0.2 against VOD, live, sliding and growing
 EVENT playlists served over HTTP.
 
+**A captured playlist never carries Low-Latency HLS request directives**
+(`_HLS_msn`, `_HLS_part`, `_HLS_skip`, `_HLS_push`, `_HLS_report`):
+`requests.js` `stripHlsDirectives` removes them from `data.url` before
+`decideCapture` decides anything, and `WebUtils.RANGE_PARAMS` removes them
+before the capture probe and the download. A player appends them to the URL
+the master lists; `_HLS_skip=YES` asks for a DELTA playlist that lists only
+the newest segments behind `#EXT-X-SKIP:SKIPPED-SEGMENTS=N`, which FFmpeg
+does not read: it numbers the listed segments from the stated media
+sequence, finds the same numbers on every reload and waits forever, and the
+stated length never grows, so the live check never fires either. Found on an
+X live broadcast (its `dynamic_delta.m3u8?type=live&_HLS_skip=YES`, 9
+segments, stalled after 3 s; the same URL without the directive is the full
+EVENT playlist). The extra parameter also hid the delta from the master's
+child list, so it was captured as a tile of its own. Pinned by the smoke's
+`decide:` delta checks. Known residuals of the live detection (Fable's
+review): hls.c recomputes `ctx->duration` from the master's FIRST variant
+only, so a live EVENT stream downloaded through its master at another
+quality flips to live only if that variant is still reloaded (unverified on
+a device); only `input[0]` is watched for growth; and the capture tile of a
+live EVENT playlist still shows its length so far.
+
 ### HLS master stream selection — pair audio to the video's PROGRAM
 
 When the **generic catcher** captures a multi-variant HLS **master** (no
