@@ -1222,9 +1222,11 @@ void *downloader_mux(void *data) {
     int64_t recording_time;
     int64_t progress_total;
     int64_t progress_value;
-    const char *input_format_name;
-    int is_hls;
-    int is_dash;
+    int64_t input_duration;
+    int64_t watched_duration;
+    int is_adaptive;
+    int is_live;
+    int i;
     enum ProgressMode progress_mode;
     int err = ERROR_NO_ERROR;
     char thread_title[] = "downloader_mux";
@@ -1241,36 +1243,59 @@ void *downloader_mux(void *data) {
 
     downloader_clear_stop(downloader);
 
-    /* Pick the longest input duration as the progress denominator. */
-    recording_time = AV_NOPTS_VALUE;
-    for (int i = 0; i < downloader->nb_inputs; i++) {
-        int64_t d = downloader->input_format_ctx[i]->duration;
-        if (d != AV_NOPTS_VALUE && (recording_time == AV_NOPTS_VALUE || d > recording_time))
-            recording_time = d;
+    /* HLS/DASH and live are fixed for the whole download (the input format
+     * doesn't change mid-stream), so derive them once here instead of on every
+     * progress tick. An HLS/DASH probe's Content-Length is the playlist byte
+     * size, not the media size, so it is never a progress denominator; and a
+     * live input's duration is not the length of what will be downloaded
+     * (utils_input_is_live). */
+    is_adaptive = FALSE;
+    is_live = FALSE;
+    for (i = 0; i < downloader->nb_inputs; i++) {
+        if (utils_input_is_adaptive(downloader->input_format_ctx[i])) {
+            is_adaptive = TRUE;
+        }
+        if (utils_input_is_live(downloader->input_format_ctx[i])) {
+            is_live = TRUE;
+        }
     }
 
-    /* HLS/DASH detection is fixed for the whole download (the input format
-     * doesn't change mid-stream), so derive it once here instead of on every
-     * progress tick. It gates the size-based fallback: an HLS/DASH probe's
-     * Content-Length is the playlist byte size, not the media size, so it must
-     * never be used as a progress denominator. */
-    input_format_name = downloader->input_format_ctx[0]->iformat->name;
-    is_hls = av_strncasecmp(input_format_name, "hls", 3) == 0;
-    is_dash = av_strncasecmp(input_format_name, "dash", 4) == 0;
+    /* Pick the longest input duration as the progress denominator. */
+    recording_time = AV_NOPTS_VALUE;
+    if (!is_live) {
+        for (i = 0; i < downloader->nb_inputs; i++) {
+            input_duration = downloader->input_format_ctx[i]->duration;
+            if (input_duration == AV_NOPTS_VALUE) {
+                continue;
+            }
+            if (recording_time == AV_NOPTS_VALUE || input_duration > recording_time) {
+                recording_time = input_duration;
+            }
+        }
+    }
 
-    /* Progress mode is fixed for the whole download — duration, input format
-     * and known total size don't change mid-stream — so decide it once here
-     * instead of re-deriving the branch on every tick:
+    /* An HLS EVENT playlist still being written states the length so far,
+     * and the hls demuxer updates it on every reload. Remember it: when it
+     * grows the stream is live (see the progress tick). */
+    watched_duration = AV_NOPTS_VALUE;
+    if (is_adaptive && !is_live) {
+        watched_duration = downloader->input_format_ctx[0]->duration;
+    }
+
+    /* Progress mode is decided here — duration, input format and known total
+     * size don't change mid-stream, except an EVENT playlist that turns out
+     * to be live (then TIME becomes NONE once):
      *   TIME  report the muxed position vs. duration (HLS/DASH VOD and any
      *         input that reports a duration — the normal path);
      *   SIZE  duration unknown but a real Content-Length is known: bytes muxed
      *         vs. total. Progressive only — an HLS/DASH probe's Content-Length
      *         is the playlist size, not the media size;
-     *   NONE  neither known: report indeterminate (AV_NOPTS_VALUE). */
+     *   NONE  neither known, or a live stream: report indeterminate
+     *         (AV_NOPTS_VALUE), which the Java side reads as live. */
     if (recording_time > 0) {
         progress_mode = PROGRESS_TIME;
         progress_total = recording_time;
-    } else if (downloader->total_size > 0 && !is_hls && !is_dash) {
+    } else if (downloader->total_size > 0 && !is_adaptive && !is_live) {
         progress_mode = PROGRESS_SIZE;
         progress_total = downloader->total_size;
     } else {
@@ -1449,6 +1474,19 @@ void *downloader_mux(void *data) {
         if (time_diff > UPDATE_TIME_US || time_diff < -UPDATE_TIME_US) {
             downloader->last_updated_time = current_time;
 
+            /* An EVENT playlist whose duration grew since the start is a
+             * live stream being written: its total moves ahead of the
+             * download, so report it as live. The demuxer writes the
+             * duration only while such a playlist is unfinished. */
+            if (progress_mode == PROGRESS_TIME && watched_duration != AV_NOPTS_VALUE) {
+                input_duration = downloader->input_format_ctx[0]->duration;
+                if (input_duration != watched_duration) {
+                    LOGI(1, "downloader_mux: playlist duration grew, live stream");
+                    progress_mode = PROGRESS_NONE;
+                    progress_total = AV_NOPTS_VALUE;
+                }
+            }
+
             switch (progress_mode) {
                 case PROGRESS_TIME:
                     progress_value = downloader_muxed_position(downloader);
@@ -1515,7 +1553,7 @@ void *downloader_mux(void *data) {
     }
 
     if (downloader->interrupt == FALSE && downloader->thiz != NULL) {
-        if (recording_time > 0) {
+        if (progress_mode == PROGRESS_TIME && recording_time > 0) {
             (*env)->CallVoidMethod(env, downloader->thiz,
                                    downloader->downloader_on_progress_update_method,
                                    recording_time, recording_time);

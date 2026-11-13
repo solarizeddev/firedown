@@ -7,6 +7,7 @@
  */
 
 #include <android/log.h>
+#include <libavutil/avstring.h>
 
 #include "utils.h"
 #include "helpers.h"
@@ -344,4 +345,53 @@ enum AVSampleFormat utils_select_sample_fmt(const AVCodec *codec) {
         return AV_SAMPLE_FMT_NONE;
     return codec->sample_fmts[0];
 #endif
+}
+
+/*
+ * TRUE for an HLS or DASH input. Their probe sizes are a playlist's, and
+ * their duration is known only from the playlist.
+ */
+int utils_input_is_adaptive(const AVFormatContext *ctx) {
+    const char *name;
+
+    if (ctx == NULL || ctx->iformat == NULL || ctx->iformat->name == NULL) {
+        return FALSE;
+    }
+    name = ctx->iformat->name;
+    if (av_strncasecmp(name, "hls", 3) == 0) {
+        return TRUE;
+    }
+    if (av_strncasecmp(name, "dash", 4) == 0) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/*
+ * TRUE when an HLS or DASH input is a live stream, whose duration is not
+ * the length of what will be downloaded.
+ *
+ * The hls demuxer sets AVFMTCTX_UNSEEKABLE on a playlist that is neither
+ * finished (#EXT-X-ENDLIST) nor an EVENT playlist. With no duration from
+ * the playlist, avformat_find_stream_info estimates one from the bit rate
+ * and the size of the PLAYLIST file (AVFMT_DURATION_FROM_BITRATE), a few
+ * seconds that the download overtakes at once: the bar sat at 100% for
+ * the whole download. A DASH live manifest gets the same estimate. A VOD
+ * playlist states its duration, which find_stream_info reports as
+ * AVFMT_DURATION_FROM_STREAM.
+ *
+ * An EVENT playlist that is still growing is not caught here (its duration
+ * is the length so far); the downloader watches its duration grow.
+ */
+int utils_input_is_live(const AVFormatContext *ctx) {
+    if (!utils_input_is_adaptive(ctx)) {
+        return FALSE;
+    }
+    if (ctx->ctx_flags & AVFMTCTX_UNSEEKABLE) {
+        return TRUE;
+    }
+    if (ctx->duration_estimation_method == AVFMT_DURATION_FROM_BITRATE) {
+        return TRUE;
+    }
+    return FALSE;
 }

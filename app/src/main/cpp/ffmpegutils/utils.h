@@ -39,4 +39,8 @@ int utils_jni_get_file_descriptor(JNIEnv *env, jobject fileDescriptor);
 int utils_select_channel_layout(const AVCodec *codec, AVChannelLayout *dst);
 enum AVSampleFormat utils_select_sample_fmt(const AVCodec *codec);
 
+/* Used by downloader.c and metadatareader.c. */
+int utils_input_is_adaptive(const AVFormatContext *ctx);
+int utils_input_is_live(const AVFormatContext *ctx);
+
 #endif

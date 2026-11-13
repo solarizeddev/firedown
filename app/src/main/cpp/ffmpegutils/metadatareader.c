@@ -1349,10 +1349,18 @@ int metadata_extract_bitmap(JNIEnv *env, jobject thiz, struct MetadataReader *me
 
 
 /**
- * Compute the maximum duration across all open inputs.
+ * Compute the maximum duration across all open inputs. A live input has
+ * none: its duration is an estimate from the playlist's size, or the
+ * length so far (utils_input_is_live).
  */
 static int64_t metadata_get_max_duration(struct MetadataReader *metadataReader) {
     int64_t max_duration = AV_NOPTS_VALUE;
+
+    for (int i = 0; i < metadataReader->nb_inputs; i++) {
+        if (utils_input_is_live(metadataReader->format_ctx[i])) {
+            return AV_NOPTS_VALUE;
+        }
+    }
 
     for (int i = 0; i < metadataReader->nb_inputs; i++) {
         int64_t d = metadataReader->format_ctx[i]->duration;

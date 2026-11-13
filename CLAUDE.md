@@ -11879,6 +11879,23 @@ callback) rather than showing a nonsensical >100 %. Don't "fix" it by switching
 these to SIZE (playlist bytes) or NONE (indeterminate) — both are worse UX than
 a saturated TIME bar.
 
+**A live HLS/DASH input is NONE, never TIME — its duration is not what
+will be downloaded** (`utils_input_is_live`, shared with the capture probe's
+`metadata_get_max_duration`). The pinned FFmpeg (9.0.2) gives an unfinished
+EVENT playlist a duration (the segments listed so far) and the hls demuxer
+rewrites it on every reload, while the download starts at the live edge: a
+live audio room reached 100% and kept going, the upper clamp pinning the
+bar. Three cases: a playlist neither finished nor EVENT sets
+`AVFMTCTX_UNSEEKABLE` (live at once); a duration estimated from the bit rate
+(`AVFMT_DURATION_FROM_BITRATE`, the PLAYLIST file's size over the stream's
+bit rate) is never a media length; and an EVENT playlist whose
+`ctx->duration` changes after the start is live (`watched_duration`, checked
+each tick; the demuxer writes it only while the playlist is unfinished).
+NONE reports AV_NOPTS_VALUE, which `DownloadTask.onProgress` turns into the
+live flag. VOD playlists report `AVFMT_DURATION_FROM_STREAM` and keep TIME.
+Verified on a host build of 9.0.2 against VOD, live, sliding and growing
+EVENT playlists served over HTTP.
+
 ### HLS master stream selection — pair audio to the video's PROGRAM
 
 When the **generic catcher** captures a multi-variant HLS **master** (no
