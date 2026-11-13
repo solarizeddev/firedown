@@ -42,7 +42,7 @@ public class PlaylistLivenessTest {
 
     @Test
     public void masterIsMasterAndNamesItsFirstRendition() {
-        String text = "﻿#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"a\",URI=\"audio.m3u8\"\n"
+        String text = "\uFEFF#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"a\",URI=\"audio.m3u8\"\n"
                 + "#EXT-X-STREAM-INF:BANDWIDTH=16000000,RESOLUTION=3840x2160\n\n"
                 + "2160/dynamic_delta.m3u8?type=live\n"
                 + "#EXT-X-STREAM-INF:BANDWIDTH=2750000,RESOLUTION=1280x720\n720/dynamic_delta.m3u8?type=live\n";
@@ -65,11 +65,26 @@ public class PlaylistLivenessTest {
     }
 
     @Test
+    public void dashCommentIsNotTheManifest() {
+        String text = "<?xml version=\"1.0\"?><!-- <MPD type=\"dynamic\"> -->"
+                + "<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\" type=\"static\"><Period/></MPD>";
+        assertEquals(PlaylistLiveness.FINISHED, PlaylistLiveness.of(text));
+    }
+
+    @Test
+    public void scanStopsAtTheMaster() {
+        PlaylistLiveness.Scan scan = new PlaylistLiveness.Scan();
+        assertFalse(scan.feed("#EXTM3U"));
+        assertTrue(scan.feed("#EXT-X-STREAM-INF:BANDWIDTH=1"));
+        assertEquals(PlaylistLiveness.MASTER, scan.result());
+    }
+
+    @Test
     public void otherBytesAreNotAPlaylist() {
         assertFalse(PlaylistLiveness.looksLikePlaylist("\u0000\u0000\u0000\u0018ftypmp42"));
         assertFalse(PlaylistLiveness.looksLikePlaylist("G@\u0011"));
         assertTrue(PlaylistLiveness.looksLikePlaylist("#EXTM3U\n#EXT"));
-        assertTrue(PlaylistLiveness.looksLikePlaylist("﻿<?xml version"));
+        assertTrue(PlaylistLiveness.looksLikePlaylist("\uFEFF<?xml version"));
         assertEquals(PlaylistLiveness.UNKNOWN, PlaylistLiveness.of("<html><body>404</body></html>"));
     }
 }

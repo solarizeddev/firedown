@@ -11916,12 +11916,19 @@ child list, so it was captured as a tile of its own. Pinned by the smoke's
 (`FFmpegMuxStrategy.isLivePlaylist` → `manager/PlaylistLiveness`, pure,
 `PlaylistLivenessTest`): the probe response the strategy already makes is
 read through an okio PEEK (nothing consumed; only when its first bytes are a
-playlist, at most 8 MB), and a media playlist with segments and no
+playlist; HLS scanned line by line, `PlaylistLiveness.Scan`, at most 8 MB, a
+DASH manifest's first 64 KB, comments skipped), and a media playlist with
+segments and no
 `#EXT-X-ENDLIST` (and not `PLAYLIST-TYPE:VOD`), or an MPD
 `type="dynamic"`, calls `onLiveStream(true)` (the sticky live flag, an
 indeterminate bar). A MASTER is answered by its first rendition, fetched once
 with the same headers (10 s call timeout), since every rendition of a stream
-is live or finished together. Why the native growth check is not enough:
+is live or finished together; the rendition is resolved against the URL that
+ANSWERED (a redirected master). The probe is closed before FFmpeg starts (it
+held the buffered playlist for the whole download), and a Stop or Delete that
+landed during the probe or this read returns before FFmpeg starts: `stop()`
+only flags until a downloader exists, and an interrupted read answers false
+here (Fable's review of this change). Why the native growth check is not enough:
 hls.c recomputes `ctx->duration` from the master's FIRST variant only
 (`variants[0]->playlists[0]`, end of `parse_playlist`), and the downloader
 discards every stream it did not select, so a live EVENT stream downloaded

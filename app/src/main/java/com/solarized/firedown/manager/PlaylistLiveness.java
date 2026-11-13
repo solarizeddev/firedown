@@ -41,6 +41,16 @@ public final class PlaylistLiveness {
         return h.startsWith("#EXTM3U") || h.startsWith("<?xml") || h.startsWith("<MPD");
     }
 
+    /** Whether the first bytes are a DASH manifest rather than HLS. */
+    public static boolean looksLikeDash(String head) {
+        if (head == null) {
+            return false;
+        }
+        String h = stripBom(head).trim();
+        return h.startsWith("<?xml") || h.startsWith("<MPD");
+    }
+
+    /** The answer for a whole text; HLS goes through {@link Scan}. */
     public static int of(String text) {
         if (text == null) {
             return UNKNOWN;
@@ -48,22 +58,36 @@ public final class PlaylistLiveness {
         String t = stripBom(text);
         String trimmed = t.trim();
         if (trimmed.startsWith("#EXTM3U")) {
-            return ofHls(t);
+            Scan scan = new Scan();
+            for (String line : t.split("\n")) {
+                if (scan.feed(line)) {
+                    break;
+                }
+            }
+            return scan.result();
         }
-        if (trimmed.startsWith("<?xml") || trimmed.startsWith("<MPD")) {
+        if (looksLikeDash(trimmed)) {
             return ofDash(t);
         }
         return UNKNOWN;
     }
 
-    private static int ofHls(String text) {
-        boolean segments = false;
-        boolean endList = false;
-        boolean vod = false;
-        for (String raw : text.split("\n")) {
+    /**
+     * An HLS playlist read one line at a time, so a caller can scan a large
+     * playlist without holding it as one string.
+     */
+    public static final class Scan {
+        private boolean segments;
+        private boolean endList;
+        private boolean vod;
+        private boolean master;
+
+        /** Takes one line; true once the answer cannot change (a master). */
+        public boolean feed(String raw) {
             String line = raw.trim();
             if (line.startsWith("#EXT-X-STREAM-INF")) {
-                return MASTER;
+                master = true;
+                return true;
             }
             if (line.startsWith("#EXTINF")) {
                 segments = true;
@@ -72,23 +96,31 @@ public final class PlaylistLiveness {
             } else if (line.startsWith("#EXT-X-PLAYLIST-TYPE:")) {
                 vod = line.substring("#EXT-X-PLAYLIST-TYPE:".length()).trim().equalsIgnoreCase("VOD");
             }
+            return false;
         }
-        if (endList || vod) {
-            return FINISHED;
+
+        public int result() {
+            if (master) {
+                return MASTER;
+            }
+            if (endList || vod) {
+                return FINISHED;
+            }
+            return segments ? LIVE : UNKNOWN;
         }
-        return segments ? LIVE : UNKNOWN;
     }
 
     private static int ofDash(String text) {
-        int mpd = text.indexOf("<MPD");
+        String t = text.replaceAll("(?s)<!--.*?-->", "");
+        int mpd = t.indexOf("<MPD");
         if (mpd < 0) {
             return UNKNOWN;
         }
-        int end = text.indexOf('>', mpd);
+        int end = t.indexOf('>', mpd);
         if (end < 0) {
             return UNKNOWN;
         }
-        String tag = text.substring(mpd, end);
+        String tag = t.substring(mpd, end);
         if (tag.matches("(?s).*\\stype\\s*=\\s*[\"']dynamic[\"'].*")) {
             return LIVE;
         }

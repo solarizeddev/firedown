@@ -47,6 +47,8 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
     /** A playlist larger than this is not read for liveness (a long EVENT
      *  playlist is a few hundred KB). */
     private static final long PLAYLIST_MAX_BYTES = 8L * 1024 * 1024;
+    /** How much of a DASH manifest is read: its MPD element opens it. */
+    private static final long DASH_HEAD_BYTES = 64 * 1024;
     /** Bound on the extra fetch of a master's first rendition. */
     private static final long VARIANT_FETCH_TIMEOUT_S = 10;
 
@@ -97,7 +99,7 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
             if (isIcyStream(httpResponse)) {
                 totalLength = -1;
                 callback.onLiveStream(true);
-            } else if (isLivePlaylist(client, httpRequest, body)) {
+            } else if (isLivePlaylist(client, httpResponse, body)) {
                 // Said from the playlist text before FFmpeg opens it: the
                 // native downloader can only infer it, and not at all for a
                 // live EVENT stream downloaded through its master at a quality
@@ -141,6 +143,22 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
             String resolvedPath = callback.onFilePathResolved(file.getAbsolutePath());
             file = new File(resolvedPath);
 
+            // A Stop or Delete that landed during the probe or the liveness
+            // read reached no downloader (stop() only flags until one exists),
+            // and an interrupted read answers false there; FFmpeg must not
+            // start after it.
+            if (stopped || context.isInterrupted()) {
+                return;
+            }
+
+            // The probe is not read again: release it (and the playlist a
+            // liveness read buffered in it) before a download that can run
+            // for hours.
+            body.close();
+            body = null;
+            httpResponse.close();
+            httpResponse = null;
+
             // FFmpeg download
             downloader = new FFmpegDownloader();
             downloader.addListener(this);
@@ -172,12 +190,6 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
                 Log.e(TAG, "FFmpegDownloader error: " + error);
 
                 if (error == FFmpegErrors.UNSUPPORTED || error == FFmpegErrors.MUX_HEADER_ERROR) {
-                    // Close the probe response — its body stream is consumed
-                    body.close();
-                    body = null;
-                    httpResponse.close();
-                    httpResponse = null;
-
                     // Fresh request for raw byte copy fallback
                     Request fallbackRequest = new Request.Builder()
                             .url(contentAddress)
@@ -318,59 +330,86 @@ public class FFmpegMuxStrategy implements DownloadStrategy, FFmpegListener {
     /**
      * Whether the probed response is a live HLS or DASH playlist. Reads the
      * body through a peek (nothing is consumed), only when its first bytes are
-     * a playlist and it fits {@link #PLAYLIST_MAX_BYTES}. For a master, the
-     * first rendition is fetched once (the same headers, bounded): every
-     * rendition of a stream is live or finished together. Any failure answers
-     * false and leaves the decision to the native downloader.
+     * a playlist; an HLS playlist is scanned line by line up to
+     * {@link #PLAYLIST_MAX_BYTES}. For a master, the first rendition is
+     * fetched once, resolved against the URL that answered (a redirect), with
+     * the same headers and a bounded call: every rendition of a stream is live
+     * or finished together. Any failure answers false and leaves the decision
+     * to the native downloader; an interrupt (a Stop) is checked by the caller.
      */
-    private static boolean isLivePlaylist(OkHttpClient client, Request probe, ResponseBody body) {
+    private static boolean isLivePlaylist(OkHttpClient client, Response probe, ResponseBody body) {
         try {
-            String text = readPlaylist(body);
-            if (text == null) {
-                return false;
-            }
-            int state = PlaylistLiveness.of(text);
+            String[] variant = new String[1];
+            int state = playlistState(body, variant);
             if (state != PlaylistLiveness.MASTER) {
                 return state == PlaylistLiveness.LIVE;
             }
-            String uri = PlaylistLiveness.firstVariantUri(text);
-            HttpUrl variant = uri != null ? probe.url().resolve(uri) : null;
-            if (variant == null) {
+            HttpUrl url = variant[0] != null ? probe.request().url().resolve(variant[0]) : null;
+            if (url == null) {
                 return false;
             }
-            Request request = probe.newBuilder().url(variant).build();
+            Request request = probe.request().newBuilder().url(url).build();
             Call call = client.newCall(request);
             call.timeout().timeout(VARIANT_FETCH_TIMEOUT_S, TimeUnit.SECONDS);
             try (Response response = call.execute()) {
                 if (!response.isSuccessful()) {
                     return false;
                 }
-                String variantText = readPlaylist(response.body());
-                return variantText != null
-                        && PlaylistLiveness.of(variantText) == PlaylistLiveness.LIVE;
+                return playlistState(response.body(), null) == PlaylistLiveness.LIVE;
             }
         } catch (IOException | RuntimeException e) {
             return false;
         }
     }
 
-    /** The whole body as text when it starts like a playlist and fits the cap,
-     *  else null. Peeks, so the body itself is left unread. */
-    private static String readPlaylist(ResponseBody body) throws IOException {
+    /**
+     * {@link PlaylistLiveness} for a body, read through a peek: the first 16
+     * bytes decide whether it is a playlist at all, a DASH manifest is read up
+     * to its first 64 KB (the MPD element opens it), and an HLS playlist is
+     * fed to {@link PlaylistLiveness.Scan} one line at a time. A master's first
+     * rendition URI goes to {@code variantOut[0]} when asked for.
+     */
+    private static int playlistState(ResponseBody body, String[] variantOut) throws IOException {
         if (body == null) {
-            return null;
+            return PlaylistLiveness.UNKNOWN;
         }
         BufferedSource head = body.source().peek();
         head.request(16);
-        long headSize = Math.min(16, head.getBuffer().size());
-        if (!PlaylistLiveness.looksLikePlaylist(head.readUtf8(headSize))) {
-            return null;
+        String start = head.readUtf8(Math.min(16, head.getBuffer().size()));
+        if (!PlaylistLiveness.looksLikePlaylist(start)) {
+            return PlaylistLiveness.UNKNOWN;
         }
-        BufferedSource all = body.source().peek();
-        if (all.request(PLAYLIST_MAX_BYTES + 1)) {
-            return null;
+        if (PlaylistLiveness.looksLikeDash(start)) {
+            BufferedSource dash = body.source().peek();
+            dash.request(DASH_HEAD_BYTES);
+            return PlaylistLiveness.of(dash.readUtf8(Math.min(DASH_HEAD_BYTES, dash.getBuffer().size())));
         }
-        return all.readUtf8(all.getBuffer().size());
+        BufferedSource lines = body.source().peek();
+        PlaylistLiveness.Scan scan = new PlaylistLiveness.Scan();
+        boolean pendingVariant = false;
+        long read = 0;
+        String line;
+        while ((line = lines.readUtf8Line()) != null) {
+            read += line.length() + 1;
+            if (read > PLAYLIST_MAX_BYTES) {
+                return PlaylistLiveness.UNKNOWN;
+            }
+            boolean master = scan.feed(line);
+            if (master) {
+                if (variantOut == null) {
+                    return PlaylistLiveness.MASTER;
+                }
+                pendingVariant = true;
+                continue;
+            }
+            if (pendingVariant) {
+                String uri = line.trim();
+                if (!uri.isEmpty() && !uri.startsWith("#")) {
+                    variantOut[0] = uri;
+                    return PlaylistLiveness.MASTER;
+                }
+            }
+        }
+        return scan.result();
     }
-
 }
