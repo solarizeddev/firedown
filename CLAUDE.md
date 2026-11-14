@@ -2336,9 +2336,11 @@ Don't reintroduce the inject, and don't move SSR reading back to the DOM.
   `parsers-replay.mjs` (`clip's page is fetched without the user's
   cookies`, `captured once, from its page`, `page's cookies go with its
   URL`, `falls back`; mutants: no cookie note, no page path — each
-  fails). Whether an anonymous page fetch's URL downloads is unverified on
-  a device at write time (the one 200 seen carried the user's tiktok.com
-  cookies). Three debug traces compare the two requests (`adb logcat -s
+  fails). Verified on a device (2026-11-14): the embed's own clip, refused
+  with every earlier cookie set, downloads (200) with the anonymous page
+  fetch's URL and cookies (`ttwid`, `tt_csrf_token`, `tt_chain_token`,
+  `msToken`), beside the related videos on the embed's cookies. Three
+  debug traces compare the two requests (`adb logcat -s
   GeckoConsole:* DownloadTrace:*`): `[TIKTOK] built headers` (the cookie
   source, names and a short tt_chain_token hint the parser emitted),
   `[TIKTOK-WIRE] player request/response` (observe-only listeners on the
