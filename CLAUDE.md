@@ -2317,7 +2317,28 @@ Don't reintroduce the inject, and don't move SSR reading back to the DOM.
   replayed`, `another tab's embed cookie is not used`; a merge that adds
   nothing fails it). Verified on a device (2026-11-14): the same embeds
   that answered 403 to every download before now download, the
-  `built headers` line reading `request+embed-set-cookie`. Three debug traces compare the two requests (`adb logcat -s
+  `built headers` line reading `request+embed-set-cookie`. **Except the
+  embed's OWN clip**: the CDN refuses its files (every rendition, 403
+  TCP_DENIED) with those cookies, while the related videos the embed
+  lists download with them. On a phone the embed never plays its clip
+  (a tap opens tiktok.com), and the clip's tiktok.com page serves a URL
+  that downloads. So for a third-party `/player/api/v1/items` response
+  the extension fetches the clip's page, `/@<user>/video/<id>`,
+  ANONYMOUSLY (`credentials: "omit"`: nothing of the user's is sent or
+  stored; one fetch per (tab, clip) a minute, 10 s timeout), reads the
+  clip from its SSR (`extractTikTokSSRItems`) and emits it with the
+  cookies that response set (`captureEmbedItems` /
+  `fetchTikTokPageItem`; fetch() cannot read Set-Cookie, so two
+  observe-only listeners note them for the extension's own request, tabId
+  -1). A page with no clip falls back to the embed's listing. Cookie
+  source `page-fetch` in the `built headers` line; `embed page fetch`
+  logs status, whether the clip was found and the cookie names. Pinned by
+  `parsers-replay.mjs` (`clip's page is fetched without the user's
+  cookies`, `captured once, from its page`, `page's cookies go with its
+  URL`, `falls back`; mutants: no cookie note, no page path — each
+  fails). Whether an anonymous page fetch's URL downloads is unverified on
+  a device at write time (the one 200 seen carried the user's tiktok.com
+  cookies). Three debug traces compare the two requests (`adb logcat -s
   GeckoConsole:* DownloadTrace:*`): `[TIKTOK] built headers` (the cookie
   source, names and a short tt_chain_token hint the parser emitted),
   `[TIKTOK-WIRE] player request/response` (observe-only listeners on the

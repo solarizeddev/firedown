@@ -127,6 +127,9 @@ const ITUNES_LOOKUP = { resultCount: 2, results: [
 const ACAST_FEEDER = {};
 const acastFeederCalls = [];
 
+// TikTok clip pages the embed path fetches, by URL: { html, setCookie }.
+const TIKTOK_PAGES = {};
+const tiktokPageFetches = [];
 const vimeoFetches = [];
 const placeholderFetches = [];
 globalThis.fetch = async (url, opts) => {
@@ -171,6 +174,25 @@ globalThis.fetch = async (url, opts) => {
         } } } } } };
         return { ok: true, status: 200, text: async () =>
             `<html><body><script id="__NEXT_DATA__" type="application/json">${JSON.stringify(next)}</script></body></html>` };
+    }
+    if (url.startsWith("https://www.tiktok.com/@")) {
+        tiktokPageFetches.push({ url, credentials: opts?.credentials });
+        const page = TIKTOK_PAGES[url];
+        // The extension's own fetch, as webRequest reports it: no tab.
+        const rid = `ttPage${tiktokPageFetches.length}`;
+        for (const r of registrations.filter(r => r.path === "webRequest.onBeforeRequest"
+                && r.filter?.types?.includes("xmlhttprequest") && r.filter?.urls?.some(p => patternMatches(p, url)))) {
+            r.fn({ url, type: "xmlhttprequest", tabId: -1, requestId: rid, method: "GET" });
+        }
+        if (page?.setCookie) {
+            for (const r of registrations.filter(r => r.path === "webRequest.onHeadersReceived"
+                    && r.filter?.types?.includes("xmlhttprequest") && r.filter?.urls?.some(p => patternMatches(p, url)))) {
+                r.fn({ url, type: "xmlhttprequest", tabId: -1, requestId: rid, statusCode: 200, thirdParty: true,
+                    responseHeaders: [{ name: "Set-Cookie", value: page.setCookie }] });
+            }
+        }
+        if (!page) return notFound;
+        return { ok: true, status: 200, text: async () => page.html };
     }
     if (url.startsWith("https://phoenix.prod.ateam.acast.cloud/api/v1/shows/")) {
         acastFeederCalls.push(url);
@@ -241,7 +263,7 @@ async function placeholderDispatch(tabId, urls, page = "https://example.com/") {
 async function drive(url, type, tabId, requestId, body, requestHeaders) {
     const matching = listenersMatching(url, type);
     const before = nativeSent.length;
-    const returns = matching.map(r => r.fn({ url, type, tabId, requestId, method: "GET" }));
+    const returns = matching.map(r => r.fn({ url, type, tabId, requestId, method: "GET", thirdParty: !!drive.thirdParty }));
     if (requestHeaders) {
         for (const r of registrations.filter(r => r.path === "webRequest.onSendHeaders"
                 && (!r.filter?.types || r.filter.types.includes(type))
@@ -286,9 +308,10 @@ async function drive(url, type, tabId, requestId, body, requestHeaders) {
     ] });
     const feed = await drive("https://www.tiktok.com/api/post/item_list/?aid=1988&msToken=SCRUBBED",
         "xmlhttprequest", 10, "ttFeed", feedBody);
-    // Two listeners match a tiktok.com XHR (item_list and the embed player's
-    // item API); each tests its own path, so one filter is opened.
-    check("tiktok: two xhr listeners, one per API", feed.matched === 2, feed.matched);
+    // Three listeners match a tiktok.com XHR (item_list, the embed player's
+    // item API, the note of the extension's own page fetches); each tests its
+    // own path, so one filter is opened.
+    check("tiktok: three xhr listeners, one per path", feed.matched === 3, feed.matched);
     check("tiktok: both feed items emitted", feed.emits.length === 2, feed.emits.length);
     if (feed.emits.length === 2) {
         const m = feed.emits[0].msg;
@@ -405,6 +428,37 @@ async function drive(url, type, tabId, requestId, body, requestHeaders) {
     check("tiktok embed: another tab's embed cookie is not used",
         !(otherTab.emits[0]?.msg?.requestHeaders || []).some(h => h.name === "Cookie"),
         JSON.stringify(otherTab.emits[0]?.msg?.requestHeaders));
+
+    // The embed's own clip is refused by the CDN; its tiktok.com page serves a
+    // URL that downloads with the cookies the page set. The extension fetches
+    // that page anonymously and captures the clip from it.
+    const pageItem = { id: "7663984400434072848", desc: "", author: { uniqueId: "sampleuser" },
+        video: { playAddr: "https://v16-webapp-prime.tiktok.example/video/page720.mp4?tk=tt_chain_token",
+            width: 720, height: 1280, duration: 6, codecType: "h264", cover: "https://p16.tiktokcdn.example/page-cover.jpg" } };
+    TIKTOK_PAGES["https://www.tiktok.com/@sampleuser/video/7663984400434072848"] = {
+        html: `<html><script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">`
+            + JSON.stringify({ __DEFAULT_SCOPE__: { "webapp.video-detail": { itemInfo: { itemStruct: pageItem } } } })
+            + `</script></html>`,
+        setCookie: "tt_chain_token=PAGE/bb==; Path=/; Domain=.tiktok.com; Secure; HttpOnly\nttwid=1%7Cabc; Path=/"
+    };
+    drive.thirdParty = true;
+    const viaPage = await drive("https://www.tiktok.com/player/api/v1/items?item_ids=7663984400434072848&aid=1284",
+        "xmlhttprequest", 18, "ttPlayerPage", playerBody.replace(/7663984400434072845/g, "7663984400434072848"),
+        [{ name: "Accept", value: "*/*" }]);
+    drive.thirdParty = false;
+    const pageFetch = tiktokPageFetches.find(f => f.url.endsWith("/7663984400434072848"));
+    check("tiktok embed: the clip's page is fetched without the user's cookies",
+        !!pageFetch && pageFetch.credentials === "omit", JSON.stringify(pageFetch));
+    const vp = viaPage.emits[0]?.msg;
+    check("tiktok embed: the clip is captured once, from its page",
+        viaPage.emits.length === 1 && vp?.variants?.length === 1
+            && vp.variants[0].url.includes("page720.mp4"), JSON.stringify(viaPage.emits.map(e => e.msg?.variants?.map(v => v.url))));
+    check("tiktok embed: the page's cookies go with its URL",
+        vp?.requestHeaders?.find(h => h.name === "Cookie")?.value === "tt_chain_token=PAGE/bb==; ttwid=1%7Cabc",
+        JSON.stringify(vp?.requestHeaders?.find(h => h.name === "Cookie")));
+    check("tiktok embed: a page with no clip falls back to the embed's listing",
+        embed.emits.length === 1 && tiktokPageFetches.some(f => f.url.endsWith("/7663984400434072845")),
+        JSON.stringify(tiktokPageFetches.map(f => f.url)));
 
     // On tiktok.com the item request's own Cookie header is the one replayed,
     // not a fresh jar read.

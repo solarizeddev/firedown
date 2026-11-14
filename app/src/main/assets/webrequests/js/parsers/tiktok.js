@@ -169,10 +169,15 @@ function mediaUrlShape(u) {
 // URL (in an embed, plus the cookies TikTok set there and the browser
 // refused). Only when that request was not seen (a response served by
 // TikTok's service worker) are the tab's jar cookies read instead.
-async function buildTikTokHeaders(tabId, requestId) {
+async function buildTikTokHeaders(tabId, requestId, pageCookies) {
     let cookieHeader = "";
     let source = "request";
-    if (requestId && itemRequestCookies.has(requestId)) {
+    if (typeof pageCookies === "string") {
+        // The clip's own page, fetched by the extension: its URLs go with the
+        // cookies that page set.
+        cookieHeader = pageCookies;
+        source = "page-fetch";
+    } else if (requestId && itemRequestCookies.has(requestId)) {
         const seen = itemRequestCookies.get(requestId);
         itemRequestCookies.delete(requestId);
         cookieHeader = seen.cookie;
@@ -297,7 +302,7 @@ function tiktokPlayerItems(json) {
 //   3. The historical fear that filterResponseData perturbs the stream
 //      into a "Something went wrong" overlay did NOT reproduce on-device
 //      with byte-exact write-through (see filterResponseText).
-async function handleTikTokItemList({ url, body, tabId, pageUrl, requestId }) {
+async function handleTikTokItemList({ url, body, tabId, pageUrl, requestId, pageCookies }) {
     // Empty body slips through (preflight / cache-warm). Treat it as the
     // no-op it is without logging "parse failed" (misleading: there's
     // nothing to parse, not a malformed JSON).
@@ -385,7 +390,7 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl, requestId }) {
     })();
     log("TIKTOK", `${items.length} item(s) from ${pathname}`);
 
-    const headers = await buildTikTokHeaders(tabId, requestId);
+    const headers = await buildTikTokHeaders(tabId, requestId, pageCookies);
 
     let sentCount = 0;
     let skippedNoVariants = 0;
@@ -633,6 +638,98 @@ browser.webRequest.onBeforeRequest.addListener(
 );
 
 
+// An embed on another site lists its own clip with URLs the video CDN refuses
+// (Akamai 403 TCP_DENIED, every rendition, with the cookies the embed set),
+// while the related videos it lists download with those cookies. On a phone
+// the embed never plays the clip: a tap opens tiktok.com, whose page for the
+// clip serves a URL that downloads with the cookies that page sets (device
+// logs 2026-11-14). So for an embed's clip the extension fetches that page,
+// anonymously (credentials omitted: no cookie of the user's is sent, none is
+// stored), and captures the clip from it with the cookies its response set.
+// When the page yields no clip, the embed's own listing is captured as before.
+const TIKTOK_PAGE_FETCH_MS = 10000;
+const embedPageClaims = new ClaimSet(60 * 1000, 64);
+// Own page fetches in flight: URL → cookies its responses set, filled by the
+// two listeners below (fetch() cannot read Set-Cookie). A redirect keeps the
+// requestId, so a cookie set on the way is kept too.
+const pageFetchByUrl = new Map();
+const pageFetchByRequest = new Map();
+
+browser.webRequest.onBeforeRequest.addListener(
+    (details) => {
+        if (details.tabId !== -1) return;
+        const jar = pageFetchByUrl.get(details.url);
+        if (jar) pageFetchByRequest.set(details.requestId, jar);
+    },
+    { urls: ["*://www.tiktok.com/*"], types: ["xmlhttprequest"] }
+);
+
+browser.webRequest.onHeadersReceived.addListener(
+    (details) => {
+        const jar = pageFetchByRequest.get(details.requestId);
+        if (!jar) return;
+        for (const h of details.responseHeaders || []) {
+            if (h.name.toLowerCase() !== "set-cookie") continue;
+            for (const line of String(h.value).split("\n")) {
+                const c = parseSetCookie(line);
+                if (c) jar.set(c[0], c[1]);
+            }
+        }
+    },
+    { urls: ["*://www.tiktok.com/*"], types: ["xmlhttprequest"] },
+    ["responseHeaders"]
+);
+
+// The clip's tiktok.com page → { item, cookies } or null.
+async function fetchTikTokPageItem(author, id) {
+    const url = `https://www.tiktok.com/@${encodeURIComponent(author)}/video/${id}`;
+    const jar = new Map();
+    pageFetchByUrl.set(url, jar);
+    let requestIdSeen = null;
+    try {
+        const resp = await fetch(url, {
+            credentials: "omit",
+            headers: { "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" },
+            signal: AbortSignal.timeout(TIKTOK_PAGE_FETCH_MS)
+        });
+        const html = resp.ok ? await resp.text() : "";
+        const found = html ? extractTikTokSSRItems(html).find(it => String(it.id) === String(id)) : null;
+        const cookies = [...jar].map(([n, v]) => `${n}=${v}`).join("; ");
+        log("TIKTOK", `embed page fetch`, {
+            id, status: resp.status, htmlLen: html.length, found: !!found,
+            cookies: cookieNames(cookies), chainToken: cookieValueHint(cookies, "tt_chain_token")
+        });
+        return found ? { item: found, cookies } : null;
+    } catch (e) {
+        log("TIKTOK", `embed page fetch failed`, { id, error: e.message });
+        return null;
+    } finally {
+        pageFetchByUrl.delete(url);
+        for (const [rid, j] of pageFetchByRequest) {
+            if (j === jar) requestIdSeen = rid;
+        }
+        if (requestIdSeen !== null) pageFetchByRequest.delete(requestIdSeen);
+    }
+}
+
+// An embed's clips: each from its own page where that works, the rest from
+// the embed's listing in one batch (its request's cookies are read once).
+async function captureEmbedItems(details, items, forward) {
+    const fallback = [];
+    await Promise.all(items.map(async (it) => {
+        const author = it.author?.uniqueId;
+        if (!author || !it.id) { fallback.push(it); return; }
+        if (!embedPageClaims.claim(`${details.tabId}|${it.id}`)) return;
+        const page = await fetchTikTokPageItem(author, it.id);
+        if (page) {
+            forward([page.item], page.cookies);
+        } else {
+            fallback.push(it);
+        }
+    }));
+    if (fallback.length) forward(fallback);
+}
+
 // Wire source — the embedded player's item API. A TikTok embed on another site
 // (blockquote.tiktok-embed, an oEmbed iframe of /player/v1/<id>) asks
 // /player/api/v1/items for the video it shows and fires no item_list call
@@ -645,15 +742,21 @@ browser.webRequest.onBeforeRequest.addListener(
         const created = filterResponseText(details, (body) => {
             const json = body ? tryParseJson(body) : null;
             const items = tiktokPlayerItems(json);
-            log("TIKTOK", `player items`, { count: items.length, tabId: details.tabId });
+            log("TIKTOK", `player items`, { count: items.length, tabId: details.tabId, thirdParty: !!details.thirdParty });
             if (items.length === 0) return;
-            handleTikTokItemList({
+            const forward = (list, pageCookies) => handleTikTokItemList({
                 url: details.url,
-                body: JSON.stringify({ itemList: items }),
+                body: JSON.stringify({ itemList: list }),
                 tabId: details.tabId,
                 pageUrl: details.documentUrl || details.originUrl,
-                requestId: details.requestId
+                requestId: details.requestId,
+                pageCookies
             }).catch(e => log("TIKTOK", `handler error (player)`, e.message));
+            if (details.thirdParty) {
+                captureEmbedItems(details, items, forward);
+            } else {
+                forward(items);
+            }
         });
         if (!created) {
             log("TIKTOK", `filterResponseData unavailable (player)`, { url: details.url.slice(0, 100) });
