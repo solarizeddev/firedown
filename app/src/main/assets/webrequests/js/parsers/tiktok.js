@@ -401,9 +401,6 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl, requestId, page
 
         const author = item.author?.uniqueId || item.author?.nickname;
         const caption = (item.desc || "").split("\n")[0].trim().slice(0, 140).trim();
-        // A clip with no caption is named by its account's display name; the
-        // @handle stays the description.
-        const displayName = String(item.author?.nickname || "").trim().slice(0, 140);
         const canonical = author && item.id
             ? `https://www.tiktok.com/@${author}/video/${item.id}`
             : pageUrl;
@@ -459,7 +456,7 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl, requestId, page
             origin: canonical,
             description: author ? "@" + author : undefined,
             img: v.cover || v.originCover,
-            name: caption || displayName || (author ? `TikTok by @${author}` : "TikTok video"),
+            name: caption || (author ? `TikTok by @${author}` : "TikTok video"),
             duration: typeof v.duration === "number" ? v.duration * 1000 : 0,
             requestHeaders: headers
         });

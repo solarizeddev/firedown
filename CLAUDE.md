@@ -2350,6 +2350,14 @@ Don't reintroduce the inject, and don't move SSR reading back to the DOM.
   interceptors, and a refused answer's headers and first 512 bytes).
   Cookie values are never logged, only names and the token's length and
   first characters.
+- **A clip with no caption is titled "TikTok by @handle" — and that stays,
+  by decision.** `desc` is often empty (the embed's clips on a news page all
+  were). Option considered and NOT built (maintainer, 2026-11-14): name it by
+  the account's display name (`author.nickname`, "charli d'amelio"), the
+  @handle as description, "TikTok by @handle" only with no nickname. It was
+  built (`5c67303`) and reverted: every caption-less clip of one account
+  then reads the same name, so it buys nothing over the handle. The music
+  title was rejected too ("original sound" or a song the clip only uses).
 - **The anti-bot throttle is the real gotcha.** TikTok withholds the item_list
   XHRs entirely (the `Take_A_Break` reminder shows, only `/api/preload/` fires)
   unless the page's **fingerprint stays unstable**. Globally that's

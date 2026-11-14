@@ -386,8 +386,7 @@ async function drive(url, type, tabId, requestId, body, requestHeaders) {
         const m = embed.emits[0].msg;
         check("tiktok embed: exact id in the origin",
             m.origin === "https://www.tiktok.com/@sampleuser/video/7663984400434072845", m.origin);
-        check("tiktok embed: no caption → named by the display name, @handle below",
-            m.name === "Sample" && m.description === "@sampleuser", JSON.stringify([m.name, m.description]));
+        check("tiktok embed: no caption → titled by its author", m.name === "TikTok by @sampleuser", m.name);
         check("tiktok embed: picture, duration, size",
             m.img === "https://p16.tiktokcdn.example/embed-cover.jpg" && m.duration === 6000
                 && m.variants.some(v => v.size === 443766), JSON.stringify([m.img, m.duration]));
