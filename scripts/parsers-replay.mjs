@@ -238,10 +238,17 @@ async function placeholderDispatch(tabId, urls, page = "https://example.com/") {
 // Dispatch a request through EVERY matching listener; if a body is given and a
 // listener created a response filter, feed it. Returns the listeners' sync
 // return values (for redirect checks) plus the capture emits that followed.
-async function drive(url, type, tabId, requestId, body) {
+async function drive(url, type, tabId, requestId, body, requestHeaders) {
     const matching = listenersMatching(url, type);
     const before = nativeSent.length;
     const returns = matching.map(r => r.fn({ url, type, tabId, requestId, method: "GET" }));
+    if (requestHeaders) {
+        for (const r of registrations.filter(r => r.path === "webRequest.onSendHeaders"
+                && (!r.filter?.types || r.filter.types.includes(type))
+                && r.filter?.urls?.some(p => patternMatches(p, url)))) {
+            r.fn({ url, type, tabId, requestId, method: "GET", requestHeaders, thirdParty: !!drive.thirdParty });
+        }
+    }
     if (body != null) {
         const f = filters.get(requestId);
         if (f) {
@@ -279,7 +286,9 @@ async function drive(url, type, tabId, requestId, body) {
     ] });
     const feed = await drive("https://www.tiktok.com/api/post/item_list/?aid=1988&msToken=SCRUBBED",
         "xmlhttprequest", 10, "ttFeed", feedBody);
-    check("tiktok: one xhr listener", feed.matched === 1, feed.matched);
+    // Two listeners match a tiktok.com XHR (item_list and the embed player's
+    // item API); each tests its own path, so one filter is opened.
+    check("tiktok: two xhr listeners, one per API", feed.matched === 2, feed.matched);
     check("tiktok: both feed items emitted", feed.emits.length === 2, feed.emits.length);
     if (feed.emits.length === 2) {
         const m = feed.emits[0].msg;
@@ -329,6 +338,79 @@ async function drive(url, type, tabId, requestId, body) {
             ssr.emits[0].msg.origin === "https://www.tiktok.com/@sampleuser/video/7300000000000000009",
             ssr.emits[0].msg.origin);
     }
+
+    // The embedded player (a TikTok embed on another site) asks
+    // /player/api/v1/items for its video, snake_case, and no item_list call
+    // lists it. The id is a JSON number past 2^53: id_str is the exact one.
+    const playerBody = `{"items":[{"author_info":{"nickname":"Sample","unique_id":"sampleuser"},"desc":"",`
+        + `"id":7663984400434072845,"id_str":"7663984400434072845","video_info":{`
+        + `"cover":{"url_list":["https://p16.tiktokcdn.example/embed-cover.jpg"]},`
+        + `"meta":{"bitrate":624560,"duration":6,"format":"mp4","height":1280,"width":720},`
+        + `"profiles":[`
+        + `{"bitrate":624560,"codec_type":"h264","play_addr":{"data_size":528300,"height":1280,"width":720,"url_list":["https://v16-webapp-prime.tiktok.example/video/e720.mp4?tk=tt_chain_token"]}},`
+        + `{"bitrate":524623,"codec_type":"h265","play_addr":{"data_size":443766,"height":1920,"width":1080,"url_list":["https://v16-webapp-prime.tiktok.example/video/e1080.mp4?tk=tt_chain_token"]}}],`
+        + `"url_list":["https://v16-webapp-prime.tiktok.example/video/e720.mp4?tk=tt_chain_token"]}}]}`;
+    // A jar holding a token (from browsing tiktok.com) must not reach it.
+    const jarGetAll = browser.cookies.getAll;
+    browser.cookies.getAll = async () => [{ name: "tt_chain_token", value: "JAR" }];
+    drive.thirdParty = true;
+    const embed = await drive("https://www.tiktok.com/player/api/v1/items?item_ids=7663984400434072845&aid=1284",
+        "xmlhttprequest", 14, "ttPlayer", playerBody, [{ name: "Accept", value: "*/*" }]);
+    drive.thirdParty = false;
+    browser.cookies.getAll = jarGetAll;
+    check("tiktok embed: the player's own video captured", embed.emits.length === 1, embed.emits.length);
+    if (embed.emits.length === 1) {
+        const m = embed.emits[0].msg;
+        check("tiktok embed: exact id in the origin",
+            m.origin === "https://www.tiktok.com/@sampleuser/video/7663984400434072845", m.origin);
+        check("tiktok embed: no caption → titled by its author", m.name === "TikTok by @sampleuser", m.name);
+        check("tiktok embed: picture, duration, size",
+            m.img === "https://p16.tiktokcdn.example/embed-cover.jpg" && m.duration === 6000
+                && m.variants.some(v => v.size === 443766), JSON.stringify([m.img, m.duration]));
+        check("tiktok embed: HEVC rendition named h265",
+            m.variants.find(v => v.height === 1920)?.videoCodec === "h265"
+                && m.variants.find(v => v.height === 1280)?.videoCodec === "h264",
+            JSON.stringify(m.variants.map(v => [v.height, v.videoCodec])));
+        // An embed's request carried no cookie (the browser refuses TikTok's
+        // third-party cookies there): the download must not add the jar's.
+        check("tiktok embed: no Cookie when the item request carried none",
+            !(m.requestHeaders || []).some(h => h.name === "Cookie"), JSON.stringify(m.requestHeaders));
+    }
+
+    // On tiktok.com the item request's own Cookie header is the one replayed,
+    // not a fresh jar read.
+    const realGetAll = browser.cookies.getAll;
+    let jarReads = 0;
+    browser.cookies.getAll = async () => { jarReads++; return [{ name: "tt_chain_token", value: "JAR" }]; };
+    const withCookie = await drive("https://www.tiktok.com/api/post/item_list/?aid=1988&c=1", "xmlhttprequest", 15, "ttCookie",
+        JSON.stringify({ itemList: [item("7300000000000000011", { playAddr: "https://v16-webapp-prime.tiktok.example/video/ck.mp4?tk=tt_chain_token" })] }),
+        [{ name: "Cookie", value: "tt_chain_token=MINT; msToken=x" }]);
+    const ck = withCookie.emits[0]?.msg?.requestHeaders?.find(h => h.name === "Cookie")?.value;
+    check("tiktok: the minting request's Cookie is replayed", ck === "tt_chain_token=MINT; msToken=x" && jarReads === 0, `${ck} jarReads=${jarReads}`);
+    // First party with no Cookie header (a service-worker response can show
+    // none): the tab's jar, not "no cookie".
+    const fpNone = await drive("https://www.tiktok.com/api/post/item_list/?aid=1988&c=3", "xmlhttprequest", 15, "ttFpNone",
+        JSON.stringify({ itemList: [item("7300000000000000014", { playAddr: "https://v16-webapp-prime.tiktok.example/video/fp.mp4?tk=tt_chain_token" })] }),
+        [{ name: "Accept", value: "*/*" }]);
+    const fp = fpNone.emits[0]?.msg?.requestHeaders?.find(h => h.name === "Cookie")?.value;
+    check("tiktok: first-party request with no Cookie header reads the jar", fp === "tt_chain_token=JAR" && jarReads === 1, `${fp} jarReads=${jarReads}`);
+    // Not seen (a service-worker response): the tab's jar, as before.
+    const noRecord = await drive("https://www.tiktok.com/api/post/item_list/?aid=1988&c=2", "xmlhttprequest", 15, "ttNoRecord",
+        JSON.stringify({ itemList: [item("7300000000000000012", { playAddr: "https://v16-webapp-prime.tiktok.example/video/nr.mp4?tk=tt_chain_token" })] }));
+    const nr = noRecord.emits[0]?.msg?.requestHeaders?.find(h => h.name === "Cookie")?.value;
+    check("tiktok: unseen request falls back to the jar", nr === "tt_chain_token=JAR" && jarReads === 2, `${nr} jarReads=${jarReads}`);
+    browser.cookies.getAll = realGetAll;
+
+    // Caption tracks ride with their video, language canonicalised.
+    const subBefore = nativeSent.length;
+    await drive("https://www.tiktok.com/api/related/item_list/?aid=1988&s=1", "xmlhttprequest", 16, "ttSubs",
+        JSON.stringify({ itemList: [item("7300000000000000013", { playAddr: "https://v16-webapp-prime.tiktok.example/video/sb.mp4",
+            subtitleInfos: [{ Format: "webvtt", LanguageCodeName: "eng-US", Source: "ASR", Url: "https://v16-webapp.tiktokcdn.example/sub/?a=1" }] })] }));
+    const sub = nativeSent.slice(subBefore).find(s => s.msg?.type === "subtitle");
+    check("tiktok: caption track emitted under the video's origin",
+        sub?.msg?.url === "https://v16-webapp.tiktokcdn.example/sub/?a=1" && sub?.msg?.language === "en-US"
+            && sub?.msg?.origin === "https://www.tiktok.com/@sampleuser/video/7300000000000000013",
+        JSON.stringify(sub?.msg));
 }
 
 // ---------------------------------------------------------------------------

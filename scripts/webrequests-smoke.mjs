@@ -101,11 +101,13 @@ const count = (path) => (registrations[path] ?? []).length;
 // Inventory of listener registrations across the background module graph
 // (js/parsers/* + requests.js + cookies.js + debug.js). Update deliberately
 // when adding/removing a listener — that's the point of the check.
-expect(count("webRequest.onBeforeRequest") === 47, `webRequest.onBeforeRequest registrations == 47 (got ${count("webRequest.onBeforeRequest")})`);
+expect(count("webRequest.onBeforeRequest") === 48, `webRequest.onBeforeRequest registrations == 48 (got ${count("webRequest.onBeforeRequest")})`);
 // The snapshot archiver's Referer rewrite for its own privileged fetches
 // (requests.js snapshotReferers) — the one blocking onBeforeSendHeaders.
 expect(count("webRequest.onBeforeSendHeaders") === 1, `webRequest.onBeforeSendHeaders registrations == 1 (got ${count("webRequest.onBeforeSendHeaders")})`);
-expect(count("webRequest.onSendHeaders") === 2, `webRequest.onSendHeaders registrations == 2 (got ${count("webRequest.onSendHeaders")})`);
+// The third: TikTok's record of the Cookie each item request carried (the
+// download replays exactly that, js/parsers/tiktok.js).
+expect(count("webRequest.onSendHeaders") === 3, `webRequest.onSendHeaders registrations == 3 (got ${count("webRequest.onSendHeaders")})`);
 expect(count("webRequest.onHeadersReceived") === 2, `webRequest.onHeadersReceived registrations == 2 (got ${count("webRequest.onHeadersReceived")})`);
 expect(count("webRequest.onResponseStarted") === 1, `webRequest.onResponseStarted registrations == 1 (got ${count("webRequest.onResponseStarted")})`);
 expect(count("webRequest.onErrorOccurred") === 1, `webRequest.onErrorOccurred registrations == 1 (got ${count("webRequest.onErrorOccurred")})`);

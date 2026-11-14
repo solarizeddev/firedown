@@ -3,6 +3,7 @@ package com.solarized.firedown.ffmpegutils;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.solarized.firedown.data.capture.CaptureFacts;
 import com.solarized.firedown.utils.FileUriHelper;
 
 import java.io.IOException;
@@ -512,7 +513,7 @@ public class FFmpegMetaDataReader {
                                 FFmpegEntity.setInfo(String.format(Locale.getDefault(), "%dx%d", info.getWidth(), info.getHeight()));
                             }
                         } else {
-                            FFmpegEntity.setInfo(String.format(Locale.getDefault(), "%dp", info.getHeight()));
+                            FFmpegEntity.setInfo(CaptureFacts.qualityLabel(info.getWidth(), info.getHeight()));
                         }
                     }
                     FFmpegEntity.setDimensions(info.getWidth(), info.getHeight());

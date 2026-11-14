@@ -5,6 +5,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.solarized.firedown.data.capture.CaptureFacts;
 import com.solarized.firedown.utils.Utils;
 
 import java.util.HashMap;
@@ -191,7 +192,11 @@ public class FFmpegStreamInfo {
             if (isImage()) {
                 return String.format(Locale.US, "%d x %d", getWidth(), getHeight());
             }
-            return String.format(Locale.US, "%dp (%d x %d)", getHeight(), getWidth(), getHeight());
+            String quality = CaptureFacts.qualityLabel(getWidth(), getHeight());
+            if (quality == null) {
+                return String.format(Locale.US, "%dp (%d x %d)", getHeight(), getWidth(), getHeight());
+            }
+            return String.format(Locale.US, "%s (%d x %d)", quality, getWidth(), getHeight());
         }
         return "";
     }

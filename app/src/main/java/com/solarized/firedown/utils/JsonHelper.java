@@ -3,6 +3,7 @@ package com.solarized.firedown.utils;
 
 import android.util.Log;
 
+import com.solarized.firedown.data.capture.CaptureFacts;
 import com.solarized.firedown.data.entity.AudioTrackEntity;
 import com.solarized.firedown.data.entity.GeckoInspectEntity;
 import com.solarized.firedown.ffmpegutils.FFmpegConstants;
@@ -242,9 +243,10 @@ public class JsonHelper {
                 // (a lean item with only a type tier, any RESOLUTION-less HLS
                 // rendition): full WxH → height-only → bitrate → nothing.
                 if (height > 0 && width > 0) {
+                    String quality = CaptureFacts.qualityLabel(width, height);
                     stream.setStreamDescription(
-                            String.format(Locale.US, "%dp (%d x %d)", height, width, height));
-                    stream.setInfo(String.format(Locale.US, "%dp", height));
+                            String.format(Locale.US, "%s (%d x %d)", quality, width, height));
+                    stream.setInfo(quality);
                 } else if (height > 0) {
                     stream.setStreamDescription(String.format(Locale.US, "%dp", height));
                     stream.setInfo(String.format(Locale.US, "%dp", height));

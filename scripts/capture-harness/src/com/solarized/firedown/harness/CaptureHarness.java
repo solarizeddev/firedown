@@ -634,9 +634,10 @@ public class CaptureHarness {
     check("facts: no duration, no estimate", CaptureFacts.variantSize(r720, 0) == null
         && CaptureFacts.variantSize(r720, 8_000_000L).bytes == 1_000_000L);
 
-    // a download row's resolution as the picker's label (its height)
+    // a download row's resolution as the picker's label (its short side:
+    // a portrait 720x1280 clip is 720p, as YouTube names it)
     check("facts: resolution -> quality", "720p".equals(CaptureFacts.qualityOfResolution("1280x720"))
-        && "1280p".equals(CaptureFacts.qualityOfResolution("720x1280")));
+        && "720p".equals(CaptureFacts.qualityOfResolution("720x1280")));
     check("facts: not a resolution -> null", CaptureFacts.qualityOfResolution(null) == null
         && CaptureFacts.qualityOfResolution("720p") == null && CaptureFacts.qualityOfResolution("x720") == null
         && CaptureFacts.qualityOfResolution("1280x") == null && CaptureFacts.qualityOfResolution("0x720") == null);

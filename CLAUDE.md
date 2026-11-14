@@ -2275,6 +2275,35 @@ Don't reintroduce the inject, and don't move SSR reading back to the DOM.
   app/i18n/seo context) — the feed is client-rendered via the item_list XHRs, so
   the item_list listener is the only source there. The `main_frame` SSR listener
   runs on the detail (`/@user/video/<id>`) paths only.
+- **An embed on another site is read through the player's own API, and its
+  downloads carry the cookies of the request that listed them** (2026-11, a
+  HAR of a news article embedding a TikTok). A TikTok embed (oEmbed iframe
+  of `/player/v1/<id>`) asks `/player/api/v1/items?item_ids=<id>` for its
+  video (snake_case: `author_info.unique_id`, `video_info.profiles[].play_addr
+  {url_list,width,height,data_size}`, `codec_type`, `meta.duration` in
+  seconds, `id_str` because `id` overflows a double), then
+  `/api/related/item_list/` for the author's other videos. Before this only
+  the related list was read: the embedded video itself never reached the
+  sheet. `tiktokPlayerItems` rewrites the player shape into the item_list
+  shape so `handleTikTokItemList` emits both. **Cookies**: a URL with
+  `tk=tt_chain_token` is checked against the cookie of the session that
+  minted it. On tiktok.com that is the tab's jar; in an embed the browser
+  refuses TikTok's third-party cookies, so the item request carried none,
+  and replaying the JAR's token (from browsing tiktok.com) made every
+  embed download answer 403 "Forbidden". `itemRequestCookies` (an
+  `onSendHeaders` record by requestId, read once, 2-minute TTL) holds the
+  Cookie header each item request actually sent, and `buildTikTokHeaders`
+  replays exactly that, with no Cookie header when there was none; only a
+  request it never saw (a service-worker response) falls back to the jar.
+  Also: each rendition's codec is TikTok's own (`CodecType`, HEVC as
+  `h265`), not a fixed `h264`, and `subtitleInfos` (speech-recognition
+  WebVTT) are emitted as caption tracks under the video's origin, the
+  language canonicalised (`eng-US` → `en-US`). Pinned by `parsers-replay.mjs`
+  (`tiktok embed:` and the cookie checks; mutants: the jar always read, the
+  codec fixed — each fails). That a cookie-less request is what the CDN
+  accepts for an embed-minted URL is inferred, not measured (no media
+  request in the HAR): if embed downloads still 403 on a device, the
+  `built headers` log line names the cookie source and names.
 - **The anti-bot throttle is the real gotcha.** TikTok withholds the item_list
   XHRs entirely (the `Take_A_Break` reminder shows, only `/api/preload/` fires)
   unless the page's **fingerprint stays unstable**. Globally that's
@@ -3884,7 +3913,11 @@ type, not a mode.
   the capture harness): the quality is the default rendition's label (the
   first in `FFmpegEntityComparator` order, i.e. what `DownloadRequest.from`
   picks; a copy is sorted, never the entity's list) else the
-  `TYPE_QUALITY` tag; the size is, in order, the rendition's EXACT byte
+  `TYPE_QUALITY` tag. **A rendition is named by its frame's SHORT side**
+  (`CaptureFacts.qualityLabel`, called by JsonHelper, the probe and
+  `FFmpegStreamInfo`): a portrait 1080x1920 clip is "1080p", as YouTube
+  names it; by height every TikTok, Reel and Short read "1920p". The size
+  is, in order, the rendition's EXACT byte
   size (`FFmpegEntity.size` — YouTube's video + audio `contentLength`,
   TikTok's `PlayAddr.DataSize`), the capture's own length (one file — the
   catcher's response), else an ESTIMATE, the rendition's bitrate (bits/s)

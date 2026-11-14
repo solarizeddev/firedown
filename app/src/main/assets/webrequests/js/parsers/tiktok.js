@@ -1,6 +1,7 @@
 // TikTok parser (filterResponseData: item_list feeds + document SSR) — split
 // verbatim out of the former parser-background.js.
-import { log, tryParseJson, sendVariants, filterResponseText, cookieQueryForTab } from './common.js';
+import { log, tryParseJson, sendVariants, sendSubtitles, filterResponseText, cookieQueryForTab } from './common.js';
+import { MetaCache } from '../bounded.js';
 
 // ============================================================================
 // TikTok
@@ -34,26 +35,65 @@ browser.webRequest.onBeforeRequest.addListener(
     ["blocking"]
 );
 
-// Build the header set that lets v*-webapp-prime.tiktok.com /video/
-// URLs replay successfully from the native downloader. Mirrors what
-// Firefox itself sends on the page-driven media fetch (captured via
-// the webrequests path): Origin/Referer/Sec-Fetch-* and — crucially
-// — Cookie, which carries tt_chain_token (the URL's `tk=` param names
-// this cookie as the auth source, so without it TikTok 403s).
-async function buildTikTokHeaders(tabId) {
-    let cookieHeader = "";
-    let cookieCount = 0;
-    try {
-        // The jar of the TAB the item came from (a private tab's download must
-        // not carry the regular session's tt_chain_token).
-        const cookies = await browser.cookies.getAll(await cookieQueryForTab(tabId, { domain: "tiktok.com" }));
-        cookieCount = cookies.length;
-        cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join("; ");
-    } catch (e) {
-        log("TIKTOK", `cookies.getAll failed`, e.message);
+// The Cookie header each TikTok item request actually carried, by requestId.
+// A video URL is minted for the request that listed it, so the download must
+// carry THAT request's tt_chain_token (the URL's `tk=` param names the cookie)
+// and nothing else. On tiktok.com that is the tab's jar. In an embed on
+// another site the browser refuses TikTok's third-party cookies, so the
+// request carried none, and the jar's own token (from browsing tiktok.com)
+// made the CDN answer 403. A first-party request with no Cookie header is not
+// trusted as "none": a request a service worker answers can show none while
+// the jar holds the token. Keyed by request, read once: one request has one
+// tab and one browsing mode.
+const itemRequestCookies = new MetaCache(64, 2 * 60 * 1000);
+
+browser.webRequest.onSendHeaders.addListener(
+    (details) => {
+        if (!isTikTokItemRequest(details)) return;
+        const header = (details.requestHeaders || []).find(h => h.name.toLowerCase() === "cookie");
+        if (!header && !details.thirdParty) return;
+        itemRequestCookies.set(details.requestId, header ? header.value : "");
+    },
+    { urls: ["*://www.tiktok.com/*", "*://m.tiktok.com/*"], types: ["main_frame", "xmlhttprequest"] },
+    ["requestHeaders"]
+);
+
+function isTikTokItemRequest(details) {
+    if (details.type === "main_frame") {
+        try { return TIKTOK_DETAIL_PATH_RE.test(new URL(details.url).pathname); }
+        catch (_) { return false; }
     }
-    log("TIKTOK", `built headers`, { cookies: cookieCount, cookieLen: cookieHeader.length, ua: navigator.userAgent.slice(0, 60) });
-    return [
+    return TIKTOK_ITEMLIST_RE.test(details.url) || TIKTOK_PLAYER_ITEMS_RE.test(details.url);
+}
+
+function cookieNames(header) {
+    return header ? header.split(";").map(c => c.split("=")[0].trim()).filter(Boolean) : [];
+}
+
+// The headers a v*-webapp-prime.tiktok.com /video/ URL is replayed with.
+// Mirrors what Firefox sends on the page-driven media fetch:
+// Origin/Referer/Sec-Fetch-* and the cookies of the request that minted the
+// URL. Only when that request was not seen (a response served by TikTok's
+// service worker) are the tab's jar cookies read instead.
+async function buildTikTokHeaders(tabId, requestId) {
+    let cookieHeader = "";
+    let source = "request";
+    if (requestId && itemRequestCookies.has(requestId)) {
+        cookieHeader = itemRequestCookies.get(requestId);
+        itemRequestCookies.delete(requestId);
+    } else {
+        source = "jar";
+        try {
+            // The jar of the TAB the item came from (a private tab's download
+            // must not carry the regular session's tt_chain_token).
+            const cookies = await browser.cookies.getAll(await cookieQueryForTab(tabId, { domain: "tiktok.com" }));
+            cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join("; ");
+        } catch (e) {
+            log("TIKTOK", `cookies.getAll failed`, e.message);
+        }
+    }
+    log("TIKTOK", `built headers`, { cookieSource: source, cookies: cookieNames(cookieHeader) });
+    const headers = [
         { name: "User-Agent",     value: navigator.userAgent },
         { name: "Accept",         value: "*/*" },
         { name: "Accept-Language", value: "en-US,en;q=0.9" },
@@ -62,9 +102,73 @@ async function buildTikTokHeaders(tabId) {
         { name: "Sec-Fetch-Dest", value: "empty" },
         { name: "Sec-Fetch-Mode", value: "cors" },
         { name: "Sec-Fetch-Site", value: "same-site" },
-        { name: "Connection",     value: "keep-alive" },
-        { name: "Cookie",         value: cookieHeader }
+        { name: "Connection",     value: "keep-alive" }
     ];
+    if (cookieHeader) headers.push({ name: "Cookie", value: cookieHeader });
+    return headers;
+}
+
+// TikTok names HEVC "h265" or "bytevc1"; everything else it serves is H.264.
+function tiktokCodec(name) {
+    const n = String(name || "").toLowerCase();
+    return (n === "h265" || n === "bytevc1" || n === "hevc") ? "h265" : "h264";
+}
+
+// A video's caption tracks (speech recognition, WebVTT), language in BCP 47:
+// TikTok writes ISO 639-2 ("eng-US"), which canonicalises to "en-US".
+function tiktokSubtitles(video) {
+    const out = [];
+    const list = Array.isArray(video?.subtitleInfos) ? video.subtitleInfos : [];
+    for (const s of list) {
+        const url = s?.Url;
+        if (typeof url !== "string" || !/^https?:/i.test(url)) continue;
+        if (s.Format && String(s.Format).toLowerCase() !== "webvtt") continue;
+        let language = s.LanguageCodeName || null;
+        if (language) {
+            try { language = Intl.getCanonicalLocales(language)[0]; } catch (_) { /* keep as written */ }
+        }
+        out.push({ url, language });
+    }
+    return out;
+}
+
+// The embedded player's API (/player/api/v1/items, what a TikTok embed on
+// another site plays) lists the same videos in snake_case. Rewritten into the
+// item_list shape so one handler emits both.
+function tiktokPlayerItems(json) {
+    const items = Array.isArray(json?.items) ? json.items : [];
+    const out = [];
+    for (const it of items) {
+        const vi = it?.video_info;
+        if (!vi) continue;
+        const meta = vi.meta || {};
+        const bitrateInfo = [];
+        for (const p of Array.isArray(vi.profiles) ? vi.profiles : []) {
+            const pa = p?.play_addr;
+            if (!pa || !Array.isArray(pa.url_list) || pa.url_list.length === 0) continue;
+            bitrateInfo.push({
+                Bitrate: p.bitrate || 0,
+                CodecType: p.codec_type,
+                PlayAddr: { UrlList: pa.url_list, Width: pa.width, Height: pa.height, DataSize: pa.data_size }
+            });
+        }
+        out.push({
+            // id is a JSON number past 2^53; id_str is exact.
+            id: it.id_str || String(it.id || ""),
+            desc: it.desc || "",
+            author: { uniqueId: it.author_info?.unique_id, nickname: it.author_info?.nickname },
+            video: {
+                bitrateInfo,
+                playAddr: Array.isArray(vi.url_list) ? vi.url_list[0] : undefined,
+                width: meta.width || 0,
+                height: meta.height || 0,
+                duration: meta.duration,
+                cover: vi.cover?.url_list?.[0],
+                originCover: vi.origin_cover?.url_list?.[0]
+            }
+        });
+    }
+    return out;
 }
 
 // Processes one item_list JSON body, whatever its source. Source-agnostic
@@ -89,7 +193,7 @@ async function buildTikTokHeaders(tabId) {
 //   3. The historical fear that filterResponseData perturbs the stream
 //      into a "Something went wrong" overlay did NOT reproduce on-device
 //      with byte-exact write-through (see filterResponseText).
-async function handleTikTokItemList({ url, body, tabId, pageUrl }) {
+async function handleTikTokItemList({ url, body, tabId, pageUrl, requestId }) {
     // Empty body slips through (preflight / cache-warm). Treat it as the
     // no-op it is without logging "parse failed" (misleading: there's
     // nothing to parse, not a malformed JSON).
@@ -177,7 +281,7 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl }) {
     })();
     log("TIKTOK", `${items.length} item(s) from ${pathname}`);
 
-    const headers = await buildTikTokHeaders(tabId);
+    const headers = await buildTikTokHeaders(tabId, requestId);
 
     let sentCount = 0;
     let skippedNoVariants = 0;
@@ -187,7 +291,7 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl }) {
         if (!v) { skippedNoVideo++; continue; }
 
         const author = item.author?.uniqueId || item.author?.nickname;
-        const caption = (item.desc || "").split("\n")[0].slice(0, 140);
+        const caption = (item.desc || "").split("\n")[0].trim().slice(0, 140).trim();
         const canonical = author && item.id
             ? `https://www.tiktok.com/@${author}/video/${item.id}`
             : pageUrl;
@@ -205,7 +309,7 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl }) {
                     // The file's exact size, which the quality picker shows
                     // (TikTok serves it beside the URL list, as a string).
                     size: Number(b.PlayAddr?.DataSize) || 0,
-                    videoCodec: "h264"
+                    videoCodec: tiktokCodec(b.CodecType)
                 });
             }
         }
@@ -214,7 +318,7 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl }) {
                 url: v.playAddr || v.downloadAddr,
                 width: v.width || 0,
                 height: v.height || 0,
-                videoCodec: "h264"
+                videoCodec: tiktokCodec(v.codecType)
             });
         }
         if (variants.length === 0) { skippedNoVariants++; continue; }
@@ -246,6 +350,10 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl }) {
             duration: typeof v.duration === "number" ? v.duration * 1000 : 0,
             requestHeaders: headers
         });
+        const subtitles = tiktokSubtitles(v);
+        if (subtitles.length > 0) {
+            sendSubtitles(details, { subtitles, origin: canonical, requestHeaders: headers });
+        }
         sentCount++;
     }
     log("TIKTOK", `batch done`, { sent: sentCount, skippedNoVideo, skippedNoVariants, total: items.length });
@@ -352,7 +460,8 @@ browser.webRequest.onBeforeRequest.addListener(
                 url: details.url,
                 body: JSON.stringify({ itemList: items }),
                 tabId: details.tabId,
-                pageUrl: details.url
+                pageUrl: details.url,
+                requestId: details.requestId
             }).catch(e => log("TIKTOK", `handler error (ssr)`, e.message));
         });
         if (!created) {
@@ -403,7 +512,8 @@ browser.webRequest.onBeforeRequest.addListener(
                 url: details.url,
                 body,
                 tabId: details.tabId,
-                pageUrl: details.documentUrl || details.originUrl
+                pageUrl: details.documentUrl || details.originUrl,
+                requestId: details.requestId
             }).catch(e => {
                 log("TIKTOK", `handler error (filter)`, e.message);
             });
@@ -417,3 +527,34 @@ browser.webRequest.onBeforeRequest.addListener(
     ["blocking"]
 );
 
+
+// Wire source — the embedded player's item API. A TikTok embed on another site
+// (blockquote.tiktok-embed, an oEmbed iframe of /player/v1/<id>) asks
+// /player/api/v1/items for the video it shows and fires no item_list call
+// for it, so without this the embedded video itself was never captured (only
+// the related videos the player lists after it).
+const TIKTOK_PLAYER_ITEMS_RE = /\/player\/api\/v1\/items\?/i;
+browser.webRequest.onBeforeRequest.addListener(
+    (details) => {
+        if (!TIKTOK_PLAYER_ITEMS_RE.test(details.url)) return {};
+        const created = filterResponseText(details, (body) => {
+            const json = body ? tryParseJson(body) : null;
+            const items = tiktokPlayerItems(json);
+            log("TIKTOK", `player items`, { count: items.length, tabId: details.tabId });
+            if (items.length === 0) return;
+            handleTikTokItemList({
+                url: details.url,
+                body: JSON.stringify({ itemList: items }),
+                tabId: details.tabId,
+                pageUrl: details.documentUrl || details.originUrl,
+                requestId: details.requestId
+            }).catch(e => log("TIKTOK", `handler error (player)`, e.message));
+        });
+        if (!created) {
+            log("TIKTOK", `filterResponseData unavailable (player)`, { url: details.url.slice(0, 100) });
+        }
+        return {};
+    },
+    { urls: ["*://www.tiktok.com/*", "*://m.tiktok.com/*"], types: ["xmlhttprequest"] },
+    ["blocking"]
+);

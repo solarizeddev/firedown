@@ -142,9 +142,24 @@ public final class CaptureFacts {
     }
 
     /**
+     * The quality a frame size is named by: its SHORT side, so a portrait
+     * 1080x1920 clip is "1080p" like its landscape twin (YouTube's naming),
+     * not "1920p". Every producer of a rendition label calls this (JsonHelper,
+     * the probe, the stream description), so a running download's frame size
+     * finds its rendition by the same label. Null without both sides.
+     */
+    @Nullable
+    public static String qualityLabel(int width, int height) {
+        if (width <= 0 || height <= 0) {
+            return null;
+        }
+        return Math.min(width, height) + "p";
+    }
+
+    /**
      * "1280x720" → "720p", the label a rendition of that frame size wears in
-     * the picker (its height, as JsonHelper and the probe name it). Null for
-     * anything that is not a frame size.
+     * the picker ({@link #qualityLabel}). Null for anything that is not a
+     * frame size.
      */
     @Nullable
     public static String qualityOfResolution(@Nullable String resolution) {
@@ -158,10 +173,7 @@ public final class CaptureFacts {
         try {
             int width = Integer.parseInt(resolution.substring(0, x).trim());
             int height = Integer.parseInt(resolution.substring(x + 1).trim());
-            if (width <= 0 || height <= 0) {
-                return null;
-            }
-            return height + "p";
+            return qualityLabel(width, height);
         } catch (NumberFormatException e) {
             return null;
         }
