@@ -2315,8 +2315,9 @@ Don't reintroduce the inject, and don't move SSR reading back to the DOM.
   in the `built headers` line). A first-party request never gets them.
   Pinned by `parsers-replay.mjs` (`the token the embed document set is
   replayed`, `another tab's embed cookie is not used`; a merge that adds
-  nothing fails it). Whether the CDN accepts that token for the URL is
-  still unverified on a device. Three debug traces compare the two requests (`adb logcat -s
+  nothing fails it). Verified on a device (2026-11-14): the same embeds
+  that answered 403 to every download before now download, the
+  `built headers` line reading `request+embed-set-cookie`. Three debug traces compare the two requests (`adb logcat -s
   GeckoConsole:* DownloadTrace:*`): `[TIKTOK] built headers` (the cookie
   source, names and a short tt_chain_token hint the parser emitted),
   `[TIKTOK-WIRE] player request/response` (observe-only listeners on the
