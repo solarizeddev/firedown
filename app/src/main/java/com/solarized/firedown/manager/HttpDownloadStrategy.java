@@ -22,11 +22,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
 import com.solarized.firedown.okhttp.SafeHeaders;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -39,6 +42,11 @@ import okhttp3.ResponseBody;
 public class HttpDownloadStrategy implements DownloadStrategy {
 
     private static final String TAG = HttpDownloadStrategy.class.getSimpleName();
+    // A literal tag: R8 renames this class in the diagnostic build, and the
+    // exchange trace below is what a refused download is debugged from.
+    private static final String TRACE_TAG = "DownloadTrace";
+    private static final boolean TRACE = BuildConfig.DEBUG || BuildConfig.DIAGNOSTIC;
+    private static final long TRACE_BODY_BYTES = 512;
     private static final int BYTE_SIZE = 8192;
     private static final long UPDATE_RATE = 1500;
     private volatile boolean stopped;
@@ -125,6 +133,9 @@ public class HttpDownloadStrategy implements DownloadStrategy {
             if (status >= HttpURLConnection.HTTP_BAD_REQUEST
                     && status <= HttpURLConnection.HTTP_VERSION) {
                 Log.w(TAG, "execute: HTTP error status=" + status + ", aborting");
+                if (TRACE) {
+                    traceRefusal(httpResponse);
+                }
                 callback.onError(status);
                 return;
             }
@@ -434,45 +445,117 @@ public class HttpDownloadStrategy implements DownloadStrategy {
                 .url(url)
                 .headers(SafeHeaders.of(perCallHeaders))
                 .build();
-        if (BuildConfig.DEBUG) {
-            // Log every request-header name + value (cookies/authorization
-            // redacted to a length count). Many CDNs cut
-            // the stream short when Referer is missing — a missing or empty
-            // Referer/Origin here is the smoking gun for the "1 MiB then EOF"
-            // truncation symptom.
-            StringBuilder hdrs = new StringBuilder();
-            for (Map.Entry<String, String> e : perCallHeaders.entrySet()) {
-                String k = e.getKey(), v = e.getValue();
-                String klc = k.toLowerCase(Locale.ROOT);
-                hdrs.append(k).append('=');
-                if (klc.equals("cookie") || klc.equals("authorization")) {
-                    hdrs.append('<').append(v != null ? v.length() : 0).append(" chars>");
-                } else {
-                    hdrs.append(v);
-                }
-                hdrs.append("; ");
-            }
-            Log.d(TAG, "makeRequest: url=" + url
-                    + " isResume=" + isResume
-                    + " range=" + perCallHeaders.get(BrowserHeaders.RANGES)
-                    + " referer=" + perCallHeaders.get("Referer")
-                    + " origin=" + perCallHeaders.get("Origin")
-                    + " ua=" + perCallHeaders.get("User-Agent")
-                    + " allHeaders=[" + hdrs + "]");
-        }
         Response response = client.newCall(request).execute();
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "makeRequest: response code=" + response.code()
-                    + " contentLength=" + response.header("Content-Length")
-                    + " contentRange=" + response.header("Content-Range")
-                    + " contentType=" + response.header("Content-Type")
-                    + " server=" + response.header("Server")
-                    + " url=" + url);
+        if (TRACE) {
+            traceExchange(response, isResume, forceRange);
         }
 
         // 416 is interpreted by the caller (execute): on a resume request it
         // means our offset is past the end — the file is already complete.
         return response;
+    }
+
+    /**
+     * Debug and diagnostic builds: one line per hop of the exchange, with the
+     * headers as they LEFT the phone (the network request, after every
+     * interceptor, so Host, a filled-in User-Agent and Accept-Encoding are in
+     * it) and the answer. A redirect is its own hop. Cookie and authorization
+     * values are never printed, only cookie names and a short hint of
+     * tt_chain_token, enough to tell two tokens apart.
+     */
+    private static void traceExchange(Response response, boolean isResume, boolean forceRange) {
+        ArrayList<Response> hops = new ArrayList<>();
+        for (Response r = response; r != null; r = r.priorResponse()) {
+            hops.add(0, r);
+        }
+        for (int i = 0; i < hops.size(); i++) {
+            Response hop = hops.get(i);
+            Response network = hop.networkResponse() != null ? hop.networkResponse() : hop;
+            Log.d(TRACE_TAG, "hop " + (i + 1) + "/" + hops.size()
+                    + " " + network.request().method() + " " + shortUrl(network.request().url().toString())
+                    + " resume=" + isResume + " forceRange=" + forceRange
+                    + " -> " + hop.code() + " " + hop.protocol()
+                    + " sent=[" + describeHeaders(network.request().headers()) + "]"
+                    + " got=[contentType=" + hop.header("Content-Type")
+                    + " contentLength=" + hop.header("Content-Length")
+                    + " contentRange=" + hop.header("Content-Range")
+                    + " location=" + shortUrl(hop.header("Location"))
+                    + " server=" + hop.header("Server") + "]");
+        }
+    }
+
+    /** Every response header of a refused download, and the start of its body. */
+    private static void traceRefusal(Response response) {
+        StringBuilder headers = new StringBuilder();
+        for (int i = 0; i < response.headers().size(); i++) {
+            String name = response.headers().name(i);
+            String value = name.equalsIgnoreCase("set-cookie")
+                    ? "<" + response.headers().value(i).length() + " chars>"
+                    : response.headers().value(i);
+            headers.append(name).append('=').append(value).append("; ");
+        }
+        String bodyHead;
+        try {
+            bodyHead = response.peekBody(TRACE_BODY_BYTES).string().replace('\n', ' ');
+        } catch (IOException | RuntimeException e) {
+            bodyHead = "<unreadable: " + e.getMessage() + ">";
+        }
+        Log.w(TRACE_TAG, "refused " + response.code() + " " + shortUrl(response.request().url().toString())
+                + " headers=[" + headers + "] body=" + bodyHead);
+    }
+
+    private static String describeHeaders(Headers headers) {
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < headers.size(); i++) {
+            String name = headers.name(i);
+            String value = headers.value(i);
+            out.append(name).append('=');
+            if (name.equalsIgnoreCase("cookie")) {
+                out.append(cookieSummary(value));
+            } else if (name.equalsIgnoreCase("authorization")) {
+                out.append('<').append(value.length()).append(" chars>");
+            } else {
+                out.append(value);
+            }
+            out.append("; ");
+        }
+        return out.toString();
+    }
+
+    /** Cookie names, and tt_chain_token's length and first characters. */
+    private static String cookieSummary(String cookie) {
+        StringBuilder names = new StringBuilder("{");
+        String chain = null;
+        for (String part : cookie.split(";")) {
+            int eq = part.indexOf('=');
+            String name = (eq < 0 ? part : part.substring(0, eq)).trim();
+            if (name.isEmpty()) {
+                continue;
+            }
+            names.append(name).append(' ');
+            if (eq >= 0 && name.equals("tt_chain_token")) {
+                String value = part.substring(eq + 1).trim();
+                chain = value.length() + " chars, " + value.substring(0, Math.min(6, value.length())) + "...";
+            }
+        }
+        names.append('}');
+        if (chain != null) {
+            names.append(" tt_chain_token=").append(chain);
+        }
+        return names.toString();
+    }
+
+    /** The host, path and parameter names: the signature stays out of the log. */
+    private static String shortUrl(String url) {
+        if (url == null) {
+            return null;
+        }
+        HttpUrl parsed = HttpUrl.parse(url);
+        if (parsed == null) {
+            return url.length() > 120 ? url.substring(0, 120) + "..." : url;
+        }
+        return parsed.host() + parsed.encodedPath() + " params=" + parsed.queryParameterNames()
+                + (parsed.queryParameter("tk") != null ? " tk=" + parsed.queryParameter("tk") : "");
     }
 
     /**

@@ -2302,8 +2302,17 @@ Don't reintroduce the inject, and don't move SSR reading back to the DOM.
   (`tiktok embed:` and the cookie checks; mutants: the jar always read, the
   codec fixed — each fails). That a cookie-less request is what the CDN
   accepts for an embed-minted URL is inferred, not measured (no media
-  request in the HAR): if embed downloads still 403 on a device, the
-  `built headers` log line names the cookie source and names.
+  request in the HAR), and on a device embed downloads still answered 403
+  after it. Three debug traces compare the two requests (`adb logcat -s
+  GeckoConsole:* DownloadTrace:*`): `[TIKTOK] built headers` (the cookie
+  source, names and a short tt_chain_token hint the parser emitted),
+  `[TIKTOK-WIRE] player request/response` (observe-only listeners on the
+  video CDN: what the PAGE's player sends and what it gets, one line per
+  file a minute), and `DownloadTrace` (`HttpDownloadStrategy`, debug and
+  diagnostic builds: every hop as it left the phone, after the
+  interceptors, and a refused answer's headers and first 512 bytes).
+  Cookie values are never logged, only names and the token's length and
+  first characters.
 - **The anti-bot throttle is the real gotcha.** TikTok withholds the item_list
   XHRs entirely (the `Take_A_Break` reminder shows, only `/api/preload/` fires)
   unless the page's **fingerprint stays unstable**. Globally that's

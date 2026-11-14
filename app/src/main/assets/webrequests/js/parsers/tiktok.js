@@ -1,7 +1,7 @@
 // TikTok parser (filterResponseData: item_list feeds + document SSR) — split
 // verbatim out of the former parser-background.js.
 import { log, tryParseJson, sendVariants, sendSubtitles, filterResponseText, cookieQueryForTab } from './common.js';
-import { MetaCache } from '../bounded.js';
+import { ClaimSet, MetaCache } from '../bounded.js';
 
 // ============================================================================
 // TikTok
@@ -70,6 +70,35 @@ function cookieNames(header) {
     return header ? header.split(";").map(c => c.split("=")[0].trim()).filter(Boolean) : [];
 }
 
+// Debug logs only: a cookie's length and first characters, enough to tell two
+// tokens apart in a log without printing one whole.
+function cookieValueHint(header, name) {
+    if (!header) return null;
+    for (const part of header.split(";")) {
+        const eq = part.indexOf("=");
+        if (eq < 0 || part.slice(0, eq).trim() !== name) continue;
+        const value = part.slice(eq + 1).trim();
+        return `${value.length} chars, ${value.slice(0, 6)}…`;
+    }
+    return null;
+}
+
+// Debug logs only: what a video URL carries, without its signature.
+function mediaUrlShape(u) {
+    try {
+        const url = new URL(u);
+        const p = url.searchParams;
+        return {
+            host: url.host,
+            tk: p.get("tk"),
+            expire: p.get("expire") || p.get("x-expires"),
+            params: [...new Set([...p.keys()])].join(",")
+        };
+    } catch (_) {
+        return { host: null };
+    }
+}
+
 // The headers a v*-webapp-prime.tiktok.com /video/ URL is replayed with.
 // Mirrors what Firefox sends on the page-driven media fetch:
 // Origin/Referer/Sec-Fetch-* and the cookies of the request that minted the
@@ -92,7 +121,11 @@ async function buildTikTokHeaders(tabId, requestId) {
             log("TIKTOK", `cookies.getAll failed`, e.message);
         }
     }
-    log("TIKTOK", `built headers`, { cookieSource: source, cookies: cookieNames(cookieHeader) });
+    log("TIKTOK", `built headers`, {
+        cookieSource: source,
+        cookies: cookieNames(cookieHeader),
+        chainToken: cookieValueHint(cookieHeader, "tt_chain_token")
+    });
     const headers = [
         { name: "User-Agent",     value: navigator.userAgent },
         { name: "Accept",         value: "*/*" },
@@ -328,6 +361,7 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl, requestId }) {
             author,
             variants: variants.length,
             topUrl: variants[0].url.slice(0, 80),
+            url: mediaUrlShape(variants[0].url),
             name: caption.slice(0, 60)
         });
 
@@ -558,3 +592,74 @@ browser.webRequest.onBeforeRequest.addListener(
     { urls: ["*://www.tiktok.com/*", "*://m.tiktok.com/*"], types: ["xmlhttprequest"] },
     ["blocking"]
 );
+
+
+// ---------------------------------------------------------------------------
+// Debug trace of the PLAYER's own video requests (observe-only, logs nothing
+// in a release build): the headers the page sends to TikTok's video CDN and
+// what the CDN answers. Compared with the download's request (logcat tag
+// DownloadTrace) it shows why a download is refused while the page plays.
+// One line per (file, phase, status) a minute; a player's ranged requests for
+// one file would otherwise repeat it.
+// ---------------------------------------------------------------------------
+const TIKTOK_MEDIA_TRACE_URLS = [
+    "*://*.tiktok.com/video/tos/*",
+    "*://*.tiktokcdn.com/*",
+    "*://*.tiktokcdn-us.com/*",
+    "*://*.tiktokcdn-eu.com/*",
+    "*://*.tiktokv.com/*"
+];
+const tiktokMediaTraced = new ClaimSet(60 * 1000, 128);
+
+function isTikTokVideoRequest(details) {
+    return /\/video\/tos\//.test(details.url) || /mime_type=video/.test(details.url);
+}
+
+function traceHeaders(list) {
+    const out = {};
+    for (const h of list || []) {
+        const name = h.name.toLowerCase();
+        out[h.name] = name === "cookie"
+            ? { names: cookieNames(h.value), chainToken: cookieValueHint(h.value, "tt_chain_token") }
+            : h.value;
+    }
+    return out;
+}
+
+function tracePath(url) {
+    try { return new URL(url).pathname.slice(-48); }
+    catch (_) { return url.slice(0, 48); }
+}
+
+browser.webRequest.onSendHeaders.addListener((details) => {
+    if (!isTikTokVideoRequest(details)) return;
+    if (!tiktokMediaTraced.claim(`send|${tracePath(details.url)}`)) return;
+    log("TIKTOK-WIRE", `player request`, {
+        tabId: details.tabId,
+        frameId: details.frameId,
+        type: details.type,
+        thirdParty: details.thirdParty,
+        url: mediaUrlShape(details.url),
+        headers: traceHeaders(details.requestHeaders)
+    });
+}, { urls: TIKTOK_MEDIA_TRACE_URLS }, ["requestHeaders"]);
+
+browser.webRequest.onHeadersReceived.addListener((details) => {
+    if (!isTikTokVideoRequest(details)) return;
+    if (!tiktokMediaTraced.claim(`recv|${details.statusCode}|${tracePath(details.url)}`)) return;
+    const keep = {};
+    for (const h of details.responseHeaders || []) {
+        const name = h.name.toLowerCase();
+        if (name === "content-type" || name === "content-length" || name === "content-range"
+                || name === "server" || name.startsWith("x-")) {
+            keep[h.name] = h.value;
+        }
+    }
+    log("TIKTOK-WIRE", `player response`, {
+        tabId: details.tabId,
+        status: details.statusCode,
+        fromCache: details.fromCache,
+        url: mediaUrlShape(details.url),
+        headers: keep
+    });
+}, { urls: TIKTOK_MEDIA_TRACE_URLS }, ["responseHeaders"]);
