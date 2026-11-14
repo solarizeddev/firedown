@@ -41,6 +41,7 @@ class TabState {
     this.blocked = new ClaimSet(10 * 60 * 1000, 512);        // urls whose page request a blocker refused
     this.pageBlocked = null;                                 // { count, hosts } refused on this page (blocked-stats.js)
     this.claims = new Map();                                 // name → ClaimSet (parser per-tab decisions)
+    this.caches = new Map();                                 // name → MetaCache (parser per-tab facts)
     this.snapshot = null;                                    // { at, timer } while a snapshot capture is live
   }
 }
@@ -79,6 +80,19 @@ function tabClaims(tabId, name, ttlMs, max) {
   if (!c) {
     c = new ClaimSet(ttlMs, max);
     s.claims.set(name, c);
+  }
+  return c;
+}
+
+// A parser's per-tab MetaCache, created on first use and dropped with the tab.
+// For facts that hold credentials (a cookie a response set): a cache in the
+// tab cannot serve one tab's, or one browsing mode's, to another.
+function tabCache(tabId, name, max, ttlMs) {
+  const s = tabState(tabId);
+  let c = s.caches.get(name);
+  if (!c) {
+    c = new MetaCache(max, ttlMs);
+    s.caches.set(name, c);
   }
   return c;
 }
@@ -143,5 +157,5 @@ browser.tabs.onRemoved.addListener((tabId) => {
 
 export function __tabStateCount() { return tabStates.size; }
 
-export { UNKNOWN_TAB, TabState, tabState, peekTabState, allTabStates, tabClaims,
+export { UNKNOWN_TAB, TabState, tabState, peekTabState, allTabStates, tabClaims, tabCache,
          rememberTabUrl, tabIdForUrl, tabUrls, allTabUrls, onTabRemoved };

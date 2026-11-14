@@ -2,6 +2,7 @@
 // verbatim out of the former parser-background.js.
 import { log, tryParseJson, sendVariants, sendSubtitles, filterResponseText, cookieQueryForTab } from './common.js';
 import { ClaimSet, MetaCache } from '../bounded.js';
+import { tabCache } from '../tab-state.js';
 
 // ============================================================================
 // TikTok
@@ -37,14 +38,11 @@ browser.webRequest.onBeforeRequest.addListener(
 
 // The Cookie header each TikTok item request actually carried, by requestId.
 // A video URL is minted for the request that listed it, so the download must
-// carry THAT request's tt_chain_token (the URL's `tk=` param names the cookie)
-// and nothing else. On tiktok.com that is the tab's jar. In an embed on
-// another site the browser refuses TikTok's third-party cookies, so the
-// request carried none, and the jar's own token (from browsing tiktok.com)
-// made the CDN answer 403. A first-party request with no Cookie header is not
-// trusted as "none": a request a service worker answers can show none while
-// the jar holds the token. Keyed by request, read once: one request has one
-// tab and one browsing mode.
+// carry THAT request's tt_chain_token (the URL's `tk=` param names the cookie).
+// On tiktok.com that is the tab's jar. A first-party request with no Cookie
+// header is not trusted as "none": a request a service worker answers can
+// show none while the jar holds the token. Keyed by request, read once: one
+// request has one tab and one browsing mode.
 const itemRequestCookies = new MetaCache(64, 2 * 60 * 1000);
 
 browser.webRequest.onSendHeaders.addListener(
@@ -52,11 +50,77 @@ browser.webRequest.onSendHeaders.addListener(
         if (!isTikTokItemRequest(details)) return;
         const header = (details.requestHeaders || []).find(h => h.name.toLowerCase() === "cookie");
         if (!header && !details.thirdParty) return;
-        itemRequestCookies.set(details.requestId, header ? header.value : "");
+        itemRequestCookies.set(details.requestId, {
+            cookie: header ? header.value : "",
+            thirdParty: !!details.thirdParty
+        });
     },
     { urls: ["*://www.tiktok.com/*", "*://m.tiktok.com/*"], types: ["main_frame", "xmlhttprequest"] },
     ["requestHeaders"]
 );
+
+// An embed on another site: the embed document (/player/v1/<id>) answers with
+// Set-Cookie tt_chain_token, the browser refuses it as a third-party cookie,
+// and the item request that follows carries none. The URLs it lists still
+// say tk=tt_chain_token, and the video CDN refuses them without that cookie
+// (Akamai 403 "Access Denied"; a jar token from browsing tiktok.com is refused
+// too). So the cookies TikTok SET in the tab's cross-site TikTok frames are
+// kept here, per tab, and an embed's download carries them: what the player
+// would send had the browser kept them.
+function embedSetCookies(tabId) {
+    return tabCache(tabId, "tiktok-embed-set-cookie", 16, 30 * 60 * 1000);
+}
+
+// "name=value; Path=/; ..." → [name, value], or null for a deletion.
+function parseSetCookie(line) {
+    const parts = String(line).split(";");
+    const eq = parts[0].indexOf("=");
+    if (eq <= 0) return null;
+    const name = parts[0].slice(0, eq).trim();
+    const value = parts[0].slice(eq + 1).trim();
+    if (!name || !value) return null;
+    for (let k = 1; k < parts.length; k++) {
+        const attr = parts[k].trim().toLowerCase();
+        if (attr === "max-age=0" || attr.startsWith("max-age=-")) return null;
+    }
+    return [name, value];
+}
+
+browser.webRequest.onHeadersReceived.addListener(
+    (details) => {
+        if (!details.thirdParty || typeof details.tabId !== "number" || details.tabId < 0) return;
+        const cache = embedSetCookies(details.tabId);
+        const names = [];
+        for (const h of details.responseHeaders || []) {
+            if (h.name.toLowerCase() !== "set-cookie") continue;
+            // Firefox joins several Set-Cookie headers with "\n".
+            for (const line of String(h.value).split("\n")) {
+                const c = parseSetCookie(line);
+                if (!c) continue;
+                cache.set(c[0], c[1]);
+                names.push(c[0]);
+            }
+        }
+        if (names.length) {
+            log("TIKTOK", `embed set-cookie`, { tabId: details.tabId, type: details.type, names,
+                chainToken: cookieValueHint(`tt_chain_token=${cache.get("tt_chain_token") || ""}`, "tt_chain_token") });
+        }
+    },
+    { urls: ["*://www.tiktok.com/*"], types: ["sub_frame", "xmlhttprequest"] },
+    ["responseHeaders"]
+);
+
+// A request's Cookie header with the embed's refused cookies added (a name the
+// request already carried keeps its value).
+function withEmbedCookies(tabId, cookieHeader) {
+    const have = new Set(cookieNames(cookieHeader));
+    const add = [];
+    for (const [name, value] of embedSetCookies(tabId)) {
+        if (!have.has(name)) add.push(`${name}=${value}`);
+    }
+    if (!add.length) return cookieHeader;
+    return cookieHeader ? `${cookieHeader}; ${add.join("; ")}` : add.join("; ");
+}
 
 function isTikTokItemRequest(details) {
     if (details.type === "main_frame") {
@@ -102,14 +166,21 @@ function mediaUrlShape(u) {
 // The headers a v*-webapp-prime.tiktok.com /video/ URL is replayed with.
 // Mirrors what Firefox sends on the page-driven media fetch:
 // Origin/Referer/Sec-Fetch-* and the cookies of the request that minted the
-// URL. Only when that request was not seen (a response served by TikTok's
-// service worker) are the tab's jar cookies read instead.
+// URL (in an embed, plus the cookies TikTok set there and the browser
+// refused). Only when that request was not seen (a response served by
+// TikTok's service worker) are the tab's jar cookies read instead.
 async function buildTikTokHeaders(tabId, requestId) {
     let cookieHeader = "";
     let source = "request";
     if (requestId && itemRequestCookies.has(requestId)) {
-        cookieHeader = itemRequestCookies.get(requestId);
+        const seen = itemRequestCookies.get(requestId);
         itemRequestCookies.delete(requestId);
+        cookieHeader = seen.cookie;
+        if (seen.thirdParty && typeof tabId === "number" && tabId >= 0) {
+            const merged = withEmbedCookies(tabId, cookieHeader);
+            if (merged !== cookieHeader) source = "request+embed-set-cookie";
+            cookieHeader = merged;
+        }
     } else {
         source = "jar";
         try {

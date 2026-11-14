@@ -371,11 +371,40 @@ async function drive(url, type, tabId, requestId, body, requestHeaders) {
             m.variants.find(v => v.height === 1920)?.videoCodec === "h265"
                 && m.variants.find(v => v.height === 1280)?.videoCodec === "h264",
             JSON.stringify(m.variants.map(v => [v.height, v.videoCodec])));
-        // An embed's request carried no cookie (the browser refuses TikTok's
-        // third-party cookies there): the download must not add the jar's.
+        // An embed's request carried no cookie and the tab saw no Set-Cookie
+        // from TikTok: the download must not add the jar's.
         check("tiktok embed: no Cookie when the item request carried none",
             !(m.requestHeaders || []).some(h => h.name === "Cookie"), JSON.stringify(m.requestHeaders));
     }
+
+    // The embed document set tt_chain_token and the browser refused it (third
+    // party): the download carries the token TikTok set, never the jar's.
+    for (const r of registrations.filter(r => r.path === "webRequest.onHeadersReceived"
+            && r.filter?.types?.includes("sub_frame")
+            && r.filter?.urls?.some(p => patternMatches(p, "https://www.tiktok.com/player/v1/7663984400434072845")))) {
+        r.fn({ url: "https://www.tiktok.com/player/v1/7663984400434072845?embed_from=oembed", type: "sub_frame",
+            tabId: 16, requestId: "ttEmbedDoc", thirdParty: true, statusCode: 200,
+            responseHeaders: [{ name: "Set-Cookie", value: "tt_chain_token=EMBED/aa==; Path=/; Domain=.tiktok.com; Secure; HttpOnly; SameSite=None\nttwid=gone; Max-Age=0" }] });
+    }
+    const jarGetAll2 = browser.cookies.getAll;
+    browser.cookies.getAll = async () => [{ name: "tt_chain_token", value: "JAR" }];
+    drive.thirdParty = true;
+    const embedSet = await drive("https://www.tiktok.com/player/api/v1/items?item_ids=7663984400434072846&aid=1284",
+        "xmlhttprequest", 16, "ttPlayerSet", playerBody.replace(/7663984400434072845/g, "7663984400434072846"),
+        [{ name: "Accept", value: "*/*" }]);
+    drive.thirdParty = false;
+    browser.cookies.getAll = jarGetAll2;
+    const es = embedSet.emits[0]?.msg?.requestHeaders?.find(h => h.name === "Cookie")?.value;
+    check("tiktok embed: the token the embed document set is replayed", es === "tt_chain_token=EMBED/aa==", es);
+    // Another tab never gets that tab's token.
+    drive.thirdParty = true;
+    const otherTab = await drive("https://www.tiktok.com/player/api/v1/items?item_ids=7663984400434072847&aid=1284",
+        "xmlhttprequest", 17, "ttPlayerOther", playerBody.replace(/7663984400434072845/g, "7663984400434072847"),
+        [{ name: "Accept", value: "*/*" }]);
+    drive.thirdParty = false;
+    check("tiktok embed: another tab's embed cookie is not used",
+        !(otherTab.emits[0]?.msg?.requestHeaders || []).some(h => h.name === "Cookie"),
+        JSON.stringify(otherTab.emits[0]?.msg?.requestHeaders));
 
     // On tiktok.com the item request's own Cookie header is the one replayed,
     // not a fresh jar read.

@@ -108,9 +108,10 @@ expect(count("webRequest.onBeforeSendHeaders") === 1, `webRequest.onBeforeSendHe
 // The third: TikTok's record of the Cookie each item request carried (the
 // download replays exactly that, js/parsers/tiktok.js). The fourth, and the
 // third onHeadersReceived: TikTok's debug trace of the player's own video
-// requests (observe-only, both non-blocking).
+// requests (observe-only, both non-blocking). The fourth onHeadersReceived:
+// TikTok's record of the cookies an embed's frames were set (observe-only).
 expect(count("webRequest.onSendHeaders") === 4, `webRequest.onSendHeaders registrations == 4 (got ${count("webRequest.onSendHeaders")})`);
-expect(count("webRequest.onHeadersReceived") === 3, `webRequest.onHeadersReceived registrations == 3 (got ${count("webRequest.onHeadersReceived")})`);
+expect(count("webRequest.onHeadersReceived") === 4, `webRequest.onHeadersReceived registrations == 4 (got ${count("webRequest.onHeadersReceived")})`);
 expect(count("webRequest.onResponseStarted") === 1, `webRequest.onResponseStarted registrations == 1 (got ${count("webRequest.onResponseStarted")})`);
 expect(count("webRequest.onErrorOccurred") === 1, `webRequest.onErrorOccurred registrations == 1 (got ${count("webRequest.onErrorOccurred")})`);
 expect(count("webRequest.onCompleted") === 2, `webRequest.onCompleted registrations == 2 (got ${count("webRequest.onCompleted")})`);

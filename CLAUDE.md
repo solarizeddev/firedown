@@ -2300,10 +2300,23 @@ Don't reintroduce the inject, and don't move SSR reading back to the DOM.
   WebVTT) are emitted as caption tracks under the video's origin, the
   language canonicalised (`eng-US` → `en-US`). Pinned by `parsers-replay.mjs`
   (`tiktok embed:` and the cookie checks; mutants: the jar always read, the
-  codec fixed — each fails). That a cookie-less request is what the CDN
-  accepts for an embed-minted URL is inferred, not measured (no media
-  request in the HAR), and on a device embed downloads still answered 403
-  after it. Three debug traces compare the two requests (`adb logcat -s
+  codec fixed — each fails). **A cookie-less download is refused too**
+  (device log, 2026-11-14: Akamai `TCP_DENIED`, 403 "Access Denied", the
+  URL byte-identical to the one emitted, no Cookie sent). What the embed
+  is missing is the cookie TikTok SET: the embed document
+  (`/player/v1/<id>`, a cross-site sub_frame) answers with `Set-Cookie:
+  tt_chain_token=…` (HAR), the browser refuses it as third-party, and the
+  item request after it carries none. So an observe-only
+  `onHeadersReceived` keeps every Set-Cookie of the tab's THIRD-PARTY
+  www.tiktok.com frames and XHRs in the tab's `TabState`
+  (`tabCache(tabId, "tiktok-embed-set-cookie")`, 30 min, gone with the
+  tab), and an embed's download adds them to the item request's own
+  cookies (`withEmbedCookies`, cookie source `request+embed-set-cookie`
+  in the `built headers` line). A first-party request never gets them.
+  Pinned by `parsers-replay.mjs` (`the token the embed document set is
+  replayed`, `another tab's embed cookie is not used`; a merge that adds
+  nothing fails it). Whether the CDN accepts that token for the URL is
+  still unverified on a device. Three debug traces compare the two requests (`adb logcat -s
   GeckoConsole:* DownloadTrace:*`): `[TIKTOK] built headers` (the cookie
   source, names and a short tt_chain_token hint the parser emitted),
   `[TIKTOK-WIRE] player request/response` (observe-only listeners on the
