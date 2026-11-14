@@ -347,8 +347,9 @@ async function drive(url, type, tabId, requestId, body, requestHeaders) {
         + `"cover":{"url_list":["https://p16.tiktokcdn.example/embed-cover.jpg"]},`
         + `"meta":{"bitrate":624560,"duration":6,"format":"mp4","height":1280,"width":720},`
         + `"profiles":[`
-        + `{"bitrate":624560,"codec_type":"h264","play_addr":{"data_size":528300,"height":1280,"width":720,"url_list":["https://v16-webapp-prime.tiktok.example/video/e720.mp4?tk=tt_chain_token"]}},`
-        + `{"bitrate":524623,"codec_type":"h265","play_addr":{"data_size":443766,"height":1920,"width":1080,"url_list":["https://v16-webapp-prime.tiktok.example/video/e1080.mp4?tk=tt_chain_token"]}}],`
+        + `{"bitrate":624560,"codec_type":"h264","gear_name":"normal_720_0","play_addr":{"data_size":528300,"height":1280,"width":720,"url_list":["https://v16-webapp-prime.tiktok.example/video/e720.mp4?tk=tt_chain_token"]}},`
+        + `{"bitrate":524623,"codec_type":"h265","gear_name":"adapt_lowest_1080_1","play_addr":{"data_size":443766,"height":1920,"width":1080,"url_list":["https://v16-webapp-prime.tiktok.example/video/e1080.mp4?tk=tt_chain_token"]}},`
+        + `{"bitrate":300000,"codec_type":"h265","play_addr":{"data_size":261061,"height":1024,"width":576,"url_list":["https://v16-webapp-prime.tiktok.example/video/e576.mp4?tk=tt_chain_token"]}}],`
         + `"url_list":["https://v16-webapp-prime.tiktok.example/video/e720.mp4?tk=tt_chain_token"]}}]}`;
     // A jar holding a token (from browsing tiktok.com) must not reach it.
     const jarGetAll = browser.cookies.getAll;
@@ -366,11 +367,15 @@ async function drive(url, type, tabId, requestId, body, requestHeaders) {
         check("tiktok embed: no caption → titled by its author", m.name === "TikTok by @sampleuser", m.name);
         check("tiktok embed: picture, duration, size",
             m.img === "https://p16.tiktokcdn.example/embed-cover.jpg" && m.duration === 6000
-                && m.variants.some(v => v.size === 443766), JSON.stringify([m.img, m.duration]));
+                && m.variants.some(v => v.size === 528300), JSON.stringify([m.img, m.duration]));
         check("tiktok embed: HEVC rendition named h265",
-            m.variants.find(v => v.height === 1920)?.videoCodec === "h265"
+            m.variants.find(v => v.height === 1024)?.videoCodec === "h265"
                 && m.variants.find(v => v.height === 1280)?.videoCodec === "h264",
             JSON.stringify(m.variants.map(v => [v.height, v.videoCodec])));
+        // The CDN refuses the embed's adapt_* files (device log): left out.
+        check("tiktok embed: adaptive rendition left out",
+            !m.variants.some(v => v.height === 1920) && m.variants.length === 2,
+            JSON.stringify(m.variants.map(v => v.height)));
         // An embed's request carried no cookie and the tab saw no Set-Cookie
         // from TikTok: the download must not add the jar's.
         check("tiktok embed: no Cookie when the item request carried none",

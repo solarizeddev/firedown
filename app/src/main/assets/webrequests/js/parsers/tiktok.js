@@ -247,7 +247,17 @@ function tiktokPlayerItems(json) {
         if (!vi) continue;
         const meta = vi.meta || {};
         const bitrateInfo = [];
-        for (const p of Array.isArray(vi.profiles) ? vi.profiles : []) {
+        // The embed's adaptive renditions ("adapt_*" gears) are refused 403 by
+        // the video CDN with the same cookies its "normal_*" file downloads
+        // with, and TikTok's own page for the clip offers only that file. Kept
+        // only when the item has nothing else.
+        const profiles = Array.isArray(vi.profiles) ? vi.profiles : [];
+        const isAdapt = p => String(p?.gear_name || "").startsWith("adapt");
+        const usable = profiles.some(p => !isAdapt(p)) ? profiles.filter(p => !isAdapt(p)) : profiles;
+        if (usable.length < profiles.length) {
+            log("TIKTOK", "embed: adaptive renditions left out", { id: it.id_str, kept: usable.length, of: profiles.length });
+        }
+        for (const p of usable) {
             const pa = p?.play_addr;
             if (!pa || !Array.isArray(pa.url_list) || pa.url_list.length === 0) continue;
             bitrateInfo.push({

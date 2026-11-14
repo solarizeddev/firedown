@@ -2317,7 +2317,13 @@ Don't reintroduce the inject, and don't move SSR reading back to the DOM.
   replayed`, `another tab's embed cookie is not used`; a merge that adds
   nothing fails it). Verified on a device (2026-11-14): the same embeds
   that answered 403 to every download before now download, the
-  `built headers` line reading `request+embed-set-cookie`. Three debug traces compare the two requests (`adb logcat -s
+  `built headers` line reading `request+embed-set-cookie`. One file stayed
+  refused with that cookie: the embed's 1080p `adapt_lowest_1080_1` H.265
+  rendition (403 TCP_DENIED twice, two tokens), while its `normal_720_0`
+  H.264 file downloads and is the only one TikTok's own page for the clip
+  lists and plays. `tiktokPlayerItems` leaves the player API's `adapt_*`
+  profiles out when the item has another one (pinned in
+  `parsers-replay.mjs`, `adaptive rendition left out`). Three debug traces compare the two requests (`adb logcat -s
   GeckoConsole:* DownloadTrace:*`): `[TIKTOK] built headers` (the cookie
   source, names and a short tt_chain_token hint the parser emitted),
   `[TIKTOK-WIRE] player request/response` (observe-only listeners on the
