@@ -5,10 +5,13 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.solarized.firedown.BuildConfig;
 
 import com.solarized.firedown.geckoview.GeckoState;
 import com.solarized.firedown.IntentActions;
+import com.solarized.firedown.Keys;
 import com.solarized.firedown.utils.WebUtils;
 
 import org.mozilla.geckoview.Image;
@@ -565,12 +568,21 @@ public class GeckoMediaController {
      * notification anyway).
      */
     private void sendToService(String action) {
+        sendToService(action, null);
+    }
+
+    private void sendToService(String action, @Nullable MediaSession.PositionState position) {
         if (!IntentActions.MEDIA_PLAY.equals(action) && !GeckoMediaPlaybackService.isRunning()) {
             return;
         }
         try {
             Intent intent = new Intent(mContext, GeckoMediaPlaybackService.class);
             intent.setAction(action);
+            if (position != null) {
+                intent.putExtra(Keys.MEDIA_POSITION, position.position);
+                intent.putExtra(Keys.MEDIA_DURATION, position.duration);
+                intent.putExtra(Keys.MEDIA_RATE, (float) position.playbackRate);
+            }
             mContext.startService(intent);
         } catch (Exception e) {
             Log.w(TAG, "sendToService failed for " + action, e);
@@ -582,6 +594,15 @@ public class GeckoMediaController {
      * the spotlit session is actually playing (starts the service if needed),
      * otherwise PAUSE (updates the notification only if the service is already up).
      */
+    /**
+     * Moves the notification's scrubber to the tab on screen's position. Only
+     * a running service is updated; a refused start (the app in the
+     * background) is caught in {@link #sendToService}.
+     */
+    public void pushPosition(MediaSession.PositionState position) {
+        sendToService(IntentActions.MEDIA_POSITION, position);
+    }
+
     private void refreshService() {
         if (mCurrentSessionId != 0 && mPlayingSessionIds.contains(mCurrentSessionId)) {
             sendToService(IntentActions.MEDIA_PLAY);

@@ -3288,46 +3288,10 @@ public class BrowserFragment extends BaseBrowserFragment
     // Media callbacks
     // ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    @Override
-    public void onMediaActivated(GeckoState geckoState, MediaSession mediaSession) {
-        super.onMediaActivated(geckoState, mediaSession);
-        Log.d(TAG, "onMediaActivated");
-        mActivity.startService(new Intent(mActivity, GeckoMediaPlaybackService.class));
-    }
-
-    @Override
-    public void onMediaPlay(GeckoState geckoState, MediaSession mediaSession) {
-        super.onMediaPlay(geckoState, mediaSession);
-        MediaSession.PositionState pos = mGeckoMediaController.getPositionState();
-        Log.d(TAG, "onMediaPlay: id=" + geckoState.getEntityId()
-                + " pos=" + (pos != null ? pos.position : "null")
-                + " dur=" + (pos != null ? pos.duration : "null"));
-        Intent intent = new Intent(mActivity, GeckoMediaPlaybackService.class);
-        intent.setAction(IntentActions.MEDIA_PLAY);
-        if (pos != null) {
-            intent.putExtra(Keys.MEDIA_POSITION, pos.position);
-            intent.putExtra(Keys.MEDIA_DURATION, pos.duration);
-            intent.putExtra(Keys.MEDIA_RATE, (float) pos.playbackRate);
-        }
-        mActivity.startService(intent);
-    }
-
-    @Override
-    public void onMediaPause(GeckoState geckoState, MediaSession mediaSession) {
-        super.onMediaPause(geckoState, mediaSession);
-        MediaSession.PositionState pos = mGeckoMediaController.getPositionState();
-        Log.d(TAG, "onMediaPause: id=" + geckoState.getEntityId()
-                + " pos=" + (pos != null ? pos.position : "null")
-                + " dur=" + (pos != null ? pos.duration : "null"));
-        Intent intent = new Intent(mActivity, GeckoMediaPlaybackService.class);
-        intent.setAction(IntentActions.MEDIA_PAUSE);
-        if (pos != null) {
-            intent.putExtra(Keys.MEDIA_POSITION, pos.position);
-            intent.putExtra(Keys.MEDIA_DURATION, pos.duration);
-            intent.putExtra(Keys.MEDIA_RATE, (float) pos.playbackRate);
-        }
-        mActivity.startService(intent);
-    }
+    // The playback service is started and updated by GeckoMediaController
+    // (refreshService / sendToService, guarded and caught), never from here:
+    // these callbacks also fire with the app in the background, where an
+    // unguarded startService() throws BackgroundServiceStartNotAllowedException.
 
     @Override
     public void onMediaPosition(GeckoState geckoState, MediaSession mediaSession,
@@ -3338,16 +3302,7 @@ public class BrowserFragment extends BaseBrowserFragment
                 + " dur=" + positionState.duration
                 + " rate=" + positionState.playbackRate
                 + " serviceRunning=" + GeckoMediaPlaybackService.isRunning());
-
-        if (!GeckoMediaPlaybackService.isRunning())
-            return;
-
-        Intent intent = new Intent(mActivity, GeckoMediaPlaybackService.class);
-        intent.setAction(IntentActions.MEDIA_POSITION);
-        intent.putExtra(Keys.MEDIA_POSITION, positionState.position);
-        intent.putExtra(Keys.MEDIA_DURATION, positionState.duration);
-        intent.putExtra(Keys.MEDIA_RATE, (float) positionState.playbackRate);
-        mActivity.startService(intent);
+        mGeckoMediaController.pushPosition(positionState);
     }
 
     @Override

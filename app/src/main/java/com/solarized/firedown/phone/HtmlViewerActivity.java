@@ -115,11 +115,17 @@ public class HtmlViewerActivity extends BaseActivity {
         // Check the intent for the content to view
         Intent intent = getIntent();
 
-        Uri uri = intent.getData();
+        Uri uri = intent != null ? intent.getData() : null;
 
-        assert uri != null;
+        // An explicit start with no file has nothing to show (`assert` is a
+        // no-op on Android, so this used to be an NPE in onCreate).
+        if (uri == null) {
+            finish();
+            return;
+        }
 
-        toolbar.setTitle(FilenameUtils.getName(uri.getPath()));
+        String path = uri.getPath();
+        toolbar.setTitle(path != null ? FilenameUtils.getName(path) : "");
 
         // text/html → RENDER the page (a saved "Save snapshot" / web archive).
         // Load the content:// directly so a tens-of-MB self-contained file isn't
@@ -136,8 +142,11 @@ public class HtmlViewerActivity extends BaseActivity {
                     String sb = Utils.readInputStream(is);
                     mWebView.loadData(sb, FileUriHelper.MIMETYPE_TXT, "UTF-8");
                 }
-            } catch (IOException e) {
+            } catch (IOException | SecurityException e) {
+                // SecurityException: a read grant that did not survive (a
+                // task restored after a reboot).
                 Log.e(TAG, "Load File Error", e);
+                finish();
             }
         }
 

@@ -14,7 +14,9 @@ import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -46,8 +48,8 @@ import org.mozilla.geckoview.MediaSession;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -139,6 +141,16 @@ public class GeckoMediaPlaybackService extends Service {
     private boolean mIsForegroundService  = false;
     private static volatile boolean sIsRunning = false;
 
+    /**
+     * Set once this instance shuts down (shutdown() or onDestroy()). A late
+     * artwork fetch must not touch a released MediaSession, and must never
+     * start the service again: the fetch answers on an OkHttp thread, often
+     * after the app left the screen, where startService() throws
+     * BackgroundServiceStartNotAllowedException (Android 12+).
+     */
+    private boolean mStopped = false;
+    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
+
     // ── Lifecycle ─────────────────────────────────────────────────────────────────────────────────
 
     @Override
@@ -199,6 +211,8 @@ public class GeckoMediaPlaybackService extends Service {
     @Override
     public void onDestroy() {
         sIsRunning = false;
+        mStopped = true;
+        cancelArtworkFetches();
         unregisterNoisyReceiverIfNeeded();
         mAudioManager.abandonAudioFocusRequest(mFocusRequest);
         mediaSessionCompat.release();
@@ -433,6 +447,8 @@ public class GeckoMediaPlaybackService extends Service {
      */
     private void shutdown() {
         Log.d(TAG, "shutDown");
+        mStopped = true;
+        cancelArtworkFetches();
         unregisterNoisyReceiverIfNeeded();
         stopForeground(true);
         mIsForegroundService = false;
@@ -440,6 +456,14 @@ public class GeckoMediaPlaybackService extends Service {
         mNotificationManager.cancel(NotificationID.MEDIA_ID);
         mediaSessionCompat.release();
         stopSelf();
+    }
+
+    private void cancelArtworkFetches() {
+        for (Call call : mArtworkCalls.values()) {
+            call.cancel();
+        }
+        mArtworkCalls.clear();
+        mMainHandler.removeCallbacksAndMessages(null);
     }
 
     // ── Audio setup ───────────────────────────────────────────────────────────────────────────────
@@ -580,15 +604,18 @@ public class GeckoMediaPlaybackService extends Service {
     private static final int ARTWORK_MAX_DIM = 512;
     private static final int ARTWORK_MAX_BYTES = 8 * 1024 * 1024;
 
-    /** Sessions whose fallback artwork is being fetched: every update asks, one request answers. */
-    private final Set<Integer> mArtworkFetches = ConcurrentHashMap.newKeySet();
+    /**
+     * Fallback artwork requests in flight, by session: every update asks, one
+     * request answers. Main thread only; cancelled when the service stops.
+     */
+    private final Map<Integer, Call> mArtworkCalls = new HashMap<>();
 
     private void fetchBitmap(GeckoMetaData meta) {
 
         Log.d(TAG, "fetchBitmap: icon=" + meta.getIcon()
                 + " iconBitmap=" + (meta.getIconBitmap() != null));
 
-        if (!mArtworkFetches.add(meta.getSessionId())) {
+        if (mStopped || mArtworkCalls.containsKey(meta.getSessionId())) {
             return;
         }
 
@@ -596,7 +623,6 @@ public class GeckoMediaPlaybackService extends Service {
 
         if (TextUtils.isEmpty(iconUrl)) {
             setDefaultThumbnail(meta);
-            mArtworkFetches.remove(meta.getSessionId());
             return;
         }
 
@@ -614,49 +640,74 @@ public class GeckoMediaPlaybackService extends Service {
                 Log.e(TAG, "Failed to decode data URI bitmap", e);
                 setDefaultThumbnail(meta);
             }
-            mArtworkFetches.remove(meta.getSessionId());
-            return; // no notifyMetaData() — we're already inside updateNotification
+            return; // decoded in place, we're already inside updateNotification
         }
 
         if (!UrlStringUtils.isHttpOrHttps(iconUrl)) {
             setDefaultThumbnail(meta);
-            mArtworkFetches.remove(meta.getSessionId());
             return;
         }
 
         Request request = new Request.Builder().url(iconUrl).build();
-        mOkHttpClient.newCall(request).enqueue(new Callback() {
+        Call call = mOkHttpClient.newCall(request);
+        mArtworkCalls.put(meta.getSessionId(), call);
+        call.enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 Log.e(TAG, "Bitmap fetch failed", e);
-                setDefaultThumbnail(meta);
-                mArtworkFetches.remove(meta.getSessionId());
-                notifyMetaData(); // safe — iconBitmap is now set, won't re-fetch
+                deliverArtwork(meta, null);
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+                Bitmap bitmap = null;
                 try (ResponseBody body = response.body()) {
                     if (response.isSuccessful() && FileUriHelper.isImage(body.contentType())) {
                         byte[] bytes = readArtworkBytes(body);
-                        Bitmap bitmap = bytes != null ? decodeArtwork(bytes) : null;
-                        if (bitmap != null) {
-                            meta.setIconBitmap(bitmap);
-                            // The page's own artwork may have landed meanwhile
-                            // (the controller's fetch); a favicon never replaces it.
-                            if (meta.getBitmap() == null) {
-                                meta.setBitmap(bitmap);
-                            }
-                            mArtworkFetches.remove(meta.getSessionId());
-                            notifyMetaData();
-                            return;
-                        }
+                        bitmap = bytes != null ? decodeArtwork(bytes) : null;
                     }
-                    setDefaultThumbnail(meta);
-                    mArtworkFetches.remove(meta.getSessionId());
-                    notifyMetaData();
+                } catch (IOException e) {
+                    // A body cut off mid-read: the fallback tile, as on a failure.
+                    Log.e(TAG, "Bitmap read failed", e);
                 }
+                deliverArtwork(meta, bitmap);
             }
+        });
+    }
+
+    /**
+     * Hands a fallback artwork fetch's result to the main thread, where every
+     * other update of the entry and the notification runs, and repaints THIS
+     * instance in process. The callback runs on an OkHttp thread, often after
+     * the app left the screen or the service stopped: it used to send itself
+     * a MEDIA_METADATA intent through startService(), which re-created a
+     * stopped service and, with the app in the background, threw
+     * BackgroundServiceStartNotAllowedException on the OkHttp thread.
+     * A stopped service drops the result; an entry the notification no
+     * longer shows keeps its picture but repaints nothing.
+     *
+     * @param bitmap the decoded artwork, or null when the fetch failed
+     */
+    private void deliverArtwork(GeckoMetaData meta, @Nullable Bitmap bitmap) {
+        mMainHandler.post(() -> {
+            mArtworkCalls.remove(meta.getSessionId());
+            if (mStopped) {
+                return;
+            }
+            if (bitmap != null) {
+                meta.setIconBitmap(bitmap);
+                // The page's own artwork may have landed meanwhile
+                // (the controller's fetch); a favicon never replaces it.
+                if (meta.getBitmap() == null) {
+                    meta.setBitmap(bitmap);
+                }
+            } else {
+                setDefaultThumbnail(meta);
+            }
+            if (mGeckoMediaController.getGeckoMetaData() != meta) {
+                return;
+            }
+            handleAction(IntentActions.MEDIA_METADATA, meta);
         });
     }
 
@@ -715,14 +766,6 @@ public class GeckoMediaPlaybackService extends Service {
             meta.setBitmap(tile);
         }
         meta.setIconBitmap(tile); // prevent re-fetch
-    }
-
-    private void notifyMetaData(){
-        Log.d(TAG, "notifyMetaData — sending MEDIA_METADATA to service");
-        // Trigger metadata refresh via the service intent mechanism.
-        startService(new Intent(getApplicationContext(),
-                GeckoMediaPlaybackService.class)
-                .setAction(IntentActions.MEDIA_METADATA));
     }
 
     public boolean ismIsForegroundService() {

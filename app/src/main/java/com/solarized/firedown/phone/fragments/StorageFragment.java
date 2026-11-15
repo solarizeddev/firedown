@@ -515,6 +515,12 @@ public class StorageFragment extends BaseFocusFragment {
                 snack(getString(R.string.storage_offload_unverified), false);
                 return;
             }
+            // The re-list can take long on a cloud provider: a user who left
+            // the screen meanwhile is not deleted from behind (and a delete
+            // started from the background is refused by Android anyway).
+            if (!isResumed()) {
+                return;
+            }
             for (int i = 0; i < toDelete.size(); i += DELETE_CHUNK) {
                 ArrayList<DownloadEntity> chunk = new ArrayList<>(
                         toDelete.subList(i, Math.min(i + DELETE_CHUNK, toDelete.size())));

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -25,6 +26,8 @@ import javax.inject.Singleton;
 
 @Singleton
 public class TaskRepository {
+
+    private static final String TAG = TaskRepository.class.getSimpleName();
 
     /**
      * Active+queued count of regular (non-vault) downloads. Surfaced as
@@ -273,14 +276,23 @@ public class TaskRepository {
      * Starts the delete operation via RunnableManager service.
      * This keeps the service-start logic in the repository layer
      * so fragments/dialogs don't need direct access to the Service class.
+     *
+     * @return false when Android refused the start (the app in the
+     *     background, Android 8+); nothing was deleted then
      */
-    public void requestDelete(Context context, ArrayList<DownloadEntity> entities) {
+    public boolean requestDelete(Context context, ArrayList<DownloadEntity> entities) {
         if (entities == null || entities.isEmpty())
-            return;
+            return true;
         Intent intent = new Intent(context, RunnableManager.class);
         intent.putExtra(Keys.ITEM_LIST_ID, entities);
         intent.setAction(IntentActions.DOWNLOAD_DELETE);
-        context.startService(intent);
+        try {
+            context.startService(intent);
+            return true;
+        } catch (IllegalStateException e) {
+            Log.w(TAG, "requestDelete: start refused", e);
+            return false;
+        }
     }
 
 }

@@ -10232,6 +10232,20 @@ with no notification. `onMediaPlay`/`onMediaPauseOrStop` call `refreshService()`
 which starts/updates the service directly (the tell was that the controller already
 *stopped* it directly via `stopService()` — only start was UI-delegated). So the
 notification follows actual playback, including a background tab that autoplays.
+**Only the controller starts the service, and nothing else may call
+`startService` for it from a callback** (crash report, 1.2.10):
+the service's fallback artwork fetch used to send itself a MEDIA_METADATA
+intent from the OkHttp callback, which re-created a stopped service and,
+with the app in the background, threw `BackgroundServiceStartNotAllowedException`
+on the OkHttp thread, killing the process. Now the callback only decodes,
+`deliverArtwork` posts to the main thread, drops the result once the service
+stopped (`mStopped`, set in `shutdown()`/`onDestroy()`, which also cancel the
+in-flight calls), and repaints THIS instance in process (`handleAction`) only
+while the controller still shows that entry. `BrowserFragment`'s
+`onMediaActivated`/`onMediaPlay`/`onMediaPause` no longer start the service
+(they duplicated `refreshService` with no guard); `onMediaPosition` goes
+through `GeckoMediaController.pushPosition` (running check + try/catch). A
+new caller sends through `sendToService`, never a bare `startService`.
 
 **The artwork and the title are the CONTROLLER's too (issue #308).** The
 page's metadata — the title and the artwork a MediaSession-API page
