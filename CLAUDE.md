@@ -10240,8 +10240,9 @@ with the app in the background, threw `BackgroundServiceStartNotAllowedException
 on the OkHttp thread, killing the process. Now the callback only decodes,
 `deliverArtwork` posts to the main thread, drops the result once the service
 stopped (`mStopped`, set in `shutdown()`/`onDestroy()`, which also cancel the
-in-flight calls), and repaints THIS instance in process (`handleAction`) only
-while the controller still shows that entry. `BrowserFragment`'s
+in-flight calls), and repaints THIS instance in process (`handleAction`)
+with the entry the controller shows now; a start that reaches an instance
+after `shutdown()` does nothing. `BrowserFragment`'s
 `onMediaActivated`/`onMediaPlay`/`onMediaPause` no longer start the service
 (they duplicated `refreshService` with no guard); `onMediaPosition` goes
 through `GeckoMediaController.pushPosition` (running check + try/catch). A

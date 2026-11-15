@@ -590,11 +590,6 @@ public class GeckoMediaController {
     }
 
     /**
-     * Reflect the current playback state onto the service notification: PLAY when
-     * the spotlit session is actually playing (starts the service if needed),
-     * otherwise PAUSE (updates the notification only if the service is already up).
-     */
-    /**
      * Moves the notification's scrubber to the tab on screen's position. Only
      * a running service is updated; a refused start (the app in the
      * background) is caught in {@link #sendToService}.
@@ -603,6 +598,11 @@ public class GeckoMediaController {
         sendToService(IntentActions.MEDIA_POSITION, position);
     }
 
+    /**
+     * Reflect the current playback state onto the service notification: PLAY when
+     * the spotlit session is actually playing (starts the service if needed),
+     * otherwise PAUSE (updates the notification only if the service is already up).
+     */
     private void refreshService() {
         if (mCurrentSessionId != 0 && mPlayingSessionIds.contains(mCurrentSessionId)) {
             sendToService(IntentActions.MEDIA_PLAY);

@@ -167,6 +167,11 @@ public class GeckoMediaPlaybackService extends Service {
         if (intent == null || intent.getAction() == null) {
             return START_NOT_STICKY;
         }
+        // A start queued before shutdown() reached a dying instance whose
+        // MediaSession is released: nothing to update (STOP is done already).
+        if (mStopped) {
+            return START_NOT_STICKY;
+        }
 
         String action   = intent.getAction();
         GeckoMetaData meta = mGeckoMediaController.getGeckoMetaData();
@@ -648,7 +653,14 @@ public class GeckoMediaPlaybackService extends Service {
             return;
         }
 
-        Request request = new Request.Builder().url(iconUrl).build();
+        Request request;
+        try {
+            request = new Request.Builder().url(iconUrl).build();
+        } catch (IllegalArgumentException e) {
+            // An http(s) string OkHttp cannot parse ("http://").
+            setDefaultThumbnail(meta);
+            return;
+        }
         Call call = mOkHttpClient.newCall(request);
         mArtworkCalls.put(meta.getSessionId(), call);
         call.enqueue(new Callback() {
@@ -666,8 +678,10 @@ public class GeckoMediaPlaybackService extends Service {
                         byte[] bytes = readArtworkBytes(body);
                         bitmap = bytes != null ? decodeArtwork(bytes) : null;
                     }
-                } catch (IOException e) {
-                    // A body cut off mid-read: the fallback tile, as on a failure.
+                } catch (IOException | RuntimeException e) {
+                    // A body cut off mid-read or a decoder that threw: the
+                    // fallback tile, as on a failure. Never thrown on the
+                    // OkHttp thread, and the request is always marked done.
                     Log.e(TAG, "Bitmap read failed", e);
                 }
                 deliverArtwork(meta, bitmap);
@@ -683,8 +697,7 @@ public class GeckoMediaPlaybackService extends Service {
      * a MEDIA_METADATA intent through startService(), which re-created a
      * stopped service and, with the app in the background, threw
      * BackgroundServiceStartNotAllowedException on the OkHttp thread.
-     * A stopped service drops the result; an entry the notification no
-     * longer shows keeps its picture but repaints nothing.
+     * A stopped service drops the result.
      *
      * @param bitmap the decoded artwork, or null when the fetch failed
      */
@@ -704,10 +717,13 @@ public class GeckoMediaPlaybackService extends Service {
             } else {
                 setDefaultThumbnail(meta);
             }
-            if (mGeckoMediaController.getGeckoMetaData() != meta) {
-                return;
+            // Repaint whatever entry the notification shows now: when a
+            // navigation replaced this one meanwhile, its update re-fetches
+            // for it (the request for the session is no longer in flight).
+            GeckoMetaData current = mGeckoMediaController.getGeckoMetaData();
+            if (current != null) {
+                handleAction(IntentActions.MEDIA_METADATA, current);
             }
-            handleAction(IntentActions.MEDIA_METADATA, meta);
         });
     }
 

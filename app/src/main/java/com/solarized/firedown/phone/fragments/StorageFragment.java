@@ -524,7 +524,13 @@ public class StorageFragment extends BaseFocusFragment {
             for (int i = 0; i < toDelete.size(); i += DELETE_CHUNK) {
                 ArrayList<DownloadEntity> chunk = new ArrayList<>(
                         toDelete.subList(i, Math.min(i + DELETE_CHUNK, toDelete.size())));
-                mTaskRepository.requestDelete(app, chunk);
+                if (!mTaskRepository.requestDelete(app, chunk)) {
+                    // Android refused the start: say nothing was done, and
+                    // show what is still on the phone.
+                    refreshOffload();
+                    snack(getString(R.string.error_unknown), false);
+                    return;
+                }
             }
             showOffload(new ArrayList<>());
             snack(getString(R.string.storage_offload_done,

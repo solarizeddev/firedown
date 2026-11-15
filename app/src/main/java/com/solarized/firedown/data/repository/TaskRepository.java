@@ -15,6 +15,7 @@ import com.solarized.firedown.data.TaskEvent;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.manager.RunnableManager;
 import com.solarized.firedown.manager.ServiceActions;
+import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
 
@@ -290,7 +291,9 @@ public class TaskRepository {
             context.startService(intent);
             return true;
         } catch (IllegalStateException e) {
-            Log.w(TAG, "requestDelete: start refused", e);
+            if (BuildConfig.DEBUG) {
+                Log.w(TAG, "requestDelete: start refused", e);
+            }
             return false;
         }
     }
