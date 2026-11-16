@@ -20,6 +20,7 @@ import com.solarized.firedown.data.TaskEvent;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.ffmpegutils.FakeNative;
 import com.solarized.firedown.manager.ServiceActions;
+import com.solarized.firedown.manager.ItemLists;
 import com.solarized.firedown.manager.tasks.TaskManager;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.utils.GalleryPublisher;
@@ -988,6 +989,7 @@ public class TaskHarness {
         finishedReachesUi();
         nullEntity();
         lockMissingSource();
+        lockManyByToken();
         readErrorMidCopy(K.LOCK);
         readErrorMidCopy(K.UNLOCK);
         runningTask();
@@ -1111,6 +1113,26 @@ public class TaskHarness {
         check(c.id + ".count-matches-files-locked", fin != null && Integer.valueOf((int) locked).equals(fin.result()),
                 "Finished(" + (fin == null ? "-" : fin.action() + "," + fin.result()) + "), " + locked + " file(s) locked");
         info(c.id, "second file " + (p.inputs.get(1).isFile() ? "never attempted (the first IOException ends the batch)" : "locked"));
+        c.endState();
+    }
+
+    /** A multi-select Lock of many rows: the list past Binder's reach travels
+     *  as an ItemLists token (shipped: TransactionTooLargeException, 1872632
+     *  bytes), and the task still locks every file. */
+    static void lockManyByToken() throws Exception {
+        Case c = new Case("11i.lock-many-by-token");
+        Plan p = plan(K.LOCK, "tk", 800, 512);
+        Intent i = new Intent(ctx, TaskManager.class).setAction(K.LOCK.start);
+        ItemLists.put(i, new ArrayList<>(p.entities));
+        check(c.id + ".travels-as-a-token", i.hasExtra(Keys.ITEM_LIST_TOKEN) && !i.hasExtra(Keys.ITEM_LIST_ID), "");
+        sys.startService(i, false);
+        awaitFinished(1, WAIT);
+        quiesce(WAIT);
+        Ev fin = first(TaskEvent.Finished.class);
+        long locked = p.outputs.stream().filter(File::isFile).count();
+        check(c.id + ".every-file-locked", locked == p.outputs.size() && fin != null
+                        && Integer.valueOf((int) locked).equals(fin.result()),
+                locked + "/" + p.outputs.size() + " locked, " + fin);
         c.endState();
     }
 

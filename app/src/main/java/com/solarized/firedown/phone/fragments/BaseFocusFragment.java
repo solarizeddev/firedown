@@ -59,6 +59,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.data.RestoredFileAccess;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.manager.DownloadIntents;
+import com.solarized.firedown.manager.ItemLists;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.manager.RunnableManager;
 import com.solarized.firedown.phone.VaultActivity;
@@ -860,14 +861,14 @@ public class BaseFocusFragment extends Fragment {
         switch(action) {
             case IntentActions.LOCK_FOR_ENCRYPTION:
                 intent = new Intent(mActivity, VaultActivity.class);
-                intent.putExtra(Keys.ITEM_LIST_ID, mDownloadEntities);
+                ItemLists.put(intent, mDownloadEntities);
                 intent.setAction(action);
                 mStartForResult.launch(intent);
                 break;
             case IntentActions.START_DECRYPTION:
             case IntentActions.DOWNLOAD_START_COMPRESS:
                 intent = new Intent(mActivity, TaskManager.class);
-                intent.putExtra(Keys.ITEM_LIST_ID, mDownloadEntities);
+                ItemLists.put(intent, mDownloadEntities);
                 intent.setAction(action);
                 mActivity.startService(intent);
                 break;
@@ -892,7 +893,7 @@ public class BaseFocusFragment extends Fragment {
                 intent = new Intent(mActivity, VaultActivity.class);
                 mDownloadEntities = new ArrayList<>();
                 mDownloadEntities.add(entity);
-                intent.putExtra(Keys.ITEM_LIST_ID, mDownloadEntities);
+                ItemLists.put(intent, mDownloadEntities);
                 intent.setAction(action);
                 mStartForResult.launch(intent);
                 break;
@@ -904,7 +905,7 @@ public class BaseFocusFragment extends Fragment {
                 intent = new Intent(mActivity, TaskManager.class);
                 mDownloadEntities = new ArrayList<>();
                 mDownloadEntities.add(entity);
-                intent.putExtra(Keys.ITEM_LIST_ID, mDownloadEntities);
+                ItemLists.put(intent, mDownloadEntities);
                 intent.setAction(action);
                 mActivity.startService(intent);
                 break;
@@ -923,7 +924,7 @@ public class BaseFocusFragment extends Fragment {
                 intent = new Intent(mActivity, RunnableManager.class);
                 mDownloadEntities = new ArrayList<>();
                 mDownloadEntities.add(entity);
-                intent.putExtra(Keys.ITEM_LIST_ID, mDownloadEntities);
+                ItemLists.put(intent, mDownloadEntities);
                 intent.setAction(action);
                 mActivity.startService(intent);
                 break;

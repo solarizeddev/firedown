@@ -14,6 +14,7 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.manager.ItemLists;
 import com.solarized.firedown.utils.FragmentArgs;
 
 import java.util.ArrayList;
@@ -42,10 +43,8 @@ public class DeleteDownloadsDialogFragment extends BaseDialogFragment {
             DownloadEntity downloadEntity = FragmentArgs.parcelable(this, Keys.ITEM_ID, DownloadEntity.class);
             mDownloadEntities = new ArrayList<>();
             if (downloadEntity != null) mDownloadEntities.add(downloadEntity);
-        } else if (bundle.containsKey(Keys.ITEM_LIST_ID)) {
-            bundle.setClassLoader(DownloadEntity.class.getClassLoader());
-            mDownloadEntities = bundle.getParcelableArrayList(Keys.ITEM_LIST_ID);
-            if (mDownloadEntities == null) mDownloadEntities = new ArrayList<>();
+        } else if (ItemLists.carries(bundle)) {
+            mDownloadEntities = ItemLists.read(bundle, DownloadEntity.class.getClassLoader());
         } else {
             mDownloadEntities = new ArrayList<>();
         }

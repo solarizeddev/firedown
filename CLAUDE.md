@@ -10777,10 +10777,26 @@ persistent tracking triggers when `room_table_modification_log` is missing
 them before Room's onOpen can recreate the table, which would turn a
 database that used to heal at open into a crash loop. The transport belt is
 generic on purpose: whatever field grows (a cookie jar, a header set), the
-Intent stays small — but it covers `DOWNLOAD_START` only; the
-`DownloadEntity` lists of a multi-select (delete, restart, lock, and the
-nav Bundles carrying them) are chunked by `requestDelete` alone and remain
-a known gap. Pinned by `sh scripts/datauri-harness/run.sh` (the REAL
+Intent stays small. **A multi-select list goes through `manager/ItemLists`,
+the same idea for `Keys.ITEM_LIST_ID`**: inline while its parcel is under
+128 KB, else parked in-process and carried as `Keys.ITEM_LIST_TOKEN`.
+Shipped as `TransactionTooLargeException: data parcel size 1872632 bytes`
+from a multi-select Lock (the whole `ArrayList<DownloadEntity>` in the
+VaultActivity Intent). Every sender and reader of a selection uses it: the
+Lock hop (list → VaultActivity → LockFragment's result → `BaseActivity.
+startEncryptionService`, the token FORWARDED hop to hop), unlock, compress,
+delete (the dialog's nav Bundle and `requestDelete`), the tab archive's
+delete, and the readers in `TaskManager` / `DownloadEngine`. Reads do not
+consume (a dialog recreated after rotation reads its args again) and return
+fresh copies (a task that changes its entities never changes the rows on
+screen); the service that acts on a list `take`s it, which releases it. The
+park holds 8 lists, so a sender must never park several in a row before any
+is read (Storage's delete loop of 50-entity chunks did: the 9th evicted the
+1st, whose files then stayed on disk) — send one list, and a token that outlived its process reads
+as an empty list, which every reader treats as nothing to do. Don't put an
+entity list in an Intent or a nav Bundle by hand. Pinned by the engine
+harness's 13j-13n and the task harness's 11i (an 800-file Lock by token).
+Pinned by `sh scripts/datauri-harness/run.sh` (the REAL
 `DataUris`, JDK only; mutants: a strip that keeps the payload, a decoder
 that skips percent-decoding, an uncapped header, a base64 flag read from a
 capped prefix, a payload keeping its fragment — each fails) and the engine
@@ -14595,7 +14611,8 @@ row's loudest number, because it is the sort key and the decision; the facts
 line is `[cloud] duration · date`. The confirm dialog COUNTS the backed-up
 files ("N of them are also in your backup folder and stay there") rather than
 implying every file is. Delete is the normal `TaskRepository.requestDelete`
-in 50-entity chunks, optimistic (rows leave now, the resume re-scan
+as ONE request (a big list travels by `ItemLists` token; chunks parked one
+after another evicted each other before the service read them), optimistic (rows leave now, the resume re-scan
 reconciles). **History (on-device, two rounds):** it first shipped as the
 Downloads row verbatim — the size as the first token of the 11sp facts line
 (read as a Downloads list rather than a size list) and a permanently docked
@@ -14633,8 +14650,8 @@ list underneath.
 **"Free up space" (Signal's Optimize storage) lives on the same screen.** An
 outlined card, shown ONLY when some finished downloads are already in the
 backup folder: it removes their PHONE copies through the normal download
-delete (`TaskRepository.requestDelete`, chunked 50 per intent against Binder
-limits) and they stay in Backups (stream / restore). Candidates = the
+delete (`TaskRepository.requestDelete`, one request, the list by `ItemLists`
+token when large) and they stay in Backups (stream / restore). Candidates = the
 folder's content keys (`CloudBackupManager.loadBackedUpKeys`, the name+size
 match the Downloads cloud mark uses) ∩ downloads whose file is really on
 disk (a missing or foreign-owned file frees nothing). Two load-bearing

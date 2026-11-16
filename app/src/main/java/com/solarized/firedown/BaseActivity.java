@@ -46,6 +46,7 @@ import com.solarized.firedown.data.models.IncognitoStateViewModel;
 import com.solarized.firedown.data.repository.GeckoStateDataRepository;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import com.solarized.firedown.manager.DownloadIntents;
+import com.solarized.firedown.manager.ItemLists;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.manager.tasks.TaskManager;
 import com.solarized.firedown.phone.BrowserMainActivity;
@@ -755,8 +756,7 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
     @Override
     public void startEncryptionService(Intent intent) {
         Intent serviceIntent = new Intent(this, TaskManager.class);
-        serviceIntent.putParcelableArrayListExtra(Keys.ITEM_LIST_ID,
-                intent.getParcelableArrayListExtra(Keys.ITEM_LIST_ID));
+        ItemLists.forward(intent, serviceIntent);
         serviceIntent.setAction(intent.getAction());
         startService(serviceIntent);
     }

@@ -57,6 +57,7 @@ import com.solarized.firedown.data.entity.OptionEntity;
 import com.solarized.firedown.data.models.DownloadsViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.manager.ServiceActions;
+import com.solarized.firedown.manager.ItemLists;
 import com.solarized.firedown.manager.tasks.TaskManager;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.phone.SettingsActivity;
@@ -783,7 +784,7 @@ public abstract class BaseDownloadFragment extends BaseFocusFragment {
         } else if (id == R.id.action_delete) {
             ArrayList<DownloadEntity> list = mAdapter.getSelectedEntities();
             Bundle bundle = new Bundle();
-            bundle.putParcelableArrayList(Keys.ITEM_LIST_ID, list);
+            ItemLists.put(bundle, list);
             bundle.putBoolean(Keys.IS_INCOGNITO, mCurrentDestinationId == R.id.vault);
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_delete_files, mCurrentDestinationId, bundle);
         } else if (id == R.id.action_cipher) {

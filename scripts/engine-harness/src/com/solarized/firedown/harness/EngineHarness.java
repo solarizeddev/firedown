@@ -17,6 +17,7 @@ import com.solarized.firedown.data.repository.TaskRepository;
 import com.solarized.firedown.geckoview.GeckoRuntimeHelper;
 import com.solarized.firedown.manager.DownloadEngine;
 import com.solarized.firedown.manager.DownloadIntents;
+import com.solarized.firedown.manager.ItemLists;
 import com.solarized.firedown.manager.DownloadRequest;
 import com.solarized.firedown.manager.DownloadRunnable;
 import com.solarized.firedown.manager.DownloadTask;
@@ -512,6 +513,43 @@ public class EngineHarness {
             waitUntil(() -> r.started);
             r.finishNaturally();
         }
+        host.await("idle");
+
+        // ── 13j. ItemLists: a multi-select list past the inline cap travels as a token ─
+        // (shipped: TransactionTooLargeException, a parcel of 1872632 bytes, from a Lock of many rows)
+        freshEngine();
+        List<DownloadEntity> many = new ArrayList<>();
+        StringBuilder longDir = new StringBuilder(dir.getAbsolutePath()).append('/');
+        for (int k = 0; k < 2_000; k++) longDir.append('d');
+        for (int k = 0; k < 200; k++) {
+            DownloadEntity e = new DownloadEntity();
+            e.setId(90_000 + k);
+            e.setFileName("many" + k + ".mp4");
+            e.setFilePath(longDir + "/many" + k + ".mp4");
+            e.setFileStatus(Download.FINISHED);
+            many.add(e);
+        }
+        Intent smallDelete = new Intent(IntentActions.DOWNLOAD_DELETE);
+        ItemLists.put(smallDelete, new ArrayList<>(many.subList(0, 2)));
+        check("13j a small list rides inline as ITEM_LIST_ID, no token",
+                smallDelete.hasExtra(Keys.ITEM_LIST_ID) && !smallDelete.hasExtra(Keys.ITEM_LIST_TOKEN), "");
+        Intent bigDelete = new Intent(IntentActions.DOWNLOAD_DELETE);
+        ItemLists.put(bigDelete, new ArrayList<>(many));
+        check("13k a list past the cap rides as a token only",
+                bigDelete.hasExtra(Keys.ITEM_LIST_TOKEN) && !bigDelete.hasExtra(Keys.ITEM_LIST_ID), "");
+        Intent forwarded = new Intent(IntentActions.DOWNLOAD_DELETE);
+        ItemLists.forward(bigDelete, forwarded);
+        check("13l a forwarded token reads the same list, twice (reads do not consume)",
+                ItemLists.<DownloadEntity>read(forwarded).size() == many.size()
+                        && ItemLists.<DownloadEntity>read(bigDelete).size() == many.size(), "");
+        int batches13 = repo.batchDeletes.size();
+        engine.dispatch(forwarded, 1);
+        check("13m the engine takes the parked list and batch-deletes every row",
+                waitUntil(() -> repo.batchDeletes.size() > batches13)
+                        && repo.batchDeletes.get(batches13).size() == many.size(),
+                repo.batchDeletes.size() > batches13 ? "" + repo.batchDeletes.get(batches13).size() : "none");
+        check("13n and releases it: the token reads empty afterwards",
+                ItemLists.<DownloadEntity>read(bigDelete).isEmpty(), "");
         host.await("idle");
 
         // ── 16. the bottom bar's ring: one group per mode ─

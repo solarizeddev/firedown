@@ -155,8 +155,6 @@ public class StorageFragment extends BaseFocusFragment {
     @Qualifiers.HeavyIO
     Executor mHeavyExecutor;
 
-    /** Entities per delete intent — keeps each Binder transaction small. */
-    private static final int DELETE_CHUNK = 50;
 
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
 
@@ -521,16 +519,13 @@ public class StorageFragment extends BaseFocusFragment {
             if (!isResumed()) {
                 return;
             }
-            for (int i = 0; i < toDelete.size(); i += DELETE_CHUNK) {
-                ArrayList<DownloadEntity> chunk = new ArrayList<>(
-                        toDelete.subList(i, Math.min(i + DELETE_CHUNK, toDelete.size())));
-                if (!mTaskRepository.requestDelete(app, chunk)) {
-                    // Android refused the start: say nothing was done, and
-                    // show what is still on the phone.
-                    refreshOffload();
-                    snack(getString(R.string.error_unknown), false);
-                    return;
-                }
+            // One request (see StorageReviewFragment.performDelete).
+            if (!mTaskRepository.requestDelete(app, toDelete)) {
+                // Android refused the start: say nothing was done, and
+                // show what is still on the phone.
+                refreshOffload();
+                snack(getString(R.string.error_unknown), false);
+                return;
             }
             showOffload(new ArrayList<>());
             snack(getString(R.string.storage_offload_done,

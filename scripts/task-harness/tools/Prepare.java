@@ -53,8 +53,8 @@ public class Prepare {
             }
         }
         for (String f : List.of("data/repository/TaskRepository.java", "data/TaskEvent.java", "data/SingleLiveEvent.java",
-                "data/Download.java", "manager/ServiceActions.java", "IntentActions.java", "Keys.java",
-                "utils/NotificationID.java", "ffmpegutils/FFmpegListener.java")) {
+                "data/Download.java", "data/DownloadProgress.java", "manager/ServiceActions.java", "IntentActions.java", "Keys.java",
+                "utils/NotificationID.java", "ffmpegutils/FFmpegListener.java", "manager/ItemLists.java")) {
             copy(f);
         }
         rewriteNatives("ffmpegutils/FFmpegGifMaker.java");

@@ -37,6 +37,8 @@ public class Keys {
     public static final String BACKUP_IN_FLIGHT = "com.solarized.firedown.BACKUP_IN_FLIGHT";
     public static final String ITEM_CONTAINS = "com.solarized.firedown.ITEM_CONTAINS";
     public static final String ITEM_LIST_ID = "com.solarized.firedown.ITEM_LIST_ID";
+    /** A list too big for Binder, held in-process; see manager/ItemLists. */
+    public static final String ITEM_LIST_TOKEN = "com.solarized.firedown.ITEM_LIST_TOKEN";
     public static final String INTENT_ACTION = "com.solarized.firedown.INTENT_ACTION";
     public static final String UPDATE_META = "com.solarized.firedown.UDPATE_META";
     public static final String UPDATE_NAME = "com.solarized.firedown.UPDATE_NAME";

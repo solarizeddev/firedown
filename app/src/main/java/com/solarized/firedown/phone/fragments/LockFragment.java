@@ -31,9 +31,9 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.IntentActions;
 import com.solarized.firedown.utils.BuildUtils;
 import com.solarized.firedown.Keys;
+import com.solarized.firedown.manager.ItemLists;
 import com.solarized.firedown.utils.NavigationUtils;
 
-import java.util.ArrayList;
 
 public class LockFragment extends BaseFocusFragment implements  View.OnClickListener {
 
@@ -79,12 +79,14 @@ public class LockFragment extends BaseFocusFragment implements  View.OnClickList
                     resultIntent.putExtra(Keys.ITEM_ID, mDownloadEntity);
                     mActivity.setResult(mDownloadEntity != null ? Activity.RESULT_OK : Activity.RESULT_CANCELED, resultIntent);
                     mActivity.finish();
-                } else if (bundle != null && bundle.containsKey(Keys.ITEM_LIST_ID)) {
-                    ArrayList<DownloadEntity> mDownloadEntities = bundle.getParcelableArrayList(Keys.ITEM_LIST_ID);
+                } else if (ItemLists.carries(bundle)) {
+                    // The list (or its token) is forwarded as it came: a
+                    // result Intent crosses Binder like the one that brought it.
+                    ClassLoader loader = DownloadEntity.class.getClassLoader();
+                    boolean any = !ItemLists.read(bundle, loader).isEmpty();
                     Intent resultIntent = new Intent(IntentActions.START_ENCRYPTION);
-                    resultIntent.putParcelableArrayListExtra(Keys.ITEM_LIST_ID, mDownloadEntities);
-                    mActivity.setResult(mDownloadEntities != null && !mDownloadEntities.isEmpty() ?
-                            Activity.RESULT_OK : Activity.RESULT_CANCELED, resultIntent);
+                    ItemLists.forward(bundle, loader, resultIntent);
+                    mActivity.setResult(any ? Activity.RESULT_OK : Activity.RESULT_CANCELED, resultIntent);
                     mActivity.finish();
                 }else{
                     NavigationUtils.navigateSafe(mNavController,R.id.action_lock_to_vault, R.id.lock, getArguments());

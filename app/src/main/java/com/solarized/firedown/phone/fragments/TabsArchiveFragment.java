@@ -36,7 +36,7 @@ import com.solarized.firedown.ui.EqualSpacingItemDecoration;
 import com.solarized.firedown.ui.OnItemClickListener;
 import com.solarized.firedown.ui.diffs.TabStateArchivedDiffCallback;
 import com.solarized.firedown.IntentActions;
-import com.solarized.firedown.Keys;
+import com.solarized.firedown.manager.ItemLists;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.ArrayList;
@@ -157,7 +157,7 @@ public class TabsArchiveFragment extends BaseFocusFragment implements OnItemClic
                 }
             }
             Bundle bundle = new Bundle();
-            bundle.putParcelableArrayList(Keys.ITEM_LIST_ID, selectedItems);
+            ItemLists.put(bundle, selectedItems);
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_delete_tabs, R.id.tabs_archive, bundle);
         } else {
             NavigationUtils.navigateSafe(mNavController, R.id.dialog_delete_tabs, R.id.tabs_archive);

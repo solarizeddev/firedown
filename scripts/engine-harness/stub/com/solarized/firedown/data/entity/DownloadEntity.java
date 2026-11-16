@@ -1,7 +1,8 @@
 package com.solarized.firedown.data.entity;
 import com.solarized.firedown.data.Download;
+import android.os.Parcelable;
 /** The fields the engine and the fake task read/write. Snapshot-copyable like the Room entity. */
-public class DownloadEntity {
+public class DownloadEntity implements Parcelable {
     private int id;
     private String fileUrl = "", fileName = "", filePath, mimeType = "";
     private int fileStatus = Download.PROGRESS, fileErrorType, fileProgress;

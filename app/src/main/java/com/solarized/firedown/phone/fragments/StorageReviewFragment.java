@@ -88,8 +88,6 @@ public class StorageReviewFragment extends BaseFocusFragment {
     @Qualifiers.HeavyIO
     Executor mHeavyExecutor;
 
-    /** Entities per delete intent — keeps each Binder transaction small. */
-    private static final int DELETE_CHUNK = 50;
 
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
 
@@ -412,11 +410,10 @@ public class StorageReviewFragment extends BaseFocusFragment {
 
     private void performDelete(ArrayList<DownloadEntity> targets, long bytes) {
         final Context app = requireContext().getApplicationContext();
-        for (int i = 0; i < targets.size(); i += DELETE_CHUNK) {
-            ArrayList<DownloadEntity> chunk = new ArrayList<>(
-                    targets.subList(i, Math.min(i + DELETE_CHUNK, targets.size())));
-            mTaskRepository.requestDelete(app, chunk);
-        }
+        // One request: a list past Binder's reach travels as an ItemLists
+        // token, and chunks parked one after another would evict each other
+        // before the service reads them.
+        mTaskRepository.requestDelete(app, targets);
         // Optimistic: the rows leave now; the service removes row + file, and
         // the resume re-scan reconciles anything it could not.
         Set<Integer> gone = new HashSet<>();

@@ -13,7 +13,7 @@ import com.solarized.firedown.R;
 import com.solarized.firedown.data.entity.TabStateArchivedEntity;
 import com.solarized.firedown.data.models.TabsArchiveViewModel;
 import com.solarized.firedown.IntentActions;
-import com.solarized.firedown.Keys;
+import com.solarized.firedown.manager.ItemLists;
 
 import java.util.ArrayList;
 
@@ -28,7 +28,10 @@ public class DeleteTabsDialogFragment extends BaseDialogFragment {
         super.onCreate(savedInstanceState);
         mTabsArchiveViewModel = new ViewModelProvider(this).get(TabsArchiveViewModel.class);
         Bundle bundle = getArguments();
-        if(bundle != null) mList = bundle.getParcelableArrayList(Keys.ITEM_LIST_ID);
+        // No list means "delete all"; a list lost with the process reads empty.
+        if (ItemLists.carries(bundle)) {
+            mList = ItemLists.read(bundle, TabStateArchivedEntity.class.getClassLoader());
+        }
     }
 
     @NonNull

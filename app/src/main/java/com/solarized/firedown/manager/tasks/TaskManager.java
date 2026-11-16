@@ -32,6 +32,7 @@ import com.solarized.firedown.data.TaskEvent;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.repository.DownloadDataRepository;
 import com.solarized.firedown.data.repository.TaskRepository;
+import com.solarized.firedown.manager.ItemLists;
 import com.solarized.firedown.phone.DownloadsActivity;
 import com.solarized.firedown.utils.NotificationID;
 
@@ -580,7 +581,7 @@ public class TaskManager extends Service {
      * list, and an exception on the worker thread ends the process. */
     @NonNull
     private static ArrayList<DownloadEntity> entitiesOf(@NonNull Intent intent) {
-        ArrayList<DownloadEntity> entities = intent.getParcelableArrayListExtra(Keys.ITEM_LIST_ID);
+        ArrayList<DownloadEntity> entities = ItemLists.take(intent);
         ArrayList<DownloadEntity> copy = new ArrayList<>();
         if (entities != null) {
             for (DownloadEntity entity : entities) {

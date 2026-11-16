@@ -14,10 +14,10 @@ import com.solarized.firedown.data.SingleLiveEvent;
 import com.solarized.firedown.data.TaskEvent;
 import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.manager.RunnableManager;
+import com.solarized.firedown.manager.ItemLists;
 import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.IntentActions;
-import com.solarized.firedown.Keys;
 
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -285,7 +285,7 @@ public class TaskRepository {
         if (entities == null || entities.isEmpty())
             return true;
         Intent intent = new Intent(context, RunnableManager.class);
-        intent.putExtra(Keys.ITEM_LIST_ID, entities);
+        ItemLists.put(intent, entities);
         intent.setAction(IntentActions.DOWNLOAD_DELETE);
         try {
             context.startService(intent);

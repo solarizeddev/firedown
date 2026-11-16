@@ -45,6 +45,7 @@ mkdir -p "$OUT/src/com/solarized/firedown/manager" "$OUT/src/com/solarized/fired
          "$OUT/src/com/solarized/firedown/utils"
 cp "$SRC/manager/DownloadEngine.java"  "$OUT/src/com/solarized/firedown/manager/"
 cp "$SRC/manager/DownloadIntents.java" "$OUT/src/com/solarized/firedown/manager/"
+cp "$SRC/manager/ItemLists.java"       "$OUT/src/com/solarized/firedown/manager/"
 cp "$SRC/manager/ServiceActions.java"  "$OUT/src/com/solarized/firedown/manager/"
 cp "$SRC/IntentActions.java"           "$OUT/src/com/solarized/firedown/"
 cp "$SRC/data/Download.java"           "$OUT/src/com/solarized/firedown/data/"

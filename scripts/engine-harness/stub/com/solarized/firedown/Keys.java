@@ -5,4 +5,5 @@ public class Keys {
     public static final String DOWNLOAD_REQUEST_TOKEN = "com.solarized.firedown.DOWNLOAD_REQUEST_TOKEN";
     public static final String ITEM_ID = "com.solarized.firedown.ITEM_ID";
     public static final String ITEM_LIST_ID = "com.solarized.firedown.ITEM_LIST_ID";
+    public static final String ITEM_LIST_TOKEN = "com.solarized.firedown.ITEM_LIST_TOKEN";
 }

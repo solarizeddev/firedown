@@ -499,7 +499,7 @@ public class DownloadEngine {
 
 		Log.d(TAG, "Executor addDeleteTaskToExecutor IN");
 
-		ArrayList<DownloadEntity> downloadEntities = intent.getParcelableArrayListExtra(Keys.ITEM_LIST_ID);
+		ArrayList<DownloadEntity> downloadEntities = ItemLists.take(intent);
 
 		if (downloadEntities == null || downloadEntities.isEmpty()) {
 			Log.w(TAG, "addDeleteTaskToExecutor: no entities");
@@ -770,9 +770,9 @@ public class DownloadEngine {
 
 			resumeDownloadTaskToExecutor(downloadEntity);
 
-		} else if (intent.hasExtra(Keys.ITEM_LIST_ID)) {
+		} else if (ItemLists.carries(intent)) {
 
-			ArrayList<DownloadEntity> downloadEntities = intent.getParcelableArrayListExtra(Keys.ITEM_LIST_ID);
+			ArrayList<DownloadEntity> downloadEntities = ItemLists.take(intent);
 
 			if (downloadEntities == null)
 				return;
@@ -846,8 +846,8 @@ public class DownloadEngine {
 			if (entity != null) {
 				entities.add(entity);
 			}
-		} else if (intent.hasExtra(Keys.ITEM_LIST_ID)) {
-			ArrayList<DownloadEntity> downloadEntities = intent.getParcelableArrayListExtra(Keys.ITEM_LIST_ID);
+		} else if (ItemLists.carries(intent)) {
+			ArrayList<DownloadEntity> downloadEntities = ItemLists.take(intent);
 			if (downloadEntities != null) {
 				entities.addAll(downloadEntities);
 			}
