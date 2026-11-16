@@ -6932,7 +6932,8 @@ longer than the ack window, and arming at the moment eof was queued failed
 slow transfers at 100 % with "no delivery confirmation" — so a genuinely
 lost ack still fails honestly instead of spinning forever. The receiver enforces the **accepted size**
 (`offer.size + OVERRUN_SLACK`): a modified sender that advertised "2 MB" can't
-stream tens of GB to fill the disk. The receiver writes to `<name>.part`, then
+stream tens of GB to fill the disk. The receiver writes to a HIDDEN
+`.<name>.part` (`P2pFileNames.partFile`) beside the target, then
 `P2pShareController.finalizeReceivedFile` (disk executor) verifies the byte
 count, re-uniquifies (against disk AND the download table via `findByFilePath`
 — a path free on disk can be owned by a queued/errored row) + renames, inserts
@@ -6941,7 +6942,15 @@ a `FINISHED` `DownloadEntity` (`file_url = "p2p://<device-slug>"` so the row's
 the FILE, not the entity's stored label; Room invalidation refreshes the list,
 no poke) and calls `GalleryPublisher.publish`. An aborted/failed receive
 KEEPS a non-empty `.part` (only an empty one is deleted) — it is the resume
-capital, see below. **A bad scanned/pasted answer is SOFT** (`bad-code`): the
+capital, see below. **The partial is a dot-file on purpose**: it sits in the
+public `Download/Firedown`, and as a visible `<name>.part` file managers
+listed it while it grew, so people opened the video there mid-transfer and
+it stalled where the received bytes ended (reported). File managers hide a
+dot-file and the media scanner skips it; nothing in the app offers the file
+before DONE. A kept partial under the old visible name is renamed to the
+hidden one at the next accept (`adoptLegacyPart`), so a resume still finds
+it; the prune's `*.part` match covers both names. Pinned by the p2p
+harness's `part:` checks (mutant: the dot dropped). **A bad scanned/pasted answer is SOFT** (`bad-code`): the
 engine keys softness on `signalingState` and treats every decode/apply failure
 before connect as recoverable (the offer QR stays valid) — never `fail()` the
 session on a mangled paste.

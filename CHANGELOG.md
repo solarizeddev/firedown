@@ -5,6 +5,7 @@
 - Live audio and video streams download as live instead of stopping at 100% or stalling
 - Videos embedded from TikTok are captured and download instead of failing
 - Vertical videos are labelled by their short side, like 1080p instead of 1920p
+- Direct share: a file being received stays hidden until it has fully arrived
 
 ## [1.2.10] - 2026-11-11
 

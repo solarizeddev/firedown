@@ -1572,7 +1572,8 @@ public class P2pShareController {
                 StoragePaths.ensureDownloadPath(mContext);
                 pruneStaleParts(new File(StoragePaths.getDownloadPath(mContext)));
                 File target = buildTargetFile(name, mime);
-                partFile = new File(target.getParentFile(), target.getName() + ".part");
+                partFile = P2pFileNames.partFile(target);
+                adoptLegacyPart(target, partFile);
                 // RESUME: a kept partial from an earlier broken attempt of this
                 // same offer lands on the same .part path (the target name
                 // re-uniquifies identically while nothing final exists). Offer
@@ -2055,6 +2056,20 @@ public class P2pShareController {
         }
     }
 
+    /**
+     * A partial kept by a build that wrote {@code <target>.part} in plain
+     * sight is renamed to the hidden name, so the resume still finds it. Only
+     * when the hidden one is absent: two kept partials of one offer cannot
+     * both be the newest, and the hidden one is this build's own.
+     */
+    private static void adoptLegacyPart(File target, File partFile) {
+        File legacy = P2pFileNames.legacyPartFile(target);
+        if (!partFile.exists() && legacy.length() > 0 && !legacy.renameTo(partFile)
+                && BuildConfig.DEBUG) {
+            Log.d(TAG, "legacy part rename failed: " + legacy.getName());
+        }
+    }
+
     /** Delete a .part only when empty — a non-empty one is resume capital. */
     private static void deletePartIfEmpty(File partFile) {
         if (partFile.exists() && partFile.length() == 0 && !partFile.delete()) {
@@ -2086,7 +2101,8 @@ public class P2pShareController {
      * the one .part a running session owns is at most minutes old.
      */
     private static void pruneStaleParts(File downloadDir) {
-        File[] parts = downloadDir.listFiles((dir, name) -> name.endsWith(".part"));
+        // Hidden (.<name>.part) and legacy (<name>.part) partials alike.
+        File[] parts = downloadDir.listFiles((dir, name) -> name.endsWith(P2pFileNames.PART_SUFFIX));
         if (parts == null) {
             return;
         }

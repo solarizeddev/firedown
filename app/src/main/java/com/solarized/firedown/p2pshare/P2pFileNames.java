@@ -30,6 +30,32 @@ final class P2pFileNames {
     /** Used when the offer names no file at all (or only characters the sanitizer drops). */
     static final String FALLBACK_NAME = "received-file";
 
+    /** Every in-progress receive ends in this; the stale-partial prune matches it. */
+    static final String PART_SUFFIX = ".part";
+
+    /**
+     * The file a receive writes into until the last byte has arrived and been
+     * verified: {@code .<target>.part}, hidden. It sits in the public download
+     * folder, so a file manager or a player app would otherwise list it while
+     * it grows, and a video opened from there stalls where the received bytes
+     * end. A dot-file is hidden by file managers and skipped by the media
+     * scanner; it is renamed to the target name only once complete.
+     */
+    @NonNull
+    static File partFile(@NonNull File target) {
+        return new File(target.getParentFile(), "." + target.getName() + PART_SUFFIX);
+    }
+
+    /**
+     * Where builds before the hidden name kept a partial ({@code <target>.part}):
+     * read once, to carry a kept partial over to {@link #partFile} so the
+     * resume still finds it.
+     */
+    @NonNull
+    static File legacyPartFile(@NonNull File target) {
+        return new File(target.getParentFile(), target.getName() + PART_SUFFIX);
+    }
+
     /** Numbered candidates tried before a random suffix takes over. */
     static final int MAX_NUMBERED = 9999;
 

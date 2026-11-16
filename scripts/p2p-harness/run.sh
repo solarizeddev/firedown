@@ -18,6 +18,8 @@
 #     still tries).
 #   - P2pFileNames: a received file's name, bounded and correct without an
 #     extension (the old loop spun forever on the shared disk executor).
+#     The in-progress partial is a hidden .<name>.part (a visible one was
+#     opened mid-transfer and stalled).
 #   - P2pSessionPolicy: attach / start / busy when a share screen opens.
 #   - P2pLanServer.reachableHost: nearby lists IPv4 only.
 #   - P2pSendRows: the Send screen's one "Send to" list (no spinner at rest,
@@ -41,14 +43,15 @@ javac -nowarn -d "$OUT/classes" -cp "$HERE/stub" \
       $(find "$HERE/stub" "$OUT/src" "$HERE/src" -name '*.java')
 java -cp "$OUT/classes" com.solarized.firedown.p2pshare.P2pHarness
 
-# Mutants: each planted bug in P2pSendRows must fail the harness (MUTANTS=0 skips).
+# Mutants: each planted bug must fail the harness (MUTANTS=0 skips). The
+# fourth argument names the class (P2pSendRows when absent).
 if [ "${MUTANTS:-1}" != "0" ]; then
-  SRC="$ROOT/app/src/main/java/com/solarized/firedown/p2pshare/P2pSendRows.java"
   run_mutant() {
-    name=$1; from=$2; to=$3
+    name=$1; from=$2; to=$3; cls=${4:-P2pSendRows}
+    SRC="$ROOT/app/src/main/java/com/solarized/firedown/p2pshare/$cls.java"
     M=$(mktemp -d)
     cp -r "$OUT/src" "$M/src"
-    python3 - "$SRC" "$M/src/com/solarized/firedown/p2pshare/P2pSendRows.java" "$from" "$to" <<'PY'
+    python3 - "$SRC" "$M/src/com/solarized/firedown/p2pshare/$cls.java" "$from" "$to" <<'PY'
 import sys
 s = open(sys.argv[1]).read()
 if sys.argv[3] not in s:
@@ -69,4 +72,5 @@ PY
   run_mutant "asked phone tappable again" "!waiting, waiting, false, 0" "true, waiting, false, 0"
   run_mutant "preparing link tappable" "Sub.LINK_PREPARING, false, true" "Sub.LINK_PREPARING, true, true"
   run_mutant "Cancel at rest" "|| (phase == Phase.READY && (linkShared" "|| (phase == Phase.READY && (true"
+  run_mutant "partial in plain sight" '"." + target.getName() + PART_SUFFIX' 'target.getName() + PART_SUFFIX' P2pFileNames
 fi

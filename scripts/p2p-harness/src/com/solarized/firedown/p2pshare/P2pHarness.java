@@ -346,6 +346,17 @@ public final class P2pHarness {
         check("names: a free numbered name is found on the first try", counted.asked == 2);
         check("names: the file stays in the directory it was asked for",
                 "/dl".equals(P2pFileNames.uniquify(new File("/dl"), "a.txt", new Names()).getParent()));
+        // A receive in progress is hidden: a file manager or player listing
+        // it while it grows plays a video that stalls where the bytes end.
+        File target = new File("/dl", "clip(1).mp4");
+        File part = P2pFileNames.partFile(target);
+        check("part: the partial is a dot-file", part.getName().startsWith("."), part.getName());
+        check("part: hidden name is .<target>.part", ".clip(1).mp4.part".equals(part.getName()), part.getName());
+        check("part: beside the target", "/dl".equals(part.getParent()));
+        check("part: the stale-partial prune still matches it",
+                part.getName().endsWith(P2pFileNames.PART_SUFFIX));
+        check("part: the legacy name is the old visible one",
+                "clip(1).mp4.part".equals(P2pFileNames.legacyPartFile(target).getName()));
     }
 
     /* ── P2pSessionPolicy ───────────────────────────────────────────────── */
