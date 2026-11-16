@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -38,12 +39,29 @@ final class P2pFileNames {
      * verified: {@code .<target>.part}, hidden. It sits in the public download
      * folder, so a file manager or a player app would otherwise list it while
      * it grows, and a video opened from there stalls where the received bytes
-     * end. A dot-file is hidden by file managers and skipped by the media
-     * scanner; it is renamed to the target name only once complete.
+     * end. File managers hide a dot-file and MediaStore records it as
+     * non-media; it is renamed to the target name only once complete.
+     *
+     * <p>A file name is at most {@link #MAX_NAME_BYTES} bytes, and the target
+     * may already use all of them (the sanitizer's own cap), so the target part
+     * is shortened by whole code points until the partial's name fits. The
+     * result depends on the target name only, so a resume finds the same file.
      */
     @NonNull
     static File partFile(@NonNull File target) {
-        return new File(target.getParentFile(), "." + target.getName() + PART_SUFFIX);
+        String name = target.getName();
+        int budget = MAX_NAME_BYTES - 1 - PART_SUFFIX.length();
+        while (utf8Length(name) > budget) {
+            name = name.substring(0, name.offsetByCodePoints(name.length(), -1));
+        }
+        return new File(target.getParentFile(), "." + name + PART_SUFFIX);
+    }
+
+    /** The longest file name, in bytes, the filesystems the app writes to accept. */
+    static final int MAX_NAME_BYTES = 255;
+
+    private static int utf8Length(@NonNull String s) {
+        return s.getBytes(StandardCharsets.UTF_8).length;
     }
 
     /**

@@ -6946,11 +6946,15 @@ capital, see below. **The partial is a dot-file on purpose**: it sits in the
 public `Download/Firedown`, and as a visible `<name>.part` file managers
 listed it while it grew, so people opened the video there mid-transfer and
 it stalled where the received bytes ended (reported). File managers hide a
-dot-file and the media scanner skips it; nothing in the app offers the file
-before DONE. A kept partial under the old visible name is renamed to the
-hidden one at the next accept (`adoptLegacyPart`), so a resume still finds
-it; the prune's `*.part` match covers both names. Pinned by the p2p
-harness's `part:` checks (mutant: the dot dropped). **A bad scanned/pasted answer is SOFT** (`bad-code`): the
+dot-file and MediaStore records it as non-media; nothing in the app offers
+the file before DONE. A kept partial under the old visible name is renamed to
+the hidden one at the next accept (`adoptLegacyPart`), so a resume still finds
+it, and deleted when it is not adopted (empty, a hidden one already there, a
+failed rename): left in place it is the very file people opened. The
+partial's name is shortened by whole code points to stay within 255 bytes
+(the target may already use them all), the same way every time so a resume
+finds it. Pinned by the p2p harness's `part:` checks (mutants: the dot
+dropped, no byte cap, a cut mid-character). **A bad scanned/pasted answer is SOFT** (`bad-code`): the
 engine keys softness on `signalingState` and treats every decode/apply failure
 before connect as recoverable (the offer QR stays valid) — never `fail()` the
 session on a mangled paste.
@@ -7000,7 +7004,8 @@ bound on the loopback through its package-private `start(InetAddress)` door
 `declined` body, a busy receiver's 409, exact body bytes, a slow client, the
 connection deadline, the worker pool and the exact-bytes token compare —
 `RelayCredsPolicy`'s boundaries and network gate, `P2pFileNames`,
-`P2pSessionPolicy`, `reachableHost` and the Send list's `P2pSendRows`; 146 checks, ~15 s). Known residual:
+`P2pSessionPolicy`, `reachableHost`, the Send list's `P2pSendRows` and the hidden
+partial's name; 158 checks, ~15 s). Known residual:
 non-trickle ICE means a receiver that accepts a 10-minute-old link answers
 candidates minted 10 minutes ago; a NAT binding that expired meanwhile
 shows as `no-path` on an otherwise fine network — the relay candidate is

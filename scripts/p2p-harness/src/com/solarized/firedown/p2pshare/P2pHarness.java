@@ -357,6 +357,26 @@ public final class P2pHarness {
                 part.getName().endsWith(P2pFileNames.PART_SUFFIX));
         check("part: the legacy name is the old visible one",
                 "clip(1).mp4.part".equals(P2pFileNames.legacyPartFile(target).getName()));
+        // A target already at the byte limit: the partial must still be a
+        // name the filesystem accepts, and the same one every time (resume).
+        StringBuilder longName = new StringBuilder();
+        // 63 emoji: 252 bytes, each a surrogate pair, so a cut by char
+        // instead of by code point would leave half of one.
+        for (int i = 0; i < 63; i++) {
+            longName.append("\uD83D\uDE00");
+        }
+        File longTarget = new File("/dl", longName.toString());
+        String longPart = P2pFileNames.partFile(longTarget).getName();
+        int longBytes = longPart.getBytes(StandardCharsets.UTF_8).length;
+        check("part: a partial of a 255-byte name fits in 255 bytes",
+                longBytes <= P2pFileNames.MAX_NAME_BYTES, String.valueOf(longBytes));
+        check("part: a shortened partial is still hidden and a .part",
+                longPart.startsWith(".") && longPart.endsWith(P2pFileNames.PART_SUFFIX));
+        check("part: a shortened partial is the same every time",
+                longPart.equals(P2pFileNames.partFile(longTarget).getName()));
+        check("part: shortened by whole characters (valid UTF-16)",
+                !Character.isHighSurrogate(longPart.charAt(longPart.length()
+                        - P2pFileNames.PART_SUFFIX.length() - 1)));
     }
 
     /* ── P2pSessionPolicy ───────────────────────────────────────────────── */

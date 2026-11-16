@@ -72,5 +72,7 @@ PY
   run_mutant "asked phone tappable again" "!waiting, waiting, false, 0" "true, waiting, false, 0"
   run_mutant "preparing link tappable" "Sub.LINK_PREPARING, false, true" "Sub.LINK_PREPARING, true, true"
   run_mutant "Cancel at rest" "|| (phase == Phase.READY && (linkShared" "|| (phase == Phase.READY && (true"
-  run_mutant "partial in plain sight" '"." + target.getName() + PART_SUFFIX' 'target.getName() + PART_SUFFIX' P2pFileNames
+  run_mutant "partial in plain sight" '"." + name + PART_SUFFIX' 'name + PART_SUFFIX' P2pFileNames
+  run_mutant "partial name over 255 bytes" 'while (utf8Length(name) > budget)' 'while (utf8Length(name) > budget + 64)' P2pFileNames
+  run_mutant "partial cut mid-character" 'name.offsetByCodePoints(name.length(), -1)' 'name.length() - 1' P2pFileNames
 fi

@@ -2060,13 +2060,19 @@ public class P2pShareController {
      * A partial kept by a build that wrote {@code <target>.part} in plain
      * sight is renamed to the hidden name, so the resume still finds it. Only
      * when the hidden one is absent: two kept partials of one offer cannot
-     * both be the newest, and the hidden one is this build's own.
+     * both be the newest, and the hidden one is this build's own. A legacy
+     * file that is not adopted (empty, the hidden one already there, a failed
+     * rename) is deleted: left in place it is exactly the visible partial
+     * people opened by mistake. Losing it costs a resume, never a file.
      */
     private static void adoptLegacyPart(File target, File partFile) {
         File legacy = P2pFileNames.legacyPartFile(target);
-        if (!partFile.exists() && legacy.length() > 0 && !legacy.renameTo(partFile)
-                && BuildConfig.DEBUG) {
-            Log.d(TAG, "legacy part rename failed: " + legacy.getName());
+        if (!legacy.exists()) {
+            return;
+        }
+        boolean adopted = !partFile.exists() && legacy.length() > 0 && legacy.renameTo(partFile);
+        if (!adopted && !legacy.delete() && BuildConfig.DEBUG) {
+            Log.d(TAG, "legacy part delete failed: " + legacy.getName());
         }
     }
 
