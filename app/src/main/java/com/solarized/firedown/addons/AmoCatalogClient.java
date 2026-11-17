@@ -42,7 +42,8 @@ import okhttp3.ResponseBody;
  * Fetches the official list ({@link AmoCatalog}) when the Add-ons screen
  * opens, never in the background. A copy is kept for two days (Firefox's
  * cache age) and shown at once; when the list cannot be fetched the last
- * copy is shown, however old.
+ * copy is shown, however old. At startup the saved copy is read into
+ * memory ({@link #warm}, disk only) so the screen's first frame lists it.
  */
 @Singleton
 public class AmoCatalogClient {
@@ -121,6 +122,40 @@ public class AmoCatalogClient {
             List<AmoCatalog.Entry> result = entries == null ? Collections.emptyList() : entries;
             boolean failedFinal = failed;
             postState(new State(result, false, failedFinal));
+        });
+    }
+
+    /**
+     * Reads the saved copy into memory, whatever its age, so the screen's
+     * first frame already lists it: building the rows from a read that
+     * finished after the list was drawn moved everything below them. Disk
+     * only, never the network ({@link #load} still decides whether to
+     * fetch); nothing to read for a user who never opened the screen.
+     * Called at startup. Main thread.
+     */
+    public void warm() {
+        State current = mState.getValue();
+        if (current != null && !current.entries.isEmpty()) {
+            return;
+        }
+        final String language = Locale.getDefault().getLanguage();
+        mNetworkExecutor.execute(() -> {
+            File cache = cacheFile(language);
+            if (!cache.isFile()) {
+                return;
+            }
+            List<AmoCatalog.Entry> entries = readCache(cache, language);
+            if (entries == null) {
+                return;
+            }
+            mMainHandler.post(() -> {
+                State now = mState.getValue();
+                // A load that finished first has the newer list.
+                if (now == null || now.entries.isEmpty()) {
+                    boolean loading = now != null && now.loading;
+                    mState.setValue(new State(entries, loading, false));
+                }
+            });
         });
     }
 

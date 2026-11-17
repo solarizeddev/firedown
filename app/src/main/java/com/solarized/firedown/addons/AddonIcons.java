@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
+import android.util.LruCache;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +31,48 @@ public final class AddonIcons {
 
     public interface Sink {
         void onIcon(@NonNull Drawable icon);
+    }
+
+    /** Icons of installed add-ons, by {@link #cacheKey}: about 30 KB each. */
+    private static final LruCache<String, Bitmap> CACHE = new LruCache<String, Bitmap>(2 * 1024 * 1024) {
+        @Override
+        protected int sizeOf(String key, Bitmap value) {
+            return value.getByteCount();
+        }
+    };
+
+    /** An installed add-on's icon: a new version may bring a new one. */
+    @NonNull
+    public static String cacheKey(@NonNull AddonInfo info, int sizePx) {
+        return info.id + '\n' + info.version + '\n' + sizePx;
+    }
+
+    /**
+     * The same as {@link #load(Context, Image, int, Sink)}, remembered under
+     * {@code key}: Gecko answers every ask later, so a screen that opens
+     * again paints its rows without icons for a frame and rebinds each one
+     * as its answer lands. A remembered icon is handed over at once.
+     */
+    @UiThread
+    public static void load(@NonNull Context context, @NonNull String key, @NonNull Image icon,
+                            int sizePx, @NonNull Sink sink) {
+        Bitmap cached = CACHE.get(key);
+        if (cached != null) {
+            sink.onIcon(new BitmapDrawable(context.getApplicationContext().getResources(), cached));
+            return;
+        }
+        Context app = context.getApplicationContext();
+        icon.getBitmap(sizePx).accept(bitmap -> {
+            if (bitmap != null) {
+                BitmapDrawable drawable = drawable(app, bitmap, sizePx);
+                CACHE.put(key, drawable.getBitmap());
+                sink.onIcon(drawable);
+            }
+        }, e -> {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "add-on icon failed", e);
+            }
+        });
     }
 
     /** {@code sink} runs on the main thread; it must check its view is still there. */
@@ -73,7 +116,7 @@ public final class AddonIcons {
      * createScaledBitmap hands back the same bitmap when the size matches.
      */
     @NonNull
-    private static Drawable drawable(@NonNull Context context, @NonNull Bitmap bitmap, int sizePx) {
+    private static BitmapDrawable drawable(@NonNull Context context, @NonNull Bitmap bitmap, int sizePx) {
         Bitmap own;
         if (bitmap.getWidth() == sizePx && bitmap.getHeight() == sizePx) {
             Bitmap.Config config = bitmap.getConfig() == null ? Bitmap.Config.ARGB_8888 : bitmap.getConfig();

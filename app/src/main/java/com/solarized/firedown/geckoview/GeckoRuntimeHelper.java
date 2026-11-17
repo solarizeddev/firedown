@@ -20,6 +20,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.solarized.firedown.BuildConfig;
 import com.solarized.firedown.Preferences;
 import com.solarized.firedown.addons.AddonManager;
+import com.solarized.firedown.addons.AmoCatalogClient;
 import com.solarized.firedown.data.di.Qualifiers;
 import com.solarized.firedown.data.entity.GeckoInspectEntity;
 import com.solarized.firedown.data.repository.BrowserDownloadRepository;
@@ -122,6 +123,7 @@ public class GeckoRuntimeHelper {
     private final OkHttpClient mOkHttpClient;
     private final P2pShareController mP2pShareController;
     private final AddonManager mAddonManager;
+    private final AmoCatalogClient mAmoCatalogClient;
     private final Map<String, WebExtension.Port> mPorts = new HashMap<>();
     private int mTabId = DEFAULT_TAB_ID;
 
@@ -147,11 +149,13 @@ public class GeckoRuntimeHelper {
             OkHttpClient okHttpClient,
             P2pShareController p2pShareController,
             AddonManager addonManager,
+            AmoCatalogClient amoCatalogClient,
             @Qualifiers.MainThread Executor mainExecutor,
             @Qualifiers.Network Executor networkExecutor
     ) {
         this.mP2pShareController = p2pShareController;
         this.mAddonManager = addonManager;
+        this.mAmoCatalogClient = amoCatalogClient;
         this.mIconsRepository = iconsRepository;
         this.mBrowserDownloadRepository = browserDownloadRepository;
         this.mGeckoStateDataRepository = geckoStateDataRepository;
@@ -269,6 +273,9 @@ public class GeckoRuntimeHelper {
         // add-on manager, action and tab delegates. Built-in extensions above
         // stay ours; the manager never lists or touches them.
         mAddonManager.attach(sGeckoRuntime, this::blocksTrackingContent);
+        // Mozilla's list from its saved copy (disk only), so Settings →
+        // Add-ons draws it in its first frame.
+        mAmoCatalogClient.warm();
 
         // User-facing privacy toggles — defaults pick the privacy-preferring
         // value but every one of them can be flipped from settings. Disk

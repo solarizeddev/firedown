@@ -16,6 +16,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import com.solarized.firedown.Keys;
 import com.solarized.firedown.R;
@@ -161,11 +163,27 @@ public class AddonsFragment extends BasePreferenceFragment {
                 return true;
             });
         }
+        // The lists from what is already in memory, before the list view
+        // exists: rows added from the observers below land a frame after the
+        // XML's placeholders were drawn ("No add-ons installed", "Loading…")
+        // and pushed everything under them down. The observers then find
+        // the same add-ons and only update words in place.
+        renderInstalled(mAddonManager.getAddons().getValue());
+        AmoCatalogClient.State state = mCatalog.getState().getValue();
+        if (state != null) {
+            renderCatalog(state);
+        }
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        // An icon that arrives after its row was drawn rebinds the row;
+        // the default change animation cross-faded each one.
+        RecyclerView.ItemAnimator animator = getListView().getItemAnimator();
+        if (animator instanceof SimpleItemAnimator simple) {
+            simple.setSupportsChangeAnimations(false);
+        }
         mAddonManager.getAddons().observe(getViewLifecycleOwner(), addons -> {
             renderInstalled(addons);
             AmoCatalogClient.State state = mCatalog.getState().getValue();
@@ -252,7 +270,7 @@ public class AddonsFragment extends BasePreferenceFragment {
             p.setReview(mAddonManager.needsUpdateAttention(info.id));
             mInstalledCategory.addPreference(p);
             mInstalledRows.put(info.id, p);
-            AddonIcons.load(requireContext(), info.icon, mIconPx, icon -> {
+            AddonIcons.load(requireContext(), AddonIcons.cacheKey(info, mIconPx), info.icon, mIconPx, icon -> {
                 if (isAdded()) {
                     p.setIcon(icon);
                 }

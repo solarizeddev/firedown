@@ -171,6 +171,14 @@ public class AddonDetailFragment extends BasePreferenceFragment {
                 return true;
             });
         }
+        // The page from the add-on already in memory, before the list view
+        // exists: bound from the observer, every row the XML lists was drawn
+        // first and the hidden ones and the permission rows moved it a frame
+        // later. The observer binds the same add-on again, in place.
+        AddonInfo info = mId == null ? null : mAddonManager.find(mId);
+        if (info != null) {
+            bind(info);
+        }
     }
 
     @Override
@@ -208,7 +216,7 @@ public class AddonDetailFragment extends BasePreferenceFragment {
             if (!mIconLoaded) {
                 mIconLoaded = true;
                 int px = getResources().getDimensionPixelSize(R.dimen.addon_prompt_icon_size);
-                AddonIcons.load(requireContext(), info.icon, px, icon -> {
+                AddonIcons.load(requireContext(), AddonIcons.cacheKey(info, px), info.icon, px, icon -> {
                     if (isAdded() && mHeader != null) {
                         mHeader.setAddonIcon(icon);
                     }

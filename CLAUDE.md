@@ -4863,7 +4863,24 @@ before changing a flow. The rules, each easy to undo:
   notices come in bursts: the ⋮ Add-ons sheet keeps its rows by id and
   rebinds them (icon loaded once per sheet), and Settings → Add-ons does the
   same for both lists. Rebuilding restarted every icon from blank, a
-  flicker reported on-device. **An install shows on its row**: tapping an
+  flicker reported on-device. **Both add-on screens draw their real rows
+  in the FIRST frame** (reported on-device: "the list jumps every time it
+  opens"). The data was never missing (AddonManager and AmoCatalogClient
+  are singletons holding it); the rows were built from LiveData observers
+  at onStart, after the list had drawn the XML's placeholders ("No add-ons
+  installed", "Loading…", every detail row visible), and the preference
+  adapter applies hierarchy changes in a posted runnable, so a frame later
+  everything moved. Now `AddonsFragment` and `AddonDetailFragment` render
+  from the in-memory values at the end of `onCreatePreferences`, before the
+  list exists, and the observers only update in place; Mozilla's list is
+  read from its saved copy at startup (`AmoCatalogClient.warm`, disk only,
+  nothing for a user who never opened the screen; `load` still decides
+  whether to fetch); an installed add-on's icon is kept in memory
+  (`AddonIcons` keyed load, `cacheKey` = id + version + size, 2 MB LRU),
+  since Gecko answers every icon ask later; and the Add-ons list has no
+  change cross-fade, so a catalog icon fetched for the first time pops in
+  rather than flashing its row. Don't move the first render back into an
+  observer. **An install shows on its row**: tapping an
   add-on in the list (or "Install from file") turns the row into a
   `settings/ui/BusyPreference` ("Installing…" + a spinner, taps ignored)
   until Gecko is done, from `AddonManager.getInstalling()` (ids, plus
