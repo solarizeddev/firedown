@@ -90,7 +90,9 @@ public class AddonDetailFragment extends BasePreferenceFragment {
     private PreferenceCategory mSites;
     /** Each site switch's patterns, by key, as of the last bind; its listener reads them here. */
     private final Map<String, List<String>> mSitePatterns = new HashMap<>();
-    private boolean mIconLoaded;
+    /** The header's icon, shown or asked for ({@link AddonIcons#cacheKey}): a new version reloads it. */
+    @Nullable
+    private String mIconKey;
     private boolean mBinding;
 
     @Override
@@ -216,11 +218,13 @@ public class AddonDetailFragment extends BasePreferenceFragment {
             }
             facts.add(getString(R.string.addon_version, info.version));
             mHeader.set(info.name, TextUtils.join("\n", facts), info.description);
-            if (!mIconLoaded) {
-                mIconLoaded = true;
-                int px = getResources().getDimensionPixelSize(R.dimen.addon_prompt_icon_size);
-                AddonIcons.load(requireContext(), AddonIcons.cacheKey(info, px), info.icon, px, icon -> {
-                    if (isAdded() && mHeader != null) {
+            int px = getResources().getDimensionPixelSize(R.dimen.addon_prompt_icon_size);
+            String key = AddonIcons.cacheKey(info, px);
+            if (!key.equals(mIconKey)) {
+                // The old icon stays until the new one arrives.
+                mIconKey = key;
+                AddonIcons.load(requireContext(), key, info.icon, px, icon -> {
+                    if (isAdded() && mHeader != null && key.equals(mIconKey)) {
                         mHeader.setAddonIcon(icon);
                     }
                 });

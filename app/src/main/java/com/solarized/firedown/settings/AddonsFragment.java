@@ -99,6 +99,8 @@ public class AddonsFragment extends BasePreferenceFragment {
     private BusyPreference mReinstallUblock;
     /** The rows on screen, by add-on id, so a repaint updates them in place (no icon flicker). */
     private final Map<String, ReviewPreference> mInstalledRows = new LinkedHashMap<>();
+    /** The icon each installed row shows or is waiting for, by add-on id ({@link AddonIcons#cacheKey}). */
+    private final Map<String, String> mInstalledIconKeys = new HashMap<>();
     private final Map<String, CatalogPreference> mCatalogRows = new LinkedHashMap<>();
     private final Map<String, AmoCatalog.Entry> mCatalogEntries = new HashMap<>();
     private PreferenceCategory mCatalogCategory;
@@ -240,19 +242,22 @@ public class AddonsFragment extends BasePreferenceFragment {
             ids.add(info.id);
         }
         if (ids.equals(new ArrayList<>(mInstalledRows.keySet()))) {
-            // Same add-ons (one turned off, updated…): words only, icons kept.
+            // Same add-ons (one turned off, updated…): words in place, and
+            // the icon again only when a new version may bring a new one.
             for (AddonInfo info : list) {
                 ReviewPreference p = mInstalledRows.get(info.id);
                 if (p != null) {
                     p.setTitle(info.name);
                     p.setSummary(summaryFor(info));
                     p.setReview(mAddonManager.needsUpdateAttention(info.id));
+                    loadInstalledIcon(p, info);
                 }
             }
             return;
         }
         removeDynamicRows(mInstalledCategory, KEY_INSTALLED_PREFIX);
         mInstalledRows.clear();
+        mInstalledIconKeys.clear();
         int order = 100;
         for (AddonInfo info : list) {
             ReviewPreference p = new ReviewPreference(requireContext());
@@ -272,12 +277,27 @@ public class AddonsFragment extends BasePreferenceFragment {
             p.setReview(mAddonManager.needsUpdateAttention(info.id));
             mInstalledCategory.addPreference(p);
             mInstalledRows.put(info.id, p);
-            AddonIcons.load(requireContext(), AddonIcons.cacheKey(info, mIconPx), info.icon, mIconPx, icon -> {
-                if (isAdded()) {
-                    p.setIcon(icon);
-                }
-            });
+            loadInstalledIcon(p, info);
         }
+    }
+
+    /**
+     * The row keeps the icon it shows until the new one arrives, and an
+     * answer for a version the row no longer shows is dropped (an older
+     * ask that lands after a newer one).
+     */
+    private void loadInstalledIcon(@NonNull ReviewPreference p, @NonNull AddonInfo info) {
+        String key = AddonIcons.cacheKey(info, mIconPx);
+        if (key.equals(mInstalledIconKeys.get(info.id))) {
+            return;
+        }
+        mInstalledIconKeys.put(info.id, key);
+        final String id = info.id;
+        AddonIcons.load(requireContext(), key, info.icon, mIconPx, icon -> {
+            if (isAdded() && key.equals(mInstalledIconKeys.get(id)) && mInstalledRows.get(id) == p) {
+                p.setIcon(icon);
+            }
+        });
     }
 
     @NonNull
