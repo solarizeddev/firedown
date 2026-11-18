@@ -231,8 +231,7 @@ dependencies {
     implementation "androidx.biometric:biometric:1.1.0"
 
     // StringUtils / Strings / DateUtils. It used to arrive only through
-    // commons-text, which the app never called; 3.20.0 is the version that
-    // commons-text 1.15.0 brought.
+    // commons-text, which the app never called.
     implementation 'org.apache.commons:commons-lang3:3.22.0'
 
     implementation 'org.apache.commons:commons-collections4:4.6.0'
