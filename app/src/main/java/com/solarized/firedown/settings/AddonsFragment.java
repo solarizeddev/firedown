@@ -297,6 +297,12 @@ public class AddonsFragment extends BasePreferenceFragment {
             if (isAdded() && key.equals(mInstalledIconKeys.get(id)) && mInstalledRows.get(id) == p) {
                 p.setIcon(icon);
             }
+        }, () -> {
+            // Asked again on the next render (Gecko re-reports the add-on
+            // after it restarts it).
+            if (key.equals(mInstalledIconKeys.get(id))) {
+                mInstalledIconKeys.remove(id);
+            }
         });
     }
 

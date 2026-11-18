@@ -52,10 +52,13 @@ public final class AddonIcons {
      * {@code key}: Gecko answers every ask later, so a screen that opens
      * again paints its rows without icons for a frame and rebinds each one
      * as its answer lands. A remembered icon is handed over at once.
+     * {@code failed} runs, on the main thread, when Gecko has no icon to
+     * give (it may be restarting the add-on after an update), so the
+     * caller can ask again later.
      */
     @UiThread
     public static void load(@NonNull Context context, @NonNull String key, @NonNull Image icon,
-                            int sizePx, @NonNull Sink sink) {
+                            int sizePx, @NonNull Sink sink, @NonNull Runnable failed) {
         Bitmap cached = CACHE.get(key);
         if (cached != null) {
             sink.onIcon(new BitmapDrawable(context.getApplicationContext().getResources(), cached));
@@ -67,11 +70,14 @@ public final class AddonIcons {
                 BitmapDrawable drawable = drawable(app, bitmap, sizePx);
                 CACHE.put(key, drawable.getBitmap());
                 sink.onIcon(drawable);
+            } else {
+                failed.run();
             }
         }, e -> {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "add-on icon failed", e);
             }
+            failed.run();
         });
     }
 

@@ -227,6 +227,11 @@ public class AddonDetailFragment extends BasePreferenceFragment {
                     if (isAdded() && mHeader != null && key.equals(mIconKey)) {
                         mHeader.setAddonIcon(icon);
                     }
+                }, () -> {
+                    // Asked again on the next bind.
+                    if (key.equals(mIconKey)) {
+                        mIconKey = null;
+                    }
                 });
             }
         }
