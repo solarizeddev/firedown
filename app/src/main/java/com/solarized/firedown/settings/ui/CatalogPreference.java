@@ -48,7 +48,8 @@ public class CatalogPreference extends BusyPreference {
         }
         // The slot's -8dp end margin draws the button into the row's end
         // padding; its ripple must not be cut at the frame or the padding.
-        View parent = (View) action.getParent();
+        View slot = (View) action.getParent();
+        View parent = slot;
         while (parent instanceof ViewGroup) {
             ((ViewGroup) parent).setClipChildren(false);
             if (parent == holder.itemView) {
@@ -59,8 +60,8 @@ public class CatalogPreference extends BusyPreference {
         }
         action.setVisibility(shown ? View.VISIBLE : View.GONE);
         // The slot is a fixed 48dp (the spinner centres where the "+" was);
-        // a row with neither, a built-in id, keeps no empty space for it.
-        View slot = (View) action.getParent();
+        // a row with neither, a built-in id, hides it (only the widget
+        // frame's own padding stays, as before).
         slot.setVisibility(shown || isBusy() ? View.VISIBLE : View.GONE);
         action.setOnClickListener(shown ? v -> {
             OnPreferenceClickListener listener = getOnPreferenceClickListener();
