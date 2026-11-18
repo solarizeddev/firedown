@@ -196,6 +196,12 @@ public class AddonManager {
         public static final int CORRUPT = 13;
         /** The user's update check of an add-on failed (not one they declined). */
         public static final int UPDATE_FAILED = 14;
+        /** The user checked every add-on and none had an update. */
+        public static final int ALL_UP_TO_DATE = 15;
+        /** The user checked every add-on and more than one was updated. */
+        public static final int SEVERAL_UPDATED = 16;
+        /** The user checked every add-on and more than one could not be updated. */
+        public static final int SEVERAL_UPDATE_FAILED = 17;
 
         public final int type;
         @Nullable public final String name;
@@ -1456,6 +1462,15 @@ public class AddonManager {
                 mLocalPrefs.edit().putLong(PREF_REVIEW_RECHECK, now).apply();
             }
         }
+        // The user's check of every add-on says ONE thing once all of them
+        // have answered: a message per add-on replaced the one before it,
+        // so only the last could be read. One add-on's own check keeps its
+        // own message.
+        CheckTally tally = interactive && onlyId == null ? new CheckTally() : null;
+        if (tally != null) {
+            // Every add-on is asked: nothing below skips one for this check.
+            tally.pending = mInstalled.size();
+        }
         for (WebExtension extension : new ArrayList<>(mInstalled.values())) {
             if (onlyId != null && !onlyId.equals(extension.id)) {
                 continue;
@@ -1474,7 +1489,9 @@ public class AddonManager {
                 if (updated != null) {
                     clearReview(id);
                     onChanged(updated);
-                    if (interactive) {
+                    if (tally != null) {
+                        tally.updated(name);
+                    } else if (interactive) {
                         emit(Event.UPDATED, name);
                     }
                     return;
@@ -1492,7 +1509,9 @@ public class AddonManager {
                             break;
                     }
                 }
-                if (interactive) {
+                if (tally != null) {
+                    tally.noUpdate();
+                } else if (interactive) {
                     emit(Event.NO_UPDATE, name);
                 }
             }, e -> {
@@ -1503,10 +1522,66 @@ public class AddonManager {
                 if (BuildConfig.DEBUG) {
                     Log.w(TAG, "update failed: " + id + (declined ? " (declined)" : ""), e);
                 }
-                if (interactive && !declined) {
+                if (tally != null) {
+                    tally.failed(declined ? null : name);
+                } else if (interactive && !declined) {
                     emit(Event.UPDATE_FAILED, name);
                 }
             });
+        }
+    }
+
+    /**
+     * The answers to one check of every add-on, summed into one message
+     * when the last arrives. A failure is said first (the updated ones show
+     * their new version on their rows); an update the user declined counts
+     * as neither, and a check where every update was declined says nothing.
+     * Main thread: Gecko's results arrive there.
+     */
+    private final class CheckTally {
+        int pending;
+        int answered;
+        int updated;
+        int failed;
+        @Nullable String updatedName;
+        @Nullable String failedName;
+
+        void updated(@NonNull String name) {
+            updated++;
+            updatedName = name;
+            done();
+        }
+
+        void noUpdate() {
+            answered++;
+            done();
+        }
+
+        /** {@code name} null: the user declined the update's question. */
+        void failed(@Nullable String name) {
+            if (name != null) {
+                failed++;
+                failedName = name;
+            }
+            done();
+        }
+
+        private void done() {
+            pending--;
+            if (pending > 0) {
+                return;
+            }
+            if (failed == 1) {
+                emit(Event.UPDATE_FAILED, failedName);
+            } else if (failed > 1) {
+                emit(Event.SEVERAL_UPDATE_FAILED, null);
+            } else if (updated == 1) {
+                emit(Event.UPDATED, updatedName);
+            } else if (updated > 1) {
+                emit(Event.SEVERAL_UPDATED, null);
+            } else if (answered > 0) {
+                emit(Event.ALL_UP_TO_DATE, null);
+            }
         }
     }
 

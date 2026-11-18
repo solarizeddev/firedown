@@ -37,6 +37,9 @@
     <string name="addon_network">Не вдалося завантажити додаток. Перевірте з’єднання.</string>
     <string name="addon_no_update">Для %1$s немає оновлень</string>
     <string name="addon_update_failed">Не вдалося оновити %1$s</string>
+    <string name="addons_all_up_to_date">Для додатків немає оновлень</string>
+    <string name="addons_several_updated">Додатки оновлено</string>
+    <string name="addons_several_update_failed">Не вдалося оновити деякі додатки</string>
     <string name="addon_not_an_addon">Цей файл не є додатком Firefox</string>
     <string name="addon_optional_data">Передавати розробнику: %1$s</string>
     <string name="addon_optional_permissions">Необов’язкові дозволи</string>

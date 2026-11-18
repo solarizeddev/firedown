@@ -1453,6 +1453,9 @@
     <string name="addon_updated">%1$s updated</string>
     <string name="addon_no_update">%1$s is up to date</string>
     <string name="addon_update_failed">Couldn\'t update %1$s</string>
+    <string name="addons_all_up_to_date">Your add-ons are up to date</string>
+    <string name="addons_several_updated">Add-ons updated</string>
+    <string name="addons_several_update_failed">Couldn\'t update some add-ons</string>
     <string name="addon_removed">%1$s removed</string>
 
     <string name="addon_perm_all_sites">Access your data for all websites</string>

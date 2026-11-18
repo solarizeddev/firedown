@@ -40,6 +40,9 @@
     <string name="addon_network">Nie udało się pobrać dodatku. Sprawdź połączenie.</string>
     <string name="addon_no_update">%1$s jest aktualny</string>
     <string name="addon_update_failed">Nie udało się zaktualizować %1$s</string>
+    <string name="addons_all_up_to_date">Dodatki są aktualne</string>
+    <string name="addons_several_updated">Zaktualizowano dodatki</string>
+    <string name="addons_several_update_failed">Nie udało się zaktualizować niektórych dodatków</string>
     <string name="addon_not_an_addon">Ten plik nie jest dodatkiem do Firefoksa</string>
     <string name="addon_optional_data">Udostępniaj twórcy: %1$s</string>
     <string name="addon_optional_permissions">Uprawnienia opcjonalne</string>
