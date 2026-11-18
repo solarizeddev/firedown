@@ -39,7 +39,7 @@
     <string name="addon_network">No se pudo descargar el complemento. Comprueba tu conexión.</string>
     <string name="addon_no_update">%1$s está actualizado</string>
     <string name="addon_update_failed">No se pudo actualizar %1$s</string>
-    <string name="addons_all_up_to_date">Tus complementos están actualizados</string>
+    <string name="addons_no_updates_found">No se encontraron actualizaciones de complementos</string>
     <string name="addons_several_updated">Complementos actualizados</string>
     <string name="addons_several_update_failed">No se pudieron actualizar algunos complementos</string>
     <string name="addon_not_an_addon">Este archivo no es un complemento de Firefox</string>

@@ -37,7 +37,7 @@
     <string name="addon_network">Добавката не можа да бъде изтеглена. Проверете връзката си.</string>
     <string name="addon_no_update">Добавката %1$s е актуална</string>
     <string name="addon_update_failed">Добавката %1$s не можа да се обнови</string>
-    <string name="addons_all_up_to_date">Добавките са актуални</string>
+    <string name="addons_no_updates_found">Няма намерени обновления за добавките</string>
     <string name="addons_several_updated">Добавките са обновени</string>
     <string name="addons_several_update_failed">Някои добавки не можаха да се обновят</string>
     <string name="addon_not_an_addon">Този файл не е добавка за Firefox</string>

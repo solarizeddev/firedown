@@ -17,7 +17,10 @@
 # offline (a failed check reads the same), and the site switches: only the
 # declared sites listed (a site granted at run time has no switch), the
 # all-sites switch missing, one switch per pattern, host "*" under any
-# scheme taken for all sites, an IPv6 host cut at its first colon.
+# scheme taken for all sites, an IPv6 host cut at its first colon, and the
+# check for updates: a declined update read as nothing found, no timeout
+# message, an update said before a failure, an update after the timeout
+# dropped, the user's open question not holding the timeout.
 #
 # usage: sh scripts/addons-harness/run.sh [mozilla-firefox checkout]
 #   With a Firefox source checkout, Firefox's own AMO fixtures are parsed too
@@ -26,7 +29,7 @@ set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
 PKG="app/src/main/java/com/solarized/firedown/addons"
-CLASSES="AddonPolicy AmoCatalog XpiManifest AddonPermissions AddonUpdateReviews"
+CLASSES="AddonPolicy AmoCatalog XpiManifest AddonPermissions AddonUpdateReviews AddonCheckTally"
 BUILD="$HERE/build"
 FIREFOX_SRC="$1"
 CACHE=${FIREDOWN_HARNESS_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/firedown-harness/maven}
@@ -130,4 +133,9 @@ mutant noallsites AddonPermissions 's/                allSites.add(pattern);/   
 mutant nohostmerge AddonPermissions 's/String key = label.toLowerCase(Locale.ROOT);/String key = pattern;/'
 mutant anyscheme AddonPermissions 's/return m.matches() \&\& "\*".equals(m.group(2)) \&\& WEB_SCHEMES.contains(m.group(1));/return m.matches() \&\& "*".equals(m.group(2));/'
 mutant v6port AddonPermissions 's/        if (host.startsWith("\[")) {/        if (false) {/'
+mutant checkuptodate AddonCheckTally 's/        if (mDeclined > 0) {/        if (false) {/'
+mutant checknotimeout AddonCheckTally 's/        if (timedOut \&\& !mPending.isEmpty()) {/        if (false) {/'
+mutant checkupdatefirst AddonCheckTally 's/        if (mFailed == 1) {/        if (mFailed == 1 \&\& mUpdated == 0) {/'
+mutant checklate AddonCheckTally 's/            return new Result(UPDATED_ONE, name);/            return null;/'
+mutant checknoask AddonCheckTally 's/            mAsking.add(id);/            mAsking.isEmpty();/'
 exit $status

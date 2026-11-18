@@ -4691,6 +4691,25 @@ before changing a flow. The rules, each easy to undo:
   that moved back and counts as due). It used to run only once per app
   start, so a process left running for days never checked again. Updates
   that ask nothing install silently.
+- **The user's "Check for updates" of every add-on says ONE thing**
+  (`addons/AddonCheckTally`, pure, in the add-ons harness). Each add-on's
+  answer used to post its own snackbar, each replacing the last, so only
+  the last could be read. Now, first match wins: no network → "No
+  connection" and Gecko is not asked (nor the daily clock moved); a
+  failure ("Couldn't update X" / "…some add-ons"); an update ("X updated"
+  / "Add-ons updated"; said after a failure only on its row); a 2-minute
+  timeout with answers missing → "Couldn't check for updates", held while
+  an update question is on screen; an update the user declined → nothing
+  (its row says it waits); else "No add-on updates found" — never "up to
+  date", since Gecko answers a FAILED check (server down, a network that
+  doesn't reach the internet) as "no update". An add-on removed mid-check
+  counts as answered. One check of all at a time (the row shows "Checking
+  for updates…" with a spinner; the daily check waits it out), and the
+  interactive marks that route an update question to the user are COUNTED
+  per id, so one check's answer never unmarks another's. A "nothing found"
+  or "couldn't check" older than 10 s is not shown on a screen started
+  later. One add-on's own check keeps its per-add-on message (and the
+  offline check).
 - **An update that asks for new permissions WAITS for the user, and the
   user is told once per version, wherever they are** (`AddonUpdateReviews`,
   pure, in the add-ons harness; saved in `backup_local`, since the add-ons
@@ -4966,7 +4985,7 @@ before changing a flow. The rules, each easy to undo:
   them.
 - **Verify** with `sh scripts/addons-harness/run.sh /path/to/firefox-src`
   (the real pure classes against Firefox's own test fixtures and AMO
-  shapes; 136 checks without the Firefox fixtures, 28 mutants must
+  shapes; 153 checks without the Firefox fixtures, 33 mutants must
   fail), the JUnit
   `AddonsPureTest`, and on a device `addons/AddonsDeviceTest`
   (`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.addons.AddonsDeviceTest`;

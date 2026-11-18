@@ -28,7 +28,7 @@
     <string name="addon_network">Không thể tải tiện ích. Hãy kiểm tra kết nối.</string>
     <string name="addon_no_update">%1$s đã là phiên bản mới nhất</string>
     <string name="addon_update_failed">Không thể cập nhật %1$s</string>
-    <string name="addons_all_up_to_date">Các tiện ích của bạn đã là phiên bản mới nhất</string>
+    <string name="addons_no_updates_found">Không tìm thấy bản cập nhật tiện ích nào</string>
     <string name="addons_several_updated">Đã cập nhật các tiện ích</string>
     <string name="addons_several_update_failed">Không thể cập nhật một số tiện ích</string>
     <string name="addon_not_an_addon">Tệp này không phải là tiện ích Firefox</string>

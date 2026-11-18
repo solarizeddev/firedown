@@ -37,7 +37,7 @@
     <string name="addon_network">Doplněk se nepodařilo stáhnout. Zkontrolujte připojení.</string>
     <string name="addon_no_update">%1$s je aktuální</string>
     <string name="addon_update_failed">%1$s se nepodařilo aktualizovat</string>
-    <string name="addons_all_up_to_date">Doplňky jsou aktuální</string>
+    <string name="addons_no_updates_found">Nebyly nalezeny žádné aktualizace doplňků</string>
     <string name="addons_several_updated">Doplňky aktualizovány</string>
     <string name="addons_several_update_failed">Některé doplňky se nepodařilo aktualizovat</string>
     <string name="addon_not_an_addon">Tento soubor není doplněk pro Firefox</string>

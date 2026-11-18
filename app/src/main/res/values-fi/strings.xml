@@ -37,7 +37,7 @@
     <string name="addon_network">Lisäosaa ei voitu ladata. Tarkista yhteytesi.</string>
     <string name="addon_no_update">%1$s on ajan tasalla</string>
     <string name="addon_update_failed">Kohteen %1$s päivitys epäonnistui</string>
-    <string name="addons_all_up_to_date">Lisäosat ovat ajan tasalla</string>
+    <string name="addons_no_updates_found">Lisäosiin ei löytynyt päivityksiä</string>
     <string name="addons_several_updated">Lisäosat päivitetty</string>
     <string name="addons_several_update_failed">Joidenkin lisäosien päivitys epäonnistui</string>
     <string name="addon_not_an_addon">Tämä tiedosto ei ole Firefox-lisäosa</string>

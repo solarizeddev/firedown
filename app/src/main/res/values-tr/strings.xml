@@ -40,7 +40,7 @@
     <string name="addon_network">Eklenti indirilemedi. Bağlantınızı kontrol edin.</string>
     <string name="addon_no_update">%1$s güncel</string>
     <string name="addon_update_failed">%1$s güncellenemedi</string>
-    <string name="addons_all_up_to_date">Eklentileriniz güncel</string>
+    <string name="addons_no_updates_found">Eklenti güncellemesi bulunamadı</string>
     <string name="addons_several_updated">Eklentiler güncellendi</string>
     <string name="addons_several_update_failed">Bazı eklentiler güncellenemedi</string>
     <string name="addon_not_an_addon">Bu dosya bir Firefox eklentisi değil</string>

@@ -37,7 +37,7 @@
     <string name="addon_network">Lisa ei õnnestunud alla laadida. Kontrolli ühendust.</string>
     <string name="addon_no_update">%1$s on ajakohane</string>
     <string name="addon_update_failed">%1$s uuendamine ebaõnnestus</string>
-    <string name="addons_all_up_to_date">Lisad on ajakohased</string>
+    <string name="addons_no_updates_found">Lisadele uuendusi ei leitud</string>
     <string name="addons_several_updated">Lisad uuendati</string>
     <string name="addons_several_update_failed">Mõne lisa uuendamine ebaõnnestus</string>
     <string name="addon_not_an_addon">See fail pole Firefoxi lisa</string>

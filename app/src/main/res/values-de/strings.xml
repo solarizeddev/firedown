@@ -39,7 +39,7 @@
     <string name="addon_network">Das Add-on konnte nicht heruntergeladen werden. Prüfe deine Verbindung.</string>
     <string name="addon_no_update">%1$s ist auf dem neuesten Stand</string>
     <string name="addon_update_failed">%1$s konnte nicht aktualisiert werden</string>
-    <string name="addons_all_up_to_date">Deine Add-ons sind auf dem neuesten Stand</string>
+    <string name="addons_no_updates_found">Keine Add-on-Updates gefunden</string>
     <string name="addons_several_updated">Add-ons aktualisiert</string>
     <string name="addons_several_update_failed">Einige Add-ons konnten nicht aktualisiert werden</string>
     <string name="addon_not_an_addon">Diese Datei ist kein Firefox-Add-on</string>

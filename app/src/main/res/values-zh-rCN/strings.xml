@@ -39,7 +39,7 @@
     <string name="addon_network">无法下载附加组件。请检查网络连接。</string>
     <string name="addon_no_update">%1$s 已是最新版本</string>
     <string name="addon_update_failed">无法更新 %1$s</string>
-    <string name="addons_all_up_to_date">附加组件均已是最新版本</string>
+    <string name="addons_no_updates_found">未找到附加组件更新</string>
     <string name="addons_several_updated">已更新附加组件</string>
     <string name="addons_several_update_failed">部分附加组件无法更新</string>
     <string name="addon_not_an_addon">此文件不是 Firefox 附加组件</string>

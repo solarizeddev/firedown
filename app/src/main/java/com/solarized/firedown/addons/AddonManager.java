@@ -196,12 +196,19 @@ public class AddonManager {
         public static final int CORRUPT = 13;
         /** The user's update check of an add-on failed (not one they declined). */
         public static final int UPDATE_FAILED = 14;
-        /** The user checked every add-on and none had an update. */
-        public static final int ALL_UP_TO_DATE = 15;
+        /** The user checked every add-on and none had an update (or said so). */
+        public static final int NONE_FOUND = 15;
         /** The user checked every add-on and more than one was updated. */
         public static final int SEVERAL_UPDATED = 16;
         /** The user checked every add-on and more than one could not be updated. */
         public static final int SEVERAL_UPDATE_FAILED = 17;
+        /** The user's check found no network: nothing was asked. */
+        public static final int CHECK_OFFLINE = 18;
+        /** The user's check of every add-on did not hear back from all of them. */
+        public static final int CHECK_FAILED = 19;
+
+        /** When it was said (elapsed realtime): a stale "nothing found" is not shown later. */
+        public final long time = SystemClock.elapsedRealtime();
 
         public final int type;
         @Nullable public final String name;
@@ -353,7 +360,15 @@ public class AddonManager {
     private final ArrayDeque<Prompt> mPromptQueue = new ArrayDeque<>();
     private final Map<String, InstallContext> mInstallContexts = new HashMap<>();
     @Nullable private InstallContext mLastFileContext;
-    private final Set<String> mInteractiveUpdates = new HashSet<>();
+    /**
+     * Add-ons with a user's check running → how many: an update question for
+     * one is put to the user. Counted, so a check that ends (or the daily
+     * check's answer) never unmarks one a second check still waits on.
+     */
+    private final Map<String, Integer> mInteractiveUpdates = new HashMap<>();
+    /** The user's check of every add-on, while it runs (one at a time). */
+    @Nullable private AddonCheckTally mCheckAll;
+    private final MutableLiveData<Boolean> mCheckingAll = new MutableLiveData<>(false);
     /** Add-ons whose update question the user just said no to: their check's failure says nothing. */
     private final Set<String> mDeclinedUpdates = new HashSet<>();
     private final AddonUpdateReviews mReviews;
@@ -1453,6 +1468,16 @@ public class AddonManager {
         if (runtime == null) {
             return;
         }
+        boolean checkAll = interactive && onlyId == null;
+        if (checkAll && (mCheckAll != null || mInstalled.isEmpty())) {
+            return;
+        }
+        if (interactive && !hasNetwork()) {
+            // Gecko would answer "no update" for every add-on: say why instead,
+            // and leave the daily check's clock alone.
+            emit(Event.CHECK_OFFLINE, null);
+            return;
+        }
         long now = System.currentTimeMillis();
         mPrefs.edit().putLong(PREF_LAST_UPDATE_CHECK, now).apply();
         boolean recheck = false;
@@ -1462,14 +1487,13 @@ public class AddonManager {
                 mLocalPrefs.edit().putLong(PREF_REVIEW_RECHECK, now).apply();
             }
         }
-        // The user's check of every add-on says ONE thing once all of them
-        // have answered: a message per add-on replaced the one before it,
-        // so only the last could be read. One add-on's own check keeps its
-        // own message.
-        CheckTally tally = interactive && onlyId == null ? new CheckTally() : null;
+        // The user's check of every add-on says ONE thing (AddonCheckTally);
+        // one add-on's own check keeps its own message.
+        final AddonCheckTally tally = checkAll ? new AddonCheckTally(new ArrayList<>(mInstalled.keySet())) : null;
         if (tally != null) {
-            // Every add-on is asked: nothing below skips one for this check.
-            tally.pending = mInstalled.size();
+            mCheckAll = tally;
+            mCheckingAll.setValue(true);
+            mMain.postDelayed(mCheckTimeout, CHECK_TIMEOUT_MS);
         }
         for (WebExtension extension : new ArrayList<>(mInstalled.values())) {
             if (onlyId != null && !onlyId.equals(extension.id)) {
@@ -1481,16 +1505,18 @@ public class AddonManager {
             }
             String name = AddonInfo.from(extension).name;
             if (interactive) {
-                mInteractiveUpdates.add(id);
+                markInteractive(id);
             }
             runtime.getWebExtensionController().update(extension).accept(updated -> {
-                mInteractiveUpdates.remove(id);
+                if (interactive) {
+                    unmarkInteractive(id);
+                }
                 mDeclinedUpdates.remove(id);
                 if (updated != null) {
                     clearReview(id);
                     onChanged(updated);
                     if (tally != null) {
-                        tally.updated(name);
+                        sayCheck(tally, tally.updated(id, name));
                     } else if (interactive) {
                         emit(Event.UPDATED, name);
                     }
@@ -1510,78 +1536,120 @@ public class AddonManager {
                     }
                 }
                 if (tally != null) {
-                    tally.noUpdate();
+                    sayCheck(tally, tally.noUpdate(id));
                 } else if (interactive) {
                     emit(Event.NO_UPDATE, name);
                 }
             }, e -> {
-                mInteractiveUpdates.remove(id);
+                if (interactive) {
+                    unmarkInteractive(id);
+                }
                 // A declined question ends the install as cancelled, which
                 // Gecko reports as a failure: the user's no is not an error.
                 boolean declined = mDeclinedUpdates.remove(id);
+                // An add-on removed while the check ran fails its update too.
+                boolean gone = !mInstalled.containsKey(id);
                 if (BuildConfig.DEBUG) {
                     Log.w(TAG, "update failed: " + id + (declined ? " (declined)" : ""), e);
                 }
                 if (tally != null) {
-                    tally.failed(declined ? null : name);
-                } else if (interactive && !declined) {
+                    AddonCheckTally.Result result;
+                    if (declined) {
+                        result = tally.declined(id);
+                    } else if (gone) {
+                        result = tally.noUpdate(id);
+                    } else {
+                        result = tally.failed(id, name);
+                    }
+                    sayCheck(tally, result);
+                } else if (interactive && !declined && !gone) {
                     emit(Event.UPDATE_FAILED, name);
                 }
             });
         }
     }
 
+    /** True while the user's check of every add-on runs (the row's spinner). */
+    @NonNull
+    public LiveData<Boolean> getCheckingAll() {
+        return mCheckingAll;
+    }
+
+    private void markInteractive(@NonNull String id) {
+        Integer n = mInteractiveUpdates.get(id);
+        mInteractiveUpdates.put(id, n == null ? 1 : n + 1);
+    }
+
+    private void unmarkInteractive(@NonNull String id) {
+        Integer n = mInteractiveUpdates.get(id);
+        if (n == null || n <= 1) {
+            mInteractiveUpdates.remove(id);
+        } else {
+            mInteractiveUpdates.put(id, n - 1);
+        }
+    }
+
     /**
-     * The answers to one check of every add-on, summed into one message
-     * when the last arrives. A failure is said first (the updated ones show
-     * their new version on their rows); an update the user declined counts
-     * as neither, and a check where every update was declined says nothing.
-     * Main thread: Gecko's results arrive there.
+     * Long enough for a large add-on to download on a slow network; an
+     * update question on screen holds it (the user is the one answering).
      */
-    private final class CheckTally {
-        int pending;
-        int answered;
-        int updated;
-        int failed;
-        @Nullable String updatedName;
-        @Nullable String failedName;
+    private static final long CHECK_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(2);
 
-        void updated(@NonNull String name) {
-            updated++;
-            updatedName = name;
-            done();
+    private final Runnable mCheckTimeout = this::onCheckTimeout;
+
+    private void onCheckTimeout() {
+        AddonCheckTally tally = mCheckAll;
+        if (tally == null) {
+            return;
         }
-
-        void noUpdate() {
-            answered++;
-            done();
+        if (tally.isAskingUser()) {
+            mMain.postDelayed(mCheckTimeout, CHECK_TIMEOUT_MS);
+            return;
         }
+        sayCheck(tally, tally.finish(true));
+    }
 
-        /** {@code name} null: the user declined the update's question. */
-        void failed(@Nullable String name) {
-            if (name != null) {
-                failed++;
-                failedName = name;
+    /** Says a check's result, if any, and ends the running check once it is over. */
+    private void sayCheck(@NonNull AddonCheckTally tally, @Nullable AddonCheckTally.Result result) {
+        if (result != null) {
+            switch (result.kind) {
+                case AddonCheckTally.UPDATED_ONE:
+                    emit(Event.UPDATED, result.name);
+                    break;
+                case AddonCheckTally.UPDATED_SEVERAL:
+                    emit(Event.SEVERAL_UPDATED, null);
+                    break;
+                case AddonCheckTally.FAILED_ONE:
+                    emit(Event.UPDATE_FAILED, result.name);
+                    break;
+                case AddonCheckTally.FAILED_SEVERAL:
+                    emit(Event.SEVERAL_UPDATE_FAILED, null);
+                    break;
+                case AddonCheckTally.COULD_NOT_CHECK:
+                    emit(Event.CHECK_FAILED, null);
+                    break;
+                default:
+                    emit(Event.NONE_FOUND, null);
+                    break;
             }
-            done();
         }
+        if (tally.isFinished() && mCheckAll == tally) {
+            mCheckAll = null;
+            mMain.removeCallbacks(mCheckTimeout);
+            mCheckingAll.setValue(false);
+        }
+    }
 
-        private void done() {
-            pending--;
-            if (pending > 0) {
-                return;
-            }
-            if (failed == 1) {
-                emit(Event.UPDATE_FAILED, failedName);
-            } else if (failed > 1) {
-                emit(Event.SEVERAL_UPDATE_FAILED, null);
-            } else if (updated == 1) {
-                emit(Event.UPDATED, updatedName);
-            } else if (updated > 1) {
-                emit(Event.SEVERAL_UPDATED, null);
-            } else if (answered > 0) {
-                emit(Event.ALL_UP_TO_DATE, null);
-            }
+    /** Any network at all: without one, Gecko's "no update" means nothing. */
+    private boolean hasNetwork() {
+        ConnectivityManager cm = mContext.getSystemService(ConnectivityManager.class);
+        if (cm == null) {
+            return true;
+        }
+        try {
+            return cm.getActiveNetwork() != null;
+        } catch (RuntimeException e) {
+            return true;
         }
     }
 
@@ -1610,7 +1678,8 @@ public class AddonManager {
         long last = mPrefs.getLong(PREF_LAST_UPDATE_CHECK, 0L);
         long now = System.currentTimeMillis();
         // A last check in the future is a clock that moved back: check now.
-        if (now - last >= UPDATE_INTERVAL_MS || now < last) {
+        // Not under the user's own check: its answers are the ones to say.
+        if (mCheckAll == null && (now - last >= UPDATE_INTERVAL_MS || now < last)) {
             checkForUpdates(false, null);
         }
         // Notifications turned on while the app runs: a due one goes out.
@@ -1855,13 +1924,16 @@ public class AddonManager {
                 result.complete(AllowOrDeny.ALLOW);
                 return result;
             }
-            if (!mInteractiveUpdates.contains(extension.id)) {
+            if (!mInteractiveUpdates.containsKey(extension.id)) {
                 // Gecko passes the NEW version here (AddonManager.sys.mjs
                 // updatePromptHandler: info.addon), so a later update that
                 // asks for still more is told apart.
                 onUpdateRefused(extension.id, AddonInfo.from(extension).version);
                 result.complete(AllowOrDeny.DENY);
                 return result;
+            }
+            if (mCheckAll != null) {
+                mCheckAll.askingUser(extension.id);
             }
             enqueue(new Prompt(++mPromptSeq, Prompt.UPDATE, AddonInfo.from(extension),
                     list(newPermissions), list(newOrigins), list(newDataCollectionPermissions),

@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
 import android.util.TypedValue;
@@ -317,6 +318,9 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
         if (event == null || !event.take()) {
             return;
         }
+        if (isStaleCheckNews(event)) {
+            return;
+        }
         String text = addonEventText(event);
         if (text == null) {
             return;
@@ -351,6 +355,25 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
         return anchor == null ? null : Snackbar.make(anchor, text, Snackbar.LENGTH_LONG);
     }
 
+    /**
+     * A check's "nothing found" or "couldn't check", seen only on a screen
+     * started long after it (the user left mid-check): news about nothing,
+     * out of context. An update or a failure is still said.
+     */
+    private static boolean isStaleCheckNews(@NonNull AddonManager.Event event) {
+        switch (event.type) {
+            case AddonManager.Event.NO_UPDATE:
+            case AddonManager.Event.NONE_FOUND:
+            case AddonManager.Event.CHECK_OFFLINE:
+            case AddonManager.Event.CHECK_FAILED:
+                return SystemClock.elapsedRealtime() - event.time > STALE_CHECK_NEWS_MS;
+            default:
+                return false;
+        }
+    }
+
+    private static final long STALE_CHECK_NEWS_MS = 10_000L;
+
     @Nullable
     private String addonEventText(@NonNull AddonManager.Event event) {
         String name = event.name;
@@ -381,8 +404,12 @@ public abstract class BaseActivity extends AppCompatActivity implements IntentHa
                 return named ? getString(R.string.addon_no_update, name) : null;
             case AddonManager.Event.UPDATE_FAILED:
                 return named ? getString(R.string.addon_update_failed, name) : null;
-            case AddonManager.Event.ALL_UP_TO_DATE:
-                return getString(R.string.addons_all_up_to_date);
+            case AddonManager.Event.NONE_FOUND:
+                return getString(R.string.addons_no_updates_found);
+            case AddonManager.Event.CHECK_OFFLINE:
+                return getString(R.string.update_check_offline);
+            case AddonManager.Event.CHECK_FAILED:
+                return getString(R.string.update_check_failed);
             case AddonManager.Event.SEVERAL_UPDATED:
                 return getString(R.string.addons_several_updated);
             case AddonManager.Event.SEVERAL_UPDATE_FAILED:

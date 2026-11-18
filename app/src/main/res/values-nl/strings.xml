@@ -40,7 +40,7 @@
     <string name="addon_network">Kan de add-on niet downloaden. Controleer je verbinding.</string>
     <string name="addon_no_update">%1$s is up-to-date</string>
     <string name="addon_update_failed">Kan %1$s niet bijwerken</string>
-    <string name="addons_all_up_to_date">Je add-ons zijn up-to-date</string>
+    <string name="addons_no_updates_found">Geen add-on-updates gevonden</string>
     <string name="addons_several_updated">Add-ons bijgewerkt</string>
     <string name="addons_several_update_failed">Kan sommige add-ons niet bijwerken</string>
     <string name="addon_not_an_addon">Dit bestand is geen Firefox-add-on</string>

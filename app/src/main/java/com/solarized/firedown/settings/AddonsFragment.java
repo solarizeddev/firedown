@@ -106,7 +106,7 @@ public class AddonsFragment extends BasePreferenceFragment {
     private PreferenceCategory mCatalogCategory;
     private Preference mCatalogStatus;
     private Preference mCatalogRetry;
-    private Preference mUpdates;
+    private BusyPreference mUpdates;
     private int mIconPx;
 
     /** The file picker shows every type: few file apps know the .xpi type. The file itself is checked. */
@@ -171,6 +171,7 @@ public class AddonsFragment extends BasePreferenceFragment {
         // and pushed everything under them down. The observers then find
         // the same add-ons and only update words in place.
         renderInstalled(mAddonManager.getAddons().getValue());
+        applyCheckingAll(mAddonManager.getCheckingAll().getValue());
         // Started here, so a list not in memory yet (first open, or after
         // clearing data) shows "Loading…" in that first frame too.
         mCatalog.load(false);
@@ -206,6 +207,7 @@ public class AddonsFragment extends BasePreferenceFragment {
         });
         mAddonManager.getInstalling().observe(getViewLifecycleOwner(), this::applyInstalling);
         mCatalog.getState().observe(getViewLifecycleOwner(), this::renderCatalog);
+        mAddonManager.getCheckingAll().observe(getViewLifecycleOwner(), this::applyCheckingAll);
     }
 
     private void pickFile() {
@@ -213,6 +215,18 @@ public class AddonsFragment extends BasePreferenceFragment {
             mPickFile.launch(new String[]{"*/*"});
         } catch (ActivityNotFoundException e) {
             // No file app: nothing to pick from.
+        }
+    }
+
+    /** The check of every add-on, while it runs: the row says so and spins. */
+    private void applyCheckingAll(@Nullable Boolean checking) {
+        if (mUpdates == null) {
+            return;
+        }
+        boolean on = Boolean.TRUE.equals(checking);
+        if (mUpdates.isBusy() != on) {
+            mUpdates.setBusy(on);
+            mUpdates.setSummary(on ? getString(R.string.update_check_running) : null);
         }
     }
 

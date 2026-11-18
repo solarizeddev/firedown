@@ -1,5 +1,6 @@
 package com.solarized.firedown.harness;
 
+import com.solarized.firedown.addons.AddonCheckTally;
 import com.solarized.firedown.addons.AddonPermissions;
 import com.solarized.firedown.addons.AddonPolicy;
 import com.solarized.firedown.addons.AddonUpdateReviews;
@@ -46,6 +47,7 @@ public final class AddonsHarness {
             manifest();
             permissions();
             reviews();
+            checkTally();
         } catch (Throwable t) {
             failures++;
             System.out.println("FAIL harness threw: " + t);
@@ -615,5 +617,80 @@ public final class AddonsHarness {
         check("reviews: an accepted update that then fails keeps its mark, seen and not re-announced",
                 accepted.answered("d@x", "5.0") && accepted.isWaiting("d@x") && !accepted.needsAttention("d@x")
                         && !accepted.offer("d@x", "5.0") && !accepted.notificationDue());
+    }
+
+    private static AddonCheckTally tally(String... ids) {
+        return new AddonCheckTally(Arrays.asList(ids));
+    }
+
+    private static boolean is(AddonCheckTally.Result r, int kind, String name) {
+        return r != null && r.kind == kind && (name == null ? r.name == null : name.equals(r.name));
+    }
+
+    /** "Check for updates" of every add-on: one message, whatever the mix. */
+    private static void checkTally() {
+        AddonCheckTally t = tally("a", "b");
+        check("check: nothing is said before the last answer", t.noUpdate("a") == null && !t.isFinished());
+        check("check: all without an update is \"none found\", never \"up to date\"",
+                is(t.noUpdate("b"), AddonCheckTally.NONE_FOUND, null) && t.isFinished());
+
+        t = tally("a", "b");
+        t.noUpdate("a");
+        check("check: one updated names it", is(t.updated("b", "B"), AddonCheckTally.UPDATED_ONE, "B"));
+
+        t = tally("a", "b", "c");
+        t.updated("a", "A");
+        t.noUpdate("b");
+        check("check: several updated is one message", is(t.updated("c", "C"), AddonCheckTally.UPDATED_SEVERAL, null));
+
+        t = tally("a", "b");
+        t.updated("a", "A");
+        check("check: a failure is said before an update", is(t.failed("b", "B"), AddonCheckTally.FAILED_ONE, "B"));
+
+        t = tally("a", "b", "c");
+        t.failed("a", "A");
+        t.updated("b", "B");
+        check("check: several failed is one message", is(t.failed("c", "C"), AddonCheckTally.FAILED_SEVERAL, null));
+
+        t = tally("a", "b");
+        t.noUpdate("a");
+        check("check: a declined update with the rest unchanged says nothing (not \"none found\")",
+                t.declined("b") == null && t.isFinished());
+
+        t = tally("a", "b");
+        t.declined("a");
+        check("check: a declined update beside one updated still names the update",
+                is(t.updated("b", "B"), AddonCheckTally.UPDATED_ONE, "B"));
+
+        t = tally("a", "b");
+        t.noUpdate("a");
+        check("check: a timeout with an answer missing is \"couldn't check\"",
+                is(t.finish(true), AddonCheckTally.COULD_NOT_CHECK, null));
+        check("check: an update after the timeout is still said, alone",
+                is(t.updated("b", "B"), AddonCheckTally.UPDATED_ONE, "B"));
+
+        t = tally("a", "b");
+        t.updated("a", "A");
+        check("check: a timeout after an update says the update",
+                is(t.finish(true), AddonCheckTally.UPDATED_ONE, "A"));
+
+        t = tally("a", "b");
+        t.noUpdate("a");
+        t.finish(true);
+        check("check: a no-update after the timeout says nothing", t.noUpdate("b") == null);
+
+        t = tally("a", "b");
+        t.askingUser("b");
+        check("check: the user's open question holds the timeout", t.isAskingUser());
+        t.noUpdate("a");
+        check("check: answering it ends the check", is(t.updated("b", "B"), AddonCheckTally.UPDATED_ONE, "B")
+                && !t.isAskingUser());
+
+        t = tally("a");
+        check("check: an answer for an add-on not asked is ignored",
+                t.updated("x", "X") == null && t.failed("x", "X") == null && !t.isFinished());
+        check("check: one answer per add-on (a repeat is ignored)",
+                is(t.noUpdate("a"), AddonCheckTally.NONE_FOUND, null) && t.noUpdate("a") == null);
+        check("check: finish twice says nothing the second time", t.finish(true) == null);
     }
 }

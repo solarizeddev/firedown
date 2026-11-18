@@ -59,7 +59,7 @@
         android:title="@string/addons_more"
         app:iconSpaceReserved="false">
 
-        <Preference
+        <com.solarized.firedown.settings.ui.BusyPreference
             android:key="com.solarized.firedown.preferences.addons.updates"
             android:title="@string/addons_check_updates"
             app:isPreferenceVisible="false"
