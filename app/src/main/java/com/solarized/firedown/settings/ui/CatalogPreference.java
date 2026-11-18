@@ -58,6 +58,10 @@ public class CatalogPreference extends BusyPreference {
             parent = (View) parent.getParent();
         }
         action.setVisibility(shown ? View.VISIBLE : View.GONE);
+        // The slot is a fixed 48dp (the spinner centres where the "+" was);
+        // a row with neither, a built-in id, keeps no empty space for it.
+        View slot = (View) action.getParent();
+        slot.setVisibility(shown || isBusy() ? View.VISIBLE : View.GONE);
         action.setOnClickListener(shown ? v -> {
             OnPreferenceClickListener listener = getOnPreferenceClickListener();
             if (listener != null) {

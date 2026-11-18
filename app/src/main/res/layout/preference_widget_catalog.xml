@@ -8,11 +8,14 @@
   (ReviewPreference). The -8dp end margin puts the glyph 20dp from the
   card's edge (the 48dp target is 12dp wider than its glyph on each
   side); CatalogPreference lets the button draw past the widget frame.
+  The slot is a fixed 48dp so the spinner, which replaces the hidden "+",
+  centres where the "+" was: a wrap_content slot shrank to the spinner and
+  the same -8dp pushed it 12dp into the row's edge.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
     android:layout_marginEnd="-8dp">
 
     <com.google.android.material.button.MaterialButton
