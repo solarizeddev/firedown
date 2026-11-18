@@ -1,11 +1,14 @@
-## [1.2.11] - 2026-11-11
+## [1.2.11] - 2026-11-18
 
+- Updated the GeckoView browser engine to 160.0.20261116130455
 - Updates: a newer release replaces an update still downloading
 - The update sheet is simpler, with Install as its only button
 - Live audio and video streams download as live instead of stopping at 100% or stalling
 - Videos embedded from TikTok are captured and download instead of failing
 - Vertical videos are labelled by their short side, like 1080p instead of 1920p
 - Direct share: a file being received stays hidden until it has fully arrived
+- Add-ons: the list and each add-on's page open without jumping, and show an updated add-on's new icon
+- Fixed crashes when acting on many selected files at once, and with media playing in the background
 
 ## [1.2.10] - 2026-11-11
 
