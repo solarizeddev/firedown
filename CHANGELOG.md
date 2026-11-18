@@ -1,6 +1,6 @@
 ## [1.2.11] - 2026-11-18
 
-- Updated the GeckoView browser engine to 160.0.20261116130455
+- Updated the GeckoView browser engine to 160.0.1
 - Updates: a newer release replaces an update still downloading
 - The update sheet is simpler, with Install as its only button
 - Live audio and video streams download as live instead of stopping at 100% or stalling
