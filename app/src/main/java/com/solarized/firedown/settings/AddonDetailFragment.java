@@ -201,7 +201,10 @@ public class AddonDetailFragment extends BasePreferenceFragment {
         if (!isAdded()) {
             return;
         }
-        ActionBar actionBar = mActivity == null ? null : mActivity.getSupportActionBar();
+        // Not before the view: on a recreate this first bind runs before the
+        // activity has its content view; the observer's bind sets it.
+        ActionBar actionBar = mActivity == null || getView() == null
+                ? null : mActivity.getSupportActionBar();
         if (actionBar != null) {
             actionBar.setTitle(info.name);
         }

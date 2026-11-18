@@ -169,6 +169,9 @@ public class AddonsFragment extends BasePreferenceFragment {
         // and pushed everything under them down. The observers then find
         // the same add-ons and only update words in place.
         renderInstalled(mAddonManager.getAddons().getValue());
+        // Started here, so a list not in memory yet (first open, or after
+        // clearing data) shows "Loading…" in that first frame too.
+        mCatalog.load(false);
         AmoCatalogClient.State state = mCatalog.getState().getValue();
         if (state != null) {
             renderCatalog(state);
@@ -201,7 +204,6 @@ public class AddonsFragment extends BasePreferenceFragment {
         });
         mAddonManager.getInstalling().observe(getViewLifecycleOwner(), this::applyInstalling);
         mCatalog.getState().observe(getViewLifecycleOwner(), this::renderCatalog);
-        mCatalog.load(false);
     }
 
     private void pickFile() {
