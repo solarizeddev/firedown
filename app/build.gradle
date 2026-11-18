@@ -3,7 +3,6 @@ plugins {
     id 'com.google.dagger.hilt.android'
 }
 
-
 // A DIAGNOSTIC release build, for problems seen only on a phone that runs
 // release builds: `-Pfiredown.diagnostic=true` (the older
 // `-Pfiredown.geckoNetLog=true` means the same) sets BuildConfig.DIAGNOSTIC,
@@ -48,7 +47,6 @@ android {
                 arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
             }
         }
-
 
         vectorDrawables.useSupportLibrary = true
 
@@ -167,8 +165,6 @@ ext {
     geckoviewVersion = providers.gradleProperty("firedown.geckoviewVersion").get()
 }
 
-
-
 dependencies {
 
     // Installs the bundled baseline profile (app/src/main/baseline-prof.txt)
@@ -203,7 +199,6 @@ dependencies {
     implementation 'androidx.camera:camera-camera2:1.6.2'
     implementation 'androidx.camera:camera-lifecycle:1.6.2'
     implementation 'androidx.camera:camera-view:1.6.2'
-
 
     implementation("androidx.work:work-runtime:$work_version")
     // TestListenableWorkerBuilder: runs a Worker directly on a device
@@ -300,11 +295,13 @@ dependencies {
 
     implementation 'androidx.navigation:navigation-ui:2.10.2'
 
-    // MediaSessionCompat + MediaStyle for both media notifications, and the
-    // pull-to-refresh layout. Both used to arrive only through
-    // legacy-support-v4, which the app never called.
+    // Declared directly since legacy-support-v4 (which the app never called)
+    // went: MediaSessionCompat + MediaStyle for both media notifications (media3
+    // brings it too), the pull-to-refresh layout, and FastOutSlowInInterpolator
+    // (the address bar and the browser), which only other libraries brought.
     implementation 'androidx.media:media:1.7.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'androidx.interpolator:interpolator:1.0.0'
 
     implementation 'androidx.preference:preference:1.2.1'
 
