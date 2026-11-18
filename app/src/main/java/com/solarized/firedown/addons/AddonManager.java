@@ -1507,11 +1507,30 @@ public class AddonManager {
             if (interactive) {
                 markInteractive(id);
             }
-            runtime.getWebExtensionController().update(extension).accept(updated -> {
+            GeckoResult<WebExtension> request;
+            try {
+                request = runtime.getWebExtensionController().update(extension);
+            } catch (RuntimeException e) {
+                // Never asked: undo the mark, and the check hears an answer.
                 if (interactive) {
                     unmarkInteractive(id);
                 }
-                mDeclinedUpdates.remove(id);
+                if (tally != null) {
+                    sayCheck(tally, tally.failed(id, name));
+                } else if (interactive) {
+                    emit(Event.UPDATE_FAILED, name);
+                }
+                continue;
+            }
+            request.accept(updated -> {
+                if (interactive && (tally == null || !tally.timedOutWaitingFor(id))) {
+                    unmarkInteractive(id);
+                }
+                if (interactive) {
+                    // Only the user's check: the daily check's answer must not
+                    // eat a decline the user's check still has to read.
+                    mDeclinedUpdates.remove(id);
+                }
                 if (updated != null) {
                     clearReview(id);
                     onChanged(updated);
@@ -1541,12 +1560,12 @@ public class AddonManager {
                     emit(Event.NO_UPDATE, name);
                 }
             }, e -> {
-                if (interactive) {
+                if (interactive && (tally == null || !tally.timedOutWaitingFor(id))) {
                     unmarkInteractive(id);
                 }
                 // A declined question ends the install as cancelled, which
                 // Gecko reports as a failure: the user's no is not an error.
-                boolean declined = mDeclinedUpdates.remove(id);
+                boolean declined = interactive && mDeclinedUpdates.remove(id);
                 // An add-on removed while the check ran fails its update too.
                 boolean gone = !mInstalled.containsKey(id);
                 if (BuildConfig.DEBUG) {
@@ -1606,7 +1625,13 @@ public class AddonManager {
             mMain.postDelayed(mCheckTimeout, CHECK_TIMEOUT_MS);
             return;
         }
-        sayCheck(tally, tally.finish(true));
+        AddonCheckTally.Result result = tally.finish(true);
+        // Their answers may never come: a mark left behind would put every
+        // later daily-check question for those add-ons to the user.
+        for (String id : tally.timedOut()) {
+            unmarkInteractive(id);
+        }
+        sayCheck(tally, result);
     }
 
     /** Says a check's result, if any, and ends the running check once it is over. */
@@ -1817,6 +1842,9 @@ public class AddonManager {
             // and its check's failure says nothing.
             complete(prompt, false, false, false);
             if (prompt.type == Prompt.UPDATE) {
+                if (mCheckAll != null) {
+                    mCheckAll.userAnswered(prompt.addon.id);
+                }
                 mDeclinedUpdates.add(prompt.addon.id);
                 onUpdateRefused(prompt.addon.id, prompt.addon.version);
             }
@@ -1852,6 +1880,9 @@ public class AddonManager {
             return;
         }
         complete(current, allow, allowPrivate, allowTechnicalData && current.offersTechnicalData);
+        if (current.type == Prompt.UPDATE && mCheckAll != null) {
+            mCheckAll.userAnswered(current.addon.id);
+        }
         if (current.type == Prompt.UPDATE) {
             if (allow) {
                 // Cleared when the install lands (checkForUpdates): one

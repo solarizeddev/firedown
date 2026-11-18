@@ -20,7 +20,8 @@
 # scheme taken for all sites, an IPv6 host cut at its first colon, and the
 # check for updates: a declined update read as nothing found, no timeout
 # message, an update said before a failure, an update after the timeout
-# dropped, the user's open question not holding the timeout.
+# dropped, the user's open question not holding the timeout, an answered
+# question holding it for good, and a timeout that releases no add-on.
 #
 # usage: sh scripts/addons-harness/run.sh [mozilla-firefox checkout]
 #   With a Firefox source checkout, Firefox's own AMO fixtures are parsed too
@@ -138,4 +139,6 @@ mutant checknotimeout AddonCheckTally 's/        if (timedOut \&\& !mPending.isE
 mutant checkupdatefirst AddonCheckTally 's/        if (mFailed == 1) {/        if (mFailed == 1 \&\& mUpdated == 0) {/'
 mutant checklate AddonCheckTally 's/            return new Result(UPDATED_ONE, name);/            return null;/'
 mutant checknoask AddonCheckTally 's/            mAsking.add(id);/            mAsking.isEmpty();/'
+mutant checkstuck AddonCheckTally '/public void userAnswered/,/^    }/s/        mAsking.remove(id);/        mAsking.isEmpty();/'
+mutant checknorelease AddonCheckTally 's/            mTimedOut.addAll(mPending);/            mTimedOut.isEmpty();/'
 exit $status

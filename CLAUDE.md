@@ -4699,14 +4699,18 @@ before changing a flow. The rules, each easy to undo:
   failure ("Couldn't update X" / "…some add-ons"); an update ("X updated"
   / "Add-ons updated"; said after a failure only on its row); a 2-minute
   timeout with answers missing → "Couldn't check for updates", held while
-  an update question is on screen; an update the user declined → nothing
+  an update question is on screen and no longer once the user answered it
+  (Gecko may never finish that update; the row must not spin for good); an
+  update the user declined → nothing
   (its row says it waits); else "No add-on updates found" — never "up to
   date", since Gecko answers a FAILED check (server down, a network that
   doesn't reach the internet) as "no update". An add-on removed mid-check
   counts as answered. One check of all at a time (the row shows "Checking
   for updates…" with a spinner; the daily check waits it out), and the
   interactive marks that route an update question to the user are COUNTED
-  per id, so one check's answer never unmarks another's. A "nothing found"
+  per id, so one check's answer never unmarks another's; a timeout releases
+  the marks of the add-ons it gave up on, and only the user's check reads
+  or clears a decline (the daily check's answer cannot eat one). A "nothing found"
   or "couldn't check" older than 10 s is not shown on a screen started
   later. One add-on's own check keeps its per-add-on message (and the
   offline check).
@@ -4985,7 +4989,7 @@ before changing a flow. The rules, each easy to undo:
   them.
 - **Verify** with `sh scripts/addons-harness/run.sh /path/to/firefox-src`
   (the real pure classes against Firefox's own test fixtures and AMO
-  shapes; 153 checks without the Firefox fixtures, 33 mutants must
+  shapes; 156 checks without the Firefox fixtures, 35 mutants must
   fail), the JUnit
   `AddonsPureTest`, and on a device `addons/AddonsDeviceTest`
   (`./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.solarized.firedown.addons.AddonsDeviceTest`;

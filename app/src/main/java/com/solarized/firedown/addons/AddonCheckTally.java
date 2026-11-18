@@ -51,6 +51,8 @@ public final class AddonCheckTally {
     private final Set<String> mPending = new HashSet<>();
     /** Ids whose update question is on screen: the timeout waits for the user. */
     private final Set<String> mAsking = new HashSet<>();
+    /** Ids still unanswered when the timeout ended the check. */
+    private final Set<String> mTimedOut = new HashSet<>();
     private int mUpdated;
     private int mFailed;
     private int mDeclined;
@@ -72,6 +74,25 @@ public final class AddonCheckTally {
     /** True while the user has an update question in front of them. */
     public boolean isAskingUser() {
         return !mAsking.isEmpty();
+    }
+
+    /**
+     * The user answered {@code id}'s question: the timeout runs again (Gecko
+     * may never finish that update, and the row must not spin for good).
+     */
+    public void userAnswered(@NonNull String id) {
+        mAsking.remove(id);
+    }
+
+    /** True when the timeout ended the check before {@code id} answered. */
+    public boolean timedOutWaitingFor(@NonNull String id) {
+        return mTimedOut.contains(id);
+    }
+
+    /** Ids still unanswered when the timeout ended the check (empty otherwise). */
+    @NonNull
+    public Set<String> timedOut() {
+        return new HashSet<>(mTimedOut);
     }
 
     /** The update for {@code id} asks for new permissions; its sheet is up. */
@@ -138,6 +159,9 @@ public final class AddonCheckTally {
         }
         mFinished = true;
         mAsking.clear();
+        if (timedOut) {
+            mTimedOut.addAll(mPending);
+        }
         if (mFailed == 1) {
             return new Result(FAILED_ONE, mFailedName);
         }

@@ -686,6 +686,22 @@ public final class AddonsHarness {
         check("check: answering it ends the check", is(t.updated("b", "B"), AddonCheckTally.UPDATED_ONE, "B")
                 && !t.isAskingUser());
 
+        t = tally("a", "b");
+        t.askingUser("b");
+        t.userAnswered("b");
+        check("check: once the user answered, the timeout runs again (Gecko may never finish)",
+                !t.isAskingUser());
+        t.noUpdate("a");
+        check("check: a timeout then names the add-on it gave up on",
+                is(t.finish(true), AddonCheckTally.COULD_NOT_CHECK, null)
+                        && t.timedOutWaitingFor("b") && !t.timedOutWaitingFor("a")
+                        && t.timedOut().size() == 1 && t.timedOut().contains("b"));
+
+        t = tally("a");
+        t.noUpdate("a");
+        check("check: a check that ended normally gave up on nothing",
+                t.timedOut().isEmpty() && !t.timedOutWaitingFor("a"));
+
         t = tally("a");
         check("check: an answer for an add-on not asked is ignored",
                 t.updated("x", "X") == null && t.failed("x", "X") == null && !t.isFinished());
