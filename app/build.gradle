@@ -233,7 +233,7 @@ dependencies {
     // StringUtils / Strings / DateUtils. It used to arrive only through
     // commons-text, which the app never called; 3.20.0 is the version that
     // commons-text 1.15.0 brought.
-    implementation 'org.apache.commons:commons-lang3:3.20.0'
+    implementation 'org.apache.commons:commons-lang3:3.22.0'
 
     implementation 'org.apache.commons:commons-collections4:4.6.0'
 
@@ -299,8 +299,8 @@ dependencies {
     // went: MediaSessionCompat + MediaStyle for both media notifications (media3
     // brings it too), the pull-to-refresh layout, and FastOutSlowInInterpolator
     // (the address bar and the browser), which only other libraries brought.
-    implementation 'androidx.media:media:1.7.0'
-    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'androidx.media:media:1.8.0'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.2.0'
     implementation 'androidx.interpolator:interpolator:1.0.0'
 
     implementation 'androidx.preference:preference:1.2.1'
