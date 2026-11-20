@@ -179,4 +179,7 @@
     <color name="mime_fallback_label">#F4F4F7</color>
     <color name="mime_fallback_status">@color/md_theme_primary</color>
     <color name="mime_fallback_action">#FFFFFF</color>
+    <!-- A destructive row's title and glyph (DestructivePreference: an add-on's
+         Remove). Dark: the brand coral, 5.4:1 on the settings card. -->
+    <color name="destructive_ink">@color/md_theme_primary</color>
 </resources>

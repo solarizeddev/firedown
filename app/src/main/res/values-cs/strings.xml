@@ -44,6 +44,8 @@
     <string name="addon_optional_data">Sdílet s vývojářem: %1$s</string>
     <string name="addon_optional_permissions">Volitelná oprávnění</string>
     <string name="addon_site_access">Přístup k webům</string>
+    <string name="addon_site_access_all">Povoleno na všech webech</string>
+    <string name="addon_site_access_none">Nepovoleno na žádném webu</string>
     <string name="addon_allow_all_sites">Povolit na všech webech</string>
     <string name="addon_allow_all_sites_summary">Bude moci číst a měnit každý web, který navštívíte</string>
     <string name="addon_user_scripts_warning">Neověřené skripty mohou ohrozit bezpečnost a soukromí. Spouštějte jen skripty z rozšíření nebo zdrojů, kterým důvěřujete.</string>

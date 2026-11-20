@@ -267,6 +267,8 @@ public class SettingsActivity extends BaseActivity {
                 mToolbar.setTitle(R.string.folder_backup_place_s3);
             else if(id == R.id.settings_addons)
                 mToolbar.setTitle(R.string.addons_title);
+            else if(id == R.id.settings_addon_sites)
+                mToolbar.setTitle(R.string.addon_site_access);
         });
 
         ViewCompat.setOnApplyWindowInsetsListener(mToolbar, (v, windowInsets) -> {

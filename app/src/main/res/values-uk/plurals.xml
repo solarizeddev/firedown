@@ -81,4 +81,10 @@
         <item quantity="many">%d заблоковано</item>
         <item quantity="other">%d заблоковано</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="one">Дозволено на %1$d з %2$d сайту</item>
+        <item quantity="few">Дозволено на %1$d з %2$d сайтів</item>
+        <item quantity="many">Дозволено на %1$d з %2$d сайтів</item>
+        <item quantity="other">Дозволено на %1$d з %2$d сайтів</item>
+    </plurals>
 </resources>

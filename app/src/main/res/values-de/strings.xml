@@ -46,6 +46,8 @@
     <string name="addon_optional_data">Mit dem Entwickler teilen: %1$s</string>
     <string name="addon_optional_permissions">Optionale Berechtigungen</string>
     <string name="addon_site_access">Zugriff auf Websites</string>
+    <string name="addon_site_access_all">Auf allen Websites erlaubt</string>
+    <string name="addon_site_access_none">Auf keiner Website erlaubt</string>
     <string name="addon_allow_all_sites">Auf allen Websites erlauben</string>
     <string name="addon_allow_all_sites_summary">Damit kann es jede Website lesen und ändern, die du besuchst</string>
     <string name="addon_user_scripts_warning">Nicht überprüfte Skripte können Sicherheits- und Datenschutzrisiken bergen. Führe nur Skripte aus Erweiterungen oder Quellen aus, denen du vertraust.</string>

@@ -60,4 +60,9 @@
         <item quantity="many">%d bloquées</item>
         <item quantity="other">%d bloquées</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="one">Autorisé sur %1$d sur %2$d site</item>
+        <item quantity="many">Autorisé sur %1$d sur %2$d sites</item>
+        <item quantity="other">Autorisé sur %1$d sur %2$d sites</item>
+    </plurals>
 </resources>

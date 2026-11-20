@@ -47,6 +47,8 @@
     <string name="addon_optional_data">Передавать разработчику: %1$s</string>
     <string name="addon_optional_permissions">Необязательные разрешения</string>
     <string name="addon_site_access">Доступ к сайтам</string>
+    <string name="addon_site_access_all">Разрешено на всех сайтах</string>
+    <string name="addon_site_access_none">Не разрешено ни на одном сайте</string>
     <string name="addon_allow_all_sites">Разрешить на всех сайтах</string>
     <string name="addon_allow_all_sites_summary">Сможет читать и изменять любой сайт, который вы посещаете</string>
     <string name="addon_user_scripts_warning">Непроверенные скрипты могут угрожать безопасности и приватности. Запускайте только скрипты из расширений или источников, которым вы доверяете.</string>

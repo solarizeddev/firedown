@@ -57,4 +57,8 @@
         <item quantity="one">%d geblokkeerd</item>
         <item quantity="other">%d geblokkeerd</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="one">Toegestaan op %1$d van %2$d website</item>
+        <item quantity="other">Toegestaan op %1$d van %2$d websites</item>
+    </plurals>
 </resources>

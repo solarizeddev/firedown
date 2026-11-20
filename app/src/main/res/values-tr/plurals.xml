@@ -57,4 +57,8 @@
         <item quantity="one">%d engellendi</item>
         <item quantity="other">%d engellendi</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="one">%2$d web sitesinin %1$d tanesinde izinli</item>
+        <item quantity="other">%2$d web sitesinin %1$d tanesinde izinli</item>
+    </plurals>
 </resources>

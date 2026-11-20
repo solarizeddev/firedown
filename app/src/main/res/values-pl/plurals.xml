@@ -81,4 +81,10 @@
         <item quantity="many">%d zablokowanych</item>
         <item quantity="other">%d zablokowanych</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="one">Dozwolone na %1$d z %2$d strony</item>
+        <item quantity="few">Dozwolone na %1$d z %2$d stron</item>
+        <item quantity="many">Dozwolone na %1$d z %2$d stron</item>
+        <item quantity="other">Dozwolone na %1$d z %2$d stron</item>
+    </plurals>
 </resources>

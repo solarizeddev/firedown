@@ -81,4 +81,10 @@
         <item quantity="many">%d zablokováno</item>
         <item quantity="other">%d zablokováno</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="one">Povoleno na %1$d z %2$d webu</item>
+        <item quantity="few">Povoleno na %1$d z %2$d webů</item>
+        <item quantity="many">Povoleno na %1$d z %2$d webu</item>
+        <item quantity="other">Povoleno na %1$d z %2$d webů</item>
+    </plurals>
 </resources>

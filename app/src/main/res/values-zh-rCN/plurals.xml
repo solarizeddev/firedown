@@ -48,4 +48,7 @@
     <plurals name="site_permissions_blocked">
         <item quantity="other">已阻止 %d 项</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="other">在 %2$d 个网站中的 %1$d 个上允许</item>
+    </plurals>
 </resources>

@@ -35,6 +35,8 @@
     <string name="addon_optional_data">Chia sẻ %1$s với nhà phát triển</string>
     <string name="addon_optional_permissions">Quyền tùy chọn</string>
     <string name="addon_site_access">Quyền truy cập trang web</string>
+    <string name="addon_site_access_all">Được phép trên mọi trang web</string>
+    <string name="addon_site_access_none">Không được phép trên trang web nào</string>
     <string name="addon_allow_all_sites">Cho phép trên tất cả các trang web</string>
     <string name="addon_allow_all_sites_summary">Có thể đọc và thay đổi mọi trang web bạn truy cập</string>
     <string name="addon_user_scripts_warning">Các tập lệnh chưa được xác minh có thể gây rủi ro về bảo mật và quyền riêng tư. Chỉ chạy tập lệnh từ tiện ích mở rộng hoặc nguồn bạn tin cậy.</string>

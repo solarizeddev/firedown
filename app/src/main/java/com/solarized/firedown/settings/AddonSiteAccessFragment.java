@@ -1,0 +1,146 @@
+package com.solarized.firedown.settings;
+
+import android.os.Bundle;
+import android.view.View;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceScreen;
+import androidx.preference.SwitchPreferenceCompat;
+
+import com.solarized.firedown.Keys;
+import com.solarized.firedown.R;
+import com.solarized.firedown.addons.AddonInfo;
+import com.solarized.firedown.addons.AddonManager;
+import com.solarized.firedown.addons.AddonPermissions;
+import com.solarized.firedown.utils.NavigationUtils;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+/**
+ * One add-on's site access, Firefox for Android's shape: one "Allow on all
+ * websites" switch for every all-sites pattern, then a switch per host,
+ * declared or granted while the add-on ran (an add-on declaring all sites
+ * asks for one site at a time, and those grants are in no manifest). Its
+ * own screen because the list can run to hundreds of rows: on the add-on's
+ * page it pushed Remove out of reach. The host alone is the title. While
+ * all sites is allowed the site switches are disabled and keep their own
+ * state: turning one off would not stop a site the all-sites grant covers.
+ * Rows are kept and updated in place, so a site granted at run time adds
+ * one row, not a rebuild of hundreds.
+ */
+@AndroidEntryPoint
+public class AddonSiteAccessFragment extends BasePreferenceFragment {
+
+    private static final String KEY_ALL_SITES = "com.solarized.firedown.preferences.addon.sites.all";
+    private static final String SITE_PREFIX = "com.solarized.firedown.preferences.addon.site.";
+
+    @Inject
+    AddonManager mAddonManager;
+
+    private String mId;
+    private PreferenceScreen mSites;
+    /** Each switch's patterns, by key, as of the last bind; its listener reads them here. */
+    private final Map<String, List<String>> mSitePatterns = new HashMap<>();
+    private boolean mBinding;
+
+    @Override
+    public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
+        super.onCreatePreferences(savedInstanceState, rootKey);
+        mSites = getPreferenceManager().createPreferenceScreen(requireContext());
+        mSites.setOrderingAsAdded(false);
+        setPreferenceScreen(mSites);
+        mId = getArguments() == null ? null : getArguments().getString(Keys.ADDON_ID);
+        // Drawn with its rows in the first frame (the add-on page's rule).
+        AddonInfo info = mId == null ? null : mAddonManager.find(mId);
+        if (info != null) {
+            bind(info);
+        }
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        mAddonManager.getAddons().observe(getViewLifecycleOwner(), addons -> {
+            AddonInfo info = mAddonManager.find(mId);
+            if (info == null) {
+                // Removed elsewhere: its page closes too, and this with it.
+                if (Boolean.TRUE.equals(mAddonManager.getLoaded().getValue())) {
+                    NavigationUtils.popBackStackSafe(mNavController, R.id.settings_addon_sites);
+                }
+                return;
+            }
+            bind(info);
+        });
+    }
+
+    private void bind(@NonNull AddonInfo info) {
+        if (!isAdded()) {
+            return;
+        }
+        mBinding = true;
+        AddonPermissions.SiteAccess access =
+                AddonPermissions.siteAccess(info.optionalOrigins, info.grantedOptionalOrigins);
+        Map<String, Preference> existing = new HashMap<>();
+        for (int i = 0; i < mSites.getPreferenceCount(); i++) {
+            Preference p = mSites.getPreference(i);
+            existing.put(p.getKey(), p);
+        }
+        mSitePatterns.clear();
+        int order = 0;
+        if (!access.allSitesPatterns.isEmpty()) {
+            SwitchPreferenceCompat all = siteSwitch(existing, KEY_ALL_SITES);
+            all.setTitle(R.string.addon_allow_all_sites);
+            all.setSummary(R.string.addon_allow_all_sites_summary);
+            all.setOrder(order++);
+            all.setChecked(access.allSitesGranted);
+            mSitePatterns.put(KEY_ALL_SITES, access.allSitesPatterns);
+        }
+        for (AddonPermissions.Site site : access.sites) {
+            String key = SITE_PREFIX + site.label.toLowerCase(Locale.ROOT);
+            SwitchPreferenceCompat sw = siteSwitch(existing, key);
+            sw.setTitle(site.label);
+            sw.setOrder(order++);
+            sw.setChecked(site.granted);
+            sw.setEnabled(!access.allSitesGranted);
+            mSitePatterns.put(key, site.patterns);
+        }
+        for (Map.Entry<String, Preference> stale : existing.entrySet()) {
+            if (!mSitePatterns.containsKey(stale.getKey())) {
+                mSites.removePreference(stale.getValue());
+            }
+        }
+        mBinding = false;
+    }
+
+    /** The site switch with this key, made and added the first time. */
+    @NonNull
+    private SwitchPreferenceCompat siteSwitch(@NonNull Map<String, Preference> existing, @NonNull String key) {
+        Preference found = existing.get(key);
+        if (found instanceof SwitchPreferenceCompat) {
+            return (SwitchPreferenceCompat) found;
+        }
+        SwitchPreferenceCompat sw = new SwitchPreferenceCompat(requireContext());
+        sw.setKey(key);
+        sw.setPersistent(false);
+        sw.setSingleLineTitle(false);
+        sw.setIconSpaceReserved(false);
+        sw.setOnPreferenceChangeListener((p, value) -> {
+            List<String> patterns = mSitePatterns.get(p.getKey());
+            if (!mBinding && mId != null && patterns != null) {
+                mAddonManager.setOptionalOrigins(mId, patterns, Boolean.TRUE.equals(value));
+            }
+            return true;
+        });
+        mSites.addPreference(sw);
+        return sw;
+    }
+}

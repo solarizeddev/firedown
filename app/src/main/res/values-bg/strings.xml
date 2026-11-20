@@ -44,6 +44,8 @@
     <string name="addon_optional_data">Споделяне на %1$s с разработчика</string>
     <string name="addon_optional_permissions">Права по избор</string>
     <string name="addon_site_access">Достъп до сайтове</string>
+    <string name="addon_site_access_all">Разрешено за всички уебсайтове</string>
+    <string name="addon_site_access_none">Не е разрешено за нито един уебсайт</string>
     <string name="addon_allow_all_sites">Разрешаване във всички сайтове</string>
     <string name="addon_allow_all_sites_summary">Ще може да чете и променя всеки сайт, който посещавате</string>
     <string name="addon_user_scripts_warning">Непроверените скриптове може да носят рискове за сигурността и поверителността. Изпълнявайте само скриптове от разширения или източници, на които имате доверие.</string>

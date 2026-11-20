@@ -59,4 +59,9 @@
         <item quantity="many">%d bloqueados</item>
         <item quantity="other">%d bloqueados</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="one">Permitido en %1$d de %2$d sitio web</item>
+        <item quantity="many">Permitido en %1$d de %2$d sitios web</item>
+        <item quantity="other">Permitido en %1$d de %2$d sitios web</item>
+    </plurals>
 </resources>

@@ -57,4 +57,8 @@
         <item quantity="one">%d блокирано</item>
         <item quantity="other">%d блокирани</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="one">Разрешено за %1$d от %2$d уебсайт</item>
+        <item quantity="other">Разрешено за %1$d от %2$d уебсайта</item>
+    </plurals>
 </resources>

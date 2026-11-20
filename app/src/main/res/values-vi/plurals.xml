@@ -51,4 +51,7 @@
     <plurals name="site_permissions_blocked">
         <item quantity="other">%d bị chặn</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="other">Được phép trên %1$d/%2$d trang web</item>
+    </plurals>
 </resources>

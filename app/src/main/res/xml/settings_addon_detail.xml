@@ -2,7 +2,7 @@
 <!-- One installed add-on (AddonDetailFragment): the header (icon, name,
      author and version), on/off and private tabs, its own settings page,
      an update waiting for the user, its page on addons.mozilla.org,
-     what it may do, what it collects, and Remove. Rows that don't apply are hidden by
+     what it may do, what it collects, its site access (a door) and Remove. Rows that don't apply are hidden by
      the fragment. -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
@@ -95,22 +95,32 @@
         android:title="@string/addon_optional_permissions"
         app:iconSpaceReserved="false" />
 
-    <!-- Its optional sites, declared or granted while it ran: "Allow on all
-         websites", then a switch per host. Last before Remove because it
-         can run to hundreds of rows. Filled by the fragment. -->
+    <!-- Its optional sites, declared or granted while it ran: a door to
+         their own screen (AddonSiteAccessFragment), whose summary is the
+         state. Inline they ran to hundreds of rows and pushed Remove out of
+         reach. Hidden when it has none. -->
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.addon.sites.category"
-        android:title="@string/addon_site_access"
-        app:iconSpaceReserved="false" />
+        app:iconSpaceReserved="false">
 
+        <Preference
+            android:key="com.solarized.firedown.preferences.addon.sites"
+            android:title="@string/addon_site_access"
+            android:icon="@drawable/ic_globe_24"
+            app:singleLineTitle="false" />
+
+    </PreferenceCategory>
+
+    <!-- The one action that cannot be undone: its own group, last, in the
+         destructive ink with the trash glyph. -->
     <PreferenceCategory
         android:key="com.solarized.firedown.preferences.addon.remove.category"
         app:iconSpaceReserved="false">
 
-        <Preference
+        <com.solarized.firedown.settings.ui.DestructivePreference
             android:key="com.solarized.firedown.preferences.addon.remove"
             android:title="@string/addon_remove"
-            app:iconSpaceReserved="false" />
+            android:icon="@drawable/delete_light_24" />
 
     </PreferenceCategory>
 

@@ -144,7 +144,17 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_addon_detail_to_sites"
+            app:destination="@id/settings_addon_sites"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
+    <fragment
+        android:id="@+id/settings_addon_sites"
+        android:name="com.solarized.firedown.settings.AddonSiteAccessFragment" />
     <fragment
         android:id="@+id/settings_addon_options"
         android:name="com.solarized.firedown.settings.AddonOptionsFragment"

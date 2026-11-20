@@ -48,4 +48,7 @@
     <plurals name="site_permissions_blocked">
         <item quantity="other">%d 件ブロック</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="other">%2$d 件中 %1$d 件のウェブサイトで許可</item>
+    </plurals>
 </resources>

@@ -46,6 +46,8 @@
     <string name="addon_optional_data">%1$s を開発者と共有</string>
     <string name="addon_optional_permissions">任意の権限</string>
     <string name="addon_site_access">サイトへのアクセス</string>
+    <string name="addon_site_access_all">すべてのウェブサイトで許可</string>
+    <string name="addon_site_access_none">どのウェブサイトでも許可されていません</string>
     <string name="addon_allow_all_sites">すべての Web サイトで許可</string>
     <string name="addon_allow_all_sites_summary">アクセスするすべての Web サイトを読み取り、変更できるようになります</string>
     <string name="addon_user_scripts_warning">未検証のスクリプトはセキュリティとプライバシーのリスクになる可能性があります。信頼できる拡張機能やソースのスクリプトのみを実行してください。</string>

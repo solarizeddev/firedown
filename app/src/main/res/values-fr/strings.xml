@@ -46,6 +46,8 @@
     <string name="addon_optional_data">Partager avec le développeur : %1$s</string>
     <string name="addon_optional_permissions">Autorisations facultatives</string>
     <string name="addon_site_access">Accès aux sites</string>
+    <string name="addon_site_access_all">Autorisé sur tous les sites</string>
+    <string name="addon_site_access_none">Autorisé sur aucun site</string>
     <string name="addon_allow_all_sites">Autoriser sur tous les sites web</string>
     <string name="addon_allow_all_sites_summary">Il pourra lire et modifier tous les sites web que vous visitez</string>
     <string name="addon_user_scripts_warning">Les scripts non vérifiés peuvent présenter des risques pour la sécurité et la vie privée. N\'exécutez que des scripts provenant d\'extensions ou de sources de confiance.</string>

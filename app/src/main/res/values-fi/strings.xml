@@ -44,6 +44,8 @@
     <string name="addon_optional_data">Jaa kehittäjälle: %1$s</string>
     <string name="addon_optional_permissions">Valinnaiset käyttöoikeudet</string>
     <string name="addon_site_access">Sivustojen käyttöoikeus</string>
+    <string name="addon_site_access_all">Sallittu kaikilla sivustoilla</string>
+    <string name="addon_site_access_none">Ei sallittu millään sivustolla</string>
     <string name="addon_allow_all_sites">Salli kaikilla verkkosivustoilla</string>
     <string name="addon_allow_all_sites_summary">Se voi lukea ja muuttaa jokaista verkkosivustoa, jolla käyt</string>
     <string name="addon_user_scripts_warning">Vahvistamattomat skriptit voivat aiheuttaa tietoturva- ja yksityisyysriskejä. Suorita vain skriptejä laajennuksista tai lähteistä, joihin luotat.</string>

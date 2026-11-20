@@ -71,4 +71,8 @@
         <item quantity="one">%d blocked</item>
         <item quantity="other">%d blocked</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="one">Allowed on %1$d of %2$d website</item>
+        <item quantity="other">Allowed on %1$d of %2$d websites</item>
+    </plurals>
 </resources>

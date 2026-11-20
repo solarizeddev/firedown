@@ -28,10 +28,7 @@ import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.utils.NavigationUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -39,7 +36,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * One installed add-on: on/off, private tabs, its settings page, an update
- * waiting for the user, its page, what it may do, what it collects, Remove. Follows
+ * waiting for the user, its page, what it may do, what it collects, the
+ * door to its site access, Remove. Follows
  * {@link AddonManager#getAddons()}, so a change made anywhere (the add-on
  * updated, Gecko blocked it) repaints here, and a removed add-on closes it.
  */
@@ -61,9 +59,8 @@ public class AddonDetailFragment extends BasePreferenceFragment {
     private static final String KEY_REMOVE = "com.solarized.firedown.preferences.addon.remove";
     private static final String KEY_OPTIONAL = "com.solarized.firedown.preferences.addon.optional.category";
     private static final String OPTIONAL_PREFIX = "com.solarized.firedown.preferences.addon.optional.";
-    private static final String KEY_SITES = "com.solarized.firedown.preferences.addon.sites.category";
-    private static final String KEY_ALL_SITES = "com.solarized.firedown.preferences.addon.sites.all";
-    private static final String SITE_PREFIX = "com.solarized.firedown.preferences.addon.site.";
+    private static final String KEY_SITES_CATEGORY = "com.solarized.firedown.preferences.addon.sites.category";
+    private static final String KEY_SITES = "com.solarized.firedown.preferences.addon.sites";
     private static final String USER_SCRIPTS = "userScripts";
 
     @Inject
@@ -87,9 +84,8 @@ public class AddonDetailFragment extends BasePreferenceFragment {
     private PreferenceCategory mOptional;
     /** The rows now in {@link #mOptional}, so a repaint only rebuilds when they change. */
     private List<String> mOptionalKeys = new ArrayList<>();
-    private PreferenceCategory mSites;
-    /** Each site switch's patterns, by key, as of the last bind; its listener reads them here. */
-    private final Map<String, List<String>> mSitePatterns = new HashMap<>();
+    private PreferenceCategory mSitesCategory;
+    private Preference mSites;
     /** The header's icon, shown or asked for ({@link AddonIcons#cacheKey}): a new version reloads it. */
     @Nullable
     private String mIconKey;
@@ -113,13 +109,14 @@ public class AddonDetailFragment extends BasePreferenceFragment {
         mDataCategory = findPreference(KEY_DATA_CATEGORY);
         mData = findPreference(KEY_DATA);
         mOptional = findPreference(KEY_OPTIONAL);
+        mSitesCategory = findPreference(KEY_SITES_CATEGORY);
         mSites = findPreference(KEY_SITES);
-        if (mSites != null) {
-            mSites.setOrderingAsAdded(false);
-        }
         mIconInk = MaterialColors.getColor(requireContext(), android.R.attr.textColorSecondary, Color.GRAY);
         if (mData != null && mData.getIcon() != null) {
             mData.getIcon().mutate().setTint(mIconInk);
+        }
+        if (mSites != null && mSites.getIcon() != null) {
+            mSites.getIcon().mutate().setTint(mIconInk);
         }
         Preference remove = findPreference(KEY_REMOVE);
 
@@ -164,6 +161,14 @@ public class AddonDetailFragment extends BasePreferenceFragment {
         if (mUpdate != null) {
             mUpdate.setOnPreferenceClickListener(p -> {
                 mAddonManager.checkForUpdates(true, mId);
+                return true;
+            });
+        }
+        if (mSites != null) {
+            mSites.setOnPreferenceClickListener(p -> {
+                Bundle args = new Bundle();
+                args.putString(Keys.ADDON_ID, mId);
+                NavigationUtils.navigateSafe(mNavController, R.id.action_addon_detail_to_sites, args);
                 return true;
             });
         }
@@ -411,76 +416,38 @@ public class AddonDetailFragment extends BasePreferenceFragment {
     }
 
     /**
-     * Site access, Firefox for Android's shape: one "Allow on all websites"
-     * switch for every all-sites pattern, then a switch per host, declared
-     * or granted while the add-on ran (an add-on declaring all sites asks
-     * for one site at a time, and those grants are in no manifest). The
-     * host alone is the title: hundreds of "Access your data for sites in
-     * the … domain" rows read as a wall. While all sites is allowed the
-     * site switches are disabled and keep their own state: turning one off
-     * would not stop a site the all-sites grant covers. Rows are kept and
-     * updated in place, so a site granted at run time adds one row, not a
-     * rebuild of hundreds.
+     * The door to the add-on's site access ({@link AddonSiteAccessFragment}),
+     * its summary the state: all websites, how many of its sites, or none.
+     * Hidden when it has no optional sites.
      */
     private void bindSites(@NonNull AddonInfo info) {
-        if (mSites == null) {
+        if (mSitesCategory == null || mSites == null) {
             return;
         }
         AddonPermissions.SiteAccess access =
                 AddonPermissions.siteAccess(info.optionalOrigins, info.grantedOptionalOrigins);
-        Map<String, Preference> existing = new HashMap<>();
-        for (int i = 0; i < mSites.getPreferenceCount(); i++) {
-            Preference p = mSites.getPreference(i);
-            existing.put(p.getKey(), p);
+        boolean any = !access.allSitesPatterns.isEmpty() || !access.sites.isEmpty();
+        mSitesCategory.setVisible(any);
+        if (!any) {
+            return;
         }
-        mSitePatterns.clear();
-        int order = 0;
-        if (!access.allSitesPatterns.isEmpty()) {
-            SwitchPreferenceCompat all = siteSwitch(existing, KEY_ALL_SITES);
-            all.setTitle(R.string.addon_allow_all_sites);
-            all.setSummary(R.string.addon_allow_all_sites_summary);
-            all.setOrder(order++);
-            all.setChecked(access.allSitesGranted);
-            mSitePatterns.put(KEY_ALL_SITES, access.allSitesPatterns);
-        }
+        int granted = 0;
         for (AddonPermissions.Site site : access.sites) {
-            String key = SITE_PREFIX + site.label.toLowerCase(Locale.ROOT);
-            SwitchPreferenceCompat sw = siteSwitch(existing, key);
-            sw.setTitle(site.label);
-            sw.setOrder(order++);
-            sw.setChecked(site.granted);
-            sw.setEnabled(!access.allSitesGranted);
-            mSitePatterns.put(key, site.patterns);
-        }
-        for (Map.Entry<String, Preference> stale : existing.entrySet()) {
-            if (!mSitePatterns.containsKey(stale.getKey())) {
-                mSites.removePreference(stale.getValue());
+            if (site.granted) {
+                granted++;
             }
         }
-        mSites.setVisible(!mSitePatterns.isEmpty());
-    }
-
-    /** The site switch with this key, made and added the first time. */
-    @NonNull
-    private SwitchPreferenceCompat siteSwitch(@NonNull Map<String, Preference> existing, @NonNull String key) {
-        Preference found = existing.get(key);
-        if (found instanceof SwitchPreferenceCompat) {
-            return (SwitchPreferenceCompat) found;
+        int total = access.sites.size();
+        String summary;
+        if (access.allSitesGranted) {
+            summary = getString(R.string.addon_site_access_all);
+        } else if (granted == 0) {
+            summary = getString(R.string.addon_site_access_none);
+        } else {
+            summary = getResources().getQuantityString(R.plurals.addon_site_access_count,
+                    total, granted, total);
         }
-        SwitchPreferenceCompat sw = new SwitchPreferenceCompat(requireContext());
-        sw.setKey(key);
-        sw.setPersistent(false);
-        sw.setSingleLineTitle(false);
-        sw.setIconSpaceReserved(false);
-        sw.setOnPreferenceChangeListener((p, value) -> {
-            List<String> patterns = mSitePatterns.get(p.getKey());
-            if (!mBinding && mId != null && patterns != null) {
-                mAddonManager.setOptionalOrigins(mId, patterns, Boolean.TRUE.equals(value));
-            }
-            return true;
-        });
-        mSites.addPreference(sw);
-        return sw;
+        mSites.setSummary(summary);
     }
 
     private static boolean isWebUrl(@Nullable String url) {

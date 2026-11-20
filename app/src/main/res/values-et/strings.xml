@@ -44,6 +44,8 @@
     <string name="addon_optional_data">Jaga arendajaga: %1$s</string>
     <string name="addon_optional_permissions">Valikulised õigused</string>
     <string name="addon_site_access">Juurdepääs saitidele</string>
+    <string name="addon_site_access_all">Lubatud kõigil veebisaitidel</string>
+    <string name="addon_site_access_none">Pole lubatud ühelgi veebisaidil</string>
     <string name="addon_allow_all_sites">Luba kõigil veebisaitidel</string>
     <string name="addon_allow_all_sites_summary">See saab lugeda ja muuta kõiki veebisaite, mida külastad</string>
     <string name="addon_user_scripts_warning">Kontrollimata skriptid võivad ohustada turvalisust ja privaatsust. Käivita ainult skripte laiendustest või allikatest, mida usaldad.</string>

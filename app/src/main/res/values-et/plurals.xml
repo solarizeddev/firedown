@@ -57,4 +57,8 @@
         <item quantity="one">%d blokeeritud</item>
         <item quantity="other">%d blokeeritud</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="one">Lubatud %1$d veebisaidil %2$d-st</item>
+        <item quantity="other">Lubatud %1$d veebisaidil %2$d-st</item>
+    </plurals>
 </resources>

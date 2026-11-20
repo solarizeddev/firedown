@@ -4800,8 +4800,8 @@ before changing a flow. The rules, each easy to undo:
   `add/removeOptionalPermissions`). A permission it asks for at run time
   is the OPTIONAL prompt.
 - **Site access lists what the add-on HOLDS, not only what it declares**
-  (`AddonPermissions.siteAccess`, the "Site access" group, last before
-  Remove). An add-on that declares all sites as optional asks for one site
+  (`AddonPermissions.siteAccess`, its own screen, `AddonSiteAccessFragment`,
+  behind a "Site access" door on the add-on's page). An add-on that declares all sites as optional asks for one site
   at a time (Bypass Paywalls Clean), and those grants are in no manifest:
   the page listed `optionalOrigins` alone, so they had no switch and only
   removing the add-on took them back. IronFox (stock Fenix) lists the union
@@ -4822,9 +4822,19 @@ before changing a flow. The rules, each easy to undo:
   at hundreds of rows), and the patterns naming one host (http and https,
   a domain and its bare host) share it (`setOptionalOrigins` sends them
   together). Rows are kept and updated in place, never rebuilt, so a site
-  granted while the page is open adds one row. Not built yet: a separate
-  screen once the list is long (the Remove row sits below it). An
-  optional `userScripts` switch carries Firefox's warning as its summary.
+  granted while the page is open adds one row. **The list is a screen of
+  its own, always** (2026-11): inline on the add-on's page it ran to
+  hundreds of rows for a paywall bypasser and the user scrolled endlessly
+  to reach Remove (on-device). The door's summary is the state ("Allowed
+  on all websites", "Allowed on 3 of 412 websites", "Not allowed on any
+  website"); hidden when the add-on has no optional sites. Don't move the
+  list back inline, not even "while it is short": two forms of one list
+  is the drift this file keeps recording. **Remove is a
+  `DestructivePreference`** in its own last group: the trash glyph and the
+  title in `@color/destructive_ink` (md_theme_error in light, where the
+  brand coral is 2.3:1 as text; the coral in dark). A plain row read as
+  one more setting. An optional `userScripts` switch carries Firefox's
+  warning as its summary.
 - **Private tabs are opt-in per add-on**, at install and in its page; an
   add-on not allowed there gets no button, no popup and no `tabs.create`
   in a private tab.

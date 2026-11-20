@@ -35,6 +35,8 @@
     <string name="addon_optional_data">Bagikan %1$s dengan pengembang</string>
     <string name="addon_optional_permissions">Izin opsional</string>
     <string name="addon_site_access">Akses situs</string>
+    <string name="addon_site_access_all">Diizinkan di semua situs web</string>
+    <string name="addon_site_access_none">Tidak diizinkan di situs web mana pun</string>
     <string name="addon_allow_all_sites">Izinkan di semua situs web</string>
     <string name="addon_allow_all_sites_summary">Pengaya dapat membaca dan mengubah setiap situs web yang Anda kunjungi</string>
     <string name="addon_user_scripts_warning">Skrip yang belum diverifikasi dapat menimbulkan risiko keamanan dan privasi. Jalankan hanya skrip dari ekstensi atau sumber yang Anda percayai.</string>

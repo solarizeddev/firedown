@@ -57,4 +57,8 @@
         <item quantity="one">%d estetty</item>
         <item quantity="other">%d estetty</item>
     </plurals>
+    <plurals name="addon_site_access_count">
+        <item quantity="one">Sallittu %1$d/%2$d sivustolla</item>
+        <item quantity="other">Sallittu %1$d/%2$d sivustolla</item>
+    </plurals>
 </resources>
