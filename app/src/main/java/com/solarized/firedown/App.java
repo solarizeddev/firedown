@@ -155,6 +155,9 @@ public class App extends Application implements Configuration.Provider{
             // situation where we create a GeckoRuntime from the Gecko child process (
             return;
         }
+        // First, as when it was an eager field: building it queues the tab
+        // load on the disk executor ahead of the work queued below.
+        ApplicationLifeCycleHandler lifeCycle = lifeCycleHandler.get();
         setTheme();
         purgeDatabases();
         // Sweep what a SABR download leaves behind when the process is killed
@@ -167,8 +170,8 @@ public class App extends Application implements Configuration.Provider{
         // foreign-owned files on Android 11+). The user restores from the
         // Downloads empty-state button / Settings, which takes the SAF folder
         // grant and imports in one step. See DownloadBackupMirror.
-        registerActivityLifecycleCallbacks(lifeCycleHandler.get());
-        registerComponentCallbacks(lifeCycleHandler.get());
+        registerActivityLifecycleCallbacks(lifeCycle);
+        registerComponentCallbacks(lifeCycle);
         createMediaNotificationChannel(mAppContext);
         createDownloadsNotificationChannel(mAppContext);
         createUpdateNotificationChannel(mAppContext);
