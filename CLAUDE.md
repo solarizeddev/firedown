@@ -5999,6 +5999,26 @@ mirror's import) bypass Room's auto-refresh even with working tracking; the
 persistent triggers still mark the change, which the next Room-managed write
 flushes to observers.
 
+**Persistent mode makes the tracking table SHARED by every process, and
+Room recreates it on every open — so only the main process may open a Room
+database.** Room's `configureConnection` (run on each database open) does
+`DROP TABLE IF EXISTS room_table_modification_log` and then `CREATE TABLE`
+again. In persistent mode that table lives in the database file, so a SECOND
+process opening the same database drops the main process's table: a main
+process LiveData syncing its triggers in that gap crashes with
+`no such table: room_table_modification_log` (no `main.` prefix, thrown from
+`startTrackingTable` on `arch_disk_io`; seen on 1.2.11), and after it the
+main process's tracked-table rows are gone, so that database's lists stop
+refreshing until the next start. It happened through `App`: Hilt injects in
+`super.onCreate()`, which runs in every process of the app (each Gecko
+content process, a new one per site, and the extension, GPU and crash
+processes), BEFORE the `isMainProcess()` gate. The eager fields built
+`ApplicationLifeCycleHandler` → `GeckoStateDataRepository`, whose provider
+starts the tab-archive sweep, which opens `tabstate-db`. `App`'s injected
+fields are `dagger.Lazy` now, read only after the gate. Don't add an eager
+`@Inject` field to `App`, and don't open a database from anything that can
+run in another process.
+
 **Every UNBOUNDED list read is `@Transaction` — a multi-CursorWindow query
 outside a transaction is the 1.1.93 crash.** `SELECT * FROM download` on a
 long-running install no longer fits one ~2 MB CursorWindow (~290 rows of

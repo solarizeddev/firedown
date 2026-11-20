@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
+
+import dagger.Lazy;
 import dagger.hilt.android.HiltAndroidApp;
 
 @HiltAndroidApp
@@ -70,23 +72,35 @@ public class App extends Application implements Configuration.Provider{
 
     private static volatile Boolean isMainProcess;
 
+    // Every field is a Lazy, read only after the isMainProcess() gate.
+    // Hilt injects in super.onCreate(), which runs in EVERY process of the
+    // app: each Gecko content process (a new one per site), the extension,
+    // GPU and crash processes. An eager field builds its whole graph there,
+    // and the GeckoStateDataRepository provider starts the tab-archive sweep,
+    // which opens tabstate-db from that process. Room's tracker runs
+    // "DROP TABLE room_table_modification_log" + CREATE on every open of a
+    // database, so the child's open dropped the MAIN process's tracking
+    // table: "no such table: room_table_modification_log" from a main
+    // process LiveData in that gap (a crash), and the tracked-table rows
+    // gone after it (that database's lists stop refreshing). Nothing outside
+    // the main process may open a Room database.
     @Inject
-    WebHistoryDataRepository mWebHistoryDataRepository;
+    Lazy<WebHistoryDataRepository> mWebHistoryDataRepository;
     @Inject
-    LegacyShortcutsMigrator mLegacyShortcutsMigrator;
+    Lazy<LegacyShortcutsMigrator> mLegacyShortcutsMigrator;
     @Inject
-    ApplicationLifeCycleHandler lifeCycleHandler;
+    Lazy<ApplicationLifeCycleHandler> lifeCycleHandler;
     @Inject
-    HiltWorkerFactory workerFactory;
+    Lazy<HiltWorkerFactory> workerFactory;
     @Inject
-    UpdateScheduler updateScheduler;
+    Lazy<UpdateScheduler> updateScheduler;
     @Inject
-    SyncManager mSyncManager;
+    Lazy<SyncManager> mSyncManager;
     @Inject
-    CloudBackupManager mCloudBackup;
+    Lazy<CloudBackupManager> mCloudBackup;
     @Inject
     @Qualifiers.DiskIO
-    Executor mDiskExecutor;
+    Lazy<Executor> mDiskExecutor;
 
     @Override
     public void onCreate() {
@@ -147,39 +161,39 @@ public class App extends Application implements Configuration.Provider{
         // mid-way (a remux temp; the raw-segment dirs of older builds). Safe to
         // do unconditionally here because RunnableManager is a Service that
         // died with the previous process — no SABR download is in flight.
-        mDiskExecutor.execute(() -> StoragePaths.cleanupSabrLeftovers(mAppContext));
+        mDiskExecutor.get().execute(() -> StoragePaths.cleanupSabrLeftovers(mAppContext));
         // Reinstall restore is PROMPT-FIRST — there is deliberately no boot-time
         // auto-import (it would drop the user into a list of unopenable,
         // foreign-owned files on Android 11+). The user restores from the
         // Downloads empty-state button / Settings, which takes the SAF folder
         // grant and imports in one step. See DownloadBackupMirror.
-        registerActivityLifecycleCallbacks(lifeCycleHandler);
-        registerComponentCallbacks(lifeCycleHandler);
+        registerActivityLifecycleCallbacks(lifeCycleHandler.get());
+        registerComponentCallbacks(lifeCycleHandler.get());
         createMediaNotificationChannel(mAppContext);
         createDownloadsNotificationChannel(mAppContext);
         createUpdateNotificationChannel(mAppContext);
-        updateScheduler.schedulePeriodicUpdateCheck();
-        updateScheduler.setupOneTimeCheck();
+        updateScheduler.get().schedulePeriodicUpdateCheck();
+        updateScheduler.get().setupOneTimeCheck();
         // Wire bookmark-sync repository semantics + periodic job from saved state
         // (no-op when sync is off; tombstone-on-delete needs this at boot).
-        mSyncManager.init();
+        mSyncManager.get().init();
         // A periodic WorkManager job left by the hosted Cloud Backup's account
         // watch (lapse notifications) is cancelled once: the folder backup has
         // no account to watch, and WorkManager keeps a periodic request across
         // updates until something cancels it.
-        mCloudBackup.cancelLegacyWatch();
+        mCloudBackup.get().cancelLegacyWatch();
 
         // One-time migration: lift legacy 'shortcuts' rows into the
         // bookmarks table as pinned entries, then drop the legacy
         // shortcuts DB. Idempotent — guarded by a SharedPreferences
         // flag and a presence check for the legacy DB file.
-        mLegacyShortcutsMigrator.runIfNeeded();
+        mLegacyShortcutsMigrator.get().runIfNeeded();
 
         // The per-site WebAssembly allowlist (its own Room DB) was removed
         // with the "Enable for {host}?" flow; drop the orphaned file so a
         // long-lived install doesn't carry a database nothing opens.
         // deleteDatabase is a no-op when the file is already gone.
-        mDiskExecutor.execute(() -> {
+        mDiskExecutor.get().execute(() -> {
             mAppContext.deleteDatabase(LEGACY_WASM_ALLOWLIST_DB);
             mAppContext.deleteDatabase(LEGACY_TRACKING_DB);
         });
@@ -235,7 +249,7 @@ public class App extends Application implements Configuration.Provider{
     @Override
     public Configuration getWorkManagerConfiguration() {
         return new Configuration.Builder()
-                .setWorkerFactory(workerFactory)
+                .setWorkerFactory(workerFactory.get())
                 .build();
     }
 
@@ -265,7 +279,7 @@ public class App extends Application implements Configuration.Provider{
             return;
         }
         prefs.edit().putLong(Preferences.SETTINGS_HISTORY_PURGE_LAST_RUN, now).apply();
-        mWebHistoryDataRepository.purgeDatabase();
+        mWebHistoryDataRepository.get().purgeDatabase();
     }
 
     public static void triggerRebirth(Context context) {
