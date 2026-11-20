@@ -61,7 +61,9 @@ public class FFmpegOkhttp {
      *
      * okio can copy a segment straight into a DirectByteBuffer
      * (BufferedSource.read(ByteBuffer)), so reading through the source lets
-     * okhttpRead hand ffmpeg's AVIO buffer to okio directly. The byteStream()
+     * okhttpRead hand the native read buffer to okio directly — ffmpeg's AVIO
+     * buffer with older native libraries, http.c's per-connection staging
+     * buffer since the FFmpeg 9.1 build. The byteStream()
      * form could not: InputStream.read only fills a byte[], so every byte
      * downloaded was copied TWICE in Java — segment → staging array → the
      * DirectByteBuffer — and each connection carried a 32 KB staging array
@@ -154,9 +156,14 @@ public class FFmpegOkhttp {
                 String endOffset = options.get("end_offset");
                 if (endOffset != null) {
                     try {
+                        long start = Long.parseLong(offset.trim());
                         long end = Long.parseLong(endOffset.trim());
                         if (end > 0) {
-                            range += (end - 1);
+                            /* A zero-length slice (end == start) would give
+                             * bytes=N-(N-1), which servers reject or ignore;
+                             * ask for one byte instead, as this code always
+                             * did. The demuxer reads none of it. */
+                            range += Math.max(end - 1, start);
                         }
                     } catch (NumberFormatException ignored) {
                         // no usable end: open-ended Range, as for "0"
@@ -619,12 +626,14 @@ public class FFmpegOkhttp {
     }
 
     /**
-     * How long {@link #okhttpReadPartial} keeps filling once it holds some
-     * bytes. Short enough that a slow stream returns about as soon as data
-     * arrives (a probe reading a 128 kbit/s live stream gets its first 2 KiB
-     * in ~0.25 s instead of waiting for the whole request), long enough that
-     * a fast one still fills most of a large request per JNI call.
-     * scripts/okhttp-read-bench in firedown-ffmpeg measured the choice.
+     * When {@link #okhttpReadPartial} stops filling: its first okio read that
+     * ends at or after this long into the call returns. Short enough that a
+     * slow stream returns about as soon as data arrives (a probe reading a
+     * 128 kbit/s live stream gets its first 2 KiB in ~0.24 s instead of the
+     * ~2 s a 32 KiB fill takes), long enough that a fast one still fills most
+     * of a large request per JNI call (4 calls per MiB instead of 128 for
+     * returning after every read). scripts/okhttp-read-bench in
+     * firedown-ffmpeg measured the choice; 2 ms and 50 ms changed little.
      */
     private static final long PARTIAL_READ_DEADLINE_NS = 10_000_000L;
 
@@ -639,12 +648,21 @@ public class FFmpegOkhttp {
     }
 
     /**
-     * Like {@link #okhttpRead}, but returns as soon as it holds some bytes
-     * and {@link #PARTIAL_READ_DEADLINE_NS} has passed, the way a socket
-     * read returns what has arrived. http.c calls this one when it exists
-     * (found by name at open; missing on an older app) and then asks for up
-     * to 256 KiB per call, FFmpeg 9.1's network buffer size: a fast stream
-     * fills it, a slow one is not held hostage to it.
+     * Like {@link #okhttpRead}, but stops filling once
+     * {@link #PARTIAL_READ_DEADLINE_NS} has passed: after each okio read that
+     * delivered bytes, if the deadline is behind it, it returns what it holds.
+     * Before the deadline it goes back for another read, and that read blocks
+     * until more data arrives — on a steady stream a few milliseconds, on one
+     * that pauses until the next arrival. So it never waits for a whole
+     * request the way okhttpRead does, but it can hold delivered bytes for
+     * one more arrival; it is not a non-blocking read. (Ending the wait
+     * earlier would need a timed okio read, and okio's socket timeout closes
+     * the connection.)
+     *
+     * http.c calls this one when it exists (looked up by name at open; absent
+     * on an older app) and then asks for up to 256 KiB per call, FFmpeg 9.1's
+     * network buffer size: a fast stream fills it, a slow one is not held
+     * hostage to it.
      */
     @Keep
     public int okhttpReadPartial(ByteBuffer byteBuffer, int size) {
@@ -664,6 +682,12 @@ public class FFmpegOkhttp {
             }
 
             /* Bound every write by `size` — NEVER by byteBuffer.capacity().
+             *
+             * Since the FFmpeg 9.1 build, http.c hands us ONE staging buffer
+             * it owns, sized for its largest request, so capacity() >= size
+             * there and the hazard below cannot arise. Older native libraries
+             * still pass a wrapper over ffmpeg's own buffer, so the bound
+             * stays, for them and as the contract.
              *
              * This comment used to claim the two were equal ("NewDirectByteBuffer
              * was called with exactly `size` bytes, so capacity() == size, no
@@ -698,8 +722,8 @@ public class FFmpegOkhttp {
             while (true) {
                 int totalRead = 0;
                 while (totalRead < limit) {
-                    /* Segment → ffmpeg's AVIO buffer, one copy, no staging
-                     * array. okio appends at the ByteBuffer's position and
+                    /* Segment → the native read buffer, one copy, no Java
+                     * staging array. okio appends at the ByteBuffer's position and
                      * stops at its limit, so the loop needs no offset
                      * arithmetic; it returns one segment's worth at a time
                      * (Segment.SIZE, 8 KB), hence ~4 turns for a 32 KB
