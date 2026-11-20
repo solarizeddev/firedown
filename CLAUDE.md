@@ -6007,9 +6007,14 @@ again. In persistent mode that table lives in the database file, so a SECOND
 process opening the same database drops the main process's table: a main
 process LiveData syncing its triggers in that gap crashes with
 `no such table: room_table_modification_log` (no `main.` prefix, thrown from
-`startTrackingTable` on `arch_disk_io`; seen on 1.2.11), and after it the
-main process's tracked-table rows are gone, so that database's lists stop
-refreshing until the next start. It happened through `App`: Hilt injects in
+`startTrackingTable` on `arch_disk_io`; seen on 1.2.11). The DROP and the
+CREATE are two statements with no transaction, so a child killed between
+them, or whose CREATE fails on a busy database, leaves the table missing
+until the next open: no race needed. After either, the main process's
+tracked-table rows are gone, so lists over tables it already observed stop
+refreshing until the next start. The only database a child opened was
+`tabstate-db` (the tab archive), so a refresh bug in Downloads or History
+is not this. It happened through `App`: Hilt injects in
 `super.onCreate()`, which runs in every process of the app (each Gecko
 content process, a new one per site, and the extension, GPU and crash
 processes), BEFORE the `isMainProcess()` gate. The eager fields built

@@ -72,18 +72,9 @@ public class App extends Application implements Configuration.Provider{
 
     private static volatile Boolean isMainProcess;
 
-    // Every field is a Lazy, read only after the isMainProcess() gate.
-    // Hilt injects in super.onCreate(), which runs in EVERY process of the
-    // app: each Gecko content process (a new one per site), the extension,
-    // GPU and crash processes. An eager field builds its whole graph there,
-    // and the GeckoStateDataRepository provider starts the tab-archive sweep,
-    // which opens tabstate-db from that process. Room's tracker runs
-    // "DROP TABLE room_table_modification_log" + CREATE on every open of a
-    // database, so the child's open dropped the MAIN process's tracking
-    // table: "no such table: room_table_modification_log" from a main
-    // process LiveData in that gap (a crash), and the tracked-table rows
-    // gone after it (that database's lists stop refreshing). Nothing outside
-    // the main process may open a Room database.
+    // Lazy, read only after the isMainProcess() gate: Hilt injects in
+    // super.onCreate(), which runs in every Gecko child process too, and a
+    // Room database opened there drops the main process's tracking table.
     @Inject
     Lazy<WebHistoryDataRepository> mWebHistoryDataRepository;
     @Inject
@@ -258,16 +249,31 @@ public class App extends Application implements Configuration.Provider{
 
 
     private String getCurrentProcessName() {
-        String processName = "";
+        String name = processName(this);
+        return name != null ? name : "";
+    }
+
+    // Null when it can't be told. Before API 28 the only source is the
+    // running-process list, which can be null or leave out our pid.
+    private static String processName(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            return Application.getProcessName();
+        }
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (manager == null) {
+            return null;
+        }
+        List<ActivityManager.RunningAppProcessInfo> processes = manager.getRunningAppProcesses();
+        if (processes == null) {
+            return null;
+        }
         int pid = Process.myPid();
-        ActivityManager manager = (ActivityManager) this.getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningAppProcessInfo processInfo : manager.getRunningAppProcesses()) {
-            if (processInfo.pid == pid) {
-                processName = processInfo.processName;
-                break;
+        for (ActivityManager.RunningAppProcessInfo info : processes) {
+            if (info.pid == pid) {
+                return info.processName;
             }
         }
-        return processName;
+        return null;
     }
 
     public void purgeDatabases(){
@@ -301,26 +307,10 @@ public class App extends Application implements Configuration.Provider{
         if (isMainProcess != null) return isMainProcess;
         if (mAppContext == null) return false;
 
-        int pid = Process.myPid();
-
-        ActivityManager activityManager = ((ActivityManager) mAppContext.getSystemService(ACTIVITY_SERVICE));
-
-        if (activityManager != null) {
-            // getRunningAppProcesses() can return null on restricted/background contexts;
-            // match by pid rather than assuming index 0 is the current process.
-            List<ActivityManager.RunningAppProcessInfo> processes =
-                    activityManager.getRunningAppProcesses();
-            if (processes != null) {
-                String packageName = mAppContext.getPackageName();
-                for (ActivityManager.RunningAppProcessInfo info : processes) {
-                    if (info.pid == pid) {
-                        isMainProcess = packageName.equals(info.processName);
-                        break;
-                    }
-                }
-            }
+        String name = processName(mAppContext);
+        if (name != null) {
+            isMainProcess = mAppContext.getPackageName().equals(name);
         }
-
         return isMainProcess != null && isMainProcess;
     }
 
