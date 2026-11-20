@@ -195,10 +195,10 @@ dependencies {
 
     // CameraX — only for the P2P share QR scanner (zxing decodes the frames;
     // no ML Kit / Play Services, keeping de-Googled devices first-class)
-    implementation 'androidx.camera:camera-core:1.6.2'
-    implementation 'androidx.camera:camera-camera2:1.6.2'
-    implementation 'androidx.camera:camera-lifecycle:1.6.2'
-    implementation 'androidx.camera:camera-view:1.6.2'
+    implementation 'androidx.camera:camera-core:1.7.0'
+    implementation 'androidx.camera:camera-camera2:1.7.0'
+    implementation 'androidx.camera:camera-lifecycle:1.7.0'
+    implementation 'androidx.camera:camera-view:1.7.0'
 
     implementation("androidx.work:work-runtime:$work_version")
     // TestListenableWorkerBuilder: runs a Worker directly on a device
