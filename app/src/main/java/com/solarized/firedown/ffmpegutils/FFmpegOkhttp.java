@@ -146,9 +146,21 @@ public class FFmpegOkhttp {
             String offset = options.get("offset");
             if (offset != null) {
                 range = "bytes=" + offset + "-";
+                /* FFmpeg's end_offset is EXCLUSIVE, a Range's last byte is
+                 * INCLUSIVE: vanilla http.c sends end_off - 1, and 0 means
+                 * "no end". Sending end_offset itself asked for one byte too
+                 * many on every ranged open (harmless only because the
+                 * demuxer never reads past the segment size). */
                 String endOffset = options.get("end_offset");
                 if (endOffset != null) {
-                    range += endOffset;
+                    try {
+                        long end = Long.parseLong(endOffset.trim());
+                        if (end > 0) {
+                            range += (end - 1);
+                        }
+                    } catch (NumberFormatException ignored) {
+                        // no usable end: open-ended Range, as for "0"
+                    }
                 }
             }
             return new DemuxerRequest(allowed, range);
@@ -606,8 +618,40 @@ public class FFmpegOkhttp {
         }
     }
 
+    /**
+     * How long {@link #okhttpReadPartial} keeps filling once it holds some
+     * bytes. Short enough that a slow stream returns about as soon as data
+     * arrives (a probe reading a 128 kbit/s live stream gets its first 2 KiB
+     * in ~0.25 s instead of waiting for the whole request), long enough that
+     * a fast one still fills most of a large request per JNI call.
+     * scripts/okhttp-read-bench in firedown-ffmpeg measured the choice.
+     */
+    private static final long PARTIAL_READ_DEADLINE_NS = 10_000_000L;
+
+    /**
+     * Fill {@code size} bytes, or up to the end of the body. Kept for native
+     * libraries built before {@link #okhttpReadPartial} existed: they clamp
+     * every request to 32 KiB, which bounds how long this can block.
+     */
     @Keep
     public int okhttpRead(ByteBuffer byteBuffer, int size) {
+        return read(byteBuffer, size, false);
+    }
+
+    /**
+     * Like {@link #okhttpRead}, but returns as soon as it holds some bytes
+     * and {@link #PARTIAL_READ_DEADLINE_NS} has passed, the way a socket
+     * read returns what has arrived. http.c calls this one when it exists
+     * (found by name at open; missing on an older app) and then asks for up
+     * to 256 KiB per call, FFmpeg 9.1's network buffer size: a fast stream
+     * fills it, a slow one is not held hostage to it.
+     */
+    @Keep
+    public int okhttpReadPartial(ByteBuffer byteBuffer, int size) {
+        return read(byteBuffer, size, true);
+    }
+
+    private int read(ByteBuffer byteBuffer, int size, boolean partial) {
         try {
             if (bodySource == null)
                 return FFMPEG_AVERROR_ENOSYS;
@@ -649,6 +693,7 @@ public class FFmpegOkhttp {
             // infinite reconnect loop if the server is misbehaving.
             int reconnectAttempts = 0;
             final int MAX_RECONNECT_ATTEMPTS = 1;
+            final long start = partial ? System.nanoTime() : 0L;
 
             while (true) {
                 int totalRead = 0;
@@ -658,7 +703,7 @@ public class FFmpegOkhttp {
                      * stops at its limit, so the loop needs no offset
                      * arithmetic; it returns one segment's worth at a time
                      * (Segment.SIZE, 8 KB), hence ~4 turns for a 32 KB
-                     * IO_BUFFER_SIZE request. Read the FIELD every turn, never
+                     * request. Read the FIELD every turn, never
                      * hoist it to a local: the server-EOF reconnect below
                      * replaces bodySource and `continue`s back into this very
                      * loop, so a hoisted reference would read the dead one. */
@@ -666,6 +711,9 @@ public class FFmpegOkhttp {
                     if (n < 0) break;
                     if (n == 0) continue;
                     totalRead += n;
+                    if (partial && System.nanoTime() - start >= PARTIAL_READ_DEADLINE_NS) {
+                        break;
+                    }
                 }
 
                 if (totalRead > 0) {
