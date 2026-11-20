@@ -61,4 +61,8 @@
         <item quantity="one">Sallittu %1$d/%2$d sivustolla</item>
         <item quantity="other">Sallittu %1$d/%2$d sivustolla</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="one">Sallittu %d sivustolla</item>
+        <item quantity="other">Sallittu %d sivustolla</item>
+    </plurals>
 </resources>

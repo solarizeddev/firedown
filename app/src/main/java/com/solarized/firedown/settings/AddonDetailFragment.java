@@ -443,6 +443,11 @@ public class AddonDetailFragment extends BasePreferenceFragment {
             summary = getString(R.string.addon_site_access_all);
         } else if (granted == 0) {
             summary = getString(R.string.addon_site_access_none);
+        } else if (granted == total) {
+            // Every listed site allowed: an add-on asking one site at a
+            // time lists only its grants, and "3 of 3" would read as all.
+            summary = getResources().getQuantityString(R.plurals.addon_site_access_granted,
+                    granted, granted);
         } else {
             summary = getResources().getQuantityString(R.plurals.addon_site_access_count,
                     total, granted, total);

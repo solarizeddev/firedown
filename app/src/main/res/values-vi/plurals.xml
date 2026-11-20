@@ -54,4 +54,7 @@
     <plurals name="addon_site_access_count">
         <item quantity="other">Được phép trên %1$d/%2$d trang web</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="other">Được phép trên %d trang web</item>
+    </plurals>
 </resources>

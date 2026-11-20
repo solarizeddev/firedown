@@ -61,4 +61,8 @@
         <item quantity="one">Разрешено за %1$d от %2$d уебсайт</item>
         <item quantity="other">Разрешено за %1$d от %2$d уебсайта</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="one">Разрешено за %d уебсайт</item>
+        <item quantity="other">Разрешено за %d уебсайта</item>
+    </plurals>
 </resources>

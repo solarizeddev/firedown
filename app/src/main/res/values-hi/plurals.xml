@@ -61,4 +61,8 @@
         <item quantity="one">%2$d वेबसाइट में से %1$d पर अनुमति है</item>
         <item quantity="other">%2$d वेबसाइटों में से %1$d पर अनुमति है</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="one">%d वेबसाइट पर अनुमति है</item>
+        <item quantity="other">%d वेबसाइटों पर अनुमति है</item>
+    </plurals>
 </resources>

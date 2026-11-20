@@ -61,8 +61,13 @@
         <item quantity="other">%d bloquées</item>
     </plurals>
     <plurals name="addon_site_access_count">
-        <item quantity="one">Autorisé sur %1$d sur %2$d site</item>
-        <item quantity="many">Autorisé sur %1$d sur %2$d sites</item>
-        <item quantity="other">Autorisé sur %1$d sur %2$d sites</item>
+        <item quantity="one">Autorisé sur %1$d site sur %2$d</item>
+        <item quantity="many">Autorisé sur %1$d sites sur %2$d</item>
+        <item quantity="other">Autorisé sur %1$d sites sur %2$d</item>
+    </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="one">Autorisé sur %d site</item>
+        <item quantity="many">Autorisé sur %d sites</item>
+        <item quantity="other">Autorisé sur %d sites</item>
     </plurals>
 </resources>

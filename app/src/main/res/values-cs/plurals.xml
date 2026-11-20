@@ -87,4 +87,10 @@
         <item quantity="many">Povoleno na %1$d z %2$d webu</item>
         <item quantity="other">Povoleno na %1$d z %2$d webů</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="one">Povoleno na %d webu</item>
+        <item quantity="few">Povoleno na %d webech</item>
+        <item quantity="many">Povoleno na %d webu</item>
+        <item quantity="other">Povoleno na %d webech</item>
+    </plurals>
 </resources>

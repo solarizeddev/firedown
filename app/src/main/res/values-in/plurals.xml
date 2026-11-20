@@ -56,4 +56,7 @@
     <plurals name="addon_site_access_count">
         <item quantity="other">Diizinkan di %1$d dari %2$d situs web</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="other">Diizinkan di %d situs web</item>
+    </plurals>
 </resources>

@@ -61,4 +61,8 @@
         <item quantity="one">Toegestaan op %1$d van %2$d website</item>
         <item quantity="other">Toegestaan op %1$d van %2$d websites</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="one">Toegestaan op %d website</item>
+        <item quantity="other">Toegestaan op %d websites</item>
+    </plurals>
 </resources>

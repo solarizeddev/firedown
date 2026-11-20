@@ -61,4 +61,8 @@
         <item quantity="one">Auf %1$d von %2$d Website erlaubt</item>
         <item quantity="other">Auf %1$d von %2$d Websites erlaubt</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="one">Auf %d Website erlaubt</item>
+        <item quantity="other">Auf %d Websites erlaubt</item>
+    </plurals>
 </resources>

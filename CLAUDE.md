@@ -4827,12 +4827,21 @@ before changing a flow. The rules, each easy to undo:
   hundreds of rows for a paywall bypasser and the user scrolled endlessly
   to reach Remove (on-device). The door's summary is the state ("Allowed
   on all websites", "Allowed on 3 of 412 websites", "Not allowed on any
-  website"); hidden when the add-on has no optional sites. Don't move the
+  website", and "Allowed on 3 websites" when every listed site is allowed:
+  an add-on asking one site at a time lists only its grants, so "3 of 3"
+  would read as all); hidden when the add-on has no optional sites. The
+  screen saves no switch state (`onSaveInstanceState` drops
+  `android:preferences`: hundreds of rows is TransactionTooLarge
+  territory, and it rebinds from the add-on anyway), and an add-on
+  removed while it is open pops it AND the add-on page in one step. Don't move the
   list back inline, not even "while it is short": two forms of one list
   is the drift this file keeps recording. **Remove is a
   `DestructivePreference`** in its own last group: the trash glyph and the
   title in `@color/destructive_ink` (md_theme_error in light, where the
-  brand coral is 2.3:1 as text; the coral in dark). A plain row read as
+  brand coral is 2.2:1 as text on the card; the coral in dark). The
+  sheets' "colorPrimary, never colorError" rule is for sheet rows; on a
+  settings card the light-theme coral cannot be text, so this row takes
+  the error red there. A plain row read as
   one more setting. An optional `userScripts` switch carries Firefox's
   warning as its summary.
 - **Private tabs are opt-in per add-on**, at install and in its page; an

@@ -365,6 +365,6 @@
     <color name="shortcut_icon_background">#FFFFFF</color>
     <color name="shortcut_icon_glyph">#FF716C</color>
     <!-- A destructive row's title and glyph (DestructivePreference: an add-on's
-         Remove). Light: md_theme_error, 5.7:1 on the settings card (the brand coral is 2.3:1 as text here). -->
+         Remove). Light: md_theme_error, 5.7:1 on the settings card (the brand coral is 2.2:1 as text there). -->
     <color name="destructive_ink">@color/md_theme_error</color>
 </resources>

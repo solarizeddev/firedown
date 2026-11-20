@@ -66,4 +66,9 @@
         <item quantity="many">Permitido em %1$d de %2$d sites</item>
         <item quantity="other">Permitido em %1$d de %2$d sites</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="one">Permitido em %d site</item>
+        <item quantity="many">Permitido em %d sites</item>
+        <item quantity="other">Permitido em %d sites</item>
+    </plurals>
 </resources>

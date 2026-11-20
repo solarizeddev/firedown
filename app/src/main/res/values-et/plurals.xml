@@ -61,4 +61,8 @@
         <item quantity="one">Lubatud %1$d veebisaidil %2$d-st</item>
         <item quantity="other">Lubatud %1$d veebisaidil %2$d-st</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="one">Lubatud %d veebisaidil</item>
+        <item quantity="other">Lubatud %d veebisaidil</item>
+    </plurals>
 </resources>

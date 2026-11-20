@@ -61,4 +61,8 @@
         <item quantity="one">%2$d web sitesinin %1$d tanesinde izinli</item>
         <item quantity="other">%2$d web sitesinin %1$d tanesinde izinli</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="one">%d web sitesinde izinli</item>
+        <item quantity="other">%d web sitesinde izinli</item>
+    </plurals>
 </resources>

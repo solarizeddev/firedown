@@ -87,4 +87,10 @@
         <item quantity="many">Разрешено на %1$d из %2$d сайтов</item>
         <item quantity="other">Разрешено на %1$d из %2$d сайтов</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="one">Разрешено на %d сайте</item>
+        <item quantity="few">Разрешено на %d сайтах</item>
+        <item quantity="many">Разрешено на %d сайтах</item>
+        <item quantity="other">Разрешено на %d сайтах</item>
+    </plurals>
 </resources>

@@ -51,4 +51,7 @@
     <plurals name="addon_site_access_count">
         <item quantity="other">%2$d 件中 %1$d 件のウェブサイトで許可</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="other">%d 件のウェブサイトで許可</item>
+    </plurals>
 </resources>

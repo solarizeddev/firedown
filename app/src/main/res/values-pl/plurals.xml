@@ -87,4 +87,10 @@
         <item quantity="many">Dozwolone na %1$d z %2$d stron</item>
         <item quantity="other">Dozwolone na %1$d z %2$d stron</item>
     </plurals>
+    <plurals name="addon_site_access_granted">
+        <item quantity="one">Dozwolone na %d stronie</item>
+        <item quantity="few">Dozwolone na %d stronach</item>
+        <item quantity="many">Dozwolone na %d stronach</item>
+        <item quantity="other">Dozwolone na %d stronach</item>
+    </plurals>
 </resources>
