@@ -162,7 +162,9 @@ public class FFmpegOkhttp {
                             /* A zero-length slice (end == start) would give
                              * bytes=N-(N-1), which servers reject or ignore;
                              * ask for one byte instead, as this code always
-                             * did. The demuxer reads none of it. */
+                             * did. The demuxer reads none of it. (At offset 0
+                             * an end of 0 means "no end", as in vanilla
+                             * http.c, so that case stays open-ended.) */
                             range += Math.max(end - 1, start);
                         }
                     } catch (NumberFormatException ignored) {
