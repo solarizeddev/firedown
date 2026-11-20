@@ -511,7 +511,7 @@ int jni_init_metadatareader(JNIEnv *env, jobject thiz) {
 
     av_log_set_callback(utils_ffmpeg_log_callback);
 
-    av_log_set_level(FFMPEG_LOG_LEVEL);
+    av_log_set_level(utils_ffmpeg_log_level(FFMPEG_LOG_LEVEL));
 
     goto end;
 

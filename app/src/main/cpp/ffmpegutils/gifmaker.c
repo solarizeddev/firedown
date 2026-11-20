@@ -1491,7 +1491,7 @@ int jni_gifmaker_init(JNIEnv *env, jobject thiz) {
     mutex_inited = TRUE;
 
     av_log_set_callback(utils_ffmpeg_log_callback);
-    av_log_set_level(FFMPEG_LOG_LEVEL);
+    av_log_set_level(utils_ffmpeg_log_level(FFMPEG_LOG_LEVEL));
 
     /* Publish only after every fallible step succeeded — same defensive
      * pattern as encoder.c so a failed init never leaves the Java field

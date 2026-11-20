@@ -27,6 +27,8 @@ AVDictionary *utils_read_dictionary(JNIEnv *env, jobject jdictionary);
 void utils_set_dict_options(AVDictionary **dictionary);
 void utils_ffmpeg_log_callback(void *avcl, int level, const char *fmt, va_list vl);
 
+int utils_ffmpeg_log_level(int fallback);
+
 /* Used by metadatareader.c. */
 jobject utils_read_av_entry(JNIEnv *env, char *entry);
 int utils_decode_frame(AVCodecContext *codec_ctx, AVFrame *frame,

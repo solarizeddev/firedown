@@ -1037,7 +1037,7 @@ int jni_downloader_init(JNIEnv *env, jobject thiz) {
     downloader->stop = FALSE;
 
     av_log_set_callback(utils_ffmpeg_log_callback);
-    av_log_set_level(FFMPEG_LOG_LEVEL);
+    av_log_set_level(utils_ffmpeg_log_level(FFMPEG_LOG_LEVEL));
 
     /* Commit the pointer to Java only after every fallible step has succeeded. */
     (*env)->SetLongField(env, thiz, m_native_downloader_field, (jlong) downloader);

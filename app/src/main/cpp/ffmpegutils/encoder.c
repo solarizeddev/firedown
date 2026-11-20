@@ -911,7 +911,7 @@ int jni_encoder_init(JNIEnv *env, jobject thiz) {
     encoder->stop = FALSE;
 
     av_log_set_callback(utils_ffmpeg_log_callback);
-    av_log_set_level(FFMPEG_LOG_LEVEL);
+    av_log_set_level(utils_ffmpeg_log_level(FFMPEG_LOG_LEVEL));
 
     /* All fallible setup has succeeded — publish to Java. From this point
      * on, the Java side may call any of our JNI entry points and they will

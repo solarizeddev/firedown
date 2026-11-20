@@ -7,7 +7,10 @@
  */
 
 #include <android/log.h>
+#include <stdlib.h>
+#include <sys/system_properties.h>
 #include <libavutil/avstring.h>
+#include <libavutil/log.h>
 
 #include "utils.h"
 #include "helpers.h"
@@ -54,6 +57,36 @@ void utils_ffmpeg_log_callback(void *avcl, int level, const char *fmt,
     else android_level = ANDROID_LOG_DEBUG;
 
     __android_log_vprint(android_level, "ffmpeg", fmt, vl);
+}
+
+
+/*
+ * The av_log level an FFmpeg entry point should set: `fallback` (its
+ * compile-time FFMPEG_LOG_LEVEL, AV_LOG_QUIET everywhere today) in release
+ * builds. In builds without NDEBUG (CMake Debug, i.e. Android Studio's debug
+ * variant) the debug.firedown.fflog system property overrides it, so a device
+ * can be switched without a rebuild:
+ *
+ *   adb shell setprop debug.firedown.fflog 32    # AV_LOG_INFO: okhttp-stats lines
+ *   adb shell setprop debug.firedown.fflog '""'  # back to the default
+ *
+ * AV_LOG_INFO is what firedown-ffmpeg's http.c needs to log one
+ * "okhttp-stats:" line per connection (see scripts/okhttp-read-bench in that
+ * repo). The property is read on every call, which entry points make once per
+ * operation, so a change applies to the next download. Values outside
+ * AV_LOG_QUIET..AV_LOG_TRACE are ignored.
+ */
+int utils_ffmpeg_log_level(int fallback) {
+#ifndef NDEBUG
+    char value[PROP_VALUE_MAX] = "";
+    if (__system_property_get("debug.firedown.fflog", value) > 0) {
+        char *end = NULL;
+        long level = strtol(value, &end, 10);
+        if (end != value && *end == '\0' && level >= AV_LOG_QUIET && level <= AV_LOG_TRACE)
+            return (int) level;
+    }
+#endif
+    return fallback;
 }
 
 
