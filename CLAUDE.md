@@ -4833,7 +4833,11 @@ before changing a flow. The rules, each easy to undo:
   screen saves no switch state (`onSaveInstanceState` drops
   `android:preferences`: hundreds of rows is TransactionTooLarge
   territory, and it rebinds from the add-on anyway), and an add-on
-  removed while it is open pops it AND the add-on page in one step. Don't move the
+  removed while it is open pops it AND the add-on page in one step; a list
+  that empties while open (an update dropped every optional site) returns
+  to the add-on page, whose door then hides. The toolbar reads "Site
+  access" with the add-on's name as its subtitle, set while the screen is
+  started and cleared on stop (no other settings screen has one). Don't move the
   list back inline, not even "while it is short": two forms of one list
   is the drift this file keeps recording. **Remove is a
   `DestructivePreference`** in its own last group: the trash glyph and the

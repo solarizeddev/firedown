@@ -5,6 +5,8 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavDestination;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
@@ -72,18 +74,53 @@ public class AddonSiteAccessFragment extends BasePreferenceFragment {
         super.onViewCreated(view, savedInstanceState);
         mAddonManager.getAddons().observe(getViewLifecycleOwner(), addons -> {
             AddonInfo info = mAddonManager.find(mId);
+            boolean loaded = Boolean.TRUE.equals(mAddonManager.getLoaded().getValue());
             if (info == null) {
                 // Removed elsewhere: its page closes with this one, in one
                 // step (popping only this would slide the stale page in).
-                NavDestination current = mNavController.getCurrentDestination();
-                if (Boolean.TRUE.equals(mAddonManager.getLoaded().getValue())
-                        && current != null && current.getId() == R.id.settings_addon_sites) {
+                if (loaded && isCurrentDestination()) {
                     mNavController.popBackStack(R.id.settings_addon_detail, true);
                 }
                 return;
             }
             bind(info);
+            setSubtitle(info.name);
+            // Nothing left to switch (an update dropped every optional site):
+            // back to the add-on page, whose door hides, not a blank screen.
+            if (loaded && mSites.getPreferenceCount() == 0 && isCurrentDestination()) {
+                mNavController.popBackStack();
+            }
         });
+    }
+
+    /** The toolbar says "Site access"; the subtitle says whose. */
+    @Override
+    public void onStart() {
+        super.onStart();
+        AddonInfo info = mId == null ? null : mAddonManager.find(mId);
+        setSubtitle(info == null ? null : info.name);
+    }
+
+    /** No other settings screen has a subtitle, so it leaves with this one. */
+    @Override
+    public void onStop() {
+        setSubtitle(null);
+        super.onStop();
+    }
+
+    private void setSubtitle(@Nullable CharSequence subtitle) {
+        if (!(getActivity() instanceof AppCompatActivity)) {
+            return;
+        }
+        ActionBar bar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if (bar != null) {
+            bar.setSubtitle(subtitle);
+        }
+    }
+
+    private boolean isCurrentDestination() {
+        NavDestination current = mNavController.getCurrentDestination();
+        return current != null && current.getId() == R.id.settings_addon_sites;
     }
 
     private void bind(@NonNull AddonInfo info) {
