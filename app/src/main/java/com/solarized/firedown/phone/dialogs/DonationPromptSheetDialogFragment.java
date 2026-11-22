@@ -1,5 +1,6 @@
 package com.solarized.firedown.phone.dialogs;
 
+import android.app.Dialog;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.LayoutInflater;
@@ -23,11 +24,19 @@ import com.solarized.firedown.phone.SettingsActivity;
 public class DonationPromptSheetDialogFragment extends BaseBottomSheetDialogFragment {
 
     /** The sheet rises while the user reaches for the file they just
-     *  downloaded: a tap on Donate this soon after it appeared was aimed at
-     *  the list, not at the button. */
+     *  downloaded: a tap this soon after it appeared was aimed at the list.
+     *  On Donate it would pause the asks for a year, and on Not now or the
+     *  scrim it would close the sheet unseen and use up one of the asks. */
     private static final long TAP_GUARD_MS = 600;
 
     private long mVisibleSince;
+
+    private final Runnable mAllowOutsideTap = () -> {
+        Dialog dialog = getDialog();
+        if (dialog != null) {
+            dialog.setCanceledOnTouchOutside(true);
+        }
+    };
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -43,6 +52,24 @@ public class DonationPromptSheetDialogFragment extends BaseBottomSheetDialogFrag
     public void onStart() {
         super.onStart();
         mVisibleSince = SystemClock.uptimeMillis();
+        Dialog dialog = getDialog();
+        if (dialog != null && mView != null) {
+            dialog.setCanceledOnTouchOutside(false);
+            mView.removeCallbacks(mAllowOutsideTap);
+            mView.postDelayed(mAllowOutsideTap, TAP_GUARD_MS);
+        }
+    }
+
+    @Override
+    public void onStop() {
+        if (mView != null) {
+            mView.removeCallbacks(mAllowOutsideTap);
+        }
+        super.onStop();
+    }
+
+    private boolean tooSoon() {
+        return SystemClock.uptimeMillis() - mVisibleSince < TAP_GUARD_MS;
     }
 
     @Nullable
@@ -53,7 +80,7 @@ public class DonationPromptSheetDialogFragment extends BaseBottomSheetDialogFrag
         mView = inflater.inflate(R.layout.fragment_dialog_donation_prompt, container, false);
 
         mView.findViewById(R.id.donation_prompt_donate).setOnClickListener(v -> {
-            if (SystemClock.uptimeMillis() - mVisibleSince < TAP_GUARD_MS) {
+            if (tooSoon()) {
                 return;
             }
             BaseActivity activity = mActivity;
@@ -66,7 +93,11 @@ public class DonationPromptSheetDialogFragment extends BaseBottomSheetDialogFrag
             SettingsActivity.openInBrowser(activity, url);
         });
 
-        mView.findViewById(R.id.donation_prompt_later).setOnClickListener(v -> dismiss());
+        mView.findViewById(R.id.donation_prompt_later).setOnClickListener(v -> {
+            if (!tooSoon()) {
+                dismiss();
+            }
+        });
 
         return mView;
     }

@@ -14880,9 +14880,11 @@ update sheets sit outside the nav graph, hence the fragment-manager scan),
 and a VALIDATED network (a captive portal would send Donate to a login
 page). An ask is counted when the sheet is CREATED (its first `onCreate`),
 so a sheet killed under the user still counts and a navigation that never
-opened it does not. A Donate tap within 600 ms of the sheet appearing is
-ignored: the sheet rises 1.5 s after the list resumes, while the user
-reaches for the file they just downloaded. Picture and text scroll, the
+opened it does not. A tap within 600 ms of the sheet appearing (Donate,
+Not now or the scrim) is ignored: the sheet rises 1.5 s after the list
+resumes, while the user reaches for the file they just downloaded. The
+check runs on resume and again when the regular download group finishes
+while the list is on screen. Picture and text scroll, the
 buttons stay below them (landscape, large fonts). The state lives in
 `backup_local.xml` (excluded from backup: a new phone starts over) and
 the install date is the package's `firstInstallTime`; nothing is sent. A

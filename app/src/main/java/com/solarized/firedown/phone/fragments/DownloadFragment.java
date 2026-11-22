@@ -392,6 +392,16 @@ public class DownloadFragment extends BaseDownloadFragment implements
     }
 
     private void observeViewModelData() {
+        // The donation check runs on resume and skips while a download runs,
+        // so someone who watches a download finish on this screen is looked
+        // at again once the group ends (the service is gone by the delay).
+        mTaskViewModel.getRegularProgress().observe(getViewLifecycleOwner(), progress -> {
+            View root = getView();
+            if (root != null && progress != null && progress.isFinished() && isResumed()) {
+                root.removeCallbacks(mDonationCheck);
+                root.postDelayed(mDonationCheck, DONATION_CHECK_DELAY_MS);
+            }
+        });
         // Ongoing vault (incognito-tab) downloads light up the Safe Folder
         // row's subtitle. When the user has only vault downloads in flight
         // the in-progress notification already routes them to VaultActivity
@@ -526,11 +536,13 @@ public class DownloadFragment extends BaseDownloadFragment implements
     /**
      * The occasional donation sheet: DonationPromptPolicy decides whether it
      * is due (installed three weeks, 15 finished downloads, one finished in
-     * the last hour with no failure since and nothing downloading, half a
-     * year since the last ask, three asks in all, a year's pause after a
-     * Donate tap); this decides whether the screen is free to show it. Only on the resting list, with nothing else on screen, and online
-     * (Donate opens a web page). The count is a database read, so the check
-     * runs on the disk lane and comes back to look at the screen again.
+     * the last hour with no failure since and the download service idle
+     * (vault downloads included), half a year since the last ask, three
+     * asks in all, a year's pause after a Donate tap); this decides whether
+     * the screen is free to show it. Only on the resting list, with nothing
+     * else on screen, and online (Donate opens a web page). The count is a
+     * database read, so the check runs on the disk lane and comes back to
+     * look at the screen again.
      */
     private void checkDonationPrompt() {
         View root = getView();
