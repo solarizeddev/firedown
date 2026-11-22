@@ -27,6 +27,7 @@ public final class DonationPrompt {
     private static final String KEY_TIMES_SHOWN = "donation_prompt_times_shown";
     private static final String KEY_DONATE_TAPPED_AT = "donation_prompt_donate_tapped_at";
     private static final String KEY_CARD_SINCE = "donation_card_since";
+    private static final String KEY_CARD_DISPLAYS = "donation_card_displays";
     /** Before 1.2.12 a Donate tap ended the asks for good, with no time. */
     private static final String KEY_DONATED_LEGACY = "donation_prompt_donated";
 
@@ -71,6 +72,7 @@ public final class DonationPrompt {
                 .putLong(KEY_DONATE_TAPPED_AT, System.currentTimeMillis())
                 .remove(KEY_DONATED_LEGACY)
                 .remove(KEY_CARD_SINCE)
+                .remove(KEY_CARD_DISPLAYS)
                 .apply();
     }
 
@@ -80,8 +82,9 @@ public final class DonationPrompt {
         return DonationPromptPolicy.surfaceFor(prefs(context).getInt(KEY_TIMES_SHOWN, 0));
     }
 
-    /** A card ask starts: counted now, and shown until dismissed, tapped or
-     *  DonationPromptPolicy.CARD_LIFETIME_MS old. */
+    /** A card ask starts: counted now, and shown from the next visit until
+     *  dismissed or tapped, shown on CARD_MAX_DISPLAYS visits, or
+     *  CARD_LIFETIME_MS old. */
     public static synchronized void startCard(Context context) {
         SharedPreferences p = prefs(context);
         long now = System.currentTimeMillis();
@@ -89,18 +92,26 @@ public final class DonationPrompt {
                 .putLong(KEY_LAST_SHOWN, now)
                 .putInt(KEY_TIMES_SHOWN, p.getInt(KEY_TIMES_SHOWN, 0) + 1)
                 .putLong(KEY_CARD_SINCE, now)
+                .putInt(KEY_CARD_DISPLAYS, 0)
                 .apply();
     }
 
-    /** Whether the card is up (started, not dismissed, not expired). */
+    /** Whether the card is up (started, not dismissed, not used up). */
     public static boolean isCardVisible(Context context) {
-        return DonationPromptPolicy.cardVisible(
-                prefs(context).getLong(KEY_CARD_SINCE, 0), System.currentTimeMillis());
+        SharedPreferences p = prefs(context);
+        return DonationPromptPolicy.cardVisible(p.getLong(KEY_CARD_SINCE, 0),
+                p.getInt(KEY_CARD_DISPLAYS, 0), System.currentTimeMillis());
     }
 
-    /** The card's X: Not now. */
+    /** The card was shown on one more visit. */
+    public static synchronized void noteCardDisplayed(Context context) {
+        SharedPreferences p = prefs(context);
+        p.edit().putInt(KEY_CARD_DISPLAYS, p.getInt(KEY_CARD_DISPLAYS, 0) + 1).apply();
+    }
+
+    /** The card's X, or a tap on it: take it down. */
     public static void dismissCard(Context context) {
-        prefs(context).edit().remove(KEY_CARD_SINCE).apply();
+        prefs(context).edit().remove(KEY_CARD_SINCE).remove(KEY_CARD_DISPLAYS).apply();
     }
 
     /** Whether the sheet may show now. {@code finishedInList} is the
@@ -127,9 +138,11 @@ public final class DonationPrompt {
         return DonationPromptPolicy.shouldShow(state, System.currentTimeMillis());
     }
 
-    /** The donate page needs the internet; with none, or behind a captive
-     *  portal (connected but not validated), the sheet would send the user
-     *  to an error or login page. */
+    /** The donate page needs the internet: a network, and not a captive
+     *  portal (it would send Donate to a login page). VALIDATED is not
+     *  required: some VPNs and networks whose probe servers are blocked
+     *  never get it though they reach the internet (the RelayCredsPolicy
+     *  lesson). */
     public static boolean isOnline(Context context) {
         ConnectivityManager cm = context.getSystemService(ConnectivityManager.class);
         if (cm == null) {
@@ -142,7 +155,7 @@ public final class DonationPrompt {
         NetworkCapabilities caps = cm.getNetworkCapabilities(network);
         return caps != null
                 && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+                && !caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_CAPTIVE_PORTAL);
     }
 
     private static long installedAt(Context context) {

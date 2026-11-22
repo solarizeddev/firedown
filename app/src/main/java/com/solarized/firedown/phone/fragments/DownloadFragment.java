@@ -186,6 +186,15 @@ public class DownloadFragment extends BaseDownloadFragment implements
      *  not slide into its place in the same moment; cleared on resume. */
     private boolean mBannerSlotRested = false;
 
+    /** Set when a card ask starts on this visit: the card first shows on the
+     *  NEXT visit, so it is never inserted above rows the user is reaching
+     *  for. Cleared on resume. */
+    private boolean mCardStartedThisVisit = false;
+
+    /** Each visit (resume) the card is shown on counts once toward
+     *  DonationPromptPolicy.CARD_MAX_DISPLAYS. */
+    private boolean mCardDisplayCountedThisVisit = false;
+
     /** Set when a new query has been dispatched; consumed on the next successful refresh. */
     private boolean mPendingScrollToTop = false;
 
@@ -538,6 +547,8 @@ public class DownloadFragment extends BaseDownloadFragment implements
     public void onResume() {
         super.onResume();
         mBannerSlotRested = false;
+        mCardStartedThisVisit = false;
+        mCardDisplayCountedThisVisit = false;
         // Returning from the Backup screen may have set Backup up, which
         // retires the banner; nothing else observes that flag. A donation
         // card may also have expired, or been ended by the Settings row.
@@ -591,8 +602,12 @@ public class DownloadFragment extends BaseDownloadFragment implements
                     return;
                 }
                 if (DonationPrompt.nextSurface(app) == DonationPromptPolicy.Surface.CARD) {
-                    DonationPrompt.startCard(app);
-                    updateCloudBannerVisibility();
+                    // Only over a list it can show on; it appears on the
+                    // next visit (mCardStartedThisVisit).
+                    if (mHasRows) {
+                        DonationPrompt.startCard(app);
+                        mCardStartedThisVisit = true;
+                    }
                     return;
                 }
                 // The sheet counts itself as shown once it is created.
@@ -881,6 +896,9 @@ public class DownloadFragment extends BaseDownloadFragment implements
         int chipId = mChipGroup != null ? mChipGroup.getCheckedChipId() : View.NO_ID;
         boolean resting = chipId == View.NO_ID && !isSearchActive() && !mActionModeEnabled;
         mSafeFolderAdapter.setAllowed(hasVault && resting);
+        // Called on every search and selection change, which the banner slot
+        // follows too.
+        updateCloudBannerVisibility();
     }
 
     @Override
@@ -977,11 +995,17 @@ public class DownloadFragment extends BaseDownloadFragment implements
         if (mCloudBannerAdapter == null) {
             return;
         }
-        if (mBannerSlotRested) {
+        // A promo is not an answer to a search, and in selection a card
+        // above the ticked rows is a mis-tap (the Safe Folder row's rule).
+        if (mBannerSlotRested || mActionModeEnabled || isSearchActive()) {
             showBannerStage(BANNER_NONE);
             return;
         }
-        if (mHasRows && DonationPrompt.isCardVisible(requireContext())) {
+        if (mHasRows && !mCardStartedThisVisit && DonationPrompt.isCardVisible(requireContext())) {
+            if (!mCardDisplayCountedThisVisit) {
+                mCardDisplayCountedThisVisit = true;
+                DonationPrompt.noteCardDisplayed(requireContext());
+            }
             showBannerStage(BANNER_DONATION);
             return;
         }
@@ -1031,12 +1055,14 @@ public class DownloadFragment extends BaseDownloadFragment implements
                 return;
             }
             Context context = requireContext();
-            // Offline the page cannot load: the tap opens it (an error page
-            // the user can retry) but pauses nothing, and the card stays.
+            // The tap answers the card either way. Offline the page cannot
+            // load, so it pauses nothing: the next ask comes on schedule.
             if (DonationPrompt.isOnline(context)) {
                 DonationPrompt.markDonateTapped(context);
-                updateCloudBannerVisibility();
+            } else {
+                DonationPrompt.dismissCard(context);
             }
+            updateCloudBannerVisibility();
             SettingsActivity.openInBrowser(requireActivity(), getString(R.string.settings_donate_url));
             return;
         }

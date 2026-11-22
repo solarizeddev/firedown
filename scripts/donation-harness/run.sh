@@ -3,11 +3,12 @@
 # app/src, never re-typed) — who may be asked (install age, finished
 # downloads), when (right after a download finished, no failure since,
 # nothing running), how often (90 days to the second ask, a year after each
-# later one, no cap), how (the sheet first, then a card that lasts 14 days),
+# later one, no cap), how (the sheet first, then a card that lasts three visits or 7 days),
 # and that a Donate tap pauses it for a year; then five years of a user who
 # always taps Not now. JDK only. Then MUTANTS that must fail: no install-age
 # gate, no recent-download gate, no gap, a yearly gap from the start, a
-# 90-day gap forever, the sheet every time, a card that never expires, a
+# 90-day gap forever, the sheet every time, a card that never expires, a card
+# with no visit limit, a
 # Donate tap ignored, a Donate tap that never expires, no failure gate, no
 # running gate.
 #
@@ -60,6 +61,7 @@ mutant yearlyfromstart 's/timesShown <= 1 ? SECOND_ASK_GAP_MS : LATER_ASK_GAP_MS
 mutant ninetyforever 's/timesShown <= 1 ? SECOND_ASK_GAP_MS : LATER_ASK_GAP_MS/SECOND_ASK_GAP_MS/'
 mutant sheetalways 's/timesShown <= 0 ? Surface.SHEET : Surface.CARD/Surface.SHEET/'
 mutant cardforever 's/age >= 0 \&\& age < CARD_LIFETIME_MS/age >= 0/'
+mutant novisitlimit 's/ || displays >= CARD_MAX_DISPLAYS//'
 mutant nodonated 's/if (s.lastDonateTapAt > 0) {/if (false) {/'
 mutant tapforever 's/sinceTap < 0 || sinceTap < DONATE_TAP_PAUSE_MS/true/'
 mutant nofailgate 's/s.lastFailedAt > 0 \&\& (/false \&\& (/'

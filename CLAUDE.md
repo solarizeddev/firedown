@@ -14867,10 +14867,14 @@ card in the Downloads list's banner slot, the same `SyncBannerAdapter`
 instance as the Backup banner (`setContent`, `ic_favorite_24`, the sheet's
 two strings): the slot holds ONE card, and a donation card that is due
 takes it from the Backup banner rather than stacking a third card above
-the list. The card stays until its X (Not now), a tap (Donate), a Donate
-tap in Settings, or 14 days (`CARD_LIFETIME_MS`); dismissing it leaves the
-slot empty until the next resume so the Backup banner does not slide into
-its place. A yearly modal would wear on the people who picked the app for
+the list. The card first shows on the visit AFTER the one where the ask starts
+(inserted above rows the user is reaching for, it would move them under
+the finger), only over a list with rows, never during search or
+multi-select, and stays until its X (Not now), a tap, a Donate tap in
+Settings, three visits that showed it (`CARD_MAX_DISPLAYS`) or 7 days
+(`CARD_LIFETIME_MS`): a visit count, so a daily user does not see it for
+two weeks. Dismissing it leaves the slot empty until the next resume so
+the Backup banner does not slide into its place. A yearly modal would wear on the people who picked the app for
 being quiet; Signal's far more frequent asks are small inline cards in an
 app opened dozens of times a day. `DownloadFragment.checkDonationPrompt`
 decides when `donation/DonationPromptPolicy` (pure Java) says an ask is
@@ -14886,20 +14890,22 @@ year after, as Wikipedia and Thunderbird ask; it was 182 days and three
 asks in all, which ended every ask a year in); and not within a YEAR of a
 Donate tap, on the sheet, the card or the Settings row (all
 `markDonateTapped`, and only when online: offline the page cannot load, so
-the tap pauses nothing). A tap pauses rather than ends the asks: it is not
+the tap pauses nothing; a card tap takes the card down either way). A tap pauses rather than ends the asks: it is not
 a donation (a curious look, a page that did not load). A tap that ended
 them for good, from earlier builds (`donation_prompt_donated`, no time),
 starts the year when first read. The screen must be free: the resting
 Downloads list (no selection, no search, no restore running), nothing else
 on screen (the crash and update sheets sit outside the nav graph, hence
-the fragment-manager scan), and a VALIDATED network (a captive portal would
-send Donate to a login page). An ask is counted when it starts: the sheet
+the fragment-manager scan), and online: a network with INTERNET that is not
+a captive portal (it would send Donate to a login page). Not VALIDATED,
+which some VPNs and blocked-probe networks never get (the
+`RelayCredsPolicy` lesson; it shipped for one commit). An ask is counted when it starts: the sheet
 in its first `onCreate` (so a sheet killed under the user still counts and
 a navigation that never opened it does not), the card in `startCard`. A
 tap within 600 ms of either appearing is ignored (the sheet: Donate, Not
-now and the scrim; the card: the card and its X): both arrive 1.5 s after
-the list resumes, while the user reaches for the file they just
-downloaded, and the card pushes the first row down. The check runs on
+now and the scrim; the card: the card and its X): the sheet arrives 1.5 s
+after the list resumes, while the user reaches for the file they just
+downloaded. The check runs on
 resume and again when the regular download group finishes while the list
 is on screen. The sheet's picture and text scroll, the buttons stay below
 them (landscape, large fonts). The state lives in `backup_local.xml`
@@ -14907,8 +14913,8 @@ them (landscape, large fonts). The state lives in `backup_local.xml`
 the package's `firstInstallTime`; nothing is sent. A title with the user's
 own download count was sketched and dropped (it reads as "you owe us").
 Verify with `sh scripts/donation-harness/run.sh` (the real policy on a
-JDK, 36 checks incl. five years of Not now = asks on days 21, 111, 476,
-841, 1206, 1571, the sheet then cards; eleven mutants each fail it).
+JDK, 37 checks incl. five years of Not now = asks on days 21, 111, 476,
+841, 1206, 1571, the sheet then cards; twelve mutants each fail it).
 Reviewed with Fable (2026-11). On-device unverified at write time.
 
 ## Prebuilt native dependencies — GitHub Releases, pinned, fetched at sync

@@ -8,7 +8,7 @@ import com.solarized.firedown.donation.DonationPromptPolicy.Surface;
  * Drives the REAL DonationPromptPolicy (copied from app/src by run.sh): who
  * may be asked, when, how often (90 days to the second ask, a year after
  * each later one, no cap), how (the sheet first, the card after, the card
- * lasting 14 days), that a failure or a running download holds it back,
+ * lasting three visits or 7 days), that a failure or a running download holds it back,
  * and that a Donate tap pauses it for a year.
  */
 public final class DonationPromptHarness {
@@ -44,9 +44,9 @@ public final class DonationPromptHarness {
         }
     }
 
-    private static void checkCard(String name, boolean expected, long since, long now) {
+    private static void checkCard(String name, boolean expected, long since, int displays, long now) {
         checks++;
-        boolean actual = DonationPromptPolicy.cardVisible(since, now);
+        boolean actual = DonationPromptPolicy.cardVisible(since, displays, now);
         if (actual == expected) {
             System.out.println("ok   " + name);
         } else {
@@ -115,11 +115,12 @@ public final class DonationPromptHarness {
         checkSurface("never asked: the sheet", Surface.SHEET, 0);
         checkSurface("asked once: the card", Surface.CARD, 1);
         checkSurface("asked five times: the card", Surface.CARD, 5);
-        checkCard("card just started: up", true, NOW, NOW);
-        checkCard("card 13 days old: up", true, NOW - 13 * DAY, NOW);
-        checkCard("card 14 days old: gone", false, NOW - 14 * DAY, NOW);
-        checkCard("no card: gone", false, 0, NOW);
-        checkCard("card from the future (clock moved back): gone", false, NOW + DAY, NOW);
+        checkCard("card just started: up", true, NOW, 0, NOW);
+        checkCard("card 6 days old, shown twice: up", true, NOW - 6 * DAY, 2, NOW);
+        checkCard("card 7 days old: gone", false, NOW - 7 * DAY, 0, NOW);
+        checkCard("card shown on three visits: gone", false, NOW - DAY, 3, NOW);
+        checkCard("no card: gone", false, 0, 0, NOW);
+        checkCard("card from the future (clock moved back): gone", false, NOW + DAY, 0, NOW);
 
         // Not over a failure or a download still running.
         check("a download failed after the last success: no", false, failedAt(e, NOW - 30_000), NOW);

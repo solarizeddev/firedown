@@ -22,7 +22,9 @@ package com.solarized.firedown.donation;
  * </ul>
  * The FIRST ask is the sheet; every later one is a dismissible card in the
  * Downloads list's banner slot ({@link #surfaceFor}), which stays until it
- * is dismissed, tapped or {@link #CARD_LIFETIME_MS} old. A modal every year
+ * is dismissed or tapped, has been shown on {@link #CARD_MAX_DISPLAYS}
+ * visits, or is {@link #CARD_LIFETIME_MS} old: a count of visits, so a daily
+ * user is not shown it for two weeks, with an age limit beside it. A modal every year
  * would wear on the people who picked the app for being quiet.
  *
  * <p>A clock that moved backwards past a stored time reads as "not yet":
@@ -38,7 +40,8 @@ public final class DonationPromptPolicy {
     public static final long SECOND_ASK_GAP_MS = 90 * DAY_MS;
     public static final long LATER_ASK_GAP_MS = 365 * DAY_MS;
     public static final long DONATE_TAP_PAUSE_MS = 365 * DAY_MS;
-    public static final long CARD_LIFETIME_MS = 14 * DAY_MS;
+    public static final long CARD_LIFETIME_MS = 7 * DAY_MS;
+    public static final int CARD_MAX_DISPLAYS = 3;
 
     /** How an ask is shown. */
     public enum Surface { SHEET, CARD }
@@ -80,9 +83,10 @@ public final class DonationPromptPolicy {
         return timesShown <= 1 ? SECOND_ASK_GAP_MS : LATER_ASK_GAP_MS;
     }
 
-    /** Whether a card that appeared at {@code cardSince} still shows. */
-    public static boolean cardVisible(long cardSince, long now) {
-        if (cardSince <= 0) {
+    /** Whether a card started at {@code cardSince} and shown on
+     *  {@code displays} visits so far may show on this one. */
+    public static boolean cardVisible(long cardSince, int displays, long now) {
+        if (cardSince <= 0 || displays >= CARD_MAX_DISPLAYS) {
             return false;
         }
         long age = now - cardSince;
