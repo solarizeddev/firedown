@@ -9,6 +9,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -51,6 +52,7 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.models.DownloadsViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.donation.DonationPrompt;
+import com.solarized.firedown.donation.DonationPromptPolicy;
 import com.solarized.firedown.manager.RunnableManager;
 import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.phone.SettingsActivity;
@@ -110,6 +112,9 @@ public class DownloadFragment extends BaseDownloadFragment implements
      *  never stack on. */
     private static final long DONATION_CHECK_DELAY_MS = 1500;
 
+    /** A tap on the donation card this soon after it appeared is ignored. */
+    private static final long DONATION_TAP_GUARD_MS = 600;
+
     private final Runnable mDonationCheck = this::checkDonationPrompt;
 
     /** SAF folder picker for the empty-state "Restore previous downloads"
@@ -163,6 +168,23 @@ public class DownloadFragment extends BaseDownloadFragment implements
     /** Latest "the current query matched at least one row" value, fed by the
      *  aggregates stream — the backup banner's second visibility input. */
     private boolean mHasRows = false;
+
+    /** What the banner slot shows: the slot holds ONE card, and a donation
+     *  card that is due takes it from the Backup banner rather than stacking
+     *  a third card above the list. */
+    private static final int BANNER_NONE = 0;
+    private static final int BANNER_BACKUP = 1;
+    private static final int BANNER_DONATION = 2;
+    private int mBannerStage = BANNER_NONE;
+
+    /** When the donation card last appeared (uptime): it is inserted above
+     *  the first row 1.5 s after the list resumes, and a tap that soon was
+     *  aimed at the row it pushed down. */
+    private long mDonationCardShownAt;
+
+    /** Set when the donation card is dismissed, so the Backup banner does
+     *  not slide into its place in the same moment; cleared on resume. */
+    private boolean mBannerSlotRested = false;
 
     /** Set when a new query has been dispatched; consumed on the next successful refresh. */
     private boolean mPendingScrollToTop = false;
@@ -240,6 +262,7 @@ public class DownloadFragment extends BaseDownloadFragment implements
         mAdapter = null;
         mSafeFolderAdapter = null;
         mCloudBannerAdapter = null;
+        mBannerStage = BANNER_NONE;
         mGridLayoutManager = null;
         mBottomProgressView = null;
         mChipGroup = null;
@@ -514,8 +537,10 @@ public class DownloadFragment extends BaseDownloadFragment implements
     @Override
     public void onResume() {
         super.onResume();
+        mBannerSlotRested = false;
         // Returning from the Backup screen may have set Backup up, which
-        // retires the banner; nothing else observes that flag.
+        // retires the banner; nothing else observes that flag. A donation
+        // card may also have expired, or been ended by the Settings row.
         updateCloudBannerVisibility();
         View root = getView();
         if (root != null) {
@@ -534,15 +559,16 @@ public class DownloadFragment extends BaseDownloadFragment implements
     }
 
     /**
-     * The occasional donation sheet: DonationPromptPolicy decides whether it
+     * The occasional donation ask: DonationPromptPolicy decides whether one
      * is due (installed three weeks, 15 finished downloads, one finished in
      * the last hour with no failure since and the download service idle
-     * (vault downloads included), half a year since the last ask, three
-     * asks in all, a year's pause after a Donate tap); this decides whether
-     * the screen is free to show it. Only on the resting list, with nothing
-     * else on screen, and online (Donate opens a web page). The count is a
-     * database read, so the check runs on the disk lane and comes back to
-     * look at the screen again.
+     * (vault downloads included), 90 days after the first ask and a year
+     * after each later one, a year's pause after a Donate tap) and how it
+     * shows (the first as the sheet, later ones as the banner-slot card);
+     * this decides whether the screen is free for it. Only on the resting
+     * list, with nothing else on screen, and online (Donate opens a web
+     * page). The count is a database read, so the check runs on the disk
+     * lane and comes back to look at the screen again.
      */
     private void checkDonationPrompt() {
         View root = getView();
@@ -562,6 +588,11 @@ public class DownloadFragment extends BaseDownloadFragment implements
             root.post(() -> {
                 if (getView() != root || !canShowDonationPrompt() || !DonationPrompt.isOnline(app)
                         || RunnableManager.isRunning()) {
+                    return;
+                }
+                if (DonationPrompt.nextSurface(app) == DonationPromptPolicy.Surface.CARD) {
+                    DonationPrompt.startCard(app);
+                    updateCloudBannerVisibility();
                     return;
                 }
                 // The sheet counts itself as shown once it is created.
@@ -946,9 +977,17 @@ public class DownloadFragment extends BaseDownloadFragment implements
         if (mCloudBannerAdapter == null) {
             return;
         }
+        if (mBannerSlotRested) {
+            showBannerStage(BANNER_NONE);
+            return;
+        }
+        if (mHasRows && DonationPrompt.isCardVisible(requireContext())) {
+            showBannerStage(BANNER_DONATION);
+            return;
+        }
         if (!mCloudBackup.isSetUp()) {
             // DISCOVERY: no backup folder yet, pitch the feature once.
-            mCloudBannerAdapter.setVisible(mHasRows && !isCloudBannerDismissed());
+            showBannerStage(mHasRows && !isCloudBannerDismissed() ? BANNER_BACKUP : BANNER_NONE);
             return;
         }
         // Set up: the banner's job is done, permanently. (The hosted service
@@ -958,7 +997,22 @@ public class DownloadFragment extends BaseDownloadFragment implements
         if (!isCloudBannerDismissed()) {
             setCloudBannerDismissed(true);
         }
-        mCloudBannerAdapter.setVisible(false);
+        showBannerStage(BANNER_NONE);
+    }
+
+    private void showBannerStage(int stage) {
+        if (stage == BANNER_DONATION) {
+            mCloudBannerAdapter.setContent(R.string.donation_prompt_title,
+                    R.string.donation_prompt_body, R.drawable.ic_favorite_24);
+            if (mBannerStage != BANNER_DONATION) {
+                mDonationCardShownAt = SystemClock.uptimeMillis();
+            }
+        } else if (stage == BANNER_BACKUP) {
+            mCloudBannerAdapter.setContent(R.string.cloud_banner_title,
+                    R.string.cloud_banner_subtitle, R.drawable.cloud_upload_24);
+        }
+        mBannerStage = stage;
+        mCloudBannerAdapter.setVisible(stage != BANNER_NONE);
     }
 
     private boolean isCloudBannerDismissed() {
@@ -972,6 +1026,20 @@ public class DownloadFragment extends BaseDownloadFragment implements
 
     @Override
     public void onSyncBannerClicked() {
+        if (mBannerStage == BANNER_DONATION) {
+            if (SystemClock.uptimeMillis() - mDonationCardShownAt < DONATION_TAP_GUARD_MS) {
+                return;
+            }
+            Context context = requireContext();
+            // Offline the page cannot load: the tap opens it (an error page
+            // the user can retry) but pauses nothing, and the card stays.
+            if (DonationPrompt.isOnline(context)) {
+                DonationPrompt.markDonateTapped(context);
+                updateCloudBannerVisibility();
+            }
+            SettingsActivity.openInBrowser(requireActivity(), getString(R.string.settings_donate_url));
+            return;
+        }
         // The Backup screen — the recovery-code / folder roadmap lives there,
         // and setting the backup up starts with a code. popUpTo is handled by
         // SettingsActivity so Back returns here, not into settings.
@@ -982,9 +1050,18 @@ public class DownloadFragment extends BaseDownloadFragment implements
 
     @Override
     public void onSyncBannerDismissed() {
+        if (mBannerStage == BANNER_DONATION) {
+            if (SystemClock.uptimeMillis() - mDonationCardShownAt < DONATION_TAP_GUARD_MS) {
+                return;
+            }
+            DonationPrompt.dismissCard(requireContext());
+            mBannerSlotRested = true;
+            updateCloudBannerVisibility();
+            return;
+        }
         setCloudBannerDismissed(true);
         if (mCloudBannerAdapter != null) {
-            mCloudBannerAdapter.setVisible(false);
+            showBannerStage(BANNER_NONE);
         }
     }
 

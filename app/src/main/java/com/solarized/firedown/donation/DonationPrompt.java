@@ -26,6 +26,7 @@ public final class DonationPrompt {
     private static final String KEY_LAST_SHOWN = "donation_prompt_last_shown";
     private static final String KEY_TIMES_SHOWN = "donation_prompt_times_shown";
     private static final String KEY_DONATE_TAPPED_AT = "donation_prompt_donate_tapped_at";
+    private static final String KEY_CARD_SINCE = "donation_card_since";
     /** Before 1.2.12 a Donate tap ended the asks for good, with no time. */
     private static final String KEY_DONATED_LEGACY = "donation_prompt_donated";
 
@@ -62,13 +63,44 @@ public final class DonationPrompt {
                 .apply();
     }
 
-    /** Donate was tapped, on the sheet or the Settings row: pause the asks
-     *  (DonationPromptPolicy.DONATE_TAP_PAUSE_MS). */
+    /** Donate was tapped, on the sheet, the card or the Settings row: pause
+     *  the asks (DonationPromptPolicy.DONATE_TAP_PAUSE_MS) and take a card
+     *  down. */
     public static void markDonateTapped(Context context) {
         prefs(context).edit()
                 .putLong(KEY_DONATE_TAPPED_AT, System.currentTimeMillis())
                 .remove(KEY_DONATED_LEGACY)
+                .remove(KEY_CARD_SINCE)
                 .apply();
+    }
+
+    /** How the next ask is shown: the first is the sheet, later ones the
+     *  card. */
+    public static DonationPromptPolicy.Surface nextSurface(Context context) {
+        return DonationPromptPolicy.surfaceFor(prefs(context).getInt(KEY_TIMES_SHOWN, 0));
+    }
+
+    /** A card ask starts: counted now, and shown until dismissed, tapped or
+     *  DonationPromptPolicy.CARD_LIFETIME_MS old. */
+    public static synchronized void startCard(Context context) {
+        SharedPreferences p = prefs(context);
+        long now = System.currentTimeMillis();
+        p.edit()
+                .putLong(KEY_LAST_SHOWN, now)
+                .putInt(KEY_TIMES_SHOWN, p.getInt(KEY_TIMES_SHOWN, 0) + 1)
+                .putLong(KEY_CARD_SINCE, now)
+                .apply();
+    }
+
+    /** Whether the card is up (started, not dismissed, not expired). */
+    public static boolean isCardVisible(Context context) {
+        return DonationPromptPolicy.cardVisible(
+                prefs(context).getLong(KEY_CARD_SINCE, 0), System.currentTimeMillis());
+    }
+
+    /** The card's X: Not now. */
+    public static void dismissCard(Context context) {
+        prefs(context).edit().remove(KEY_CARD_SINCE).apply();
     }
 
     /** Whether the sheet may show now. {@code finishedInList} is the

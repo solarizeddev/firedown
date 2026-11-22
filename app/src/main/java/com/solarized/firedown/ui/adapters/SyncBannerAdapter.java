@@ -27,7 +27,9 @@ import com.solarized.firedown.utils.SelectionStyling;
  * <ul>
  *   <li>{@code WebBookmarkFragment} — "Sync your bookmarks across devices"
  *       (the original; the no-copy constructor keeps its defaults).</li>
- *   <li>{@code DownloadFragment} — "Keep your downloads if you lose your phone".</li>
+ *   <li>{@code DownloadFragment} — "Keep your downloads if you lose your phone",
+ *       and in the same slot, when one is due, the yearly donation card
+ *       ({@link #setContent}); the slot holds one card at a time.</li>
  * </ul>
  * The class keeps its historical {@code Sync*} name the way Backup keeps its
  * internal {@code Cloud*}/{@code Vault*} names: user-facing copy is the thing
@@ -52,7 +54,7 @@ public class SyncBannerAdapter extends RecyclerView.Adapter<SyncBannerAdapter.Ba
     @StringRes
     private int mSubtitleRes;
     @DrawableRes
-    private final int mIconRes;
+    private int mIconRes;
 
     /** The bookmarks-sync banner (the original copy + glyph). */
     public SyncBannerAdapter(@Nullable OnBannerListener listener) {
@@ -86,6 +88,18 @@ public class SyncBannerAdapter extends RecyclerView.Adapter<SyncBannerAdapter.Ba
         if (mVisible) {
             notifyItemChanged(0);
         }
+    }
+
+    /** {@link #setCopy} plus the glyph: the slot changing to another card. */
+    public void setContent(@StringRes int titleRes, @StringRes int subtitleRes,
+                           @DrawableRes int iconRes) {
+        if (iconRes != mIconRes) {
+            mIconRes = iconRes;
+            if (titleRes == mTitleRes && subtitleRes == mSubtitleRes && mVisible) {
+                notifyItemChanged(0);
+            }
+        }
+        setCopy(titleRes, subtitleRes);
     }
 
     /** Show/hide the card. Idempotent; animates via insert/remove at 0. */
