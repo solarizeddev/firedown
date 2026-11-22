@@ -6,6 +6,10 @@
   When it may show is DonationPromptPolicy's; Donate opens the website's
   donate page in a tab. The buttons reuse translated strings
   (translate_not_now, settings_donate).
+  The picture and text scroll and the buttons stay below them: in landscape
+  or with a large font the sheet is taller than the screen, and the buttons
+  must stay reachable. wrap_content + weight lets the scroll view shrink
+  only when the whole sheet does not fit.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -14,6 +18,17 @@
     android:orientation="vertical">
 
     <include layout="@layout/dialog_drag_handle" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:fillViewport="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
     <androidx.appcompat.widget.AppCompatImageView
         android:layout_width="210dp"
@@ -27,6 +42,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
+        android:accessibilityHeading="true"
         android:gravity="center"
         android:text="@string/donation_prompt_title"
         android:textAppearance="?attr/textAppearanceHeadlineSmall"
@@ -41,6 +57,10 @@
         android:text="@string/donation_prompt_body"
         android:textAppearance="?attr/textAppearanceBodyLarge"
         android:textColor="?attr/colorOnSurfaceVariant" />
+
+    </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
 
     <LinearLayout
         android:layout_width="match_parent"

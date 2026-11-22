@@ -591,9 +591,8 @@ public class SettingsFragment extends BasePreferenceFragment
                 // service — the app sells nothing now. This row hands off to
                 // the website donate page in a Firedown tab, like
                 // SETTINGS_SUPPORT below.
-                // A Donate tap here ends the occasional donation sheet too:
-                // someone who gave is never asked again.
-                DonationPrompt.markDonated(mActivity);
+                // A Donate tap here pauses the occasional donation sheet too.
+                DonationPrompt.markDonateTapped(mActivity);
                 SettingsActivity.openInBrowser(mActivity, getString(R.string.settings_donate_url));
             }
             case Preferences.SETTINGS_AUTOFILL ->

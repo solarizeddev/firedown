@@ -14863,22 +14863,36 @@ holding out a flower, shared with the notifications priming sheet; `ill_kid` is 
 the repo but not used yet), "Support Firedown", one sentence, Not now / Donate (`translate_not_now`, `settings_donate`). Shown
 by `DownloadFragment.checkDonationPrompt` as a `<dialog>` of
 `nav_graph_downloads`, when `donation/DonationPromptPolicy` (pure Java) says
-it is due: installed for 21 days, 15 finished regular downloads, one of them
-finished in the last hour (`DownloadTask.onRunComplete` stamps it, vault
-downloads never), 182 days since the last ask, 3 asks in all, never after a
-Donate tap, here or on the Settings row (both `markDonated`). And the screen
-must be free: the resting Downloads list (no selection, no search, no
-restore running), nothing else on screen (the crash and update sheets sit
-outside the nav graph, hence the fragment-manager scan), online. An ask is
-counted when it SHOWS, so a sheet killed under the user still counts. The
-state lives in `backup_local.xml` (excluded from backup: a new phone starts
-over) and the install date is the package's `firstInstallTime`; nothing
-is sent. A title with the user's own download count was sketched and
-dropped (it reads as "you owe us"). Verify with `sh
-scripts/donation-harness/run.sh` (the real policy on a JDK, 19 checks incl.
-five years of Not now = 3 asks; mutants without the age gate, the recent
-download, the gap, the cap or the Donate tap each fail). On-device
-unverified at write time.
+it is due: installed for 21 days, 15 regular downloads finished over the
+install's life (`noteDownloadFinished` counts them, since the list only
+holds what the user kept; the larger of that and the list's count is
+used), one of them finished in the last hour (`DownloadTask.onRunComplete`
+stamps it, vault downloads never), no regular download failed since
+(`noteDownloadFailed`) and none running (`RunnableManager.isRunning()`),
+182 days since the last ask, 3 asks in all, and not within a YEAR of a
+Donate tap, here or on the Settings row (both `markDonateTapped`). A tap
+pauses rather than ends the asks: it is not a donation (a curious look, a
+page that did not load). A tap that ended them for good, from earlier
+builds (`donation_prompt_donated`, no time), starts the year when first
+read. The screen must be free: the resting Downloads list (no selection,
+no search, no restore running), nothing else on screen (the crash and
+update sheets sit outside the nav graph, hence the fragment-manager scan),
+and a VALIDATED network (a captive portal would send Donate to a login
+page). An ask is counted when the sheet is CREATED (its first `onCreate`),
+so a sheet killed under the user still counts and a navigation that never
+opened it does not. A Donate tap within 600 ms of the sheet appearing is
+ignored: the sheet rises 1.5 s after the list resumes, while the user
+reaches for the file they just downloaded. Picture and text scroll, the
+buttons stay below them (landscape, large fonts). The state lives in
+`backup_local.xml` (excluded from backup: a new phone starts over) and
+the install date is the package's `firstInstallTime`; nothing is sent. A
+title with the user's own download count was sketched and dropped (it
+reads as "you owe us"). Verify with `sh scripts/donation-harness/run.sh`
+(the real policy on a JDK, 27 checks incl. five years of Not now = 3
+asks; mutants without the age gate, the recent download, the gap, the
+cap, the Donate pause, its expiry, the failure gate or the running gate
+each fail). Reviewed with Fable (2026-11). On-device unverified at write
+time.
 
 ## Prebuilt native dependencies — GitHub Releases, pinned, fetched at sync
 

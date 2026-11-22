@@ -51,6 +51,7 @@ import com.solarized.firedown.data.entity.DownloadEntity;
 import com.solarized.firedown.data.models.DownloadsViewModel;
 import com.solarized.firedown.data.models.TaskViewModel;
 import com.solarized.firedown.donation.DonationPrompt;
+import com.solarized.firedown.manager.RunnableManager;
 import com.solarized.firedown.manager.ServiceActions;
 import com.solarized.firedown.phone.SettingsActivity;
 import com.solarized.firedown.phone.VaultActivity;
@@ -525,9 +526,9 @@ public class DownloadFragment extends BaseDownloadFragment implements
     /**
      * The occasional donation sheet: DonationPromptPolicy decides whether it
      * is due (installed three weeks, 15 finished downloads, one finished in
-     * the last hour, half a year since the last ask, three asks in all, never
-     * after a Donate tap); this decides whether the screen is free to show
-     * it. Only on the resting list, with nothing else on screen, and online
+     * the last hour with no failure since and nothing downloading, half a
+     * year since the last ask, three asks in all, a year's pause after a
+     * Donate tap); this decides whether the screen is free to show it. Only on the resting list, with nothing else on screen, and online
      * (Donate opens a web page). The count is a database read, so the check
      * runs on the disk lane and comes back to look at the screen again.
      */
@@ -539,18 +540,19 @@ public class DownloadFragment extends BaseDownloadFragment implements
         Context app = root.getContext().getApplicationContext();
         mDiskExecutor.execute(() -> {
             // The stored state alone rules most visits out; count only then.
-            if (!DonationPrompt.shouldShow(app, Integer.MAX_VALUE)) {
+            if (!DonationPrompt.shouldShow(app, Integer.MAX_VALUE, RunnableManager.isRunning())) {
                 return;
             }
             int finished = mDownloadDatabase.downloadDao().getRegularFinishedCount();
-            if (!DonationPrompt.shouldShow(app, finished)) {
+            if (!DonationPrompt.shouldShow(app, finished, RunnableManager.isRunning())) {
                 return;
             }
             root.post(() -> {
-                if (getView() != root || !canShowDonationPrompt() || !DonationPrompt.isOnline(app)) {
+                if (getView() != root || !canShowDonationPrompt() || !DonationPrompt.isOnline(app)
+                        || RunnableManager.isRunning()) {
                     return;
                 }
-                DonationPrompt.markShown(app);
+                // The sheet counts itself as shown once it is created.
                 NavigationUtils.navigateSafe(mNavController, R.id.dialog_donation_prompt, R.id.downloads);
             });
         });

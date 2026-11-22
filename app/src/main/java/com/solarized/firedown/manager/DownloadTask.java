@@ -306,6 +306,8 @@ public class DownloadTask implements DownloadCallback {
                 if (!entity.isFileSafe()) {
                     DonationPrompt.noteDownloadFinished(engine.getContext());
                 }
+            } else if (entity.getFileStatus() == Download.ERROR && !entity.isFileSafe()) {
+                DonationPrompt.noteDownloadFailed(engine.getContext());
             }
             repository.add(entity);
         }
