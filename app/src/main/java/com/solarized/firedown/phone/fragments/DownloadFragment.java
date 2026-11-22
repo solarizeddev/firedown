@@ -191,10 +191,6 @@ public class DownloadFragment extends BaseDownloadFragment implements
      *  for. Cleared on resume. */
     private boolean mCardStartedThisVisit = false;
 
-    /** Each visit (resume) the card is shown on counts once toward
-     *  DonationPromptPolicy.CARD_MAX_DISPLAYS. */
-    private boolean mCardDisplayCountedThisVisit = false;
-
     /** Set when a new query has been dispatched; consumed on the next successful refresh. */
     private boolean mPendingScrollToTop = false;
 
@@ -548,7 +544,6 @@ public class DownloadFragment extends BaseDownloadFragment implements
         super.onResume();
         mBannerSlotRested = false;
         mCardStartedThisVisit = false;
-        mCardDisplayCountedThisVisit = false;
         // Returning from the Backup screen may have set Backup up, which
         // retires the banner; nothing else observes that flag. A donation
         // card may also have expired, or been ended by the Settings row.
@@ -1002,10 +997,8 @@ public class DownloadFragment extends BaseDownloadFragment implements
             return;
         }
         if (mHasRows && !mCardStartedThisVisit && DonationPrompt.isCardVisible(requireContext())) {
-            if (!mCardDisplayCountedThisVisit) {
-                mCardDisplayCountedThisVisit = true;
-                DonationPrompt.noteCardDisplayed(requireContext());
-            }
+            // Counts once per visit (an hour), however often this repaints.
+            DonationPrompt.noteCardDisplayed(requireContext());
             showBannerStage(BANNER_DONATION);
             return;
         }

@@ -23,8 +23,12 @@ package com.solarized.firedown.donation;
  * The FIRST ask is the sheet; every later one is a dismissible card in the
  * Downloads list's banner slot ({@link #surfaceFor}), which stays until it
  * is dismissed or tapped, has been shown on {@link #CARD_MAX_DISPLAYS}
- * visits, or is {@link #CARD_LIFETIME_MS} old: a count of visits, so a daily
- * user is not shown it for two weeks, with an age limit beside it. A modal every year
+ * visits, or {@link #CARD_LIFETIME_MS} have passed since it was first
+ * shown: a count of visits, so a daily user is not shown it for two weeks,
+ * and an age counted from the first showing, so someone who is away for a
+ * week does not lose the ask unseen. A visit is an hour
+ * ({@link #VISIT_MS}): returning from the player or the lock screen is the
+ * same visit, and the visit that used the last showing keeps the card. A modal every year
  * would wear on the people who picked the app for being quiet.
  *
  * <p>A clock that moved backwards past a stored time reads as "not yet":
@@ -42,6 +46,7 @@ public final class DonationPromptPolicy {
     public static final long DONATE_TAP_PAUSE_MS = 365 * DAY_MS;
     public static final long CARD_LIFETIME_MS = 7 * DAY_MS;
     public static final int CARD_MAX_DISPLAYS = 3;
+    public static final long VISIT_MS = 60L * 60 * 1000;
 
     /** How an ask is shown. */
     public enum Surface { SHEET, CARD }
@@ -83,14 +88,33 @@ public final class DonationPromptPolicy {
         return timesShown <= 1 ? SECOND_ASK_GAP_MS : LATER_ASK_GAP_MS;
     }
 
-    /** Whether a card started at {@code cardSince} and shown on
-     *  {@code displays} visits so far may show on this one. */
-    public static boolean cardVisible(long cardSince, int displays, long now) {
-        if (cardSince <= 0 || displays >= CARD_MAX_DISPLAYS) {
+    /** Whether a showing now is a new visit (and counts), or part of the
+     *  visit of the last one. A clock that moved back is the same visit. */
+    public static boolean isNewVisit(long lastDisplayAt, long now) {
+        return lastDisplayAt <= 0 || now - lastDisplayAt >= VISIT_MS;
+    }
+
+    /**
+     * Whether the card may show now.
+     *
+     * @param started       a card ask is pending (started, not answered)
+     * @param firstShownAt  when it was first shown, 0 if never
+     * @param displays      visits it has been shown on
+     * @param lastDisplayAt when the last of those visits began, 0 if none
+     */
+    public static boolean cardVisible(boolean started, long firstShownAt, int displays,
+                                      long lastDisplayAt, long now) {
+        if (!started) {
             return false;
         }
-        long age = now - cardSince;
-        return age >= 0 && age < CARD_LIFETIME_MS;
+        if (firstShownAt > 0) {
+            long age = now - firstShownAt;
+            if (age < 0 || age >= CARD_LIFETIME_MS) {
+                return false;
+            }
+        }
+        // Used up, unless this is the visit that used the last showing.
+        return displays < CARD_MAX_DISPLAYS || !isNewVisit(lastDisplayAt, now);
     }
 
     public static boolean shouldShow(State s, long now) {

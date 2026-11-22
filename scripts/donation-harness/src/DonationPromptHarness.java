@@ -8,7 +8,7 @@ import com.solarized.firedown.donation.DonationPromptPolicy.Surface;
  * Drives the REAL DonationPromptPolicy (copied from app/src by run.sh): who
  * may be asked, when, how often (90 days to the second ask, a year after
  * each later one, no cap), how (the sheet first, the card after, the card
- * lasting three visits or 7 days), that a failure or a running download holds it back,
+ * lasting three visits of an hour or 7 days from its first showing), that a failure or a running download holds it back,
  * and that a Donate tap pauses it for a year.
  */
 public final class DonationPromptHarness {
@@ -44,9 +44,21 @@ public final class DonationPromptHarness {
         }
     }
 
-    private static void checkCard(String name, boolean expected, long since, int displays, long now) {
+    private static void checkVisit(String name, boolean expected, long lastDisplayAt, long now) {
         checks++;
-        boolean actual = DonationPromptPolicy.cardVisible(since, displays, now);
+        boolean actual = DonationPromptPolicy.isNewVisit(lastDisplayAt, now);
+        if (actual == expected) {
+            System.out.println("ok   " + name);
+        } else {
+            failures++;
+            System.out.println("FAIL " + name + ": expected " + expected + ", got " + actual);
+        }
+    }
+
+    private static void checkCard(String name, boolean expected, boolean started, long firstShownAt,
+                                  int displays, long lastDisplayAt, long now) {
+        checks++;
+        boolean actual = DonationPromptPolicy.cardVisible(started, firstShownAt, displays, lastDisplayAt, now);
         if (actual == expected) {
             System.out.println("ok   " + name);
         } else {
@@ -115,12 +127,19 @@ public final class DonationPromptHarness {
         checkSurface("never asked: the sheet", Surface.SHEET, 0);
         checkSurface("asked once: the card", Surface.CARD, 1);
         checkSurface("asked five times: the card", Surface.CARD, 5);
-        checkCard("card just started: up", true, NOW, 0, NOW);
-        checkCard("card 6 days old, shown twice: up", true, NOW - 6 * DAY, 2, NOW);
-        checkCard("card 7 days old: gone", false, NOW - 7 * DAY, 0, NOW);
-        checkCard("card shown on three visits: gone", false, NOW - DAY, 3, NOW);
-        checkCard("no card: gone", false, 0, 0, NOW);
-        checkCard("card from the future (clock moved back): gone", false, NOW + DAY, 0, NOW);
+        checkCard("card started, never shown: up", true, true, 0, 0, 0, NOW);
+        checkCard("no card: gone", false, false, 0, 0, 0, NOW);
+        checkCard("first shown 6 days ago, two visits: up", true, true, NOW - 6 * DAY, 2, NOW - 2 * DAY, NOW);
+        checkCard("first shown 7 days ago: gone", false, true, NOW - 7 * DAY, 1, NOW - 7 * DAY, NOW);
+        checkCard("first shown in the future (clock moved back): gone", false, true, NOW + DAY, 1, NOW + DAY, NOW);
+        checkCard("three visits, the third 10 min ago: still up this visit", true,
+                true, NOW - 2 * DAY, 3, NOW - 10 * 60_000L, NOW);
+        checkCard("three visits, the third 2 hours ago: gone", false,
+                true, NOW - 2 * DAY, 3, NOW - 2 * HOUR, NOW);
+        checkVisit("no showing yet: a new visit", true, 0, NOW);
+        checkVisit("showing 59 minutes ago: same visit", false, NOW - 59 * 60_000L, NOW);
+        checkVisit("showing an hour ago: a new visit", true, NOW - HOUR, NOW);
+        checkVisit("showing in the future (clock moved back): same visit", false, NOW + HOUR, NOW);
 
         // Not over a failure or a download still running.
         check("a download failed after the last success: no", false, failedAt(e, NOW - 30_000), NOW);

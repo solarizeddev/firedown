@@ -14872,8 +14872,13 @@ the list. The card first shows on the visit AFTER the one where the ask starts
 the finger), only over a list with rows, never during search or
 multi-select, and stays until its X (Not now), a tap, a Donate tap in
 Settings, three visits that showed it (`CARD_MAX_DISPLAYS`) or 7 days
-(`CARD_LIFETIME_MS`): a visit count, so a daily user does not see it for
-two weeks. Dismissing it leaves the slot empty until the next resume so
+from its FIRST showing (`CARD_LIFETIME_MS`): a visit count, so a daily
+user does not see it for two weeks, and an age from the first showing, so
+someone away for a week does not lose the ask unseen. A visit is an hour
+(`VISIT_MS`, `noteCardDisplayed` counts once per hour however often the
+slot repaints): returning from the player or the lock screen is the same
+visit, and the visit that used the last showing keeps the card (it does
+not vanish on the next repaint). Dismissing it leaves the slot empty until the next resume so
 the Backup banner does not slide into its place. A yearly modal would wear on the people who picked the app for
 being quiet; Signal's far more frequent asks are small inline cards in an
 app opened dozens of times a day. `DownloadFragment.checkDonationPrompt`
@@ -14913,8 +14918,8 @@ them (landscape, large fonts). The state lives in `backup_local.xml`
 the package's `firstInstallTime`; nothing is sent. A title with the user's
 own download count was sketched and dropped (it reads as "you owe us").
 Verify with `sh scripts/donation-harness/run.sh` (the real policy on a
-JDK, 37 checks incl. five years of Not now = asks on days 21, 111, 476,
-841, 1206, 1571, the sheet then cards; twelve mutants each fail it).
+JDK, 42 checks incl. five years of Not now = asks on days 21, 111, 476,
+841, 1206, 1571, the sheet then cards; fourteen mutants each fail it).
 Reviewed with Fable (2026-11). On-device unverified at write time.
 
 ## Prebuilt native dependencies — GitHub Releases, pinned, fetched at sync

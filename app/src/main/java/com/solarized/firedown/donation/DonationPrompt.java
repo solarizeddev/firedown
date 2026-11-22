@@ -27,7 +27,9 @@ public final class DonationPrompt {
     private static final String KEY_TIMES_SHOWN = "donation_prompt_times_shown";
     private static final String KEY_DONATE_TAPPED_AT = "donation_prompt_donate_tapped_at";
     private static final String KEY_CARD_SINCE = "donation_card_since";
+    private static final String KEY_CARD_FIRST_SHOWN = "donation_card_first_shown";
     private static final String KEY_CARD_DISPLAYS = "donation_card_displays";
+    private static final String KEY_CARD_LAST_DISPLAY = "donation_card_last_display";
     /** Before 1.2.12 a Donate tap ended the asks for good, with no time. */
     private static final String KEY_DONATED_LEGACY = "donation_prompt_donated";
 
@@ -72,7 +74,9 @@ public final class DonationPrompt {
                 .putLong(KEY_DONATE_TAPPED_AT, System.currentTimeMillis())
                 .remove(KEY_DONATED_LEGACY)
                 .remove(KEY_CARD_SINCE)
+                .remove(KEY_CARD_FIRST_SHOWN)
                 .remove(KEY_CARD_DISPLAYS)
+                .remove(KEY_CARD_LAST_DISPLAY)
                 .apply();
     }
 
@@ -84,7 +88,7 @@ public final class DonationPrompt {
 
     /** A card ask starts: counted now, and shown from the next visit until
      *  dismissed or tapped, shown on CARD_MAX_DISPLAYS visits, or
-     *  CARD_LIFETIME_MS old. */
+     *  CARD_LIFETIME_MS after its first showing. */
     public static synchronized void startCard(Context context) {
         SharedPreferences p = prefs(context);
         long now = System.currentTimeMillis();
@@ -92,26 +96,46 @@ public final class DonationPrompt {
                 .putLong(KEY_LAST_SHOWN, now)
                 .putInt(KEY_TIMES_SHOWN, p.getInt(KEY_TIMES_SHOWN, 0) + 1)
                 .putLong(KEY_CARD_SINCE, now)
+                .remove(KEY_CARD_FIRST_SHOWN)
                 .putInt(KEY_CARD_DISPLAYS, 0)
+                .remove(KEY_CARD_LAST_DISPLAY)
                 .apply();
     }
 
-    /** Whether the card is up (started, not dismissed, not used up). */
+    /** Whether the card is up (started, not answered, not used up). */
     public static boolean isCardVisible(Context context) {
         SharedPreferences p = prefs(context);
-        return DonationPromptPolicy.cardVisible(p.getLong(KEY_CARD_SINCE, 0),
-                p.getInt(KEY_CARD_DISPLAYS, 0), System.currentTimeMillis());
+        return DonationPromptPolicy.cardVisible(p.getLong(KEY_CARD_SINCE, 0) > 0,
+                p.getLong(KEY_CARD_FIRST_SHOWN, 0), p.getInt(KEY_CARD_DISPLAYS, 0),
+                p.getLong(KEY_CARD_LAST_DISPLAY, 0), System.currentTimeMillis());
     }
 
-    /** The card was shown on one more visit. */
+    /** The card is on screen. Called on every repaint of the slot; counts
+     *  once per visit (DonationPromptPolicy.VISIT_MS) and writes nothing
+     *  otherwise. */
     public static synchronized void noteCardDisplayed(Context context) {
         SharedPreferences p = prefs(context);
-        p.edit().putInt(KEY_CARD_DISPLAYS, p.getInt(KEY_CARD_DISPLAYS, 0) + 1).apply();
+        long now = System.currentTimeMillis();
+        if (!DonationPromptPolicy.isNewVisit(p.getLong(KEY_CARD_LAST_DISPLAY, 0), now)) {
+            return;
+        }
+        SharedPreferences.Editor e = p.edit()
+                .putInt(KEY_CARD_DISPLAYS, p.getInt(KEY_CARD_DISPLAYS, 0) + 1)
+                .putLong(KEY_CARD_LAST_DISPLAY, now);
+        if (p.getLong(KEY_CARD_FIRST_SHOWN, 0) <= 0) {
+            e.putLong(KEY_CARD_FIRST_SHOWN, now);
+        }
+        e.apply();
     }
 
     /** The card's X, or a tap on it: take it down. */
     public static void dismissCard(Context context) {
-        prefs(context).edit().remove(KEY_CARD_SINCE).remove(KEY_CARD_DISPLAYS).apply();
+        prefs(context).edit()
+                .remove(KEY_CARD_SINCE)
+                .remove(KEY_CARD_FIRST_SHOWN)
+                .remove(KEY_CARD_DISPLAYS)
+                .remove(KEY_CARD_LAST_DISPLAY)
+                .apply();
     }
 
     /** Whether the sheet may show now. {@code finishedInList} is the
