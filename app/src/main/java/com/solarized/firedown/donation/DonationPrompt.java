@@ -123,7 +123,10 @@ public final class DonationPrompt {
                 .putInt(KEY_CARD_DISPLAYS, p.getInt(KEY_CARD_DISPLAYS, 0) + 1)
                 .putLong(KEY_CARD_LAST_DISPLAY, now);
         if (p.getLong(KEY_CARD_FIRST_SHOWN, 0) <= 0) {
-            e.putLong(KEY_CARD_FIRST_SHOWN, now);
+            // The gap to the next ask runs from when the user SAW this one:
+            // a card first seen months after it started must not be followed
+            // by the next ask weeks later.
+            e.putLong(KEY_CARD_FIRST_SHOWN, now).putLong(KEY_LAST_SHOWN, now);
         }
         e.apply();
     }

@@ -14878,7 +14878,9 @@ someone away for a week does not lose the ask unseen. A visit is an hour
 (`VISIT_MS`, `noteCardDisplayed` counts once per hour however often the
 slot repaints): returning from the player or the lock screen is the same
 visit, and the visit that used the last showing keeps the card (it does
-not vanish on the next repaint). Dismissing it leaves the slot empty until the next resume so
+not vanish on the next repaint). The gap to the next ask runs from the
+card's first showing (`noteCardDisplayed` moves the last-shown time), so a
+card seen months after it started is not followed by another weeks later. Dismissing it leaves the slot empty until the next resume so
 the Backup banner does not slide into its place. A yearly modal would wear on the people who picked the app for
 being quiet; Signal's far more frequent asks are small inline cards in an
 app opened dozens of times a day. `DownloadFragment.checkDonationPrompt`
