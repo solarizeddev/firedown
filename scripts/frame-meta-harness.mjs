@@ -331,6 +331,22 @@ const SITE = {
     + `<div class="m"><div role="button" aria-label="Video player" data-video-url="/assets/clips/g7.mp4"><img src="/img/g7.jpg" alt="Video player"></div></div>`
     + feedPost("Ana", "", 3, "ph") + feedPost("Noticias del Valle", "", 4, "ph") + feedPost("Pepe", "Wow!", 5, "ph")
     + `<div class="m">Texto de una publicación sin vídeo con varias palabras aquí</div>` + feedPost("Luis", "", 6, "ph") + `</div>`),
+  // A feed of two posts (every player labelled "Video player"), the second
+  // with its caption in a permalink.
+  [`a.test/flatfeed4.html`]: html("Discover Popular Videos | Site",
+    `<meta property="og:title" content="Discover Popular Videos | Site"><meta property="og:image" content="/img/og.jpg">`,
+    `<div class="m">` + feedPost("Canal Norte", "La final se decide en la prórroga con un gol de cabeza", 1, "ph")
+      .replace(/g1/g, "t1")
+    + feedPost("Diario Local", "<a href=\"/post/2\">El puerto recibe el primer crucero de la temporada</a>", 2, "ph").replace(/g2/g, "t2")
+    + `</div>`),
+  // A single clip whose wrapper shares a generic attribute with one related
+  // card's hover preview and a footer promo.
+  [`a.test/generic.html`]: html("Mayor resigns after budget vote | The Daily",
+    `<meta property="og:title" content="Mayor resigns after budget vote | The Daily"><meta property="og:image" content="/img/og.jpg">`,
+    `<header><h1>Mayor resigns after budget vote</h1></header><div class="content"><div class="player" data-src="/assets/clips/w.mp4">`
+    + `<video src="/assets/clips/w.mp4"></video></div><p>The mayor told reporters she would leave office on Friday.</p></div>`
+    + `<aside><a href="/s2"><div class="thumb" data-src="/assets/clips/prev2.mp4"></div><h3>Floods close the coast road again</h3></a></aside>`
+    + `<footer><div class="promo" data-src="/assets/clips/appad.mp4"></div></footer>`),
   [`a.test/article2.html`]: html("Storm leaves the valley without power", `<meta property="og:title" content="Storm leaves the valley without power">`,
     `<article><h1>Storm leaves the valley without power</h1><div class="body">`
     + `<p>Crews worked through the night to restore the lines, the utility said on Tuesday.</p><figure><video src="/assets/clips/a1.mp4"></video></figure>`
@@ -1554,6 +1570,20 @@ try {
     expect(r.pick?.name === "Mayor resigns after budget vote" && r.meta?.posterlessClip === false,
       "a single clip keeps the page's title and picture beside hover previews, a share field and another rendition",
       `${r.pick?.name} posterless=${r.meta?.posterlessClip}`);
+    o = await open(`${a}/flatfeed4.html`);
+    top = o.frame("/flatfeed4.html");
+    r = await o.ask(top, "t1.mp4");
+    expect(r.pick?.name === "La final se decide en la prórroga con un gol de cabeza",
+      "a feed of two: the playing clip is named by its caption, never the players' shared label", r.pick?.name);
+    r = await o.ask(top, "t2.mp4");
+    expect(r.pick?.name === "El puerto recibe el primer crucero de la temporada" && r.meta?.posterlessClip === true,
+      "a feed of two: the unplayed clip, its caption a permalink, takes no page picture",
+      `${r.pick?.name} posterless=${r.meta?.posterlessClip}`);
+    o = await open(`${a}/generic.html`);
+    top = o.frame("/generic.html");
+    r = await o.ask(top, "w.mp4");
+    expect(r.pick?.name === "Mayor resigns after budget vote | The Daily" && r.meta?.posterlessClip === false,
+      "a player wrapper sharing a generic attribute with unlike elements is no feed", `${r.pick?.name} posterless=${r.meta?.posterlessClip}`);
     o = await open(`${a}/dupe.html`);
     top = o.frame("/dupe.html");
     r = await o.ask(top, "d.mp4?v=1");

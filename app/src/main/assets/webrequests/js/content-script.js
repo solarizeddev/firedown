@@ -1081,9 +1081,17 @@ function sweepShadowRoots(root, onRoot) {
     fileSearches.set(mediaUrl, { el: found, at: now });
     return found;
   };
+  // Members look alike: the same role and the same first class (a related
+  // story's `div.thumb[data-src]` is no member beside an article's
+  // `div.player[data-src]`), one of the two set.
+  const firstClass = (el) => ((el.getAttribute('class') || '').trim().split(/\s+/)[0] || '');
+  const alikePlayers = (a, b) => (a.getAttribute('role') || '') === (b.getAttribute('role') || '')
+    && firstClass(a) === firstClass(b) && !!(a.getAttribute('role') || firstClass(a));
+  const foldLabel = (t) => String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
   // The feed `el` (the clip's element, or null) plays in: {own, others,
-  // idle} — its own player, the other members, how many of those hold no
-  // media element — or null.
+  // idle, label} — its own player, the other members, how many of those
+  // hold no media element, the label every member carries ("Video player",
+  // never a title) — or null.
   const clipPlayers = (el, mediaUrl) => {
     let own = null;
     let a = null;
@@ -1112,7 +1120,7 @@ function sweepShadowRoots(root, onRoot) {
     let idle = 0;
     for (let i = 0; i < els.length && i < MAX_FEED_PLAYERS; i++) {
       const m = els[i];
-      if (m === own || m.contains(own) || own.contains(m)) continue;
+      if (m === own || m.contains(own) || own.contains(m) || !alikePlayers(own, m)) continue;
       const v = (m.getAttribute(a.attr) || '').trim();
       const u = PLAYER_URL_RE.test(v) ? absUrl(v) : '';
       if (!u || (mediaUrl && sameUrl(u, mediaUrl))) continue;
@@ -1120,7 +1128,12 @@ function sweepShadowRoots(root, onRoot) {
       others.push(m);
       if (!m.querySelector('video, audio')) idle++;
     }
-    return others.length && paths.size >= 2 ? { own, others, idle } : null;
+    if (!others.length || paths.size < 2) return null;
+    let label = foldLabel(own.getAttribute('aria-label'));
+    for (let i = 0; label && i < others.length; i++) {
+      if (foldLabel(others[i].getAttribute('aria-label')) !== label) label = '';
+    }
+    return { own, others, idle, label };
   };
   // Whether `node` holds another member of the clip's feed.
   const holdsFeedPlayer = (feed, node) => !!feed && feed.others.some((o) => node.contains(o));
@@ -2626,8 +2639,10 @@ function sweepShadowRoots(root, onRoot) {
   // section beside the clip as part of its card (see pickUnits).
   const cardTitleFor = (el, holdsOther, skipOwn, noLabel, wholeCard, feed) => {
     const start = cardStart(el);
+    // A label every player of the clip's feed carries names none of them.
+    const notFeedLabel = (t) => (t && feed && feed.label && foldLabel(t) === feed.label ? '' : t);
     if (start === el && !skipOwn) {
-      const own = ownCardLabel(el) || labelledByText(el);
+      const own = notFeedLabel(ownCardLabel(el) || labelledByText(el));
       if (own) return own;
     }
     const twin = storyTwinTitleFor(start, holdsOther);
@@ -2650,7 +2665,7 @@ function sweepShadowRoots(root, onRoot) {
           break;
         }
       }
-      const named = labelledByText(node) || itemLabel(node) || heldControlName(node, start);
+      const named = notFeedLabel(labelledByText(node) || itemLabel(node) || heldControlName(node, start));
       if (named) return named;
       const level = levelNames(node, start, !!wholeCard);
       if (level.title) return level.title;
@@ -2659,9 +2674,9 @@ function sweepShadowRoots(root, onRoot) {
       const cap = cardCaptionFor(node);
       if (cap) return clipText(cap);
       if (level.plain) return clipText(level.plain);
-      if (!label) label = cardLabelFor(node, start);
+      if (!label) label = notFeedLabel(cardLabelFor(node, start));
       if (!hidden) hidden = level.hidden;
-      if (!alt) alt = cardAltFor(node);
+      if (!alt) alt = notFeedLabel(cardAltFor(node));
       if (!kicker) kicker = level.kicker;
     }
     return (noLabel ? '' : label) || clipText(hidden) || alt || kicker;
@@ -2671,7 +2686,8 @@ function sweepShadowRoots(root, onRoot) {
   // text of its own, and the first ancestor holding another of the feed's
   // players is that list. The post's caption is the nearest sibling with
   // text BEFORE the clip's branch: its last text of three words or more
-  // that is no link (an author's name links to the author). When that
+  // that is no short link (an author's name links to the author; a caption
+  // can be a permalink). When that
   // sibling holds none (a post with no caption: its header), nothing names
   // the clip; another clip, another feed player or a picture on the way
   // ends the run too, so a post never takes the words of the post above.
@@ -2707,7 +2723,8 @@ function sweepShadowRoots(root, onRoot) {
       if (visibleTextLength(sib, 1) === 0) continue;
       const units = textUnitsIn(sib, null, readHidden);
       for (let i = units.length - 1; i >= 0; i--) {
-        if (units[i].closest('a[href], [role="link"]')) continue;
+        const link = units[i].closest('a[href], [role="link"]');
+        if (link && wordsOf(link.textContent || '').length <= 3) continue;
         const u = unitInfo(units[i], readHidden);
         if (!u || !u.f.rendered || u.kicker || u.words < 3) continue;
         const next = units[i].nextElementSibling;
@@ -3308,7 +3325,7 @@ function sweepShadowRoots(root, onRoot) {
     if (player && player.media && !boundEl) boundEl = player.media;
     // A feed's players not loaded yet are clips too (see clipPlayers).
     const feed = clipPlayers(boundEl || (player ? player.root : null), mediaUrl);
-    const multiVideo = countVideos(document) + (feed ? feed.idle : 0) > 1;
+    const multiVideo = !!feed || countVideos(document) > 1;
     let poster = '';
     if (boundEl) {
       poster = (boundEl.poster ? boundEl.poster : '') || posterFromPlayerBg(boundEl);
