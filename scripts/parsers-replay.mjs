@@ -594,6 +594,48 @@ async function drive(url, type, tabId, requestId, body, requestHeaders) {
             JSON.stringify([m.name, m.description, m.duration]));
     }
 
+    // Desktop Comet keeps the files in a child of the video object; the title,
+    // owner, picture and frame size are on the video (the logged-out /watch/
+    // feed, 2026-11: every clip landed untitled, no picture, 0-wide).
+    const childUrl = (id, side) => `https://video.fxyz1-1.fna.fbcdn.net/o1/v/t2/f2/m366/AQchild${id}${side}.mp4?_nc_cat=103&efg=${Buffer.from(JSON.stringify({
+        vencode_tag: `xpv_progressive.FACEBOOK..C3.${side}.dash_h264-basic-gen2_${side}p`, xpv_asset_id: Number(id), duration_s: 21, urlgen_source: "www",
+    })).toString("base64url")}&oh=00_X&oe=6AF7`;
+    const childFiles = (id, childId) => ({
+        id, width: 1280, height: 720, playable_duration_in_ms: 21000,
+        title: { text: "Parent title" }, owner: { name: "Parent Page" },
+        preferred_thumbnail: { image: { uri: `https://scontent.xx.fbcdn.example/p-${id}.jpg` } },
+        videoDeliveryLegacyFields: {
+            id: childId ?? id,
+            browser_native_hd_url: childUrl(id, 720),
+            browser_native_sd_url: childUrl(id, 360),
+        },
+    });
+    const child = await drive("https://www.facebook.com/api/graphql/", "xmlhttprequest", 43, "fbChild",
+        "for (;;);" + JSON.stringify({ data: { video: childFiles("1000011") } }));
+    check("fb: files in a child of the video object: one emit", child.emits.length === 1, child.emits.length);
+    if (child.emits.length === 1) {
+        const m = child.emits[0].msg;
+        check("fb: ...titled, described and pictured from the video object",
+            m.name === "Parent title" && m.description === "Parent Page" && m.img === "https://scontent.xx.fbcdn.example/p-1000011.jpg",
+            JSON.stringify([m.name, m.description, m.img]));
+        check("fb: ...its frame size from the video object (16:9 at each short side)",
+            JSON.stringify(m.variants.map(v => [v.width, v.height])) === "[[1280,720],[640,360]]", JSON.stringify(m.variants.map(v => [v.width, v.height])));
+    }
+    // A parent naming another video lends it nothing (no neighbour's title).
+    const otherVid = await drive("https://www.facebook.com/api/graphql/", "xmlhttprequest", 44, "fbOther",
+        "for (;;);" + JSON.stringify({ data: { video: childFiles("1000012", "1000099") } }));
+    check("fb: a parent naming another video lends no title or picture",
+        otherVid.emits.length === 1 && otherVid.emits[0].msg.name !== "Parent title" && !otherVid.emits[0].msg.img,
+        JSON.stringify(otherVid.emits.map(e => [e.msg.name, e.msg.img])));
+    // A list of videos holding the files: never a parent (an array is not the video).
+    const list = await drive("https://www.facebook.com/api/graphql/", "xmlhttprequest", 45, "fbList",
+        "for (;;);" + JSON.stringify({ data: { title: { text: "The feed" }, edges: [
+            { id: "1000021", browser_native_hd_url: "https://video.xx.fbcdn.example/v/hd-1000021.mp4?_nc=1" },
+            { id: "1000022", browser_native_hd_url: "https://video.xx.fbcdn.example/v/hd-1000022.mp4?_nc=1" },
+        ] } }));
+    check("fb: videos in a list are not titled by what holds the list",
+        list.emits.length === 2 && list.emits.every(e => e.msg.name !== "The feed"), JSON.stringify(list.emits.map(e => e.msg.name)));
+
     // Streamed (NDJSON) GraphQL — each line an independent object.
     const nd = await drive("https://www.facebook.com/api/graphql/", "xmlhttprequest", 41, "fbNd",
         JSON.stringify({ data: { node: fbVideo("1000002") } }) + "\n"

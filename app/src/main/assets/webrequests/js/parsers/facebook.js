@@ -128,11 +128,15 @@ function findNodeStarts(src, out) {
         while (j < n && (src[j] === " " || src[j] === "\n" || src[j] === "\t" || src[j] === "\r")) j++;
         return src[j] === ":";
     };
+    // Each recorded node with the `{` that directly encloses it, when there is
+    // one: the delivery fields can sit in a child of the video object (see
+    // nodesFromText), whose title and picture are then on that parent.
     const record = () => {
         const top = stack[stack.length - 1];
         if (top && top.ch === "{" && !top.recorded) {
             top.recorded = true;
-            out.push(top.at);
+            const parent = stack[stack.length - 2];
+            out.push({ at: top.at, parentAt: parent && parent.ch === "{" ? parent.at : -1 });
         }
     };
     while (i < n && out.length < FB_MAX_NODES_PER_BODY) {
@@ -213,14 +217,43 @@ function findNodeStarts(src, out) {
     return out;
 }
 
+// Whether a node carries anything about the video besides its files.
+function nodeHasMeta(video) {
+    return !!(extractFacebookText(video) || extractFacebookThumbnail(video) || nodeAspect(video)
+        || extractFacebookOwnerName(video));
+}
+
+// The video's id, as the node names it.
+function nodeId(video) {
+    const id = video?.id ?? video?.video_id ?? video?.videoId;
+    return id == null ? "" : String(id);
+}
+
+// A node that holds only the files (desktop Comet keeps the delivery fields
+// in a child of the video object, its title, owner, picture and size on the
+// video itself) takes what its enclosing object says about the video. Only
+// when that object is the same video: it holds no files of its own and names
+// no other id; a list or a story holding several videos never lends one
+// video's title to another. Found on the logged-out /watch/ feed (2026-11):
+// every clip landed untitled, with no picture and a 0-wide frame.
 function nodesFromText(src) {
     const nodes = [];
     if (!FB_MARKER_RE.test(src)) return nodes;
     const starts = findNodeStarts(src, []);
-    for (const at of starts) {
+    for (const { at, parentAt } of starts) {
         let v;
         try { v = parseJsValue(src, { i: at, R: {} }); } catch (_) { continue; }
-        if (isFacebookVideoNode(v)) nodes.push(v);
+        if (!isFacebookVideoNode(v)) continue;
+        if (parentAt >= 0 && !nodeHasMeta(v)) {
+            let p = null;
+            try { p = parseJsValue(src, { i: parentAt, R: {} }); } catch (_) { p = null; }
+            const pid = nodeId(p), vid = nodeId(v);
+            if (p && typeof p === "object" && !Array.isArray(p) && !isFacebookVideoNode(p)
+                && (!pid || !vid || pid === vid)) {
+                v = { ...p, ...v };
+            }
+        }
+        nodes.push(v);
     }
     return nodes;
 }
