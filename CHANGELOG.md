@@ -2,6 +2,7 @@
 
 - Updated the GeckoView browser engine to 161.0 and FFmpeg to 9.1
 - Videos in social feeds are named by their post instead of the page title
+- Featured live streams on a site's home page are captured
 - Add-ons: each add-on's site access has its own screen
 - Add-ons: checking for updates ends in one clear message
 - Fixed a rare crash in the background
