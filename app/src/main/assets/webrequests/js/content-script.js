@@ -1015,6 +1015,67 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   const countVideos = (root) => queryDeep(root, 'video').length;
+
+  // ── Players not loaded yet ──
+  // A feed can render each clip as a placeholder that names its file in an
+  // attribute and create the <video> only for the clip playing (or the next
+  // one, preloaded at the end of <body>), so counting <video> elements reads
+  // a list of clips as one. An element that is no link and no media element,
+  // one of whose attributes is ONE media file URL, holding no media element,
+  // stands for that clip. Read once a second: every card walk asks.
+  const PLACEHOLDER_URL_RE = /^(?:https?:\/\/|\/)[^\s"'<>]+\.(?:mp4|m4v|webm|mov|m3u8|mpd)(?:[?#][^\s"'<>]*)?$/i;
+  const PLACEHOLDER_SKIP_RE = /^(?:A|AREA|LINK|META|SCRIPT|SOURCE|TRACK|VIDEO|AUDIO|IFRAME|EMBED|OBJECT|IMG)$/;
+  const PLACEHOLDER_XPATH = '//*[@*[contains(., ".mp4") or contains(., ".m3u8") or contains(., ".webm")'
+    + ' or contains(., ".mpd") or contains(., ".m4v") or contains(., ".mov")]]';
+  const MAX_PLACEHOLDERS = 200;
+  let placeholderList = null;
+  let placeholderAt = 0;
+  const mediaPlaceholders = () => {
+    const now = Date.now();
+    if (placeholderList && now - placeholderAt < 1000) return placeholderList;
+    const out = [];
+    let hits = null;
+    try {
+      hits = document.evaluate(PLACEHOLDER_XPATH, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+    } catch (_) {
+      hits = null;
+    }
+    const n = hits ? hits.snapshotLength : 0;
+    for (let i = 0; i < n && out.length < MAX_PLACEHOLDERS; i++) {
+      const el = hits.snapshotItem(i);
+      if (PLACEHOLDER_SKIP_RE.test(el.tagName.toUpperCase())) continue;
+      let url = '';
+      for (let j = 0; j < el.attributes.length; j++) {
+        const v = el.attributes[j].value.trim();
+        if (v.length < 2048 && PLACEHOLDER_URL_RE.test(v)) {
+          url = absUrl(v) || '';
+          break;
+        }
+      }
+      if (!url || el.querySelector('video, audio')) continue;
+      out.push({ el, url });
+    }
+    placeholderList = out;
+    placeholderAt = now;
+    return out;
+  };
+  // Whether `node` holds a placeholder of a clip other than mediaUrl's.
+  const holdsOtherPlaceholder = (node, mediaUrl) => mediaPlaceholders()
+    .some((p) => node.contains(p.el) && !(mediaUrl && sameUrl(p.url, mediaUrl)));
+  // A walk from a placeholder (its clip has no element in it): any <video>
+  // or another clip's placeholder is another clip.
+  const otherClipThan = (mediaUrl) => (node) => countVideos(node) > 0 || holdsOtherPlaceholder(node, mediaUrl);
+  // The one placeholder of mediaUrl's clip outside `el`, or null.
+  const placeholderFor = (mediaUrl, el) => {
+    if (!mediaUrl) return null;
+    let found = null;
+    for (const p of mediaPlaceholders()) {
+      if (!sameUrl(p.url, mediaUrl) || (el && (el.contains(p.el) || p.el.contains(el)))) continue;
+      if (found) return null;
+      found = p.el;
+    }
+    return found;
+  };
   // Every <video> and <audio> of the page, those in shadow roots included.
   const allMediaElements = () => queryDeep(document, 'audio, video');
   // requests.js' urlIsStandaloneAudio, by extension.
@@ -2347,7 +2408,7 @@ function sweepShadowRoots(root, onRoot) {
     }
     return false;
   };
-  const textUnitsIn = (node, anchor) => {
+  const textUnitsIn = (node, anchor, readHidden) => {
     const out = [];
     let budget = UNIT_MAX_ELEMENTS;
     const visit = (el, top) => {
@@ -2355,7 +2416,7 @@ function sweepShadowRoots(root, onRoot) {
       if (!anchor || !el.contains(anchor)) {
         if (el.matches(UNIT_SKIP_SEL) || (!top && el.matches(CONTROL_SEL))) return;
         // Hidden from readers by the page: a duplicate, a decoration, a credit.
-        if (!top && el.getAttribute('aria-hidden') === 'true') return;
+        if (!top && !readHidden && el.getAttribute('aria-hidden') === 'true') return;
         if (titleElement(el) || ownsText(el)) {
           out.push(el);
           return;
@@ -2380,9 +2441,9 @@ function sweepShadowRoots(root, onRoot) {
   // A text unit as a card names a clip with, or null when it names nothing:
   // a player's chrome, a credit, fine print, a word several cards repeat, a
   // short link text its URL contradicts.
-  const unitInfo = (el) => {
+  const unitInfo = (el, readHidden) => {
     const meta = el.tagName === 'META';
-    if (!meta && (el.getAttribute('aria-hidden') === 'true' || playerRootOf(el))) return null;
+    if (!meta && ((!readHidden && el.getAttribute('aria-hidden') === 'true') || playerRootOf(el))) return null;
     const heading = titleElement(el) ? el : (el.parentElement ? el.parentElement.closest(CARD_HEADING_SEL) : null);
     const semantic = !!heading && (heading === el || titleElement(heading));
     const text = heading === el ? titleText(el) : usableCardLabel(textOf(el));
@@ -2536,6 +2597,8 @@ function sweepShadowRoots(root, onRoot) {
         if (!show) {
           const listed = clip && first ? slideListedCaptionFor(node, start) : '';
           if (listed) return listed;
+          const run = clip || isPlaceholder(el) ? flatRunTitle(node, start, holdsOther) : '';
+          if (run) return run;
           break;
         }
       }
@@ -2554,6 +2617,38 @@ function sweepShadowRoots(root, onRoot) {
       if (!kicker) kicker = level.kicker;
     }
     return (noLabel ? '' : label) || clipText(hidden) || alt || kicker;
+  };
+  // A feed with no wrapper per post: the post's parts (author, caption,
+  // player, reactions) are siblings in one list, the clip's branch holds no
+  // text of its own, and the first ancestor holding another clip is that
+  // list. The post's words are the siblings BEFORE the clip's branch, back
+  // to the previous clip's: the nearest text of three words or more (a
+  // post's caption sits right above its media). A caption the page cut
+  // short, an ellipsis element after it, keeps the cut. A page that hides
+  // the clip itself from screen readers (a dialog open over the feed hides
+  // everything behind it) says nothing about its texts with aria-hidden.
+  const FLAT_RUN_MAX_SIBLINGS = 8;
+  const ELLIPSIS_RE = /^\s*(?:\.\.\.|\u2026)\s*$/;
+  const isPlaceholder = (el) => mediaPlaceholders().some((p) => p.el === el);
+  const flatRunTitle = (node, start, holdsOther) => {
+    let branch = anchorIn(node, start);
+    while (branch && branch.parentElement !== node) branch = branch.parentElement;
+    if (!branch || visibleTextLength(branch, 1) > 0) return '';
+    const readHidden = !!(start.closest && start.closest('[aria-hidden="true"]'));
+    let sib = branch.previousElementSibling;
+    for (let hops = 0; sib && hops < FLAT_RUN_MAX_SIBLINGS; hops++, sib = sib.previousElementSibling) {
+      if (holdsOther(sib)) break;
+      const units = textUnitsIn(sib, null, readHidden);
+      for (let i = units.length - 1; i >= 0; i--) {
+        const u = unitInfo(units[i], readHidden);
+        if (!u || !u.f.rendered || u.kicker || u.words < 3) continue;
+        const next = units[i].nextElementSibling;
+        const cut = !!next && ELLIPSIS_RE.test(next.textContent || '');
+        const text = clipText(u.text);
+        return cut && !/[.\u2026]$/.test(text) ? text + '\u2026' : text;
+      }
+    }
+    return '';
   };
   frameCardTitleOf = (el) => cardTitleFor(el,
     (node) => queryDeep(node, 'iframe, video, audio').some((x) => x !== el), true);
@@ -2591,6 +2686,10 @@ function sweepShadowRoots(root, onRoot) {
   };
   const slideshowAround = (node, el, start, show) => {
     const others = queryDeep(node, 'audio, video').filter((o) => o !== el && !start.contains(o));
+    // A clip not loaded yet is a slide too.
+    for (const p of mediaPlaceholders()) {
+      if (node.contains(p.el) && !p.el.contains(start) && !start.contains(p.el)) others.push(p.el);
+    }
     if (show) return others.every((o) => show.contains(o)) ? show : null;
     if (!shownIn(el, node)) return null;
     for (const o of others) {
@@ -3124,7 +3223,8 @@ function sweepShadowRoots(root, onRoot) {
     //   no bound element → on a single-video page the first <video poster>, then
     //     the first player container's background; on a multi-video page
     //     nothing: the first poster belongs to another clip.
-    const multiVideo = countVideos(document) > 1;
+    // A clip not loaded yet (its placeholder) is a clip too.
+    const multiVideo = countVideos(document) + (holdsOtherPlaceholder(document, mediaUrl) ? 1 : 0) > 1;
     let boundEl = mediaUrl ? findBoundMedia(mediaUrl) : null;
     // The page player playing the URL: the one whose tech element is bound
     // (its name still says which clip it is), else the one whose sources
@@ -3184,7 +3284,14 @@ function sweepShadowRoots(root, onRoot) {
     let cardTitle = '';
     let posterTitle = '';
     let cardImage = '';
-    const moreThanOneVideo = (node) => countVideos(node) > 1;
+    // Another clip in `node`: a second <video> where node holds this one, any
+    // where it does not (a sibling of the clip's branch), or another clip's
+    // placeholder.
+    const moreThanOneVideo = (node) => {
+      const own = boundEl ? anchorIn(node, boundEl) : null;
+      const holdsOwn = !!own && (node === own || node.contains(own));
+      return countVideos(node) > (holdsOwn ? 1 : 0) || holdsOtherPlaceholder(node, mediaUrl);
+    };
     const teaser = !multiVideo && boundVideo && !!boundEl
       && (inStoryLink(cardStart(boundEl)) || inCardButton(cardStart(boundEl))
         || cardStoryLink(cardStart(boundEl), moreThanOneVideo));
@@ -3192,7 +3299,9 @@ function sweepShadowRoots(root, onRoot) {
     // button) or names by its id: that element stands for it, unless the
     // page's JSON names it.
     const jsonNames = !!json && !!(json.title || json.story);
-    const fileLink = !boundEl && !player && mediaUrl && !jsonNames
+    // A clip no element plays yet: its placeholder stands for it.
+    const standIn = !boundEl && !player && mediaUrl && !jsonNames ? placeholderFor(mediaUrl, null) : null;
+    const fileLink = !boundEl && !player && mediaUrl && !jsonNames && !standIn
       ? (linkToFile(mediaUrl) || elementForFileId(mediaUrl)) : null;
     if ((multiVideo || teaser) && boundVideo) {
       playerTitle = (player ? player.name : '') || distinctPlayerConfigTitle(boundEl)
@@ -3207,6 +3316,10 @@ function sweepShadowRoots(root, onRoot) {
       if (!playerTitle && !cardTitle && multiVideo && poster && walkFrom) {
         cardTitle = posterTwinTitleFor(poster, walkFrom);
       }
+      // A <video> outside any card (a feed preloading its next clip at the
+      // end of <body>): the placeholder that names its file stands for it.
+      const stand = !playerTitle && !cardTitle && multiVideo ? placeholderFor(mediaUrl, walkFrom) : null;
+      if (stand) cardTitle = cardTitleFor(stand, otherClipThan(mediaUrl));
       if (!playerTitle && !cardTitle && multiVideo) posterTitle = posterSlugTitle(poster);
     } else if (boundEl && boundEl.tagName === 'AUDIO' && holdsAnotherClip(document, boundEl, mediaUrl)) {
       // An <audio> on a page with other clips: its card names it. An audio
@@ -3234,6 +3347,8 @@ function sweepShadowRoots(root, onRoot) {
       // A URL the page's JSON lists with no element showing it: the JSON names it.
       playerTitle = json.title || '';
       if (!playerTitle && json.story) cardTitle = storyTitleFor(json.story);
+    } else if (standIn) {
+      cardTitle = cardTitleFor(standIn, otherClipThan(mediaUrl));
     } else if (fileLink) {
       // The link's own label is the button's ("Download"); its card names
       // the file.

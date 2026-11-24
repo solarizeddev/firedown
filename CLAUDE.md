@@ -1515,6 +1515,20 @@ backbone covers it). On a device: `CaptureLiveTest` t6 (live network, a
 pinned public reel; it counts the reel's video and audio captures, not the page's pictures), green on SM-A426B (Android 12); desktop pages and `plugins/video.php` embeds are
 read by the same scanner but no HAR of them was checked.
 
+**The mobile site's /watch/ (`m.facebook.com`, the "weblite" app) gives the
+readers nothing: its clips are named by the content script.** The document
+is server-rendered HTML, not data: the first posts are `div`s, each player a
+`<div role="button" aria-label="Video player" data-video-url="…mp4"
+data-video-id="…">` placeholder, and every later post arrives over a
+binary WebSocket (`WebLitePipe`, `kaios-d.facebook.com`) that no webRequest
+filter can read. There is no `playable_url` in anything, so every played
+file takes the wire backbone, titled by the frame's `get-page-metadata`. It
+landed as the page title ("Discover Popular Videos | Facebook") or "Open
+Facebook" until the flat-feed rules under "Generic catcher" (players not
+loaded yet). A post's caption is cut by the page ("…See more"); the full
+text is in no response either. Found on a HAR (2026-11); replayed with
+`har-replay.mjs`, the page's own JS autoplays the first clip.
+
 ### Skip the capture probe when the parser already has the metadata
 
 A parser that supplies url + resolution + duration does **not** need the ffmpeg
@@ -3384,6 +3398,33 @@ flag, no word floor, no template drop — each fails one):
   A bracketed tag ("[VIDEO]") beside a real clip is not one.
 Residuals: a slide that never plays; a site whose podcast or bulletin list
 names its audio nowhere the bridge or the content script reads.
+
+**Players not loaded yet, and posts with no wrapper — each pinned by
+`frame-meta-harness.mjs` "flat feed" (mutants: no placeholders, no flat
+run, aria-hidden honoured behind a dialog, the slideshow test blind to
+placeholders — each fails at least one):**
+- **A placeholder is a clip** (`mediaPlaceholders`, read once a second): an
+  element that is no link and no media element, one of whose attributes is
+  ONE media file URL (absolute or root-relative), holding no `<video>` or
+  `<audio>`. A feed that creates the `<video>` only for the clip playing
+  read as a single-video page (the page's title) or as one card spanning the
+  list. It counts for the multi-video test, the card walk's stop rule
+  (`holdsOtherPlaceholder`) and the slideshow test (a list of placeholders
+  is not a slideshow showing this clip).
+- **A post whose parts are siblings** (`flatRunTitle`): when the walk stops
+  at an ancestor holding another clip and the clip's own branch holds no
+  text, the post is the run of siblings BEFORE that branch, back to the
+  previous clip's; the nearest text of three words or more names it (a
+  post's caption sits above its media), with "…" when an ellipsis element
+  follows it (a caption the page cut). Only for a media element or a
+  placeholder.
+- **A `<video>` outside any card** (a next clip preloaded at the end of
+  `<body>`), **or a clip no element plays yet**, is named through the one
+  placeholder of its file (`placeholderFor`).
+- **Behind a dialog, aria-hidden says nothing** about a text: when the clip
+  itself sits under `aria-hidden="true"` (an app banner open over the feed
+  hides everything behind it), the flat run reads aria-hidden texts too. The
+  rest of the walk still skips them (a credit hidden from readers).
 
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`

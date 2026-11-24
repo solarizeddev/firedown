@@ -74,6 +74,33 @@ const vjsRoot = (id, poster, src) =>
   + `<div class="vjs-control-bar"><button title="Play"></button>`
   + `<button title="Picture-in-Picture"></button><button title="Seek to live, currently behind live"></button></div>`
   + `</video-js>`;
+// See the flatfeed pages.
+const flatFeed = (dialog, preload) => {
+  const h = dialog ? ' aria-hidden="true"' : "";
+  const posts = [
+    ["Diario Local", "Lluvias intensas cortan tres carreteras de la comarca durante la noche y obligan a", true],
+    ["Noticias del Valle", "El ayuntamiento abre el nuevo parque junto al río", false],
+    ["Canal Norte", "La final se decide en la prórroga con un gol de cabeza", false],
+  ];
+  let out = `<div class="m"${h}>`;
+  posts.forEach(([author, caption, cut], i) => {
+    const n = i + 1;
+    out += `<div class="m"${h}><div role="button" aria-label="${author} profile picture"${h}><img src="/img/p${n}.jpg" alt=""></div>`
+      + `<div class="m"${h}><span role="link"${h}>${author}</span></div><div${h} aria-label="2 hours ago"><span>2h</span></div></div>`
+      + `<div class="m"${h}><div class="m" tabindex="0"${h}><div class="native-text"${h}><span>${caption}</span>`
+      + (cut ? `<span>...</span><span> See more</span>` : "") + `</div></div></div>`
+      + `<div class="m"${h}><div role="button" aria-label="Video player" data-video-url="/assets/clips/f${n}.mp4"${h}>`
+      + `<img src="/img/f${n}.jpg" alt="Video player"><div class="inline-video-container">`
+      + (i === 0 && preload ? `<video src="/assets/clips/f1.mp4"></video>` : "") + `</div>`
+      + `<button class="play"></button></div></div>`
+      + `<div class="m"${h}><span>15K</span><span>1.2K</span></div><div class="m"${h}></div>`;
+  });
+  out += `</div>`;
+  if (preload) out += `<video src="/assets/clips/f2.mp4"></video>`;
+  if (dialog) out += `<div role="dialog"><div>Get the full experience</div><div role="button" aria-label="Open the app">Open the app</div>`
+    + `<div role="button" aria-label="Log in">Log in</div></div>`;
+  return out;
+};
 // The page's videojs global: getAllPlayers() with each player's manifest,
 // poster and (when named) Brightcove-style mediainfo.
 const vjsScript = (players) => `<script>
@@ -270,6 +297,18 @@ const SITE = {
     + `<video class="video-js" preload="none" src="/assets/clips/d3.mp4" data-setup='{"name":"heroPlayer","fluid":true}'></video></div></div>`
     + `<div class="puff"><div class="player"><img src="/img/d4.jpg" alt="Hero video poster">`
     + `<video preload="none" src="/assets/clips/d4.mp4"></video></div></div>`),
+
+  // A feed with no wrapper per post (a "lite" mobile web app): each post's
+  // header, caption, player and reactions are siblings in one list, every
+  // player but the one playing is a placeholder naming its file in a data-*
+  // attribute, the next clip is preloaded in a <video> at the end of <body>,
+  // and a dialog open over the feed hides everything behind it with
+  // aria-hidden. flatfeed2 is the same feed before anything plays, with no
+  // dialog.
+  [`a.test/flatfeed.html`]: html("Discover Popular Videos | Site", `<meta property="og:title" content="Discover Popular Videos | Site">`,
+    flatFeed(true, true)),
+  [`a.test/flatfeed2.html`]: html("Discover Popular Videos | Site", `<meta property="og:title" content="Discover Popular Videos | Site">`,
+    flatFeed(false, false)),
 
   [`a.test/cards.html`]: html("Cards page",
     `<meta property="og:title" content="Cards page">`,
@@ -1432,6 +1471,23 @@ try {
     const pageAsPicture = await top.evaluate(() => window.__reports.some((x) => x.kind === "images-detected"
       && (x.urls || []).some((u) => u.split("#")[0] === location.href.split("#")[0])));
     expect(!pageAsPicture, "an <img src=\"\"> does not report the page itself as a picture", pageAsPicture);
+  }
+
+  console.log("flat feed: posts whose parts are siblings, players not loaded yet");
+  {
+    let o = await open(`${a}/flatfeed.html`);
+    let top = o.frame("/flatfeed.html");
+    let r = await o.ask(top, "f1.mp4");
+    expect(r.pick?.name === "Lluvias intensas cortan tres carreteras de la comarca durante la noche y obligan a\u2026",
+      "the playing clip is named by its post's caption (cut short as the page shows it), behind a dialog", r.pick?.name);
+    r = await o.ask(top, "f2.mp4");
+    expect(r.pick?.name === "El ayuntamiento abre el nuevo parque junto al río",
+      "a clip preloaded outside the feed is named through its placeholder", r.pick?.name);
+    o = await open(`${a}/flatfeed2.html`);
+    top = o.frame("/flatfeed2.html");
+    r = await o.ask(top, "f3.mp4");
+    expect(r.pick?.name === "La final se decide en la prórroga con un gol de cabeza",
+      "a clip no element plays yet is named by its placeholder's post", r.pick?.name);
   }
 
   console.log("player config: a clip named by its player's data-* JSON");
