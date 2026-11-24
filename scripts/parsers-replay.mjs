@@ -2068,6 +2068,37 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
     check("kick: a channel visit costs ONE API fetch (own request not re-fetched)", channelFetches === 1, channelFetches);
 }
 
+// Kick home page: the featured player asks only for its stream URL
+// (/api/v2/channels/<slug>/playback-url). The page itself names no channel,
+// and the live master's host is block-listed, so that request is the one
+// door to the featured stream.
+{
+    const home = await drive("https://kick.com/", "main_frame", 59, "kickHome");
+    check("kick home: the page itself emits nothing", home.emits.length === 0, home.emits.length);
+    const completed = registrations.filter(r => r.path === "webRequest.onCompleted"
+        && r.filter?.urls?.some(p => patternMatches(p, "https://web.kick.com/api/v2/channels/somestreamer/playback-url")));
+    check("kick home: the playback-url request is listened to on kick.com and web.kick.com",
+        completed.length === 1 && completed[0].filter.urls.some(p => patternMatches(p, "https://kick.com/api/v2/channels/somestreamer/playback-url")),
+        completed.length);
+    const playbackDone = async (url, tabId, requestId, statusCode = 200) => {
+        const before = nativeSent.length;
+        for (const r of completed) r.fn({ url, type: "xmlhttprequest", tabId, requestId, statusCode });
+        await new Promise(r => setTimeout(r, 60));
+        return nativeSent.slice(before).filter(isCapture);
+    };
+    const featured = await playbackDone("https://kick.com/api/v2/channels/somestreamer/playback-url", 59, "kickFeat");
+    check("kick home: the featured stream is captured under its channel, titled",
+        featured.length === 1 && featured[0].msg.type === "hls-master"
+            && featured[0].msg.origin === "https://kick.com/somestreamer"
+            && featured[0].msg.description === "Playing games — Just Chatting"
+            && featured[0].msg.tabId === 59,
+        JSON.stringify(featured.map(e => [e.msg.type, e.msg.origin, e.msg.description, e.msg.tabId])));
+    const again = await playbackDone("https://kick.com/api/v2/channels/somestreamer/playback-url", 59, "kickFeat2");
+    check("kick home: the player's refetch of the same stream adds nothing", again.length === 0, again.length);
+    const refused = await playbackDone("https://kick.com/api/v2/channels/otherstreamer/playback-url", 60, "kickFeat3", 403);
+    check("kick home: a refused playback-url fetches nothing", refused.length === 0, refused.length);
+}
+
 // Twitch: only a usher MASTER seeds the rendezvous (a video-weaver media
 // playlist would complete it with a non-master URL), and the tab's NEWEST
 // cached URL names the channel after an SPA navigation.

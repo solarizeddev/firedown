@@ -197,6 +197,16 @@ function listenerKickPage(details) {
 
 // Intercept Kick API responses — use onCompleted to re-fetch with cookies after browser succeeds
 function listenerKickApiComplete(details) {
+    // A player outside the channel page (the home page's featured stream)
+    // asks only for its stream URL; the channel lookup names and titles it.
+    // Tested before isOwnRequest: the own-request marks match by prefix, and
+    // our pending /channels/<slug> mark would swallow the page's
+    // /channels/<slug>/playback-url.
+    const playback = details.url.match(/\/api\/v2\/channels\/([A-Za-z0-9_-]+)\/playback-url\/?(?:\?|$)/);
+    if (playback) {
+        if (details.statusCode === 200) fetchKickChannel(details, playback[1]);
+        return;
+    }
     if (isOwnRequest(details.url)) return;   // fetchKickChannel's own request
     // Only process the channel endpoint itself
     const channelMatch = details.url.match(/\/api\/v2\/channels\/([A-Za-z0-9_-]+)\/?(?:\?|$)/);
@@ -278,7 +288,7 @@ browser.webRequest.onBeforeRequest.addListener(
 
 browser.webRequest.onCompleted.addListener(
     listenerKickApiComplete,
-    { urls: ["*://kick.com/api/v2/channels/*", "*://www.kick.com/api/v2/channels/*"], types: ["xmlhttprequest"] }
+    { urls: ["*://kick.com/api/v2/channels/*", "*://www.kick.com/api/v2/channels/*", "*://web.kick.com/api/v2/channels/*"], types: ["xmlhttprequest"] }
 );
 
 

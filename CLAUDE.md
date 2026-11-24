@@ -1397,6 +1397,17 @@ browser User-Agent, a Referer or a full image header set, so
 no header can fix it; it is only the fallback for a body with no `id`. The
 channel `id`, not `user_id` (that one 404s); pinned by `parsers-replay.mjs`.
 
+**Kick's home page is captured through the player's playback-url request.**
+The featured stream on `kick.com/` names no channel in the page URL, and its
+live master is on the block-listed `*.playback.live-video.net`, so neither the
+page listener nor the catcher sees it. The player asks
+`/api/v2/channels/<slug>/playback-url` (kick.com or web.kick.com) first;
+`listenerKickApiComplete` takes that slug to the channel lookup, the same emit
+as a channel page (per-tab claim, origin `kick.com/<slug>`). It is tested
+BEFORE `isOwnRequest`: the own-request marks match by prefix, and our pending
+`/channels/<slug>` mark would swallow the page's `/channels/<slug>/playback-url`.
+Pinned by `parsers-replay.mjs` (`kick home:`; the order mutant fails two).
+
 **Kick's ad filler is block-listed** (`static.kick.com/ads/`, under the
 `kick` key): the player runs a 2-second black clip (`black_2s.mp4`) in its ad
 slot, and the catcher captured it under the channel's title, a black "video"
