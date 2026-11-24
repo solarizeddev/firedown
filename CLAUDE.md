@@ -1524,8 +1524,8 @@ binary WebSocket (`WebLitePipe`, `kaios-d.facebook.com`) that no webRequest
 filter can read. There is no `playable_url` in anything, so every played
 file takes the wire backbone, titled by the frame's `get-page-metadata`. It
 landed as the page title ("Discover Popular Videos | Facebook") or "Open
-Facebook" until the flat-feed rules under "Generic catcher" (players not
-loaded yet). A post's caption is cut by the page ("…See more"); the full
+Facebook" until the flat-feed rules under "Generic catcher" ("A feed of
+players"). A post's caption is cut by the page ("…See more"); the full
 text is in no response either. Found on a HAR (2026-11); replayed with
 `har-replay.mjs`, the page's own JS autoplays the first clip.
 
@@ -3399,32 +3399,47 @@ flag, no word floor, no template drop — each fails one):
 Residuals: a slide that never plays; a site whose podcast or bulletin list
 names its audio nowhere the bridge or the content script reads.
 
-**Players not loaded yet, and posts with no wrapper — each pinned by
-`frame-meta-harness.mjs` "flat feed" (mutants: no placeholders, no flat
-run, aria-hidden honoured behind a dialog, the slideshow test blind to
-placeholders — each fails at least one):**
-- **A placeholder is a clip** (`mediaPlaceholders`, read once a second): an
-  element that is no link and no media element, one of whose attributes is
-  ONE media file URL (absolute or root-relative), holding no `<video>` or
-  `<audio>`. A feed that creates the `<video>` only for the clip playing
-  read as a single-video page (the page's title) or as one card spanning the
-  list. It counts for the multi-video test, the card walk's stop rule
-  (`holdsOtherPlaceholder`) and the slideshow test (a list of placeholders
-  is not a slideshow showing this clip).
-- **A post whose parts are siblings** (`flatRunTitle`): when the walk stops
-  at an ancestor holding another clip and the clip's own branch holds no
-  text, the post is the run of siblings BEFORE that branch, back to the
-  previous clip's; the nearest text of three words or more names it (a
-  post's caption sits above its media), with "…" when an ellipsis element
-  follows it (a caption the page cut). Only for a media element or a
-  placeholder.
-- **A `<video>` outside any card** (a next clip preloaded at the end of
-  `<body>`), **or a clip no element plays yet**, is named through the one
-  placeholder of its file (`placeholderFor`).
-- **Behind a dialog, aria-hidden says nothing** about a text: when the clip
-  itself sits under `aria-hidden="true"` (an app banner open over the feed
-  hides everything behind it), the flat run reads aria-hidden texts too. The
-  rest of the walk still skips them (a credit hidden from readers).
+**A feed of players, and posts with no wrapper — each pinned by
+`frame-meta-harness.mjs` "flat feed" (15 checks; mutants: no feed, a lone
+stray attribute taken for a feed, no flat run, aria-hidden honoured behind a
+dialog, the slideshow test blind to the feed, author links read, no picture
+stop, a run past the nearest text sibling — each fails at least one):**
+- **A feed is a SET of players** (`clipPlayers`): elements of one tag
+  sharing one attribute, each naming ONE media file (absolute or
+  root-relative; links, media elements, form fields and buttons never), two
+  files or more. A clip is in it only when its own player is a member (the
+  element or an ancestor within six levels carrying the attribute) or, for
+  a `<video>` loose in `<body>` or a clip no element plays, when one member
+  names its file (`playerNamingFile`, the one search by file name, kept 5 s
+  per URL). The set is then read by its attribute name
+  (`querySelectorAll`), never by scanning every attribute of the page. A
+  stray media URL in an attribute (a share field, another rendition, related
+  stories' hover previews) changes nothing for a clip outside the set; two
+  members naming one file (a mini-player copy) are no feed. The first cut
+  counted any such attribute anywhere and turned single-video articles into
+  multi-video pages (Fable's review, 2026-11).
+- **What the feed changes**: its members with no media element count for
+  the multi-video test (`multiVideo`, so a feed clip never takes the page's
+  title or og:image), for the walk's stop rule (`holdsFeedPlayer`) and for
+  the slideshow test (a list of players is not a slideshow showing this
+  clip).
+- **A post whose parts are siblings** (`flatRunTitle`, feed only): when the
+  walk stops at the list and the clip's branch holds no text, the post's
+  caption is the NEAREST sibling with text before the branch: its last text
+  of three words or more that is no link (an author's name links to the
+  author), with "…" when an ellipsis element follows it. A sibling with no
+  such text (a captionless post's header) names nothing; another clip,
+  another member or a picture (box, declared or natural size ≥ 100 px) ends
+  the run first. So a post never takes the words of the post above or its
+  author's name.
+- **A `<video>` outside any card or a clip no element plays** is walked
+  from its feed player.
+- **Behind a dialog, aria-hidden says nothing**: when the clip's whole part
+  of the list is `aria-hidden` (an app banner open over the feed hides
+  everything behind it), the flat run reads aria-hidden texts. The rest of
+  the walk still skips them (a credit hidden from readers).
+- Cost on a synthetic 4 000-card page (desktop Chromium): a cold query
+  6–10 ms, as before; ~20 ms once per URL per 5 s for a loose `<video>`.
 
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`

@@ -101,6 +101,16 @@ const flatFeed = (dialog, preload) => {
     + `<div role="button" aria-label="Log in">Log in</div></div>`;
   return out;
 };
+// A feed post for flatfeed3: header, caption, then a player ("ph") or a photo.
+const feedPost = (author, caption, n, kind) =>
+  `<div class="m"><div role="button" aria-label="${author} profile picture"><img src="/img/p${n}.jpg" width="40" height="40" alt=""></div>`
+  + `<div class="m"><span role="link">${author}</span></div><div aria-label="2 hours ago"><span>2h</span></div></div>`
+  + (caption ? `<div class="m"><div class="m" tabindex="0"><div class="native-text"><span>${caption}</span></div></div></div>` : "")
+  + (kind === "photo" ? `<div class="m"><img src="/img/ph${n}.jpg" width="400" height="300" alt="Foto"></div>`
+    : `<div class="m"><div role="button" aria-label="Video player" data-video-url="/assets/clips/g${n}.mp4">`
+      + `<img src="/img/g${n}.jpg" alt="Video player"><div class="inline-video-container">`
+      + (n === 1 ? `<video src="/assets/clips/g1.mp4"></video>` : "") + `</div></div></div>`)
+  + `<div class="m"><span>15K</span><span>1.2K</span></div>`;
 // The page's videojs global: getAllPlayers() with each player's manifest,
 // poster and (when named) Brightcove-style mediainfo.
 const vjsScript = (players) => `<script>
@@ -309,6 +319,35 @@ const SITE = {
     flatFeed(true, true)),
   [`a.test/flatfeed2.html`]: html("Discover Popular Videos | Site", `<meta property="og:title" content="Discover Popular Videos | Site">`,
     flatFeed(false, false)),
+
+  // What the feed rules must NOT touch: a feed post with no caption (after a
+  // photo post, author only, one word), an article with two clips between
+  // paragraphs, a single clip beside related stories' hover previews, a
+  // share field and a lazy player of another rendition.
+  [`a.test/flatfeed3.html`]: html("Discover Popular Videos | Site", `<meta property="og:title" content="Discover Popular Videos | Site">`,
+    `<div class="m">` + feedPost("Canal Norte", "La final se decide en la prórroga con un gol de cabeza", 1, "ph")
+    + feedPost("Diario Local", "Vendo bicicleta de montaña casi nueva en Madrid", 2, "photo")
+    + `<div class="m"><span>Una foto del atardecer sobre la bahía de Valencia</span></div><div class="m"><img src="/img/ph8.jpg" width="400" height="300" alt="Foto"></div>`
+    + `<div class="m"><div role="button" aria-label="Video player" data-video-url="/assets/clips/g7.mp4"><img src="/img/g7.jpg" alt="Video player"></div></div>`
+    + feedPost("Ana", "", 3, "ph") + feedPost("Noticias del Valle", "", 4, "ph") + feedPost("Pepe", "Wow!", 5, "ph")
+    + `<div class="m">Texto de una publicación sin vídeo con varias palabras aquí</div>` + feedPost("Luis", "", 6, "ph") + `</div>`),
+  [`a.test/article2.html`]: html("Storm leaves the valley without power", `<meta property="og:title" content="Storm leaves the valley without power">`,
+    `<article><h1>Storm leaves the valley without power</h1><div class="body">`
+    + `<p>Crews worked through the night to restore the lines, the utility said on Tuesday.</p><figure><video src="/assets/clips/a1.mp4"></video></figure>`
+    + `<p>Residents were told to boil water until further notice from the council.</p><figure><video src="/assets/clips/a2.mp4"></video></figure></div></article>`),
+  [`a.test/strays.html`]: html("Mayor resigns after budget vote",
+    `<meta property="og:title" content="Mayor resigns after budget vote"><meta property="og:image" content="/img/og.jpg">`,
+    `<article><h1>Mayor resigns after budget vote</h1><figure><video src="/assets/clips/s.mp4?token=abc"></video></figure>`
+    + `<div class="lazy" data-mp4="/assets/clips/s_hd.mp4"></div><p>The mayor told reporters she would leave office on Friday.</p>`
+    + `<div class="share"><input readonly value="/assets/clips/s.mp4"><button data-clipboard-text="/assets/clips/s.mp4">Copy link</button></div></article>`
+    + `<aside><a href="/s2"><div class="thumb" data-preview="/assets/clips/prev2.mp4"><img src="/img/2.jpg" width="200" height="120" alt=""></div>`
+    + `<h3>Floods close the coast road again</h3></a><a href="/s3"><div class="thumb" data-preview="/assets/clips/prev3.mp4">`
+    + `<img src="/img/3.jpg" width="200" height="120" alt=""></div><h3>Council approves the new tram line</h3></a></aside>`),
+  [`a.test/dupe.html`]: html("Mayor resigns after budget vote",
+    `<meta property="og:title" content="Mayor resigns after budget vote"><meta property="og:image" content="/img/og.jpg">`,
+    `<article><h1>Mayor resigns after budget vote</h1><div class="pl" data-src="/assets/clips/d.mp4?v=1"><video src="/assets/clips/d.mp4?v=1"></video></div>`
+    + `<p>The mayor told reporters she would leave office on Friday.</p></article>`
+    + `<div class="mini"><div class="pl" data-src="/assets/clips/d.mp4?v=2"></div></div>`),
 
   [`a.test/cards.html`]: html("Cards page",
     `<meta property="og:title" content="Cards page">`,
@@ -1488,6 +1527,38 @@ try {
     r = await o.ask(top, "f3.mp4");
     expect(r.pick?.name === "La final se decide en la prórroga con un gol de cabeza",
       "a clip no element plays yet is named by its placeholder's post", r.pick?.name);
+    o = await open(`${a}/flatfeed3.html`);
+    top = o.frame("/flatfeed3.html");
+    r = await o.ask(top, "g1.mp4");
+    expect(r.pick?.name === "La final se decide en la prórroga con un gol de cabeza", "a feed's first post is named by its caption", r.pick?.name);
+    for (const [clip, why] of [["g3.mp4", "a post with no caption after a photo post takes nothing from it"],
+      ["g4.mp4", "a post with no caption is not named after its author"],
+      ["g5.mp4", "a one-word caption is no title, and nothing above it is taken"],
+      ["g6.mp4", "a post with no caption after a text-only post takes nothing from it"],
+      ["g7.mp4", "a player with no header after a photo post takes nothing from it"]]) {
+      r = await o.ask(top, clip);
+      expect(r.pick?.name === "Discover Popular Videos | Site", why, r.pick?.name);
+    }
+    r = await o.ask(top, "g4.mp4");
+    expect(r.meta?.posterlessClip === true, "a feed clip not playing never takes the page's picture", r.meta?.posterlessClip);
+    o = await open(`${a}/article2.html`);
+    top = o.frame("/article2.html");
+    for (const clip of ["a1.mp4", "a2.mp4"]) {
+      r = await o.ask(top, clip);
+      expect(r.pick?.name === "Storm leaves the valley without power",
+        `an article's clip between paragraphs keeps the article's title (${clip})`, r.pick?.name);
+    }
+    o = await open(`${a}/strays.html`);
+    top = o.frame("/strays.html");
+    r = await o.ask(top, "s.mp4?token=abc");
+    expect(r.pick?.name === "Mayor resigns after budget vote" && r.meta?.posterlessClip === false,
+      "a single clip keeps the page's title and picture beside hover previews, a share field and another rendition",
+      `${r.pick?.name} posterless=${r.meta?.posterlessClip}`);
+    o = await open(`${a}/dupe.html`);
+    top = o.frame("/dupe.html");
+    r = await o.ask(top, "d.mp4?v=1");
+    expect(r.pick?.name === "Mayor resigns after budget vote" && r.meta?.posterlessClip === false,
+      "two players naming one file (a mini-player copy) are no feed", `${r.pick?.name} posterless=${r.meta?.posterlessClip}`);
   }
 
   console.log("player config: a clip named by its player's data-* JSON");
