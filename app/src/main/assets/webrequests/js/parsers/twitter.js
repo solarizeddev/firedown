@@ -433,7 +433,10 @@ function shownTweets(result) {
         ? [{ result: original, nested: true, wrapper: result }]
         : [{ result, nested: false }];
     const main = unwrapTweet(original || result);
-    const quoted = main?.quoted_status_result?.result;
+    // X's TweetDetail / TweetResultByRestId bodies now carry the quote as
+    // quoted_tweet_results (seen 2026-11-24), the key the SSR inline path
+    // already reads; older bodies used quoted_status_result.
+    const quoted = main?.quoted_status_result?.result || main?.quoted_tweet_results?.result;
     if (quoted) out.push({ result: quoted, nested: true });
     return out;
 }

@@ -1788,6 +1788,26 @@ const micro = async (n) => { for (let i = 0; i < n; i++) await null; };
         JSON.stringify(origins) === JSON.stringify(["https://x.com/otherauthor/status/7107", "https://x.com/pageowner/status/7108"]),
         JSON.stringify(origins));
 
+    // X's current bodies carry the quote as quoted_tweet_results (seen 2026-11-24): a
+    // status page whose tweet has no video of its own and quotes one that does.
+    // The quoted video is captured from the response (a paste-a-link page never
+    // plays it); the reply's GIF below is not. Both keys at once: once.
+    const qtQuoted = tweet("7110", "clipauthor", "This clip will go down in history https://t.co/d6", [media("510110")]);
+    const qtFocal = tweet("7111", "quoter2", "Brutal", null, { quoted_tweet_results: { result: qtQuoted } });
+    const gif = { id_str: "510112", type: "animated_gif", media_url_https: "https://pbs.twimg.com/tweet_video_thumb/G1.jpg",
+        video_info: { variants: [{ content_type: "video/mp4", bitrate: 0, url: "https://video.twimg.com/tweet_video/G1.mp4" }] } };
+    const qtReply = tweet("7112", "replier2", "@quoter2 lol", [gif]);
+    const qt = await drive(detailUrl("7111"), "xmlhttprequest", 82, "twDetailQuotedNewKey", detail(qtFocal, qtReply));
+    check("twitter-nested: a quote carried as quoted_tweet_results is captured from the response, under the quoted tweet",
+        qt.emits.length === 1 && qt.emits[0].msg.origin === "https://x.com/clipauthor/status/7110"
+            && qt.emits[0].msg.name === "This clip will go down in history" && qt.emits[0].msg.description === "@clipauthor",
+        JSON.stringify(qt.emits.map(e => [e.msg.origin, e.msg.name, e.msg.description])));
+    const both = tweet("7113", "quoter3", "Both keys", null, { quoted_status_result: { result: tweet("7114", "clip3", "Clip three", [media("510114")]) },
+        quoted_tweet_results: { result: tweet("7114", "clip3", "Clip three", [media("510114")]) } });
+    const b2 = await drive(detailUrl("7113"), "xmlhttprequest", 83, "twDetailBothKeys", detail(both));
+    check("twitter-nested: a tweet carrying both quote keys is captured once",
+        b2.emits.length === 1 && b2.emits[0].msg.origin === "https://x.com/clip3/status/7114", JSON.stringify(b2.emits.map(e => e.msg.origin)));
+
     // The user plays the reply: its master is captured by Layer 3, titled by
     // the REPLY's tweet, not by the page's handle.
     const played = await drive(master("510109"), "xmlhttprequest", 81, "twReplyPlayed");
