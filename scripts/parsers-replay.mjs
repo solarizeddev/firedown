@@ -13,6 +13,7 @@
 // extraction path or an emit field), not proof the shapes still match today's
 // live sites — for a "site changed its API" bug, get a fresh HAR and follow
 // CLAUDE.md's debugging order. Run: node scripts/parsers-replay.mjs (any cwd).
+import { readFileSync } from "node:fs";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -592,6 +593,74 @@ async function drive(url, type, tabId, requestId, body, requestHeaders) {
         check("fb: titled by its words, author as description, duration",
             m.name === "A sample description" && m.description === "Sample Page" && m.duration === 32000,
             JSON.stringify([m.name, m.description, m.duration]));
+    }
+
+    // Desktop Comet keeps the files in a child of the video object; the title,
+    // owner, picture and frame size are on the video (the logged-out /watch/
+    // feed, 2026-11: every clip landed untitled, no picture, 0-wide).
+    const childUrl = (id, side) => `https://video.fxyz1-1.fna.fbcdn.net/o1/v/t2/f2/m366/AQchild${id}${side}.mp4?_nc_cat=103&efg=${Buffer.from(JSON.stringify({
+        vencode_tag: `xpv_progressive.FACEBOOK..C3.${side}.dash_h264-basic-gen2_${side}p`, xpv_asset_id: Number(id), duration_s: 21, urlgen_source: "www",
+    })).toString("base64url")}&oh=00_X&oe=6AF7`;
+    const childFiles = (id, childId) => ({
+        id, width: 1280, height: 720, playable_duration_in_ms: 21000,
+        title: { text: "Parent title" }, owner: { name: "Parent Page" },
+        preferred_thumbnail: { image: { uri: `https://scontent.xx.fbcdn.example/p-${id}.jpg` } },
+        videoDeliveryLegacyFields: {
+            id: childId ?? id,
+            browser_native_hd_url: childUrl(id, 720),
+            browser_native_sd_url: childUrl(id, 360),
+        },
+    });
+    const child = await drive("https://www.facebook.com/api/graphql/", "xmlhttprequest", 43, "fbChild",
+        "for (;;);" + JSON.stringify({ data: { video: childFiles("1000011") } }));
+    check("fb: files in a child of the video object: one emit", child.emits.length === 1, child.emits.length);
+    if (child.emits.length === 1) {
+        const m = child.emits[0].msg;
+        check("fb: ...titled, described and pictured from the video object",
+            m.name === "Parent title" && m.description === "Parent Page" && m.img === "https://scontent.xx.fbcdn.example/p-1000011.jpg",
+            JSON.stringify([m.name, m.description, m.img]));
+        check("fb: ...its frame size from the video object (16:9 at each short side)",
+            JSON.stringify(m.variants.map(v => [v.width, v.height])) === "[[1280,720],[640,360]]", JSON.stringify(m.variants.map(v => [v.width, v.height])));
+    }
+    // A parent naming another video lends it nothing (no neighbour's title).
+    const otherVid = await drive("https://www.facebook.com/api/graphql/", "xmlhttprequest", 44, "fbOther",
+        "for (;;);" + JSON.stringify({ data: { video: childFiles("1000012", "1000099") } }));
+    check("fb: a parent naming another video lends no title or picture",
+        otherVid.emits.length === 1 && otherVid.emits[0].msg.name !== "Parent title" && !otherVid.emits[0].msg.img,
+        JSON.stringify(otherVid.emits.map(e => [e.msg.name, e.msg.img])));
+    // A list of videos holding the files: never a parent (an array is not the video).
+    const list = await drive("https://www.facebook.com/api/graphql/", "xmlhttprequest", 45, "fbList",
+        "for (;;);" + JSON.stringify({ data: { title: { text: "The feed" }, edges: [
+            { id: "1000021", browser_native_hd_url: "https://video.xx.fbcdn.example/v/hd-1000021.mp4?_nc=1" },
+            { id: "1000022", browser_native_hd_url: "https://video.xx.fbcdn.example/v/hd-1000022.mp4?_nc=1" },
+        ] } }));
+    check("fb: videos in a list are not titled by what holds the list",
+        list.emits.length === 2 && list.emits.every(e => e.msg.name !== "The feed"), JSON.stringify(list.emits.map(e => e.msg.name)));
+
+    // Real shapes (scripts/fixtures/facebook, from logged-out /watch/ bodies,
+    // sanitized): the document lists the feed's clips with their text, author,
+    // picture and length and no files; each clip's files come in a playback
+    // response, when it plays, with no text or author. Every clip is titled.
+    {
+        const fx = join(dirname(fileURLToPath(import.meta.url)), "fixtures", "facebook");
+        const watchHtml = readFileSync(join(fx, "watch-document.html"), "utf8");
+        const playback = JSON.parse(readFileSync(join(fx, "playback-bodies.json"), "utf8"));
+        const page = await drive("https://www.facebook.com/watch/", "main_frame", 46, "fbWatchDoc", watchHtml);
+        check("fb watch: the feed document emits nothing (no files in it)", page.emits.length === 0, page.emits.length);
+        const titled = [];
+        for (let k = 0; k < playback.length; k++) {
+            const r = await drive("https://www.facebook.com/api/graphql/", "xmlhttprequest", 46, `fbPlay${k}`, playback[k]);
+            for (const e of r.emits) titled.push(e.msg);
+        }
+        check("fb watch: each playback response emits its clip", titled.length === playback.length, titled.length);
+        check("fb watch: every clip is titled from the page (its text, else its author), never left nameless",
+            titled.length > 0 && titled.every(m => m.name && !/^AQ/.test(m.name)), JSON.stringify(titled.map(m => m.name)));
+        check("fb watch: ...its caption's first line, the author as description",
+            titled.some(m => /^Clip \d+ caption line$/.test(m.name) && /^Page [A-Z]$/.test(m.description)), JSON.stringify(titled.map(m => [m.name, m.description])));
+        check("fb watch: ...a clip with no text is named after its author",
+            titled.some(m => /^Page [A-Z]$/.test(m.name)), JSON.stringify(titled.map(m => m.name)));
+        check("fb watch: ...its picture is the playback response's own, its frame 1280x720",
+            titled.every(m => /_preferred\.jpg$/.test(m.img || "")) && titled.every(m => m.variants[0].width > 0), JSON.stringify(titled.map(m => [m.img, m.variants[0].width, m.variants[0].height])));
     }
 
     // Streamed (NDJSON) GraphQL — each line an independent object.

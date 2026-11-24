@@ -72,6 +72,14 @@ const FB_FRAME_META_MS = 1500;
 
 // Metadata about a VIDEO (true in every tab): asset id -> { node, extraUrls }.
 const fbAssetCache = new MetaCache(256, 30 * 60 * 1000);
+// What a page says about a video by its id, kept when no files came with it:
+// desktop /watch/ lists its feed (text, author, picture, length) in the
+// document and sends a clip's files only when it plays, in a playback
+// response that carries none of that (2026-11, from real bodies).
+const fbVideoMeta = new MetaCache(512, 30 * 60 * 1000);
+// A key only a video's own object holds: its text.
+const FB_META_KEYS = new Set(["savable_description"]);
+const FB_META_RE = /savable_description/;
 
 function fbPending(tabId) {
     return tabClaims(tabId, "fb-pending", 20 * 1000, 32);
@@ -116,7 +124,7 @@ const REGEX_AFTER_WORDS = new Set(["return", "typeof", "case", "in", "of", "do",
 // as text) is skipped with the string; the wire backbone covers it. A
 // depth-capped walk of the parsed tree was how the
 // Threads parser missed items two levels too deep; this has no depth.
-function findNodeStarts(src, out) {
+function findNodeStarts(src, out, metaOut = []) {
     const stack = [];
     const n = Math.min(src.length, FB_MAX_SCAN_CHARS);
     let lastSig = "";       // last significant char outside strings/comments
@@ -128,11 +136,22 @@ function findNodeStarts(src, out) {
         while (j < n && (src[j] === " " || src[j] === "\n" || src[j] === "\t" || src[j] === "\r")) j++;
         return src[j] === ":";
     };
+    // Each recorded node with the `{` that directly encloses it, when there is
+    // one: the delivery fields can sit in a child of the video object (see
+    // nodesFromText), whose title and picture are then on that parent.
+    const recordMeta = () => {
+        const top = stack[stack.length - 1];
+        if (top && top.ch === "{" && !top.metaRecorded && metaOut.length < 256) {
+            top.metaRecorded = true;
+            metaOut.push(top.at);
+        }
+    };
     const record = () => {
         const top = stack[stack.length - 1];
         if (top && top.ch === "{" && !top.recorded) {
             top.recorded = true;
-            out.push(top.at);
+            const parent = stack[stack.length - 2];
+            out.push({ at: top.at, parentAt: parent && parent.ch === "{" ? parent.at : -1 });
         }
     };
     while (i < n && out.length < FB_MAX_NODES_PER_BODY) {
@@ -146,7 +165,11 @@ function findNodeStarts(src, out) {
             }
             const end = i;
             i++;
-            if (end - start <= 40 && FB_NODE_KEYS.has(src.slice(start, end)) && followedByColon(i)) record();
+            if (end - start <= 40 && followedByColon(i)) {
+                const key = src.slice(start, end);
+                if (FB_NODE_KEYS.has(key)) record();
+                else if (FB_META_KEYS.has(key)) recordMeta();
+            }
             lastSig = c;
             lastWord = "";
             continue;
@@ -201,7 +224,11 @@ function findNodeStarts(src, out) {
         if (isIdStart(c)) {
             let j = i + 1;
             while (j < n && isId(src[j])) j++;
-            if (j - i <= 40 && FB_NODE_KEYS.has(src.slice(i, j)) && followedByColon(j)) record();
+            if (j - i <= 40 && followedByColon(j)) {
+                const key = src.slice(i, j);
+                if (FB_NODE_KEYS.has(key)) record();
+                else if (FB_META_KEYS.has(key)) recordMeta();
+            }
             lastSig = src[j - 1];
             lastWord = src.slice(i, j);
             i = j;
@@ -213,19 +240,57 @@ function findNodeStarts(src, out) {
     return out;
 }
 
+// Whether a node carries anything about the video besides its files.
+function nodeHasMeta(video) {
+    return !!(extractFacebookText(video) || extractFacebookThumbnail(video) || nodeAspect(video)
+        || extractFacebookOwnerName(video));
+}
+
+// The video's id, as the node names it.
+function nodeId(video) {
+    const id = video?.id ?? video?.video_id ?? video?.videoId;
+    return id == null ? "" : String(id);
+}
+
+// A node that holds only the files (desktop Comet keeps the delivery fields
+// in a child of the video object, its title, owner, picture and size on the
+// video itself) takes what its enclosing object says about the video. Only
+// when that object is the same video: it holds no files of its own and names
+// no other id; a list or a story holding several videos never lends one
+// video's title to another. Found on the logged-out /watch/ feed (2026-11):
+// every clip landed untitled, with no picture and a 0-wide frame.
 function nodesFromText(src) {
     const nodes = [];
-    if (!FB_MARKER_RE.test(src)) return nodes;
-    const starts = findNodeStarts(src, []);
-    for (const at of starts) {
+    const hasNodes = FB_MARKER_RE.test(src);
+    if (!hasNodes && !FB_META_RE.test(src)) return nodes;
+    const metaStarts = [];
+    const starts = findNodeStarts(src, [], metaStarts);
+    for (const at of metaStarts) {
+        let m;
+        try { m = parseJsValue(src, { i: at, R: {} }); } catch (_) { continue; }
+        rememberFacebookMeta(m);
+    }
+    if (!hasNodes) return nodes;
+    for (const { at, parentAt } of starts) {
         let v;
         try { v = parseJsValue(src, { i: at, R: {} }); } catch (_) { continue; }
-        if (isFacebookVideoNode(v)) nodes.push(v);
+        if (!isFacebookVideoNode(v)) continue;
+        if (parentAt >= 0 && !nodeHasMeta(v)) {
+            let p = null;
+            try { p = parseJsValue(src, { i: parentAt, R: {} }); } catch (_) { p = null; }
+            const pid = nodeId(p), vid = nodeId(v);
+            if (p && typeof p === "object" && !Array.isArray(p) && !isFacebookVideoNode(p)
+                && (!pid || !vid || pid === vid)) {
+                v = { ...p, ...v };
+            }
+        }
+        nodes.push(v);
     }
     return nodes;
 }
 
-// Every inline <script> body of a document that names a node key.
+// Every inline <script> body of a document that names a node key, or a
+// video's text (its feed: remembered for the clip's files, fbVideoMeta).
 function documentScripts(html) {
     const out = [];
     const re = /<script\b[^>]*>/gi;
@@ -235,7 +300,7 @@ function documentScripts(html) {
         const end = html.indexOf("</script>", start);
         if (end <= start) continue;
         const body = html.slice(start, end);
-        if (FB_MARKER_RE.test(body)) out.push(body);
+        if (FB_MARKER_RE.test(body) || FB_META_RE.test(body)) out.push(body);
         re.lastIndex = end;
     }
     return out;
@@ -453,6 +518,29 @@ function facebookVariants(video, extraUrls = []) {
 
 // Keyed by asset id, and by file path for a URL with no efg (the played URL
 // can differ from the node's only by its signature parameters).
+// A video object that says something about the video (its text, author,
+// picture) remembered by its id, for its files to be titled by later.
+function rememberFacebookMeta(video) {
+    if (!video || typeof video !== "object" || Array.isArray(video)) return;
+    const id = nodeId(video);
+    if (!id || !(extractFacebookText(video) || extractFacebookOwnerName(video) || extractFacebookThumbnail(video))) return;
+    const keep = {};
+    for (const k of ["id", "title", "caption", "savable_description", "message", "owner", "user", "image",
+        "preferred_thumbnail", "thumbnailImage", "playable_duration_in_ms", "length_in_second", "story_url"]) {
+        if (video[k] !== undefined && video[k] !== null) keep[k] = video[k];
+    }
+    fbVideoMeta.set(id, keep);
+}
+
+// A node lacking the video's words takes what the page said about the same
+// id (its own fields win).
+function withPageMeta(video) {
+    const id = nodeId(video);
+    const m = id ? fbVideoMeta.get(id) : undefined;
+    if (!m || extractFacebookText(video)) return video;
+    return { ...m, ...video };
+}
+
 function rememberFacebookNode(video, extraUrls) {
     const entry = { video, extraUrls };
     for (const id of nodeAssetIds(video)) fbAssetCache.set(id, entry);
@@ -463,6 +551,7 @@ function rememberFacebookNode(video, extraUrls) {
 }
 
 function sendFacebookVideo(details, video, pageUrl, extraUrls = []) {
+    video = withPageMeta(video);
     let variants = facebookVariants(video, extraUrls);
     let manifest = false;
 
@@ -526,7 +615,8 @@ function readFacebookResponse(details, process) {
     pending.add(details.requestId);
     const armed = filterResponseText(details, (text) => {
         try {
-            if (text && FB_MARKER_RE.test(text)) process(text);
+            // Files, or a video's text to remember (a feed lists clips with no files).
+            if (text && (FB_MARKER_RE.test(text) || FB_META_RE.test(text))) process(text);
         } catch (e) {
             log("FB-FILTER", `extraction failed`, e.message);
         } finally {
