@@ -465,9 +465,9 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl, requestId, page
             });
             for (const x of variants) if (tiktokVideoOnly(x.url)) x.videoOnly = true;
             const whole = variants.filter(x => !x.videoOnly);
-            const pa = v.playAddr || v.downloadAddr;
+            const pa = [v.playAddr, v.downloadAddr].find(u => u && !tiktokVideoOnly(u));
             if (whole.length > 0) variants = whole;
-            else if (pa && !tiktokVideoOnly(pa)) {
+            else if (pa) {
                 // A complete file beats a sharper silent one (sendVariants sorts by height).
                 variants = [{ url: pa, width: v.width || 0, height: v.height || 0, videoCodec: tiktokCodec(v.codecType) }];
             }
