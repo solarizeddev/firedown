@@ -218,6 +218,33 @@ async function buildTikTokHeaders(tabId, requestId, pageCookies) {
 }
 
 // TikTok names HEVC "h265" or "bytevc1"; everything else it serves is H.264.
+// Some videos come as separate picture and sound tracks (seen 2026-11-24): a PlayAddr
+// whose path ends /media-video-<codec>/ is the picture alone, its sound a
+// /media-audio-…/ file beside it. Where the item's JSON keeps that sound's
+// address isn't known yet, so a picture-only file is never offered as the whole
+// video: dropped when the item has a complete file, else flagged videoOnly (the
+// app says "No sound" and offers no audio-only save).
+const TIKTOK_VIDEO_ONLY_RE = /\/media-video-[a-z0-9]+\/?$/i;
+function tiktokVideoOnly(u) {
+    try { return TIKTOK_VIDEO_ONLY_RE.test(new URL(u).pathname); } catch (_) { return false; }
+}
+// Where an item's JSON names a /media-audio-…/ file: key paths only (no
+// queries), for the log, so the next split item shows where its sound is.
+function tiktokAudioPaths(obj, path = "video", depth = 0, out = []) {
+    if (!obj || depth > 6 || out.length >= 8) return out;
+    if (typeof obj === "string") {
+        if (/\/media-audio-/i.test(obj)) {
+            let shape = obj;
+            try { shape = new URL(obj).pathname.replace(/\/[^/]{20,}\//g, "/<id>/"); } catch (_) {}
+            out.push(`${path} = ${shape}`);
+        }
+        return out;
+    }
+    if (typeof obj !== "object") return out;
+    for (const k of Object.keys(obj)) tiktokAudioPaths(obj[k], `${path}.${k}`, depth + 1, out);
+    return out;
+}
+
 function tiktokCodec(name) {
     const n = String(name || "").toLowerCase();
     return (n === "h265" || n === "bytevc1" || n === "hevc") ? "h265" : "h264";
@@ -405,7 +432,7 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl, requestId, page
             ? `https://www.tiktok.com/@${author}/video/${item.id}`
             : pageUrl;
 
-        const variants = [];
+        let variants = [];
         if (Array.isArray(v.bitrateInfo)) {
             for (const b of v.bitrateInfo) {
                 const list = b?.PlayAddr?.UrlList;
@@ -429,6 +456,21 @@ async function handleTikTokItemList({ url, body, tabId, pageUrl, requestId, page
                 height: v.height || 0,
                 videoCodec: tiktokCodec(v.codecType)
             });
+        }
+        if (variants.some(x => tiktokVideoOnly(x.url))) {
+            log("TIKTOK", `picture-only variants`, {
+                id: item.id,
+                videoKeys: Object.keys(v),
+                audio: tiktokAudioPaths(v)
+            });
+            for (const x of variants) if (tiktokVideoOnly(x.url)) x.videoOnly = true;
+            const whole = variants.filter(x => !x.videoOnly);
+            const pa = v.playAddr || v.downloadAddr;
+            if (whole.length > 0) variants = whole;
+            else if (pa && !tiktokVideoOnly(pa)) {
+                // A complete file beats a sharper silent one (sendVariants sorts by height).
+                variants = [{ url: pa, width: v.width || 0, height: v.height || 0, videoCodec: tiktokCodec(v.codecType) }];
+            }
         }
         if (variants.length === 0) { skippedNoVariants++; continue; }
 
