@@ -13,6 +13,7 @@
 // extraction path or an emit field), not proof the shapes still match today's
 // live sites — for a "site changed its API" bug, get a fresh HAR and follow
 // CLAUDE.md's debugging order. Run: node scripts/parsers-replay.mjs (any cwd).
+import { readFileSync } from "node:fs";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -635,6 +636,32 @@ async function drive(url, type, tabId, requestId, body, requestHeaders) {
         ] } }));
     check("fb: videos in a list are not titled by what holds the list",
         list.emits.length === 2 && list.emits.every(e => e.msg.name !== "The feed"), JSON.stringify(list.emits.map(e => e.msg.name)));
+
+    // Real shapes (scripts/fixtures/facebook, from logged-out /watch/ bodies,
+    // sanitized): the document lists the feed's clips with their text, author,
+    // picture and length and no files; each clip's files come in a playback
+    // response, when it plays, with no text or author. Every clip is titled.
+    {
+        const fx = join(dirname(fileURLToPath(import.meta.url)), "fixtures", "facebook");
+        const watchHtml = readFileSync(join(fx, "watch-document.html"), "utf8");
+        const playback = JSON.parse(readFileSync(join(fx, "playback-bodies.json"), "utf8"));
+        const page = await drive("https://www.facebook.com/watch/", "main_frame", 46, "fbWatchDoc", watchHtml);
+        check("fb watch: the feed document emits nothing (no files in it)", page.emits.length === 0, page.emits.length);
+        const titled = [];
+        for (let k = 0; k < playback.length; k++) {
+            const r = await drive("https://www.facebook.com/api/graphql/", "xmlhttprequest", 46, `fbPlay${k}`, playback[k]);
+            for (const e of r.emits) titled.push(e.msg);
+        }
+        check("fb watch: each playback response emits its clip", titled.length === playback.length, titled.length);
+        check("fb watch: every clip is titled from the page (its text, else its author), never left nameless",
+            titled.length > 0 && titled.every(m => m.name && !/^AQ/.test(m.name)), JSON.stringify(titled.map(m => m.name)));
+        check("fb watch: ...its caption's first line, the author as description",
+            titled.some(m => /^Clip \d+ caption line$/.test(m.name) && /^Page [A-Z]$/.test(m.description)), JSON.stringify(titled.map(m => [m.name, m.description])));
+        check("fb watch: ...a clip with no text is named after its author",
+            titled.some(m => /^Page [A-Z]$/.test(m.name)), JSON.stringify(titled.map(m => m.name)));
+        check("fb watch: ...its picture is the playback response's own, its frame 1280x720",
+            titled.every(m => /_preferred\.jpg$/.test(m.img || "")) && titled.every(m => m.variants[0].width > 0), JSON.stringify(titled.map(m => [m.img, m.variants[0].width, m.variants[0].height])));
+    }
 
     // Streamed (NDJSON) GraphQL — each line an independent object.
     const nd = await drive("https://www.facebook.com/api/graphql/", "xmlhttprequest", 41, "fbNd",
