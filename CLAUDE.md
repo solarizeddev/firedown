@@ -1515,6 +1515,20 @@ backbone covers it). On a device: `CaptureLiveTest` t6 (live network, a
 pinned public reel; it counts the reel's video and audio captures, not the page's pictures), green on SM-A426B (Android 12); desktop pages and `plugins/video.php` embeds are
 read by the same scanner but no HAR of them was checked.
 
+**The mobile site's /watch/ (`m.facebook.com`, the "weblite" app) gives the
+readers nothing: its clips are named by the content script.** The document
+is server-rendered HTML, not data: the first posts are `div`s, each player a
+`<div role="button" aria-label="Video player" data-video-url="…mp4"
+data-video-id="…">` placeholder, and every later post arrives over a
+binary WebSocket (`WebLitePipe`, `kaios-d.facebook.com`) that no webRequest
+filter can read. There is no `playable_url` in anything, so every played
+file takes the wire backbone, titled by the frame's `get-page-metadata`. It
+landed as the page title ("Discover Popular Videos | Facebook") or "Open
+Facebook" until the flat-feed rules under "Generic catcher" ("A feed of
+players"). A post's caption is cut by the page ("…See more"); the full
+text is in no response either. Found on a HAR (2026-11); replayed with
+`har-replay.mjs`, the page's own JS autoplays the first clip.
+
 ### Skip the capture probe when the parser already has the metadata
 
 A parser that supplies url + resolution + duration does **not** need the ffmpeg
@@ -3384,6 +3398,53 @@ flag, no word floor, no template drop — each fails one):
   A bracketed tag ("[VIDEO]") beside a real clip is not one.
 Residuals: a slide that never plays; a site whose podcast or bulletin list
 names its audio nowhere the bridge or the content script reads.
+
+**A feed of players, and posts with no wrapper — each pinned by
+`frame-meta-harness.mjs` "flat feed" (18 checks; mutants: no feed, a lone
+stray attribute taken for a feed, members not required alike, the members'
+shared label taken as a title, a two-clip feed not multi-video, no flat run,
+aria-hidden honoured behind a dialog, the slideshow test blind to the feed,
+author links read, every link skipped, no picture stop, a run past the
+nearest text sibling — each fails at least one):**
+- **A feed is a SET of players** (`clipPlayers`): elements of one tag
+  sharing one attribute, each naming ONE media file (absolute or
+  root-relative; links, media elements, form fields and buttons never), two
+  files or more, the members ALIKE (the same role and the same first class,
+  one of the two set: a related card's `div.thumb[data-src]` is no member
+  beside an article's `div.player[data-src]`, Fable's second review). A clip is in it only when its own player is a member (the
+  element or an ancestor within six levels carrying the attribute) or, for
+  a `<video>` loose in `<body>` or a clip no element plays, when one member
+  names its file (`playerNamingFile`, the one search by file name, kept 5 s
+  per URL). The set is then read by its attribute name
+  (`querySelectorAll`), never by scanning every attribute of the page. A
+  stray media URL in an attribute (a share field, another rendition, related
+  stories' hover previews) changes nothing for a clip outside the set; two
+  members naming one file (a mini-player copy) are no feed. The first cut
+  counted any such attribute anywhere and turned single-video articles into
+  multi-video pages (Fable's review, 2026-11).
+- **What the feed changes**: any feed makes the page multi-video
+  (`multiVideo`, so a feed clip never takes the page's title or og:image,
+  a feed of two included); its members count for the walk's stop rule (`holdsFeedPlayer`) and for
+  the slideshow test (a list of players is not a slideshow showing this
+  clip).
+- **A post whose parts are siblings** (`flatRunTitle`, feed only): when the
+  walk stops at the list and the clip's branch holds no text, the post's
+  caption is the NEAREST sibling with text before the branch: its last text
+  of three words or more that is not in a short link (an author's name
+  links to the author; a caption can be a permalink), with "…" when an ellipsis element follows it. A sibling with no
+  such text (a captionless post's header) names nothing; another clip,
+  another member or a picture (box, declared or natural size ≥ 100 px) ends
+  the run first. So a post never takes the words of the post above or its
+  author's name.
+- **A `<video>` outside any card or a clip no element plays** is walked
+  from its feed player. **A label every member carries** ("Video player")
+  names none of them, whatever the label census says (a feed of two).
+- **Behind a dialog, aria-hidden says nothing**: when the clip's whole part
+  of the list is `aria-hidden` (an app banner open over the feed hides
+  everything behind it), the flat run reads aria-hidden texts. The rest of
+  the walk still skips them (a credit hidden from readers).
+- Cost on a synthetic 4 000-card page (desktop Chromium): a cold query
+  6–10 ms, as before; ~20 ms once per URL per 5 s for a loose `<video>`.
 
 The **thumbnail** half of the same report is Java: `GlideHelper.load(Browser
 DownloadEntity…)` chains a frame decode from the media URL as the `.error()`

@@ -74,6 +74,43 @@ const vjsRoot = (id, poster, src) =>
   + `<div class="vjs-control-bar"><button title="Play"></button>`
   + `<button title="Picture-in-Picture"></button><button title="Seek to live, currently behind live"></button></div>`
   + `</video-js>`;
+// See the flatfeed pages.
+const flatFeed = (dialog, preload) => {
+  const h = dialog ? ' aria-hidden="true"' : "";
+  const posts = [
+    ["Diario Local", "Lluvias intensas cortan tres carreteras de la comarca durante la noche y obligan a", true],
+    ["Noticias del Valle", "El ayuntamiento abre el nuevo parque junto al río", false],
+    ["Canal Norte", "La final se decide en la prórroga con un gol de cabeza", false],
+  ];
+  let out = `<div class="m"${h}>`;
+  posts.forEach(([author, caption, cut], i) => {
+    const n = i + 1;
+    out += `<div class="m"${h}><div role="button" aria-label="${author} profile picture"${h}><img src="/img/p${n}.jpg" alt=""></div>`
+      + `<div class="m"${h}><span role="link"${h}>${author}</span></div><div${h} aria-label="2 hours ago"><span>2h</span></div></div>`
+      + `<div class="m"${h}><div class="m" tabindex="0"${h}><div class="native-text"${h}><span>${caption}</span>`
+      + (cut ? `<span>...</span><span> See more</span>` : "") + `</div></div></div>`
+      + `<div class="m"${h}><div role="button" aria-label="Video player" data-video-url="/assets/clips/f${n}.mp4"${h}>`
+      + `<img src="/img/f${n}.jpg" alt="Video player"><div class="inline-video-container">`
+      + (i === 0 && preload ? `<video src="/assets/clips/f1.mp4"></video>` : "") + `</div>`
+      + `<button class="play"></button></div></div>`
+      + `<div class="m"${h}><span>15K</span><span>1.2K</span></div><div class="m"${h}></div>`;
+  });
+  out += `</div>`;
+  if (preload) out += `<video src="/assets/clips/f2.mp4"></video>`;
+  if (dialog) out += `<div role="dialog"><div>Get the full experience</div><div role="button" aria-label="Open the app">Open the app</div>`
+    + `<div role="button" aria-label="Log in">Log in</div></div>`;
+  return out;
+};
+// A feed post for flatfeed3: header, caption, then a player ("ph") or a photo.
+const feedPost = (author, caption, n, kind) =>
+  `<div class="m"><div role="button" aria-label="${author} profile picture"><img src="/img/p${n}.jpg" width="40" height="40" alt=""></div>`
+  + `<div class="m"><span role="link">${author}</span></div><div aria-label="2 hours ago"><span>2h</span></div></div>`
+  + (caption ? `<div class="m"><div class="m" tabindex="0"><div class="native-text"><span>${caption}</span></div></div></div>` : "")
+  + (kind === "photo" ? `<div class="m"><img src="/img/ph${n}.jpg" width="400" height="300" alt="Foto"></div>`
+    : `<div class="m"><div role="button" aria-label="Video player" data-video-url="/assets/clips/g${n}.mp4">`
+      + `<img src="/img/g${n}.jpg" alt="Video player"><div class="inline-video-container">`
+      + (n === 1 ? `<video src="/assets/clips/g1.mp4"></video>` : "") + `</div></div></div>`)
+  + `<div class="m"><span>15K</span><span>1.2K</span></div>`;
 // The page's videojs global: getAllPlayers() with each player's manifest,
 // poster and (when named) Brightcove-style mediainfo.
 const vjsScript = (players) => `<script>
@@ -270,6 +307,63 @@ const SITE = {
     + `<video class="video-js" preload="none" src="/assets/clips/d3.mp4" data-setup='{"name":"heroPlayer","fluid":true}'></video></div></div>`
     + `<div class="puff"><div class="player"><img src="/img/d4.jpg" alt="Hero video poster">`
     + `<video preload="none" src="/assets/clips/d4.mp4"></video></div></div>`),
+
+  // A feed with no wrapper per post (a "lite" mobile web app): each post's
+  // header, caption, player and reactions are siblings in one list, every
+  // player but the one playing is a placeholder naming its file in a data-*
+  // attribute, the next clip is preloaded in a <video> at the end of <body>,
+  // and a dialog open over the feed hides everything behind it with
+  // aria-hidden. flatfeed2 is the same feed before anything plays, with no
+  // dialog.
+  [`a.test/flatfeed.html`]: html("Discover Popular Videos | Site", `<meta property="og:title" content="Discover Popular Videos | Site">`,
+    flatFeed(true, true)),
+  [`a.test/flatfeed2.html`]: html("Discover Popular Videos | Site", `<meta property="og:title" content="Discover Popular Videos | Site">`,
+    flatFeed(false, false)),
+
+  // What the feed rules must NOT touch: a feed post with no caption (after a
+  // photo post, author only, one word), an article with two clips between
+  // paragraphs, a single clip beside related stories' hover previews, a
+  // share field and a lazy player of another rendition.
+  [`a.test/flatfeed3.html`]: html("Discover Popular Videos | Site", `<meta property="og:title" content="Discover Popular Videos | Site">`,
+    `<div class="m">` + feedPost("Canal Norte", "La final se decide en la prórroga con un gol de cabeza", 1, "ph")
+    + feedPost("Diario Local", "Vendo bicicleta de montaña casi nueva en Madrid", 2, "photo")
+    + `<div class="m"><span>Una foto del atardecer sobre la bahía de Valencia</span></div><div class="m"><img src="/img/ph8.jpg" width="400" height="300" alt="Foto"></div>`
+    + `<div class="m"><div role="button" aria-label="Video player" data-video-url="/assets/clips/g7.mp4"><img src="/img/g7.jpg" alt="Video player"></div></div>`
+    + feedPost("Ana", "", 3, "ph") + feedPost("Noticias del Valle", "", 4, "ph") + feedPost("Pepe", "Wow!", 5, "ph")
+    + `<div class="m">Texto de una publicación sin vídeo con varias palabras aquí</div>` + feedPost("Luis", "", 6, "ph") + `</div>`),
+  // A feed of two posts (every player labelled "Video player"), the second
+  // with its caption in a permalink.
+  [`a.test/flatfeed4.html`]: html("Discover Popular Videos | Site",
+    `<meta property="og:title" content="Discover Popular Videos | Site"><meta property="og:image" content="/img/og.jpg">`,
+    `<div class="m">` + feedPost("Canal Norte", "La final se decide en la prórroga con un gol de cabeza", 1, "ph")
+      .replace(/g1/g, "t1")
+    + feedPost("Diario Local", "<a href=\"/post/2\">El puerto recibe el primer crucero de la temporada</a>", 2, "ph").replace(/g2/g, "t2")
+    + `</div>`),
+  // A single clip whose wrapper shares a generic attribute with one related
+  // card's hover preview and a footer promo.
+  [`a.test/generic.html`]: html("Mayor resigns after budget vote | The Daily",
+    `<meta property="og:title" content="Mayor resigns after budget vote | The Daily"><meta property="og:image" content="/img/og.jpg">`,
+    `<header><h1>Mayor resigns after budget vote</h1></header><div class="content"><div class="player" data-src="/assets/clips/w.mp4">`
+    + `<video src="/assets/clips/w.mp4"></video></div><p>The mayor told reporters she would leave office on Friday.</p></div>`
+    + `<aside><a href="/s2"><div class="thumb" data-src="/assets/clips/prev2.mp4"></div><h3>Floods close the coast road again</h3></a></aside>`
+    + `<footer><div class="promo" data-src="/assets/clips/appad.mp4"></div></footer>`),
+  [`a.test/article2.html`]: html("Storm leaves the valley without power", `<meta property="og:title" content="Storm leaves the valley without power">`,
+    `<article><h1>Storm leaves the valley without power</h1><div class="body">`
+    + `<p>Crews worked through the night to restore the lines, the utility said on Tuesday.</p><figure><video src="/assets/clips/a1.mp4"></video></figure>`
+    + `<p>Residents were told to boil water until further notice from the council.</p><figure><video src="/assets/clips/a2.mp4"></video></figure></div></article>`),
+  [`a.test/strays.html`]: html("Mayor resigns after budget vote",
+    `<meta property="og:title" content="Mayor resigns after budget vote"><meta property="og:image" content="/img/og.jpg">`,
+    `<article><h1>Mayor resigns after budget vote</h1><figure><video src="/assets/clips/s.mp4?token=abc"></video></figure>`
+    + `<div class="lazy" data-mp4="/assets/clips/s_hd.mp4"></div><p>The mayor told reporters she would leave office on Friday.</p>`
+    + `<div class="share"><input readonly value="/assets/clips/s.mp4"><button data-clipboard-text="/assets/clips/s.mp4">Copy link</button></div></article>`
+    + `<aside><a href="/s2"><div class="thumb" data-preview="/assets/clips/prev2.mp4"><img src="/img/2.jpg" width="200" height="120" alt=""></div>`
+    + `<h3>Floods close the coast road again</h3></a><a href="/s3"><div class="thumb" data-preview="/assets/clips/prev3.mp4">`
+    + `<img src="/img/3.jpg" width="200" height="120" alt=""></div><h3>Council approves the new tram line</h3></a></aside>`),
+  [`a.test/dupe.html`]: html("Mayor resigns after budget vote",
+    `<meta property="og:title" content="Mayor resigns after budget vote"><meta property="og:image" content="/img/og.jpg">`,
+    `<article><h1>Mayor resigns after budget vote</h1><div class="pl" data-src="/assets/clips/d.mp4?v=1"><video src="/assets/clips/d.mp4?v=1"></video></div>`
+    + `<p>The mayor told reporters she would leave office on Friday.</p></article>`
+    + `<div class="mini"><div class="pl" data-src="/assets/clips/d.mp4?v=2"></div></div>`),
 
   [`a.test/cards.html`]: html("Cards page",
     `<meta property="og:title" content="Cards page">`,
@@ -1432,6 +1526,69 @@ try {
     const pageAsPicture = await top.evaluate(() => window.__reports.some((x) => x.kind === "images-detected"
       && (x.urls || []).some((u) => u.split("#")[0] === location.href.split("#")[0])));
     expect(!pageAsPicture, "an <img src=\"\"> does not report the page itself as a picture", pageAsPicture);
+  }
+
+  console.log("flat feed: posts whose parts are siblings, players not loaded yet");
+  {
+    let o = await open(`${a}/flatfeed.html`);
+    let top = o.frame("/flatfeed.html");
+    let r = await o.ask(top, "f1.mp4");
+    expect(r.pick?.name === "Lluvias intensas cortan tres carreteras de la comarca durante la noche y obligan a\u2026",
+      "the playing clip is named by its post's caption (cut short as the page shows it), behind a dialog", r.pick?.name);
+    r = await o.ask(top, "f2.mp4");
+    expect(r.pick?.name === "El ayuntamiento abre el nuevo parque junto al río",
+      "a clip preloaded outside the feed is named through its placeholder", r.pick?.name);
+    o = await open(`${a}/flatfeed2.html`);
+    top = o.frame("/flatfeed2.html");
+    r = await o.ask(top, "f3.mp4");
+    expect(r.pick?.name === "La final se decide en la prórroga con un gol de cabeza",
+      "a clip no element plays yet is named by its placeholder's post", r.pick?.name);
+    o = await open(`${a}/flatfeed3.html`);
+    top = o.frame("/flatfeed3.html");
+    r = await o.ask(top, "g1.mp4");
+    expect(r.pick?.name === "La final se decide en la prórroga con un gol de cabeza", "a feed's first post is named by its caption", r.pick?.name);
+    for (const [clip, why] of [["g3.mp4", "a post with no caption after a photo post takes nothing from it"],
+      ["g4.mp4", "a post with no caption is not named after its author"],
+      ["g5.mp4", "a one-word caption is no title, and nothing above it is taken"],
+      ["g6.mp4", "a post with no caption after a text-only post takes nothing from it"],
+      ["g7.mp4", "a player with no header after a photo post takes nothing from it"]]) {
+      r = await o.ask(top, clip);
+      expect(r.pick?.name === "Discover Popular Videos | Site", why, r.pick?.name);
+    }
+    r = await o.ask(top, "g4.mp4");
+    expect(r.meta?.posterlessClip === true, "a feed clip not playing never takes the page's picture", r.meta?.posterlessClip);
+    o = await open(`${a}/article2.html`);
+    top = o.frame("/article2.html");
+    for (const clip of ["a1.mp4", "a2.mp4"]) {
+      r = await o.ask(top, clip);
+      expect(r.pick?.name === "Storm leaves the valley without power",
+        `an article's clip between paragraphs keeps the article's title (${clip})`, r.pick?.name);
+    }
+    o = await open(`${a}/strays.html`);
+    top = o.frame("/strays.html");
+    r = await o.ask(top, "s.mp4?token=abc");
+    expect(r.pick?.name === "Mayor resigns after budget vote" && r.meta?.posterlessClip === false,
+      "a single clip keeps the page's title and picture beside hover previews, a share field and another rendition",
+      `${r.pick?.name} posterless=${r.meta?.posterlessClip}`);
+    o = await open(`${a}/flatfeed4.html`);
+    top = o.frame("/flatfeed4.html");
+    r = await o.ask(top, "t1.mp4");
+    expect(r.pick?.name === "La final se decide en la prórroga con un gol de cabeza",
+      "a feed of two: the playing clip is named by its caption, never the players' shared label", r.pick?.name);
+    r = await o.ask(top, "t2.mp4");
+    expect(r.pick?.name === "El puerto recibe el primer crucero de la temporada" && r.meta?.posterlessClip === true,
+      "a feed of two: the unplayed clip, its caption a permalink, takes no page picture",
+      `${r.pick?.name} posterless=${r.meta?.posterlessClip}`);
+    o = await open(`${a}/generic.html`);
+    top = o.frame("/generic.html");
+    r = await o.ask(top, "w.mp4");
+    expect(r.pick?.name === "Mayor resigns after budget vote | The Daily" && r.meta?.posterlessClip === false,
+      "a player wrapper sharing a generic attribute with unlike elements is no feed", `${r.pick?.name} posterless=${r.meta?.posterlessClip}`);
+    o = await open(`${a}/dupe.html`);
+    top = o.frame("/dupe.html");
+    r = await o.ask(top, "d.mp4?v=1");
+    expect(r.pick?.name === "Mayor resigns after budget vote" && r.meta?.posterlessClip === false,
+      "two players naming one file (a mini-player copy) are no feed", `${r.pick?.name} posterless=${r.meta?.posterlessClip}`);
   }
 
   console.log("player config: a clip named by its player's data-* JSON");

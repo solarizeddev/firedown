@@ -1015,6 +1015,128 @@ function sweepShadowRoots(root, onRoot) {
   };
 
   const countVideos = (root) => queryDeep(root, 'video').length;
+
+  // ── A feed of players ──
+  // A feed can render each clip as a player that names its file in an
+  // attribute (`<div data-…="…/clip.mp4">`) and create the <video> only for
+  // the clip playing (or the next one, preloaded at the end of <body>), so
+  // counting <video> elements reads the list as one clip. Such a feed is a
+  // SET: elements of one tag sharing one attribute, each naming one media
+  // file, two files or more. A clip is in it when its own player is a member
+  // (the element or an ancestor carrying the attribute) or, for a <video>
+  // outside any card or a clip no element plays, when one member names its
+  // file. Only then do the other members count as clips: a stray media URL
+  // in an attribute (a share field, another rendition, a hover preview of
+  // another story) changes nothing for a clip outside the set. The set is
+  // found by its attribute name, never by scanning every attribute of the
+  // page; the one search by file name is for a loose or unbound clip and is
+  // kept a few seconds per URL.
+  const PLAYER_URL_RE = /^(?:https?:\/\/|\/)[^\s"'<>]+\.(?:mp4|m4v|webm|mov|m3u8|mpd)(?:[?#][^\s"'<>]*)?$/i;
+  const PLAYER_SKIP_RE = /^(?:A|AREA|LINK|META|SCRIPT|SOURCE|TRACK|VIDEO|AUDIO|IFRAME|EMBED|OBJECT|IMG|INPUT|TEXTAREA|SELECT|OPTION|PARAM|BUTTON)$/;
+  const PLAYER_OWN_LEVELS = 6;
+  const MAX_FEED_PLAYERS = 200;
+  const FILE_SEARCH_MS = 5000;
+  const FILE_SEARCH_MAX = 64;
+  // The attribute of `el` naming one media file: {attr, url}, or null.
+  const playerUrlAttr = (el) => {
+    if (!el || el.nodeType !== 1 || PLAYER_SKIP_RE.test(el.tagName.toUpperCase())) return null;
+    const attrs = el.attributes;
+    for (let j = 0; j < attrs.length; j++) {
+      const v = attrs[j].value.trim();
+      if (v.length < 2048 && PLAYER_URL_RE.test(v)) {
+        const url = absUrl(v);
+        if (url) return { attr: attrs[j].name, url };
+      }
+    }
+    return null;
+  };
+  // The one element naming mediaUrl's file in such an attribute, or null.
+  const fileSearches = new Map();
+  const playerNamingFile = (mediaUrl) => {
+    const now = Date.now();
+    const hit = fileSearches.get(mediaUrl);
+    if (hit && now - hit.at < FILE_SEARCH_MS && (!hit.el || hit.el.isConnected)) return hit.el;
+    const seg = lastSegment(mediaUrl);
+    let found = null;
+    if (/^[A-Za-z0-9._~%-]{6,200}$/.test(seg)) {
+      let hits = null;
+      try {
+        hits = document.evaluate(`//*[@*[contains(., "${seg}")]]`, document, null,
+          XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+      } catch (_) {
+        hits = null;
+      }
+      const n = hits ? Math.min(hits.snapshotLength, 50) : 0;
+      for (let i = 0; i < n; i++) {
+        const a = playerUrlAttr(hits.snapshotItem(i));
+        if (!a || !sameUrl(a.url, mediaUrl)) continue;
+        if (found) {
+          found = null;
+          break;
+        }
+        found = hits.snapshotItem(i);
+      }
+    }
+    if (fileSearches.size >= FILE_SEARCH_MAX) fileSearches.delete(fileSearches.keys().next().value);
+    fileSearches.set(mediaUrl, { el: found, at: now });
+    return found;
+  };
+  // Members look alike: the same role and the same first class (a related
+  // story's `div.thumb[data-src]` is no member beside an article's
+  // `div.player[data-src]`), one of the two set.
+  const firstClass = (el) => ((el.getAttribute('class') || '').trim().split(/\s+/)[0] || '');
+  const alikePlayers = (a, b) => (a.getAttribute('role') || '') === (b.getAttribute('role') || '')
+    && firstClass(a) === firstClass(b) && !!(a.getAttribute('role') || firstClass(a));
+  const foldLabel = (t) => String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  // The feed `el` (the clip's element, or null) plays in: {own, others,
+  // idle, label} — its own player, the other members, how many of those
+  // hold no media element, the label every member carries ("Video player",
+  // never a title) — or null.
+  const clipPlayers = (el, mediaUrl) => {
+    let own = null;
+    let a = null;
+    for (let n = el, i = 0; n && i <= PLAYER_OWN_LEVELS; n = parentOf(n), i++) {
+      if (n === document.body || n === document.documentElement) break;
+      a = playerUrlAttr(n);
+      if (a) {
+        own = n;
+        break;
+      }
+    }
+    const loose = !el || !parentOf(el) || parentOf(el) === document.body || parentOf(el) === document.documentElement;
+    if (!own && loose && mediaUrl) {
+      own = playerNamingFile(mediaUrl);
+      a = own ? playerUrlAttr(own) : null;
+    }
+    if (!own || !a) return null;
+    let els;
+    try {
+      els = document.querySelectorAll(`${own.tagName.toLowerCase()}[${CSS.escape(a.attr)}]`);
+    } catch (_) {
+      return null;
+    }
+    const others = [];
+    const paths = new Set([pathOf(a.url)]);
+    let idle = 0;
+    for (let i = 0; i < els.length && i < MAX_FEED_PLAYERS; i++) {
+      const m = els[i];
+      if (m === own || m.contains(own) || own.contains(m) || !alikePlayers(own, m)) continue;
+      const v = (m.getAttribute(a.attr) || '').trim();
+      const u = PLAYER_URL_RE.test(v) ? absUrl(v) : '';
+      if (!u || (mediaUrl && sameUrl(u, mediaUrl))) continue;
+      paths.add(pathOf(u));
+      others.push(m);
+      if (!m.querySelector('video, audio')) idle++;
+    }
+    if (!others.length || paths.size < 2) return null;
+    let label = foldLabel(own.getAttribute('aria-label'));
+    for (let i = 0; label && i < others.length; i++) {
+      if (foldLabel(others[i].getAttribute('aria-label')) !== label) label = '';
+    }
+    return { own, others, idle, label };
+  };
+  // Whether `node` holds another member of the clip's feed.
+  const holdsFeedPlayer = (feed, node) => !!feed && feed.others.some((o) => node.contains(o));
   // Every <video> and <audio> of the page, those in shadow roots included.
   const allMediaElements = () => queryDeep(document, 'audio, video');
   // requests.js' urlIsStandaloneAudio, by extension.
@@ -2347,7 +2469,7 @@ function sweepShadowRoots(root, onRoot) {
     }
     return false;
   };
-  const textUnitsIn = (node, anchor) => {
+  const textUnitsIn = (node, anchor, readHidden) => {
     const out = [];
     let budget = UNIT_MAX_ELEMENTS;
     const visit = (el, top) => {
@@ -2355,7 +2477,7 @@ function sweepShadowRoots(root, onRoot) {
       if (!anchor || !el.contains(anchor)) {
         if (el.matches(UNIT_SKIP_SEL) || (!top && el.matches(CONTROL_SEL))) return;
         // Hidden from readers by the page: a duplicate, a decoration, a credit.
-        if (!top && el.getAttribute('aria-hidden') === 'true') return;
+        if (!top && !readHidden && el.getAttribute('aria-hidden') === 'true') return;
         if (titleElement(el) || ownsText(el)) {
           out.push(el);
           return;
@@ -2380,9 +2502,9 @@ function sweepShadowRoots(root, onRoot) {
   // A text unit as a card names a clip with, or null when it names nothing:
   // a player's chrome, a credit, fine print, a word several cards repeat, a
   // short link text its URL contradicts.
-  const unitInfo = (el) => {
+  const unitInfo = (el, readHidden) => {
     const meta = el.tagName === 'META';
-    if (!meta && (el.getAttribute('aria-hidden') === 'true' || playerRootOf(el))) return null;
+    if (!meta && ((!readHidden && el.getAttribute('aria-hidden') === 'true') || playerRootOf(el))) return null;
     const heading = titleElement(el) ? el : (el.parentElement ? el.parentElement.closest(CARD_HEADING_SEL) : null);
     const semantic = !!heading && (heading === el || titleElement(heading));
     const text = heading === el ? titleText(el) : usableCardLabel(textOf(el));
@@ -2515,10 +2637,12 @@ function sweepShadowRoots(root, onRoot) {
   // were read already); noLabel leaves out the control-label fallback (a
   // picture's description is never a button's wording); wholeCard reads a
   // section beside the clip as part of its card (see pickUnits).
-  const cardTitleFor = (el, holdsOther, skipOwn, noLabel, wholeCard) => {
+  const cardTitleFor = (el, holdsOther, skipOwn, noLabel, wholeCard, feed) => {
     const start = cardStart(el);
+    // A label every player of the clip's feed carries names none of them.
+    const notFeedLabel = (t) => (t && feed && feed.label && foldLabel(t) === feed.label ? '' : t);
     if (start === el && !skipOwn) {
-      const own = ownCardLabel(el) || labelledByText(el);
+      const own = notFeedLabel(ownCardLabel(el) || labelledByText(el));
       if (own) return own;
     }
     const twin = storyTwinTitleFor(start, holdsOther);
@@ -2532,14 +2656,16 @@ function sweepShadowRoots(root, onRoot) {
     for (const node of cardAncestors(start)) {
       if (holdsOther(node)) {
         const first = show === null;
-        show = clip ? slideshowAround(node, el, start, show) : null;
+        show = clip ? slideshowAround(node, el, start, show, feed) : null;
         if (!show) {
           const listed = clip && first ? slideListedCaptionFor(node, start) : '';
           if (listed) return listed;
+          const run = flatRunTitle(node, start, feed);
+          if (run) return run;
           break;
         }
       }
-      const named = labelledByText(node) || itemLabel(node) || heldControlName(node, start);
+      const named = notFeedLabel(labelledByText(node) || itemLabel(node) || heldControlName(node, start));
       if (named) return named;
       const level = levelNames(node, start, !!wholeCard);
       if (level.title) return level.title;
@@ -2548,12 +2674,67 @@ function sweepShadowRoots(root, onRoot) {
       const cap = cardCaptionFor(node);
       if (cap) return clipText(cap);
       if (level.plain) return clipText(level.plain);
-      if (!label) label = cardLabelFor(node, start);
+      if (!label) label = notFeedLabel(cardLabelFor(node, start));
       if (!hidden) hidden = level.hidden;
-      if (!alt) alt = cardAltFor(node);
+      if (!alt) alt = notFeedLabel(cardAltFor(node));
       if (!kicker) kicker = level.kicker;
     }
     return (noLabel ? '' : label) || clipText(hidden) || alt || kicker;
+  };
+  // A feed with no wrapper per post: the post's parts (author, caption,
+  // player, reactions) are siblings in one list, the clip's branch holds no
+  // text of its own, and the first ancestor holding another of the feed's
+  // players is that list. The post's caption is the nearest sibling with
+  // text BEFORE the clip's branch: its last text of three words or more
+  // that is no short link (an author's name links to the author; a caption
+  // can be a permalink). When that
+  // sibling holds none (a post with no caption: its header), nothing names
+  // the clip; another clip, another feed player or a picture on the way
+  // ends the run too, so a post never takes the words of the post above.
+  // A caption the page cut short, an ellipsis element after it,
+  // keeps the cut. When the clip's whole part of the list is hidden from
+  // screen readers (a dialog open over the feed hides everything behind
+  // it), aria-hidden says nothing about the texts beside it.
+  const FLAT_RUN_MAX_SIBLINGS = 8;
+  const FLAT_RUN_PICTURE_PX = 100;
+  const ELLIPSIS_RE = /^\s*(?:\.\.\.|\u2026)\s*$/;
+  // A picture by its box, else (not loaded yet, or failed) by its declared
+  // or natural size.
+  const holdsPicture = (node) => {
+    const imgs = node.querySelectorAll('img');
+    for (let i = 0; i < imgs.length && i < 20; i++) {
+      const im = imgs[i];
+      const r = im.getBoundingClientRect();
+      const w = Math.max(r.width, Number(im.getAttribute('width')) || 0, im.naturalWidth || 0);
+      const h = Math.max(r.height, Number(im.getAttribute('height')) || 0, im.naturalHeight || 0);
+      if (Math.min(w, h) >= FLAT_RUN_PICTURE_PX) return true;
+    }
+    return false;
+  };
+  const flatRunTitle = (node, start, feed) => {
+    if (!holdsFeedPlayer(feed, node)) return '';
+    let branch = anchorIn(node, start);
+    while (branch && branch.parentElement !== node) branch = branch.parentElement;
+    if (!branch || visibleTextLength(branch, 1) > 0) return '';
+    const readHidden = !!branch.closest('[aria-hidden="true"]');
+    let sib = branch.previousElementSibling;
+    for (let hops = 0; sib && hops < FLAT_RUN_MAX_SIBLINGS; hops++, sib = sib.previousElementSibling) {
+      if (countVideos(sib) > 0 || holdsFeedPlayer(feed, sib) || holdsPicture(sib)) break;
+      if (visibleTextLength(sib, 1) === 0) continue;
+      const units = textUnitsIn(sib, null, readHidden);
+      for (let i = units.length - 1; i >= 0; i--) {
+        const link = units[i].closest('a[href], [role="link"]');
+        if (link && wordsOf(link.textContent || '').length <= 3) continue;
+        const u = unitInfo(units[i], readHidden);
+        if (!u || !u.f.rendered || u.kicker || u.words < 3) continue;
+        const next = units[i].nextElementSibling;
+        const cut = !!next && ELLIPSIS_RE.test(next.textContent || '');
+        const text = clipText(u.text);
+        return cut && !/[.\u2026]$/.test(text) ? text + '\u2026' : text;
+      }
+      break;
+    }
+    return '';
   };
   frameCardTitleOf = (el) => cardTitleFor(el,
     (node) => queryDeep(node, 'iframe, video, audio').some((x) => x !== el), true);
@@ -2589,8 +2770,14 @@ function sweepShadowRoots(root, onRoot) {
       return false;
     }
   };
-  const slideshowAround = (node, el, start, show) => {
+  const slideshowAround = (node, el, start, show, feed) => {
     const others = queryDeep(node, 'audio, video').filter((o) => o !== el && !start.contains(o));
+    // A feed's player not loaded yet is a slide too.
+    if (feed) {
+      for (const o of feed.others) {
+        if (node.contains(o) && !o.contains(start) && !start.contains(o)) others.push(o);
+      }
+    }
     if (show) return others.every((o) => show.contains(o)) ? show : null;
     if (!shownIn(el, node)) return null;
     for (const o of others) {
@@ -3124,7 +3311,6 @@ function sweepShadowRoots(root, onRoot) {
     //   no bound element → on a single-video page the first <video poster>, then
     //     the first player container's background; on a multi-video page
     //     nothing: the first poster belongs to another clip.
-    const multiVideo = countVideos(document) > 1;
     let boundEl = mediaUrl ? findBoundMedia(mediaUrl) : null;
     // The page player playing the URL: the one whose tech element is bound
     // (its name still says which clip it is), else the one whose sources
@@ -3137,6 +3323,9 @@ function sweepShadowRoots(root, onRoot) {
       player = findPagePlayer(mediaUrl);
     }
     if (player && player.media && !boundEl) boundEl = player.media;
+    // A feed's players not loaded yet are clips too (see clipPlayers).
+    const feed = clipPlayers(boundEl || (player ? player.root : null), mediaUrl);
+    const multiVideo = !!feed || countVideos(document) > 1;
     let poster = '';
     if (boundEl) {
       poster = (boundEl.poster ? boundEl.poster : '') || posterFromPlayerBg(boundEl);
@@ -3184,7 +3373,10 @@ function sweepShadowRoots(root, onRoot) {
     let cardTitle = '';
     let posterTitle = '';
     let cardImage = '';
-    const moreThanOneVideo = (node) => countVideos(node) > 1;
+    const moreThanOneVideo = (node) => countVideos(node) > 1 || holdsFeedPlayer(feed, node);
+    // A walk from the clip's own player that holds no element of it (a loose
+    // <video>, or none yet): any <video> is another clip.
+    const otherThanOwn = (node) => countVideos(node) > 0 || holdsFeedPlayer(feed, node);
     const teaser = !multiVideo && boundVideo && !!boundEl
       && (inStoryLink(cardStart(boundEl)) || inCardButton(cardStart(boundEl))
         || cardStoryLink(cardStart(boundEl), moreThanOneVideo));
@@ -3192,7 +3384,9 @@ function sweepShadowRoots(root, onRoot) {
     // button) or names by its id: that element stands for it, unless the
     // page's JSON names it.
     const jsonNames = !!json && !!(json.title || json.story);
-    const fileLink = !boundEl && !player && mediaUrl && !jsonNames
+    // A clip no element plays yet: its feed player stands for it.
+    const standIn = !boundEl && !player && mediaUrl && !jsonNames && feed ? feed.own : null;
+    const fileLink = !boundEl && !player && mediaUrl && !jsonNames && !standIn
       ? (linkToFile(mediaUrl) || elementForFileId(mediaUrl)) : null;
     if ((multiVideo || teaser) && boundVideo) {
       playerTitle = (player ? player.name : '') || distinctPlayerConfigTitle(boundEl)
@@ -3200,12 +3394,17 @@ function sweepShadowRoots(root, onRoot) {
       if (!playerTitle && json && json.story) cardTitle = storyTitleFor(json.story);
       const walkFrom = boundEl || (player ? player.root : null);
       if (!playerTitle && !cardTitle && walkFrom) {
-        cardTitle = cardTitleFor(walkFrom, moreThanOneVideo);
+        cardTitle = cardTitleFor(walkFrom, moreThanOneVideo, false, false, false, feed);
       }
       // A slide with no title of its own (a lightbox player) is named where
       // the page shows the same picture with one (the carousel card).
       if (!playerTitle && !cardTitle && multiVideo && poster && walkFrom) {
         cardTitle = posterTwinTitleFor(poster, walkFrom);
+      }
+      // A <video> outside any card (a feed preloading its next clip at the
+      // end of <body>): its feed player stands for it.
+      if (!playerTitle && !cardTitle && feed && walkFrom && !feed.own.contains(walkFrom)) {
+        cardTitle = cardTitleFor(feed.own, otherThanOwn, false, false, false, feed);
       }
       if (!playerTitle && !cardTitle && multiVideo) posterTitle = posterSlugTitle(poster);
     } else if (boundEl && boundEl.tagName === 'AUDIO' && holdsAnotherClip(document, boundEl, mediaUrl)) {
@@ -3234,6 +3433,8 @@ function sweepShadowRoots(root, onRoot) {
       // A URL the page's JSON lists with no element showing it: the JSON names it.
       playerTitle = json.title || '';
       if (!playerTitle && json.story) cardTitle = storyTitleFor(json.story);
+    } else if (standIn) {
+      cardTitle = cardTitleFor(standIn, otherThanOwn, false, false, false, feed);
     } else if (fileLink) {
       // The link's own label is the button's ("Download"); its card names
       // the file.
