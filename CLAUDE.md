@@ -5364,15 +5364,20 @@ documented in firedown-website's CLAUDE.md under `ops/`.
 `droidify`, `neostore`, `obtainium`, `play`, `sideload`, `app`, `other`),
 never the installer's package name (a rare installer would single out a
 handful of phones). The server keeps only those words (`SOURCE_LABELS` in
-firedown-website `ops/stats/firedown_stats.py`; keep the two lists equal),
-counts distinct clients per source for the month, and the weekly digest
-lists them. It is read ONCE and kept in `backup_local.xml`, because Android
+firedown-website `ops/stats/firedown_stats.py`; keep the two lists equal)
+in a table of its own, never beside country and version (a source is
+constant for an install's life, so there it would let a rare source's rows
+be matched month to month), keyed by a second hash of the token that joins
+no ping row; each install counts once a month under its latest source,
+tokened pings only, and the weekly digest lists them. It is read ONCE and kept in `backup_local.xml`, because Android
 remembers only the LAST installer and Firedown's own updater installs every
 update it downloads: after one in-app update the installer reads as
 Firedown. An install that had already updated itself before 1.2.13 reads
 as `app` (origin lost), and only that value is replaced when another
-installer later appears on record. `sideload` covers a browser or file
-manager install, so GitHub and the website's APK are not told apart.
+installer later appears on record. `sideload` is any vendor's
+`*.packageinstaller` (a browser or file manager install) or no installer on
+record (adb, an installer since removed), so GitHub and the website's APK
+are not told apart.
 Same honest-copy rule: the privacy bullet names it in all 19 copies.
 Pinned by `UpdatePingSourceTest` (JVM).
 

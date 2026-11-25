@@ -28,12 +28,17 @@ public class UpdatePingSourceTest {
         assertEquals("sideload",
                 UpdatePingSource.bucketFor("com.google.android.packageinstaller", OWN));
         assertEquals("sideload", UpdatePingSource.bucketFor("com.android.packageinstaller", OWN));
+        assertEquals("sideload", UpdatePingSource.bucketFor("com.miui.packageinstaller", OWN));
+        assertEquals("sideload",
+                UpdatePingSource.bucketFor("com.samsung.android.packageinstaller", OWN));
     }
 
     @Test
     public void selfUpdateIsApp() {
         assertEquals("app", UpdatePingSource.bucketFor(OWN, OWN));
         assertEquals("app", UpdatePingSource.bucketFor(OWN + ".debug", OWN + ".debug"));
+        // Another package that merely starts with ours is not us.
+        assertEquals("other", UpdatePingSource.bucketFor(OWN + "x", OWN));
     }
 
     @Test

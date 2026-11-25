@@ -43,7 +43,10 @@ public final class UpdatePingSource {
     public static final String NEOSTORE = "neostore";
     public static final String OBTAINIUM = "obtainium";
     public static final String PLAY = "play";
-    /** Installed by hand: a browser or a file manager, through Android's installer. */
+    /**
+     * Installed by hand (a browser or a file manager, through Android's
+     * installer) or no installer on record (adb, an installer since removed).
+     */
     public static final String SIDELOAD = "sideload";
     /** Firedown installed itself: an in-app update, the origin before it unknown. */
     public static final String APP = "app";
@@ -97,7 +100,7 @@ public final class UpdatePingSource {
         if (installer == null || installer.isEmpty()) {
             return SIDELOAD;
         }
-        if (installer.equals(ownPackage) || installer.startsWith("com.solarized.firedown")) {
+        if (installer.equals(ownPackage)) {
             return APP;
         }
         switch (installer) {
@@ -110,15 +113,16 @@ public final class UpdatePingSource {
                 return NEOSTORE;
             case "com.android.vending":
                 return PLAY;
-            case "com.google.android.packageinstaller":
-            case "com.android.packageinstaller":
-            case "com.samsung.android.packageinstaller":
-                return SIDELOAD;
             default:
                 break;
         }
         if (installer.startsWith("dev.imranr.obtainium")) {
             return OBTAINIUM;
+        }
+        // Android's installer under any vendor's name (Google's, AOSP's,
+        // Xiaomi's com.miui.packageinstaller…): a manual install.
+        if (installer.endsWith(".packageinstaller")) {
+            return SIDELOAD;
         }
         return OTHER;
     }
