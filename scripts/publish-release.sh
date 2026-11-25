@@ -492,7 +492,7 @@ if runs check; then
     waited=0
     while [ "$(served_code "$SITE_URL/status.json?release-check=$CODE-$waited")" != "$CODE" ]; do
         if [ "$waited" -ge "$CHECK_TIMEOUT" ]; then
-            die "$SITE_URL/status.json still is not $CODE after ${CHECK_TIMEOUT}s: look at the website's deploy on GitHub (Actions)"
+            die "$SITE_URL/status.json still is not $CODE after ${CHECK_TIMEOUT}s: look at the website's deploy on GitHub (Actions), or deploy it from here with $WEBSITE_DIR/tools/deploy.sh, then run: $0 --from check"
         fi
         sleep "$CHECK_INTERVAL"
         waited=$((waited + CHECK_INTERVAL))

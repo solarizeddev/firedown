@@ -5964,7 +5964,9 @@ tasks, not hand edits:
   after one last question, status.json and release-history.json committed and
   pushed to firedown's main and status.json to the website's main
   (`WEBSITE_DIR`, default `../firedown-website`), whose push deploys; last it
-  waits until `www.firedown.app/status.json` serves the new versionCode. Every
+  waits until `www.firedown.app/status.json` serves the new versionCode. When the website's
+  GitHub Actions deploy can't run (out of budget), `../firedown-website/tools/deploy.sh`
+  deploys its `main` from the laptop with the same login; then `--from check`. Every
   step can run again; `--from STEP` resumes. **The mirror needs the website's
   deploy to leave `/updates/` alone**: its rsync runs with `--delete`, so
   without `--exclude='/updates/'` beside `/fdroid/` in `deploy.yml` every
