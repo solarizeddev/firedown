@@ -177,6 +177,9 @@ public class UpdateWorker extends Worker {
                 if (token != null) {
                     builder.addHeader(UpdatePingToken.HEADER, token);
                 }
+                // One word from a fixed list: where this install came from
+                // (see UpdatePingSource for why it is read once and kept).
+                builder.addHeader(UpdatePingSource.HEADER, UpdatePingSource.current(mContext));
             }
             Request request = builder.build();
 
